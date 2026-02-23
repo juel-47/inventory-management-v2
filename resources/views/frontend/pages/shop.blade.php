@@ -1,0 +1,382 @@
+@extends('layouts.frontend')
+@section('content')
+    <div class="bg-slate-50 min-h-screen" x-data="shopFilter()">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Sidebar Filters -->
+                <aside class="w-full lg:w-72 shrink-0">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 sticky top-24">
+                        <h2 class="text-xl font-bold text-slate-900 mb-8">Filters</h2>
+
+                        <!-- Categories -->
+                        <div class="mb-10">
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Categories</h3>
+                            <div class="space-y-4">
+                                @foreach ($categories as $category)
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between group">
+                                            <button @click="toggleCategory({{ $category->id }})"
+                                                class="text-sm font-bold transition-colors text-left"
+                                                :class="activeCat === {{ $category->id }} ||
+                                                    {{ request('category') == $category->id ? 'true' : 'false' }} ?
+                                                    'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'">
+                                                {{ $category->name }}
+                                            </button>
+                                            @if ($category->subCategories->count() > 0)
+                                                <button
+                                                    @click="activeCat = (activeCat === {{ $category->id }} ? null : {{ $category->id }})"
+                                                    class="p-1 rounded-lg hover:bg-slate-50 text-slate-400 transition-transform"
+                                                    :class="{ 'rotate-180': activeCat === {{ $category->id }} }">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        <!-- Subcategories -->
+                                        <div x-show="activeCat === {{ $category->id }}" x-collapse>
+                                            <div class="pl-4 space-y-2 border-l-2 border-slate-50 mt-2 ml-1">
+                                                @foreach ($category->subCategories as $sub)
+                                                    <div class="space-y-2">
+                                                        <div class="flex items-center justify-between group">
+                                                            <button
+                                                                @click="toggleSubCategory({{ $category->id }}, {{ $sub->id }})"
+                                                                class="text-[13px] font-semibold transition-colors text-left"
+                                                                :class="activeSub === {{ $sub->id }} ||
+                                                                    {{ request('subcategory') == $sub->id ? 'true' : 'false' }} ?
+                                                                    'text-indigo-600' :
+                                                                    'text-slate-500 hover:text-indigo-600'">
+                                                                {{ $sub->name }}
+                                                            </button>
+                                                            @if ($sub->childCategories->count() > 0)
+                                                                <button
+                                                                    @click="activeSub = (activeSub === {{ $sub->id }} ? null : {{ $sub->id }})"
+                                                                    class="p-0.5 rounded-md hover:bg-slate-50 text-slate-300 transition-transform"
+                                                                    :class="{ 'rotate-180': activeSub === {{ $sub->id }} }">
+                                                                    <svg class="w-3 h-3" fill="none"
+                                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            @endif
+                                                        </div>
+
+                                                        <!-- Child Categories -->
+                                                        <div x-show="activeSub === {{ $sub->id }}" x-collapse>
+                                                            <div
+                                                                class="pl-4 space-y-1.5 border-l-2 border-slate-50 mt-1 ml-1">
+                                                                @foreach ($sub->childCategories as $child)
+                                                                    <button
+                                                                        @click="toggleChildCategory({{ $category->id }}, {{ $sub->id }}, {{ $child->id }})"
+                                                                        class="block text-[12px] font-medium transition-colors text-left"
+                                                                        :class="{{ request('childcategory') == $child->id ? 'true' : 'false' }}
+                                                                            ? 'text-indigo-600' :
+                                                                            'text-slate-400 hover:text-indigo-600'">
+                                                                        {{ $child->name }}
+                                                                    </button>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Price Filter Slider -->
+                    @auth
+                        <div class="pt-8 border-t border-slate-100">
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Price Range</h3>
+                            
+                            <div class="relative w-full h-10 mt-4">
+                                <div class="h-1.5 w-full bg-slate-200 rounded-full absolute top-1/2 -translate-y-1/2"></div>
+                                <div class="h-1.5 bg-indigo-600 rounded-full absolute top-1/2 -translate-y-1/2"
+                                     :style="`left: ${((minPrice - minRange) / (maxRange - minRange)) * 100}%; right: ${100 - ((maxPrice - minRange) / (maxRange - minRange)) * 100}%`" class="text-indigo-500"></div>
+                                
+                                <input type="range" 
+                                       :min="minRange" :max="maxRange" step="1" 
+                                       x-model.number="minPrice" 
+                                       @input="if(minPrice > maxPrice) minPrice = maxPrice - 1"
+                                       @change="applyFilters()"
+                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
+                                
+                                <input type="range" 
+                                       :min="minRange" :max="maxRange" step="1" 
+                                       x-model.number="maxPrice" 
+                                       @input="if(maxPrice < minPrice) maxPrice = minPrice + 1"
+                                       @change="applyFilters()"
+                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
+                            </div>
+
+                            <div class="flex items-center justify-between mt-6 px-1">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Min Price</span>
+                                    <span class="text-sm font-bold text-slate-900" x-text="'$' + minPrice"></span>
+                                </div>
+                                <div class="flex flex-col text-right">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Max Price</span>
+                                    <span class="text-sm font-bold text-slate-900" x-text="'$' + maxPrice"></span>
+                                </div>
+                            </div>
+                        </div>
+                    @endauth
+                    </div>
+                </aside>
+
+                <!-- Main Content -->
+                <div class="flex-1">
+                    <!-- Top Toolbar -->
+                    <div
+                        class="bg-white rounded-3xl p-4 mb-8 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 px-2">
+                            <span class="text-sm font-bold text-slate-400">Showing <span
+                                    class="text-slate-900">{{ $products->count() }}</span> of {{ $products->total() }}
+                                results</span>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <label
+                                    class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Sort
+                                    by:</label>
+                                <select x-model="sort" @change="applyFilters()"
+                                    class="bg-slate-50 border-none rounded-2xl px-6 py-2 content-center text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none pr-10 relative">
+                                    <option value="latest">Latest Product</option>
+                                    <option value="price_low_high">Price: Low to High</option>
+                                    <option value="price_high_low">Price: High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        @forelse($products as $product)
+                            @php
+                                $imagePath = $product->thumb_image;
+                                $displayPath = (strpos($imagePath, 'http') === 0) 
+                                    ? $imagePath 
+                                    : asset('storage/' . ltrim($imagePath, '/'));
+
+                                $pData = [
+                                    'id' => $product->id,
+                                    'name' => $product->name,
+                                    'thumb_image' => $displayPath,
+                                    'price' => (float)$product->price,
+                                    'outlet_price' => (float)$product->outlet_price,
+                                    'category' => $product->category->name ?? 'General',
+                                ];
+                                $vData = $product->variants->map(fn($v) => [
+                                    'id' => $v->id,
+                                    'name' => $v->name,
+                                    'price' => $v->price > 0 ? (float)$v->price : (float)$product->price,
+                                    'outlet_price' => $v->outlet_price > 0 ? (float)$v->outlet_price : (float)$product->outlet_price,
+                                    'color' => is_object($v->color) ? $v->color->name : ($v->color ?: ''),
+                                    'size' => is_object($v->size) ? $v->size->name : ($v->size ?: ''),
+                                    'stock' => (int)$v->inventory_stock,
+                                ]);
+                            @endphp
+                            <div x-data="productItem({{ json_encode($pData) }}, {{ json_encode($vData) }})"
+                                 class="group relative flex flex-col bg-white rounded-3xl border border-slate-100 p-4 hover:shadow-xl transition-all duration-300">
+                                <!-- Image Container -->
+                                <div class="aspect-square rounded-2xl bg-slate-50 overflow-hidden relative mb-4">
+                                    <img src="{{ $displayPath }}" 
+                                         alt="{{ $product->name }}" 
+                                         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700">
+                                    
+                                    <div class="absolute top-3 left-3">
+                                        <span class="px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[10px] font-bold text-slate-600 uppercase tracking-wider shadow-sm">
+                                            {{ $product->category->name ?? 'General' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Info Area -->
+                                <div class="px-1 flex-1 flex flex-col">
+                                    <h3 class="text-sm font-bold text-slate-900 leading-tight mb-3 line-clamp-2">
+                                        <a href="{{ route('product.details', $product->slug) }}" class="hover:text-indigo-600 transition-colors">{{ $product->name }}</a>
+                                    </h3>
+
+                                    <!-- Variants Selection -->
+                                    <template x-if="hasVariants">
+                                        <div class="mb-4">
+                                            <select x-model="selectedVariantIndex" 
+                                                    class="w-full bg-slate-50 border-none rounded-xl px-4 py-2 text-[10px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none transition-all">
+                                                <option value="">-- Choose Style --</option>
+                                                <template x-for="(v, index) in variants" :key="v.id">
+                                                    <option :value="index" :disabled="v.stock <= 0" x-text="`${v.name || (v.color + ' ' + v.size)} ${v.stock <= 0 ? '(Out of Stock)' : ''}`"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </template>
+                                    
+                                    <div class="mt-auto flex items-center justify-between">
+                                        @auth
+                                            <div class="flex flex-col">
+                                                @if(auth()->user()->hasRole('Outlet User'))
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
+                                                        <span class="text-lg font-black text-slate-900 leading-none">
+                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
+                                                        </span>
+                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1 mt-1">Selling Price</span>
+                                                        <span class="text-md font-black text-slate-900 leading-none">
+                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
+                                                        </span>
+                                                    </div>
+                                                @elseif(auth()->user()->hasRole('User'))
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
+                                                        <span class="text-lg font-black text-slate-900 leading-none">
+                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
+                                                        </span>
+                                                    </div>
+                                                @else
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
+                                                        <span class="text-lg font-black text-slate-900 leading-none">
+                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <!-- Manual Quantity Input -->
+                                                <input type="number" 
+                                                       x-model.number="qty" 
+                                                       min="1"
+                                                       class="w-12 h-10 text-center bg-slate-100 border-none rounded-md text-xs font-black text-slate-900 p-0 focus:ring-1 focus:ring-indigo-200  focus:outline-red-100">
+                                                
+                                                <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(hasVariants && !selectedVariant ? 'Please select a variant' : 'Out of stock', 'error')" 
+                                                        :class="canAdd ? 'bg-slate-900 hover:bg-indigo-600' : 'bg-slate-200 cursor-not-allowed text-slate-400'"
+                                                        class="w-10 h-10 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-slate-100">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="flex flex-col">
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
+                                                <span class="text-xs font-bold text-rose-500 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded-md">Login</span>
+                                            </div>
+                                        @endauth
+                                    </div>
+                                </div>
+                            </div>
+
+                        @empty
+                            <div class="col-span-full py-32 text-center">
+                                <div class="w-24 h-24 bg-slate-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">No products found</h3>
+                                <p class="text-slate-500">Try adjusting your filters or search terms.</p>
+                                <button @click="resetFilters()" class="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">Clear All Filters</button>
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="mt-24 border-t border-slate-100">
+                        {{ $products->links('vendor.pagination.tailwind') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('productItem', (product, variants) => ({
+                    qty: 1,
+                    selectedVariantIndex: '',
+                    product: product,
+                    variants: variants,
+                    get hasVariants() { return this.variants.length > 0 },
+                    get selectedVariant() { 
+                        return this.selectedVariantIndex !== '' ? this.variants[this.selectedVariantIndex] : null 
+                    },
+                    get canAdd() { 
+                        if (this.hasVariants) {
+                            return this.selectedVariant !== null && this.selectedVariant.stock > 0;
+                        }
+                        return true; // Fallback for products without variants
+                    }
+                }));
+            });
+
+            function shopFilter() {
+                return {
+                    activeCat: {{ request('category', 'null') }},
+                    activeSub: {{ request('subcategory', 'null') }},
+                    minRange: {{ $min_range }},
+                    maxRange: {{ $max_range }},
+                    minPrice: {{ request('min_price', $min_range) }},
+                    maxPrice: {{ request('max_price', $max_range) }},
+                    sort: '{{ request('sort', 'latest') }}',
+                    search: '{{ request('search', '') }}',
+
+                    toggleCategory(id) {
+                        if (this.activeCat === id) {
+                            this.activeCat = null;
+                            window.location.href = "{{ route('shop') }}";
+                        } else {
+                            this.updateUrl({
+                                category: id,
+                                subcategory: null,
+                                childcategory: null
+                            });
+                        }
+                    },
+
+                    toggleSubCategory(catId, subId) {
+                        this.updateUrl({
+                            category: catId,
+                            subcategory: subId,
+                            childcategory: null
+                        });
+                    },
+
+                    toggleChildCategory(catId, subId, childId) {
+                        this.updateUrl({
+                            category: catId,
+                            subcategory: subId,
+                            childcategory: childId
+                        });
+                    },
+
+                    applyFilters() {
+                        this.updateUrl({
+                            min_price: this.minPrice,
+                            max_price: this.maxPrice,
+                            sort: this.sort
+                        });
+                    },
+
+                    resetFilters() {
+                        window.location.href = "{{ route('shop') }}";
+                    },
+
+                    updateUrl(params) {
+                        const url = new URL(window.location.href);
+                        Object.keys(params).forEach(key => {
+                            if (params[key] === null || params[key] === undefined) {
+                                url.searchParams.delete(key);
+                            } else {
+                                url.searchParams.set(key, params[key]);
+                            }
+                        });
+                        window.location.href = url.toString();
+                    }
+                }
+            }
+        </script>
+    @endsection

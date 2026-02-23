@@ -1,0 +1,149 @@
+@extends('backend.layouts.master')
+
+@section('content')
+    <section class="section">
+        <div class="section-header">
+            <h1>Profit & Loss Report</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item active"><a href="{{ route('admin.reports.index') }}">Reports</a></div>
+                <div class="breadcrumb-item">Profit & Loss</div>
+            </div>
+        </div>
+
+        <div class="section-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Financial Performance</h4>
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ route('admin.reports.profit-loss') }}" method="GET" class="mb-4">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>Start Date</label>
+                                        <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>End Date</label>
+                                        <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label>&nbsp;</label>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary flex-grow-1 mr-2">
+                                                <i class="fas fa-filter"></i> Filter
+                                            </button>
+                                            <a href="{{ route('admin.reports.profit-loss') }}" class="btn btn-secondary">
+                                                <i class="fas fa-redo"></i> Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="row">
+                                    <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+                                    <div class="card card-statistic-1">
+                                        <div class="card-icon bg-success">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </div>
+                                        <div class="card-wrap">
+                                            <div class="card-header">
+                                                <h4>Base Total Revenue</h4>
+                                            </div>
+                                             <div class="card-body">
+                                                 {!! formatConverted($totalRevenue) !!}
+                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+                                    <div class="card card-statistic-1">
+                                        <div class="card-icon bg-danger">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <div class="card-wrap">
+                                            <div class="card-header">
+                                                <h4>Total Cost</h4>
+                                            </div>
+                                            <div class="card-body">
+                                                {!! formatConverted($totalCost) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+                                    <div class="card card-statistic-1">
+                                        <div class="card-icon {{ $grossProfit >= 0 ? 'bg-primary' : 'bg-warning' }}">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="card-wrap">
+                                            <div class="card-header">
+                                                <h4>Gross Profit</h4>
+                                            </div>
+                                            <div class="card-body">
+                                                {!! formatConverted($grossProfit) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4>Profit & Loss Statement</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                     <tr>
+                                                        <td class="font-weight-bold">Revenue</td>
+                                                         <td class="text-right text-success">{!! formatConverted($totalRevenue) !!}</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <td class="font-weight-bold">Cost of Goods Sold (Purchases)</td>
+                                                         <td class="text-right text-danger">-{!! formatConverted($totalCost) !!}</td>
+                                                     </tr>
+                                                     <tr class="table-active">
+                                                         <td class="font-weight-bold">Gross Profit</td>
+                                                         <td class="text-right font-weight-bold {{ $grossProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                                                             {!! formatConverted($grossProfit) !!}
+                                                         </td>
+                                                     </tr>
+                                                    <tr>
+                                                        <td class="font-weight-bold">Profit Margin</td>
+                                                        <td class="text-right">{{ number_format($profitMargin, 2) }}%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+
+                                            @if($grossProfit < 0)
+                                                <div class="alert alert-danger mt-3">
+                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                    <strong>Warning:</strong> Your business is currently operating at a loss. Review your pricing and costs.
+                                                </div>
+                                            @elseif($profitMargin < 10)
+                                                <div class="alert alert-warning mt-3">
+                                                    <i class="fas fa-info-circle"></i> 
+                                                    <strong>Low Margin:</strong> Your profit margin is below 10%. Consider optimizing costs or increasing prices.
+                                                </div>
+                                            @else
+                                                <div class="alert alert-success mt-3">
+                                                    <i class="fas fa-check-circle"></i> 
+                                                    <strong>Healthy Profit:</strong> Your business is performing well!
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
