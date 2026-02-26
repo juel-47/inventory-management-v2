@@ -139,16 +139,21 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <label>Status</label>
                                         <select class="form-control" name="status">
                                             <option {{ $product->status == 1 ? 'selected' : '' }} value="1">Active</option>
                                             <option {{ $product->status == 0 ? 'selected' : '' }} value="0">Inactive</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <label>Current Stock</label>
                                         <input type="text" class="form-control" name="current_stock" value="{{ $product->inventory_stock }}">
+                                    </div>
+                                     <div class="form-group col-md-4">
+                                        <label>Minimum Order Quantity</label>
+                                        <input type="number" class="form-control" name="minimum_order_qty" value="{{ old('minimum_order_qty', $product->minimum_order_qty ?? 1) }}">
+                                        <small class="text-muted">Minimum quantity that can be ordered.</small>
                                     </div>
                                 </div>
 

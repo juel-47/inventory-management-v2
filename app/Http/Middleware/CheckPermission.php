@@ -20,6 +20,14 @@ class CheckPermission
             return redirect()->route('admin.login');
         }
 
+        // Check if user is trying to access /admin routes
+        if ($request->is('admin/*')) {
+            // Only Admin role can access /admin routes
+            if (!$user->hasRole('Admin')) {
+                abort(403, 'Access Denied. Only administrators can access this area.');
+            }
+        }
+
         $permission = $this->getPermission($request);
 
         if ($permission && !$user->can($permission)) {
@@ -52,9 +60,9 @@ class CheckPermission
             'Manage Products' => ['ProductController', 'BrandController', 'SizeController', 'ColorController', 'ReviewController', 'UnitController'],
             'Manage Brands' => ['BrandController'],
             'Manage Vendors' => ['VendorController'],
-            'Administration' => ['UserController', 'RolesController', 'PermissionController', 'SettingController'],
+            'Administration' => ['UserController', 'RolesController', 'PermissionController', 'SettingController', 'TaxController'],
             'Manage Inventory' => ['IssueController', 'StockLedgerController', 'InventoryReportController'],
-            'Manage Order Place' => ['BookingController'],
+            'Manage Order Place' => ['BookingController', 'FrontendOrderController'],
             'Manage Order Receive' => ['PurchaseController'],
             'Manage Product Requests' => [],
             'Manage Reports' => ['ReportController'],

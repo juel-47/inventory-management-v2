@@ -23,6 +23,9 @@
                 <template x-if="note.type === 'warning'">
                     <svg class="h-5 w-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                 </template>
+                <template x-if="note.type === 'error'">
+                    <svg class="h-5 w-5 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.536-10.95a1 1 0 10-1.414-1.414L10 7.757 7.878 5.636a1 1 0 10-1.414 1.414L8.586 9.17l-2.122 2.122a1 1 0 001.414 1.414L10 10.585l2.121 2.121a1 1 0 001.415-1.414L11.414 9.17l2.122-2.121z" clip-rule="evenodd"></path></svg>
+                </template>
             </div>
             <div class="flex-1">
                 <p class="text-sm font-medium text-slate-800" x-text="note.message"></p>
@@ -38,6 +41,10 @@
      NAVIGATION BAR
      ===================================================== --}}
 <nav class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50">
+    @php
+        $isAdminAuth = auth()->check() && auth()->user()->hasRole('Admin');
+        $isFrontendCustomer = auth()->check() && !$isAdminAuth;
+    @endphp
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
 
@@ -70,9 +77,37 @@
                 </button>
 
                 {{-- Wishlist --}}
-                <button class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-rose-500 transition-all duration-300 relative">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                </button>
+                @if($isFrontendCustomer)
+                    {{-- Logged in: link to wishlist page with live count badge --}}
+                    <a href="{{ route('wishlist.index') }}"
+                       class="p-2.5 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300 relative"
+                       title="My Wishlist">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span x-show="wishlistCount > 0"
+                              x-text="wishlistCount"
+                              class="absolute top-1.5 right-1.5 bg-rose-500 text-white text-[10px] font-bold h-5 w-5 rounded-full border-2 border-white flex items-center justify-center"
+                              x-cloak></span>
+                    </a>
+
+                    {{-- <a href="{{ route('account.index') }}"
+                       class="p-2.5 rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 relative"
+                       title="My Orders">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3V3a1 1 0 00-2 0v2H9V3a1 1 0 00-2 0v2H6a2 2 0 00-2 2v6m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m5 4h6"></path></svg>
+                    </a> --}}
+                @elseif($isAdminAuth)
+                    <a href="{{ route('admin.dashboard') }}"
+                       class="px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all duration-300"
+                       title="Go to Admin Dashboard">
+                        Admin Dashboard
+                    </a>
+                @else
+                    {{-- Guest: redirect to login --}}
+                    <a href="{{ route('login') }}"
+                       class="p-2.5 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300 relative"
+                       title="Login to use Wishlist">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    </a>
+                @endauth
 
                 {{-- Cart --}}
                 <button @click="isCartOpen = true" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300 relative group">
@@ -83,7 +118,7 @@
                 <div class="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
 
                 {{-- User Menu --}}
-                @auth
+                @if($isFrontendCustomer)
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center gap-2 p-1 pl-2 rounded-full hover:bg-slate-100 transition-all duration-300 group">
                             <span class="text-sm font-bold text-slate-700 hidden lg:block">{{ Auth::user()->name }}</span>
@@ -97,16 +132,32 @@
                              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                              class="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2 z-50 overflow-hidden" x-cloak>
                             <div class="px-4 py-3 border-b border-slate-50">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signed in as</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">My Account</p>
                                 <p class="text-sm font-bold text-slate-900 truncate">{{ Auth::user()->name }}</p>
                             </div>
+                            <a href="{{ route('account.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.879 17.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                My Account
+                            </a>
                             @if(Auth::user()->hasRole('Admin'))
                                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border-t border-slate-50">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                                     Admin Dashboard
                                 </a>
                             @endif
-                            <form method="POST" action="{{ route('logout') }}">
+                            <a href="{{ route('wishlist.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-rose-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                My Wishlist
+                                <span x-show="wishlistCount > 0"
+                                      x-text="'(' + wishlistCount + ')'"
+                                      class="ml-auto text-xs font-bold text-rose-500" x-cloak></span>
+                            </a>
+                            {{-- <a href="{{ route('account.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3V3a1 1 0 00-2 0v2H9V3a1 1 0 00-2 0v2H6a2 2 0 00-2 2v6m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m5 4h6"></path></svg>
+                                My Orders
+                            </a> --}}
+                            {{-- Logout: clear cart/wishlist from localStorage before submitting --}}
+                            <form method="POST" action="{{ route('logout') }}" @submit.prevent="handleLogout($el)">
                                 @csrf
                                 <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -115,6 +166,14 @@
                             </form>
                         </div>
                     </div>
+                @elseif($isAdminAuth)
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-rose-600 transition-all duration-300 group flex items-center gap-2">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <span class="text-sm font-bold hidden sm:block">Logout</span>
+                        </button>
+                    </form>
                 @else
                     <a href="{{ route('login') }}" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300 group flex items-center gap-2">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>

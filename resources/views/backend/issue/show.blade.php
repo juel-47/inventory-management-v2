@@ -55,9 +55,17 @@
                                             <td>{{ $item->product->name }}</td>
                                             <td>
                                                 @if($item->variant)
+                                                    @php
+                                                        $variantColorName = is_object($item->variant->color ?? null)
+                                                            ? ($item->variant->color->name ?? '')
+                                                            : ((string) ($item->variant->color ?? ''));
+                                                        $variantSizeName = is_object($item->variant->size ?? null)
+                                                            ? ($item->variant->size->name ?? '')
+                                                            : ((string) ($item->variant->size ?? ''));
+                                                    @endphp
                                                     {{ $item->variant->name }}
-                                                    @if($item->variant->color || $item->variant->size)
-                                                        ({{ $item->variant->color->name ?? '' }}{{ $item->variant->color && $item->variant->size ? ' / ' : '' }}{{ $item->variant->size->name ?? '' }})
+                                                    @if($variantColorName || $variantSizeName)
+                                                        ({{ $variantColorName }}{{ $variantColorName && $variantSizeName ? ' / ' : '' }}{{ $variantSizeName }})
                                                     @endif
                                                 @else
                                                     -

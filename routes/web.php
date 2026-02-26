@@ -5,9 +5,11 @@ use App\Http\Controllers\Backend\BrandController;
 // use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\SubCategoryController;
+use App\Http\Controllers\Backend\TaxController;
 use App\Http\Controllers\Backend\ChildCategoryController;
 use App\Http\Controllers\Backend\ColorController;
 use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\FrontendOrderController;
 use App\Http\Controllers\Backend\InventoryReportController;
 use App\Http\Controllers\Backend\IssueController;
 use App\Http\Controllers\Backend\PermissionController;
@@ -28,6 +30,7 @@ use App\Http\Controllers\Backend\ProductTypeController;
 use App\Http\Controllers\Backend\ReviewController;
 use App\Http\Controllers\Backend\CartController;
 use App\Http\Controllers\Backend\CustomProductRequestController;
+use App\Http\Controllers\Frontend\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,6 +48,29 @@ Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])
 Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
 Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
 Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
+
+// ── Frontend Cart API (DB-backed, auth users only) ──────────────────────────
+Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
+    Route::get('/my-account', [\App\Http\Controllers\Frontend\AccountController::class, 'index'])->name('account.index');
+    Route::post('/my-account/profile', [\App\Http\Controllers\Frontend\AccountController::class, 'updateProfile'])->name('account.profile.update');
+    Route::post('/my-account/password', [\App\Http\Controllers\Frontend\AccountController::class, 'updatePassword'])->name('account.password.update');
+    Route::get('/checkout', [\App\Http\Controllers\Frontend\CartController::class, 'checkout'])->name('checkout.index');
+    Route::post('/checkout/place-order', [\App\Http\Controllers\Frontend\CartController::class, 'placeOrder'])->name('checkout.place-order');
+    Route::get('/my-orders', [\App\Http\Controllers\Frontend\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/my-orders/{order}', [\App\Http\Controllers\Frontend\OrderController::class, 'show'])->name('orders.show');
+    Route::post('/my-orders/{order}/reorder', [\App\Http\Controllers\Frontend\OrderController::class, 'reorder'])->name('orders.reorder');
+    Route::get('/frontend/cart/items',           [\App\Http\Controllers\Frontend\CartController::class, 'items'])->name('frontend.cart.items');
+    Route::post('/frontend/cart/add',            [\App\Http\Controllers\Frontend\CartController::class, 'add'])->name('frontend.cart.add');
+    Route::post('/frontend/cart/remove',         [\App\Http\Controllers\Frontend\CartController::class, 'remove'])->name('frontend.cart.remove');
+    Route::post('/frontend/cart/update-qty',     [\App\Http\Controllers\Frontend\CartController::class, 'updateQuantity'])->name('frontend.cart.update-qty');
+    Route::post('/frontend/cart/clear',          [\App\Http\Controllers\Frontend\CartController::class, 'clear'])->name('frontend.cart.clear');
+
+    // ── Wishlist ─────────────────────────────────────────────────────────────
+    Route::get('/wishlist',                      [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle',              [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::get('/wishlist/ids',                  [WishlistController::class, 'getIds'])->name('wishlist.ids');
+    Route::post('/wishlist/clear',               [WishlistController::class, 'clearAll'])->name('wishlist.clear');
+});
 
 // Route::get('/dashboard', function () {
 //     return view('backend.dashboard');
@@ -132,8 +158,21 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::get('purchases/{id}/download-pdf', [PurchaseController::class, 'downloadPdf'])->name('purchases.download-pdf');
     Route::resource('purchases', PurchaseController::class);
 
+    /** Frontend Orders (Customer Orders) */
+    Route::get('orders', [FrontendOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}/view-invoice', [FrontendOrderController::class, 'viewInvoice'])->name('orders.view-invoice');
+    Route::get('orders/{order}/download-invoice', [FrontendOrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
+    Route::get('orders/{order}', [FrontendOrderController::class, 'show'])->name('orders.show');
+    Route::put('orders/{order}/status', [FrontendOrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::delete('orders/{order}', [FrontendOrderController::class, 'destroy'])->name('orders.destroy');
+
     /** Pricing Rules (Multipliers) */
     Route::resource('pricing-rules', PricingRuleController::class);
+
+    /** Tax / VAT Rules */
+    Route::put('taxes/change-status', [TaxController::class, 'changeStatus'])->name('taxes.change-status');
+    Route::put('taxes/set-default', [TaxController::class, 'setDefault'])->name('taxes.set-default');
+    Route::resource('taxes', TaxController::class);
 
     /** Report Routes */
     Route::controller(ReportController::class)->group(function () {

@@ -183,6 +183,7 @@ class ProductController extends Controller implements HasMiddleware
             $product->raw_material_cost = $request->raw_material_cost;
             $product->transport_cost = $request->transport_cost;
             $product->tax = $request->tax;
+            $product->minimum_order_qty = $request->minimum_order_qty ?? 1;
             
             // Set qty for backward compatibility if needed, but we reflect in InventoryStock
             $product->qty = $request->qty ?? 0;
@@ -329,6 +330,7 @@ class ProductController extends Controller implements HasMiddleware
             $product->raw_material_cost = $request->raw_material_cost;
             $product->transport_cost = $request->transport_cost;
             $product->tax = $request->tax;
+            $product->minimum_order_qty = $request->minimum_order_qty ?? 1;
             $product->save();
 
             // Handle Product Manual Stock Adjustment

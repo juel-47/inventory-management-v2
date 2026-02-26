@@ -53,11 +53,12 @@
             @canany(['Manage Order Place', 'Manage Order Receive'])
             @can('Manage Order Place')
              <li class="menu-header">Order Place</li>
-             <li class="dropdown {{ setActive(['admin.bookings.*']) }}">
+             <li class="dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-book"></i>
                     <span>Manage Order Place</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}"><i class="fas fa-calendar-check"></i> Order Place</a></li>
+                    <li class="{{ setActive(['admin.orders.*']) }}"><a class="nav-link" href="{{ route('admin.orders.index') }}"><i class="fas fa-shopping-bag"></i> Frontend Orders</a></li>
                 </ul>
             </li>
             @endcan
@@ -161,13 +162,14 @@
 
             @can('Administration')
             <li class="menu-header">System</li>
-            <li class="dropdown {{ setActive(['admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.pricing-rules.*']) }}">
+            <li class="dropdown {{ setActive(['admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.pricing-rules.*', 'admin.taxes.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-cogs"></i> <span>Administration</span></a>
                 <ul class="dropdown-menu">
                      <li class="{{ setActive(['admin.users.*']) }}"><a class="nav-link" href="{{ route('admin.users.index') }}">Users</a></li>
                      <li class="{{ setActive(['admin.permission.*']) }}"><a class="nav-link" href="{{ route('admin.permission.index') }}">Permissions</a></li>
                      <li class="{{ setActive(['admin.role.*']) }}"><a class="nav-link" href="{{ route('admin.role.index') }}">Roles</a></li>
                      <li class="{{ setActive(['admin.pricing-rules.*']) }}"><a class="nav-link" href="{{ route('admin.pricing-rules.index') }}">Pricing Rules</a></li>
+                     <li class="{{ setActive(['admin.taxes.*']) }}"><a class="nav-link" href="{{ route('admin.taxes.index') }}">Tax / VAT</a></li>
                      <li class="{{ setActive(['admin.settings.*']) }}"><a class="nav-link" href="{{ route('admin.settings.index') }}">Settings</a></li>
                 </ul>
             </li>

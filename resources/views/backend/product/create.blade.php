@@ -135,17 +135,22 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <label>Status</label>
                                         <select class="form-control" name="status">
                                             <option value="1">Active</option>
                                             <option value="0">Inactive</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <label>Opening Stock</label>
                                         <input type="number" class="form-control" name="qty" value="{{ old('qty', 0) }}">
                                         <small class="text-muted">Only used if no variants are added.</small>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label>Minimum Order Quantity</label>
+                                        <input type="number" class="form-control" name="minimum_order_qty" value="{{ old('minimum_order_qty', 1) }}">
+                                        <small class="text-muted">Minimum quantity that can be ordered.</small>
                                     </div>
                                 </div>
 

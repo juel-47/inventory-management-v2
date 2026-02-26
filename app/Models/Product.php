@@ -35,6 +35,7 @@ class Product extends Model
         'raw_material_cost',
         'transport_cost',
         'tax',
+        'minimum_order_qty',
     ];
 
     public function category()

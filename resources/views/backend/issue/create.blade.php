@@ -12,6 +12,7 @@
                     <form action="{{ route('admin.issues.store') }}" method="POST" id="issue_form">
                         @csrf
                         <input type="hidden" name="product_request_id" id="product_request_id_hidden">
+                        <input type="hidden" name="order_id" id="order_id_hidden">
                         
                         {{-- Hidden container for actual form inputs --}}
                         <div id="hidden-inputs-container"></div>
@@ -30,11 +31,19 @@
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            <div style="width: 250px;">
+                                            {{-- <div style="width: 250px;">
                                                 <select class="form-control select2" id="import_request_select" data-placeholder="Import from Request...">
                                                     <option value=""></option>
                                                     @foreach($productRequests as $pr)
                                                         <option value="{{ $pr->id }}">#{{ $pr->request_no }} - {{ $pr->user->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div> --}}
+                                            <div style="width: 250px;">
+                                                <select class="form-control select2" id="import_order_select" data-placeholder="Import from Outlet/Shop Order...">
+                                                    <option value=""></option>
+                                                    @foreach($frontendOrders as $fo)
+                                                        <option value="{{ $fo->id }}">#{{ $fo->order_no }} - {{ $fo->billing_name }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -62,7 +71,7 @@
                                         </div>
                                         <div id="empty_state" class="text-center py-5 text-muted">
                                             <i class="fas fa-layer-group fa-3x mb-3 opacity-2"></i>
-                                            <p>No items added yet. Add manually or import from a request.</p>
+                                            <p>No items added yet. Add manually or import from request/order.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -157,10 +166,42 @@
     <script>
         const products = @json($products);
         const requestIdParam = @json($requestId ?? null);
+        const orderIdParam = @json($orderId ?? null);
         let rowCount = 0;
 
         $(document).ready(function() {
             $('.select2').select2({ width: '100%', dropdownAutoWidth: true });
+
+            const importSourceItems = (data) => {
+                const items = data.items || [];
+                Swal.close();
+                $('#issue_items_body').empty();
+                rowCount = 0;
+
+                if (data.source_type === 'order') {
+                    $('#order_id_hidden').val($('#import_order_select').val());
+                    $('#product_request_id_hidden').val('');
+                    $('#import_request_select').val(null).trigger('change.select2');
+                } else {
+                    $('#product_request_id_hidden').val($('#import_request_select').val());
+                    $('#order_id_hidden').val('');
+                    $('#import_order_select').val(null).trigger('change.select2');
+                }
+
+                if (data.user_id) {
+                    $('#outlet_select').val(data.user_id).trigger('change');
+                }
+
+                const grouped = {};
+                items.forEach(item => {
+                    if (!grouped[item.product_id]) grouped[item.product_id] = [];
+                    grouped[item.product_id].push(item);
+                });
+
+                Object.keys(grouped).forEach(pid => {
+                    addRow(grouped[pid]);
+                });
+            };
 
             $('#import_request_select').on('change', function() {
                 const requestId = $(this).val();
@@ -177,39 +218,39 @@
                     url: "{{ route('admin.issues.get-request-items') }}",
                     method: "GET",
                     data: { request_id: requestId },
-                    success: function(data) {
-                        const items = data.items;
-                        Swal.close();
-                        $('#issue_items_body').empty();
-                        $('#product_request_id_hidden').val(requestId);
-                        
-                        // Auto-select the outlet user
-                        if (data.user_id) {
-                            $('#outlet_select').val(data.user_id).trigger('change');
-                        }
-                        rowCount = 0;
-
-                        // Group by product so we can use the bulk entry UI
-                        const grouped = {};
-                        items.forEach(item => {
-                            if (!grouped[item.product_id]) grouped[item.product_id] = [];
-                            grouped[item.product_id].push(item);
-                        });
-
-                        Object.keys(grouped).forEach(pid => {
-                            addRow(grouped[pid]);
-                        });
-
-                        $('#import_request_select').val(null).trigger('change.select2');
-                    },
+                    success: function(data) { importSourceItems(data); },
                     error: function() {
-                        Swal.fire('Error', 'Failed to fetch request items.', 'error');
+                        Swal.fire('Error', 'Failed to fetch request/order items.', 'error');
                     }
                 });
             });
 
-            // Initialize logic: Trigger import if param exists, otherwise add empty row
-            if (requestIdParam) {
+            $('#import_order_select').on('change', function() {
+                const orderId = $(this).val();
+                if (!orderId) return;
+
+                Swal.fire({
+                    title: 'Importing Order...',
+                    text: 'Bringing order items into the issue form.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: "{{ route('admin.issues.get-request-items') }}",
+                    method: "GET",
+                    data: { order_id: orderId },
+                    success: function(data) { importSourceItems(data); },
+                    error: function() {
+                        Swal.fire('Error', 'Failed to fetch request/order items.', 'error');
+                    }
+                });
+            });
+
+            // Initialize logic: order_id takes priority, then request_id, else empty row
+            if (orderIdParam) {
+                $('#import_order_select').val(orderIdParam).trigger('change');
+            } else if (requestIdParam) {
                 $('#import_request_select').val(requestIdParam).trigger('change');
             } else {
                 addRow();
@@ -479,5 +520,3 @@
         }
     </script>
 @endpush
-
-

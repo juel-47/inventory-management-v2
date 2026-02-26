@@ -142,6 +142,11 @@
                         </div>
 
                         <div class="flex items-center gap-4">
+                           @php
+                               $auth=Auth::user();
+                            //    dd($auth);
+                           @endphp
+                           @if($auth)
                             <div class="flex items-center gap-2">
                                 <label
                                     class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Sort
@@ -153,6 +158,7 @@
                                     <option value="price_high_low">Price: High to Low</option>
                                 </select>
                             </div>
+                            @endif
                         </div>
                     </div>
 
@@ -172,6 +178,7 @@
                                     'price' => (float)$product->price,
                                     'outlet_price' => (float)$product->outlet_price,
                                     'category' => $product->category->name ?? 'General',
+                                    'minimum_order_qty' => (int)($product->minimum_order_qty ?? 1),
                                 ];
                                 $vData = $product->variants->map(fn($v) => [
                                     'id' => $v->id,
@@ -195,6 +202,20 @@
                                         <span class="px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[10px] font-bold text-slate-600 uppercase tracking-wider shadow-sm">
                                             {{ $product->category->name ?? 'General' }}
                                         </span>
+                                    </div>                                    <div class="absolute top-3 right-3">
+                                        <button @click="toggleWishlist(product.id)"
+                                                :class="isWishlisted(product.id)
+                                                    ? 'bg-rose-50 border-rose-300 text-rose-500 hover:bg-rose-100'
+                                                    : 'bg-white/90 border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-400'"
+                                                class="h-10 w-10 rounded-xl border-2 backdrop-blur flex items-center justify-center transition-all active:scale-95 shadow-sm"
+                                                :title="isWishlisted(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'">
+                                            <template x-if="isWishlisted(product.id)">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                            </template>
+                                            <template x-if="!isWishlisted(product.id)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                            </template>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -207,13 +228,21 @@
                                     <!-- Variants Selection -->
                                     <template x-if="hasVariants">
                                         <div class="mb-4">
-                                            <select x-model="selectedVariantIndex" 
-                                                    class="w-full bg-slate-50 border-none rounded-xl px-4 py-2 text-[10px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none transition-all">
-                                                <option value="">-- Choose Style --</option>
+                                            <div class="flex flex-wrap gap-1.5">
                                                 <template x-for="(v, index) in variants" :key="v.id">
-                                                    <option :value="index" :disabled="v.stock <= 0" x-text="`${v.name || (v.color + ' ' + v.size)} ${v.stock <= 0 ? '(Out of Stock)' : ''}`"></option>
+                                                    <button type="button"
+                                                            @click="v.stock > 0 ? (selectedVariantIndex = String(index)) : null"
+                                                            :disabled="v.stock <= 0"
+                                                            :class="v.stock <= 0
+                                                                ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                                                                : (selectedVariantIndex === String(index)
+                                                                    ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600')"
+                                                            class="px-2 py-1 rounded-lg border text-[10px] font-bold leading-none transition-colors">
+                                                        <span x-text="`${v.name || ([v.color, v.size].filter(Boolean).join(' ') || 'Variant')}${v.stock <= 0 ? ' - Out' : ''}`"></span>
+                                                    </button>
                                                 </template>
-                                            </select>
+                                            </div>
                                         </div>
                                     </template>
                                     
@@ -248,11 +277,17 @@
                                                 @endif
                                             </div>
 
+                                            {{-- <p class="text-[10px] font-bold text-slate-400 mb-2">
+                                                Min Order: <span x-text="minimumOrderQty"></span>
+                                            </p> --}}
+
                                             <div class="flex items-center gap-2">
                                                 <!-- Manual Quantity Input -->
                                                 <input type="number" 
                                                        x-model.number="qty" 
-                                                       min="1"
+                                                       :min="minimumOrderQty"
+                                                       :step="minimumOrderQty"
+                                                       @change="normalizeQty()"
                                                        class="w-12 h-10 text-center bg-slate-100 border-none rounded-md text-xs font-black text-slate-900 p-0 focus:ring-1 focus:ring-indigo-200  focus:outline-red-100">
                                                 
                                                 <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(hasVariants && !selectedVariant ? 'Please select a variant' : 'Out of stock', 'error')" 
@@ -260,7 +295,7 @@
                                                         class="w-10 h-10 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-slate-100">
                                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                                 </button>
-                                            </div>
+</div>
                                         @else
                                             <div class="flex flex-col">
                                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
@@ -296,10 +331,13 @@
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('productItem', (product, variants) => ({
-                    qty: 1,
+                    qty: Math.max(1, parseInt(product.minimum_order_qty) || 1),
                     selectedVariantIndex: '',
                     product: product,
                     variants: variants,
+                    get minimumOrderQty() {
+                        return Math.max(1, parseInt(this.product.minimum_order_qty) || 1);
+                    },
                     get hasVariants() { return this.variants.length > 0 },
                     get selectedVariant() { 
                         return this.selectedVariantIndex !== '' ? this.variants[this.selectedVariantIndex] : null 
@@ -308,7 +346,63 @@
                         if (this.hasVariants) {
                             return this.selectedVariant !== null && this.selectedVariant.stock > 0;
                         }
-                        return true; // Fallback for products without variants
+                        return true;
+                    },
+                    normalizeQty() {
+                        const inputQty = Math.max(1, parseInt(this.qty) || 1);
+                        const moq = this.minimumOrderQty;
+
+                        if (inputQty < moq) {
+                            this.qty = moq;
+                            return this.qty;
+                        }
+
+                        if (inputQty > moq) {
+                            this.qty = Math.ceil(inputQty / moq) * moq;
+                            return this.qty;
+                        }
+
+                        this.qty = moq;
+                        return this.qty;
+                    },
+                    
+                    async addToCart(prod, variant, qty) {
+                        try {
+                            const finalQty = this.normalizeQty();
+                            // Call the cart store directly
+                            await Alpine.store('cart').addItem(prod, variant, finalQty);
+                            // Notify user
+                            const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                            if (bodyEl?._x_dataStack?.[0]) {
+                                bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
+                                bodyEl._x_dataStack[0].isCartOpen = true;
+                            }
+                        } catch (e) {
+                            console.error('Add to cart error:', e);
+                            this.notify('Error adding to cart', 'error');
+                        }
+                    },
+                    
+                    async toggleWishlist(productId) {
+                        try {
+                            await Alpine.store('wishlist').toggle(productId);
+                            const message = this.isWishlisted(productId) ? 'Added to wishlist ♥' : 'Removed from wishlist';
+                            this.notify(message, 'success');
+                        } catch (e) {
+                            console.error('Wishlist toggle error:', e);
+                            this.notify('Error updating wishlist', 'error');
+                        }
+                    },
+                    
+                    isWishlisted(productId) {
+                        return Alpine.store('wishlist').ids.includes(productId);
+                    },
+                    
+                    notify(message, type = 'error') {
+                        const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                        if (bodyEl?._x_dataStack?.[0]) {
+                            bodyEl._x_dataStack[0].notify(message, type);
+                        }
                     }
                 }));
             });

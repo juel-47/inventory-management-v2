@@ -87,6 +87,23 @@
                             {{ $product->category->name ?? 'General' }}
                         </span>
                     </div>
+
+                    {{-- Wishlist Heart Button (top-right) --}}
+                    @auth
+                        <button @click.prevent="toggleWishlist({{ $product->id }})"
+                                class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur border border-slate-100 flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200 group/heart"
+                                :class="isWishlisted({{ $product->id }}) ? 'text-rose-500 border-rose-200 bg-rose-50' : 'text-slate-400 hover:text-rose-500'"
+                                :title="isWishlisted({{ $product->id }}) ? 'Remove from Wishlist' : 'Add to Wishlist'">
+                            {{-- solid heart when wishlisted --}}
+                            <template x-if="isWishlisted({{ $product->id }})">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            </template>
+                            {{-- outline heart when not wishlisted --}}
+                            <template x-if="!isWishlisted({{ $product->id }})">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </template>
+                        </button>
+                    @endauth
                 </div>
 
                 <!-- Info Area -->
@@ -116,11 +133,11 @@
                                 @else
                                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Price</span>
                                     <span class="text-2xl font-black text-slate-900 leading-none">
-                                        {{$settings->currency_icon}}{{ number_format($product->outlet_price ?? $product->outlet_price, 2) }}
+                                        {{$settings->currency_icon}}{{ number_format($product->outlet_price ?? $product->price, 2) }}
                                     </span>
                                 @endif
                             </div>
-                            <button @click="addToCart({{ $product->id }})" class="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:rotate-6 shadow-xl shadow-slate-200 transition-all active:scale-95">
+                            <button @click="addToCart({{ $product->toJson() }})" class="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:rotate-6 shadow-xl shadow-slate-200 transition-all active:scale-95">
                                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             </button>
                         @else

@@ -7,9 +7,12 @@ use App\Models\GeneralSetting;
 use App\Models\Issue;
 use App\Models\IssueItem;
 use App\Models\InventoryStock;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\ProductVariant;
+use App\Models\Color;
+use App\Models\Size;
 use App\Models\StockLedger;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,6 +22,48 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class IssueController extends Controller
 {
+    private function resolveVariantColorName(?ProductVariant $variant): ?string
+    {
+        if (!$variant) {
+            return null;
+        }
+
+        $relationColor = $variant->getRelation('color');
+        if (is_object($relationColor) && isset($relationColor->name)) {
+            return $relationColor->name;
+        }
+
+        if (!empty($variant->color_id)) {
+            $name = Color::query()->whereKey($variant->color_id)->value('name');
+            if ($name) {
+                return $name;
+            }
+        }
+
+        return is_string($variant->color) && $variant->color !== '' ? $variant->color : null;
+    }
+
+    private function resolveVariantSizeName(?ProductVariant $variant): ?string
+    {
+        if (!$variant) {
+            return null;
+        }
+
+        $relationSize = $variant->getRelation('size');
+        if (is_object($relationSize) && isset($relationSize->name)) {
+            return $relationSize->name;
+        }
+
+        if (!empty($variant->size_id)) {
+            $name = Size::query()->whereKey($variant->size_id)->value('name');
+            if ($name) {
+                return $name;
+            }
+        }
+
+        return is_string($variant->size) && $variant->size !== '' ? $variant->size : null;
+    }
+
     public function index()
     {
         $issues = Issue::with('outlet')->latest()->get();
@@ -39,14 +84,53 @@ class IssueController extends Controller
             ->latest()
             ->get();
 
+        $frontendOrders = Order::with('user')
+            ->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
+            ->latest()
+            ->get();
+
         $requestId = $request->query('request_id');
+        $orderId = $request->query('order_id');
         $outletUsers = User::role(['Outlet User', 'User'])->get();
             
-        return view('backend.issue.create', compact('products', 'productRequests', 'requestId', 'outletUsers'));
+        return view('backend.issue.create', compact('products', 'productRequests', 'frontendOrders', 'requestId', 'orderId', 'outletUsers'));
     }
 
     public function getRequestItems(Request $request)
     {
+        if ($request->filled('order_id')) {
+            $order = Order::with(['items.product', 'items.variant.color', 'items.variant.size'])
+                ->findOrFail($request->order_id);
+
+            $items = $order->items->map(function ($item) {
+                $stock = InventoryStock::where([
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                    'outlet_id' => 1,
+                ])->first();
+
+                return [
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product_name ?: ($item->product->name ?? 'Deleted Product'),
+                    'thumb_image' => $item->product_image ?: ($item->product->thumb_image ?? null),
+                    'variant_id' => $item->variant_id,
+                    'variant_name' => $item->variant ? $item->variant->name : ($item->variant_label ?: null),
+                    'color_name' => $this->resolveVariantColorName($item->variant),
+                    'size_name' => $this->resolveVariantSizeName($item->variant),
+                    'requested_qty' => (int) $item->quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'available_stock' => $stock ? (int) $stock->quantity : 0,
+                ];
+            });
+
+            return response()->json([
+                'items' => $items,
+                'user_id' => $order->user_id,
+                'source_type' => 'order',
+                'source_ref' => $order->order_no,
+            ]);
+        }
+
         $productRequest = ProductRequest::with(['items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($request->request_id);
         
         $items = $productRequest->items->map(function($item) {
@@ -63,8 +147,8 @@ class IssueController extends Controller
                 'thumb_image' => $item->product ? $item->product->thumb_image : null,
                 'variant_id' => $item->variant_id,
                 'variant_name' => $item->variant ? $item->variant->name : null,
-                'color_name' => $item->variant && $item->variant->color ? $item->variant->color->name : null,
-                'size_name' => $item->variant && $item->variant->size ? $item->variant->size->name : null,
+                'color_name' => $this->resolveVariantColorName($item->variant),
+                'size_name' => $this->resolveVariantSizeName($item->variant),
                 'requested_qty' => $item->qty,
                 'unit_price' => $item->unit_price,
                 'available_stock' => $stock ? $stock->quantity : 0,
@@ -73,7 +157,9 @@ class IssueController extends Controller
 
         return response()->json([
             'items' => $items,
-            'user_id' => $productRequest->user_id
+            'user_id' => $productRequest->user_id,
+            'source_type' => 'request',
+            'source_ref' => $productRequest->request_no,
         ]);
     }
 
@@ -84,17 +170,33 @@ class IssueController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'outlet_id' => 'required|exists:users,id',
+            'product_request_id' => 'nullable|exists:product_requests,id',
+            'order_id' => 'nullable|exists:orders,id',
             'note' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($request) {
+            $sourceNote = null;
+            if ($request->filled('product_request_id')) {
+                $requestRef = ProductRequest::find($request->product_request_id);
+                $sourceNote = $requestRef ? ('Source Request: ' . $requestRef->request_no) : null;
+            } elseif ($request->filled('order_id')) {
+                $orderRef = Order::find($request->order_id);
+                $sourceNote = $orderRef ? ('Source Order: ' . $orderRef->order_no) : null;
+            }
+
+            $note = trim((string) $request->note);
+            if ($sourceNote) {
+                $note = $note !== '' ? ($note . ' | ' . $sourceNote) : $sourceNote;
+            }
+
             $issue = Issue::create([
                 'issue_no' => 'ISS-' . strtoupper(uniqid()),
                 'product_request_id' => $request->product_request_id,
                 'outlet_id' => $request->outlet_id,
                 'status' => 'confirmed',
                 'total_qty' => collect($request->items)->sum('quantity'),
-                'note' => $request->note,
+                'note' => $note !== '' ? $note : null,
             ]);
 
             // If this issue is linked to a product request, update its status
@@ -105,6 +207,13 @@ class IssueController extends Controller
                         'status' => 'completed',
                         'admin_note' => $productRequest->admin_note . "\nStock Issued: " . $issue->issue_no
                     ]);
+                }
+            }
+
+            if ($request->order_id) {
+                $order = Order::find($request->order_id);
+                if ($order && !in_array(strtolower((string) $order->status), ['cancelled', 'rejected'], true)) {
+                    $order->update(['status' => 'completed']);
                 }
             }
 

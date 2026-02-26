@@ -108,7 +108,11 @@
                         </div>
                         <p class="mt-0.5 text-sm text-slate-500">Shipping and taxes calculated at checkout.</p>
                         <div class="mt-8">
-                            <a href="#" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">Checkout</a>
+                            @auth
+                            <a href="{{ route('checkout.index') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">Checkout</a>
+                        @else
+                            <a href="{{ route('login') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">Checkout</a>
+                        @endauth
                         </div>
                         <div class="mt-6 flex justify-center text-center text-sm text-slate-500 uppercase tracking-widest font-bold">
                             <p>

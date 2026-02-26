@@ -82,10 +82,27 @@
                     </div>
 
                     @auth
-                        <div class="flex flex-col sm:flex-row gap-4 mt-auto">
-                            <button @click="addToCart({{ $product->id }})" class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 shadow-2xl shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-3">
+                        <div class="flex flex-col sm:flex-row gap-4 mt-auto" x-data="productDetail()">
+                            {{-- Add to Cart --}}
+                            <button @click="handleAddToCart()"
+                                    class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 shadow-2xl shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 ADD TO INVENTORY
+                            </button>
+
+                            {{-- Wishlist Toggle --}}
+                            <button @click="handleToggleWishlist()"
+                                    class="w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-200 active:scale-95"
+                                    :class="isInWishlist
+                                        ? 'bg-rose-50 border-rose-300 text-rose-500 hover:bg-rose-100'
+                                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-400'"
+                                    :title="isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'">
+                                <template x-if="isInWishlist">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                </template>
+                                <template x-if="!isInWishlist">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                </template>
                             </button>
                         </div>
                     @endauth
@@ -109,4 +126,96 @@
         </div>
     </div>
 </div>
+
+<script>
+    function productDetail() {
+        return {
+            productId: {{ $product->id }},
+            isInWishlist: {{ auth()->check() && auth()->user()->wishlist()->where('product_id', $product->id)->exists() ? 'true' : 'false' }},
+
+            async handleAddToCart() {
+                try {
+                    const response = await fetch('/frontend/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            product_id: this.productId,
+                            quantity: 1
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        await Alpine.store('cart').loadFromDB();
+                        const msg = data.action === 'added' ? 'Added to cart ✓' : 'Updated in cart ✓';
+                        
+                        const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                        if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
+                            bodyEl._x_dataStack[0].notify(msg, 'success');
+                            bodyEl._x_dataStack[0].isCartOpen = true;
+                        }
+                    } else {
+                        const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                        if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
+                            bodyEl._x_dataStack[0].notify('Failed to add to cart', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Cart add error:', error);
+                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                    if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
+                        bodyEl._x_dataStack[0].notify('Error: ' + error.message, 'error');
+                    }
+                }
+            },
+
+            async handleToggleWishlist() {
+                try {
+                    const response = await fetch('/wishlist/toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            product_id: this.productId
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isInWishlist = data.wishlisted;
+                        const store = Alpine.store('wishlist');
+                        if (store) {
+                            if (data.wishlisted) {
+                                if (!store.ids.includes(this.productId)) {
+                                    store.ids = [...store.ids, this.productId];
+                                }
+                            } else {
+                                store.ids = store.ids.filter(id => id !== this.productId);
+                            }
+                            store.count = data.count;
+                        }
+                        
+                        const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                        if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
+                            bodyEl._x_dataStack[0].notify(data.message, data.wishlisted ? 'success' : 'warning');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Wishlist toggle error:', error);
+                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                    if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
+                        bodyEl._x_dataStack[0].notify('Error: ' + error.message, 'error');
+                    }
+                }
+            }
+        }
+    }
+</script>
 @endsection
