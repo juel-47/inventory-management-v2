@@ -171,19 +171,25 @@
                                 quantity: q
                             }),
                         });
-                        if (res.ok) {
-                            const data = await res.json();
-                            await this.loadFromDB();
-                            if (data.removed_from_wishlist) {
-                                const wishlist = Alpine.store('wishlist');
-                                wishlist.ids = wishlist.ids.filter(id => id !== parseInt(product.id));
-                                wishlist.count = data.wishlist_count ?? wishlist.ids.length;
-                            }
-                        } else {
-                            console.error('Add to cart failed:', res.status);
+
+                        let data = {};
+                        try {
+                            data = await res.json();
+                        } catch (_) {}
+
+                        if (!res.ok || data.success === false) {
+                            throw new Error(data.message || 'Add to cart failed.');
+                        }
+
+                        await this.loadFromDB();
+                        if (data.removed_from_wishlist) {
+                            const wishlist = Alpine.store('wishlist');
+                            wishlist.ids = wishlist.ids.filter(id => id !== parseInt(product.id));
+                            wishlist.count = data.wishlist_count ?? wishlist.ids.length;
                         }
                     } catch (e) { 
                         console.error('Add item error:', e);
+                        throw e;
                     }
                 } else {
                     // Guest: use localStorage only
@@ -255,13 +261,20 @@
                             },
                             body: JSON.stringify({ cart_id: cartId, quantity: q }),
                         });
-                        if (res.ok) {
-                            await this.loadFromDB();
-                        } else {
-                            console.error('Update qty failed:', res.status);
+
+                        let data = {};
+                        try {
+                            data = await res.json();
+                        } catch (_) {}
+
+                        if (!res.ok || data.success === false) {
+                            throw new Error(data.message || 'Failed to update quantity.');
                         }
+
+                        await this.loadFromDB();
                     } catch (e) { 
                         console.error('Update quantity error:', e);
+                        throw e;
                     }
                 } else {
                     const item = this.items.find(i => i.id === cartId);
@@ -377,7 +390,7 @@
                     }
                 } catch (e) {
                     console.error('Add to cart error:', e);
-                    this.notify('Error adding to cart', 'error');
+                    this.notify(e?.message || 'Error adding to cart', 'error');
                 }
             },
             
@@ -445,9 +458,13 @@
 
             // Cart actions
             async addToCart(product, variant = null, quantity = 1) {
-                await Alpine.store('cart').addItem(product, variant, quantity);
-                this.notify('Added to cart ✓');
-                this.isCartOpen = true;
+                try {
+                    await Alpine.store('cart').addItem(product, variant, quantity);
+                    this.notify('Added to cart ✓');
+                    this.isCartOpen = true;
+                } catch (e) {
+                    this.notify(e?.message || 'Add to cart failed.', 'error');
+                }
             },
 
             async removeFromCart(cartId) {
@@ -456,11 +473,32 @@
             },
 
             async updateCartQty(cartId, qty) {
-                const val = parseInt(qty);
-                if (val < 1) {
-                    await this.removeFromCart(cartId);
-                } else {
-                    await Alpine.store('cart').updateQuantity(cartId, qty);
+                try {
+                    let val = parseInt(qty);
+
+                    if (Number.isNaN(val)) {
+                        this.notify('Please enter a valid quantity.', 'error');
+                        await Alpine.store('cart').loadFromDB();
+                        return;
+                    }
+
+                    const item = this.cartItems.find(i => parseInt(i.id) === parseInt(cartId));
+                    const stock = item && item.available_stock !== undefined && item.available_stock !== null
+                        ? Math.max(0, parseInt(item.available_stock) || 0)
+                        : null;
+
+                    if (stock !== null && val > stock) {
+                        this.notify(`Available stock: ${stock}`, 'error');
+                        val = stock;
+                    }
+
+                    if (val < 1) {
+                        await this.removeFromCart(cartId);
+                    } else {
+                        await Alpine.store('cart').updateQuantity(cartId, val);
+                    }
+                } catch (e) {
+                    this.notify(e?.message || 'Failed to update quantity.', 'error');
                 }
             },
 

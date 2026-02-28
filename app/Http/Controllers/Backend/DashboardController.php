@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\Issue;
@@ -27,8 +28,8 @@ class DashboardController extends Controller
             $pendingRequests = ProductRequest::where('status', 'pending')->count();
             $totalOutlets = User::role('Outlet User')->count();
             
-            // Recent Requests for Admin
-            $recentRequests = ProductRequest::with('user')->orderBy('id', 'desc')->take(5)->get();
+            // Recent frontend orders for Admin
+            $recentRequests = Order::with('user')->orderByDesc('id')->take(5)->get();
 
             // Chart Data: Monthly Issues (Last 12 Months)
             $monthlyIssues = Issue::select(
@@ -76,7 +77,7 @@ class DashboardController extends Controller
                 ->whereIn('status', ['approved', 'completed', 'complete']) 
                 ->sum('total_amount');
             
-            $recentRequests = ProductRequest::where('user_id', $user->id)->orderBy('id', 'desc')->take(5)->get();
+            $recentRequests = Order::where('user_id', $user->id)->with('user')->orderByDesc('id')->take(5)->get();
 
             return view('backend.dashboard', compact(
                 'myTotalRequests',

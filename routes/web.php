@@ -54,6 +54,10 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
     Route::get('/my-account', [\App\Http\Controllers\Frontend\AccountController::class, 'index'])->name('account.index');
     Route::post('/my-account/profile', [\App\Http\Controllers\Frontend\AccountController::class, 'updateProfile'])->name('account.profile.update');
     Route::post('/my-account/password', [\App\Http\Controllers\Frontend\AccountController::class, 'updatePassword'])->name('account.password.update');
+    Route::post('/my-account/order-form/add-to-cart', [\App\Http\Controllers\Frontend\AccountController::class, 'addOrderFormToCart'])->name('account.order-form.add-to-cart');
+    Route::post('/my-account/order-form/save', [\App\Http\Controllers\Frontend\AccountController::class, 'saveOrderForm'])->name('account.order-form.save');
+    Route::post('/my-account/saved-forms/{savedRequest}/checkout', [\App\Http\Controllers\Frontend\AccountController::class, 'checkoutSavedForm'])->name('account.saved-forms.checkout');
+    Route::delete('/my-account/saved-forms/{savedRequest}', [\App\Http\Controllers\Frontend\AccountController::class, 'deleteSavedForm'])->name('account.saved-forms.delete');
     Route::get('/checkout', [\App\Http\Controllers\Frontend\CartController::class, 'checkout'])->name('checkout.index');
     Route::post('/checkout/place-order', [\App\Http\Controllers\Frontend\CartController::class, 'placeOrder'])->name('checkout.place-order');
     Route::get('/my-orders', [\App\Http\Controllers\Frontend\OrderController::class, 'index'])->name('orders.index');

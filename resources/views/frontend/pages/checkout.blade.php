@@ -50,6 +50,10 @@
                     <form id="checkout-form" action="{{ route('checkout.place-order') }}" method="POST">
                         @csrf
                         <input type="hidden" name="ship_different" :value="shipDifferent ? 1 : 0">
+                        @php($resolvedSavedFormId = old('saved_form_id', $savedFormId ?? null))
+                        @if(!empty($resolvedSavedFormId))
+                            <input type="hidden" name="saved_form_id" value="{{ $resolvedSavedFormId }}">
+                        @endif
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             
                             <div>

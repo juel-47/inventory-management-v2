@@ -1,6 +1,44 @@
 @extends('layouts.frontend')
 @section('title', 'My Account')
 
+@section('head')
+@if(($panel ?? '') === 'order-form')
+    <link rel="stylesheet" href="{{ asset('backend/assets/modules/select2/dist/css/select2.min.css') }}">
+    <style>
+        .order-form-select2 + .select2-container { width: 100% !important; }
+        .order-form-select2 + .select2-container .select2-selection--single {
+            border: 1px solid rgb(203 213 225);
+            border-radius: 2px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+        }
+        .order-form-select2 + .select2-container .select2-selection__rendered {
+            color: rgb(30 41 59);
+            font-size: 13px;
+            line-height: 1.3;
+            padding-left: 10px;
+            padding-right: 24px;
+        }
+        .order-form-select2 + .select2-container .select2-selection__arrow {
+            height: 100%;
+            right: 6px;
+        }
+        .select2-dropdown.order-form-dropdown {
+            border-color: rgb(203 213 225);
+            border-radius: 2px;
+        }
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid rgb(203 213 225);
+            border-radius: 2px;
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+    </style>
+@endif
+@endsection
+
 @section('content')
 @php
     $currentPanel = $panel ?? 'dashboard';
@@ -48,8 +86,9 @@
                     <a href="{{ route('account.index', ['panel' => 'dashboard']) }}" class="{{ $menuBase }} {{ $currentPanel === 'dashboard' ? $menuActive : $menuIdle }}">Control Panel</a>
                     <a href="{{ route('account.index', ['panel' => 'orders']) }}" class="{{ $menuBase }} {{ $currentPanel === 'orders' ? $menuActive : $menuIdle }}">Orders</a>
                     {{-- <a href="{{ route('account.index', ['panel' => 'downloads']) }}" class="{{ $menuBase }} {{ $currentPanel === 'downloads' ? $menuActive : $menuIdle }}">Downloads</a> --}}
-                    <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="{{ $menuBase }} {{ $currentPanel === 'addresses' ? $menuActive : $menuIdle }}">Addresses</a>
+                    {{-- <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="{{ $menuBase }} {{ $currentPanel === 'addresses' ? $menuActive : $menuIdle }}">Addresses</a> --}}
                     <a href="{{ route('account.index', ['panel' => 'order-form']) }}" class="{{ $menuBase }} {{ $currentPanel === 'order-form' ? $menuActive : $menuIdle }}">Order Form</a>
+                    <a href="{{ route('account.index', ['panel' => 'saved-forms']) }}" class="{{ $menuBase }} {{ $currentPanel === 'saved-forms' ? $menuActive : $menuIdle }}">Saved Forms</a>
                     {{-- <a href="{{ route('wishlist.index') }}" class="{{ $menuBase }} {{ $menuIdle }}">Shopping List</a> --}}
                     <a href="{{ route('account.index', ['panel' => 'profile']) }}" class="{{ $menuBase }} {{ $currentPanel === 'profile' ? $menuActive : $menuIdle }}">Account Information</a>
                     <form method="POST" action="{{ route('logout') }}">
@@ -150,47 +189,156 @@
                         @endif
                     </div>
                 @elseif($currentPanel === 'order-form')
-                    <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6" x-data="orderFormPanel(@js($productsForOrderForm), @js($reorderSeedRows), @js($currency))">
-                        <h2 class="text-4xl font-light text-slate-900 mb-3 uppercase tracking-wide">Order Form</h2>
+                    <div class="space-y-6">
+                        <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6" x-data="orderFormPanel(@js($productsForOrderForm), @js($reorderSeedRows), @js($currency))">
+                            <h2 class="text-4xl font-light text-slate-900 mb-3 uppercase tracking-wide">Order Form</h2>
 
-                        <div class="border border-slate-300 rounded-sm overflow-hidden">
-                            <div class="bg-slate-500 text-white text-sm px-3 py-2 font-bold">Order form</div>
-                            <div class="p-3 bg-slate-100/70">
-                                <div class="grid grid-cols-12 gap-3 text-xs uppercase tracking-[0.12em] font-black text-slate-600 mb-2">
-                                    <div class="col-span-8">Search/Product</div>
-                                    <div class="col-span-2 text-center">Number</div>
-                                    <div class="col-span-2 text-right">Total</div>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <template x-for="(row, idx) in rows" :key="idx">
-                                        <div class="grid grid-cols-12 gap-3 items-center">
-                                            <div class="col-span-8">
-                                                <select x-model.number="row.product_id" @change="syncRow(idx)" class="w-full border border-slate-300 rounded-sm bg-white px-3 py-2 text-sm text-slate-800">
-                                                    <option value="">Search for a product</option>
-                                                    <template x-for="p in products" :key="p.id">
-                                                        <option :value="p.id" x-text="p.name"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
-                                            <div class="col-span-2">
-                                                <input type="number" min="0" x-model.number="row.qty" @input="syncRow(idx)" class="w-full border border-slate-300 rounded-sm bg-white px-2 py-2 text-sm text-center text-slate-800">
-                                            </div>
-                                            <div class="col-span-2 text-right text-sm font-semibold text-slate-700" x-text="formatMoney(row.line_total)"></div>
-                                        </div>
-                                    </template>
-                                </div>
-
-                                <button type="button" @click="addRow()" class="mt-3 px-3 py-1.5 bg-slate-500 text-white text-xs uppercase tracking-[0.12em] font-bold rounded-sm hover:bg-slate-600">+Add Product</button>
-
-                                <div class="mt-4 pt-3 border-t border-slate-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div class="flex items-center gap-2">
-                                        <button type="button" @click="addAllToCart()" class="px-4 py-2 bg-rose-700 text-white text-sm font-black uppercase tracking-[0.12em] rounded-sm hover:bg-rose-800">Add To Cart</button>
-                                        <button type="button" class="px-4 py-2 bg-slate-300 text-white text-sm font-black uppercase tracking-[0.12em] rounded-sm cursor-not-allowed">Save Purchase Form</button>
+                            <div class="border border-slate-300 rounded-sm overflow-hidden">
+                                <div class="bg-slate-500 text-white text-sm px-3 py-2 font-bold">Order form</div>
+                                <div class="p-3 bg-slate-100/70">
+                                    <div class="grid grid-cols-12 gap-3 text-xs uppercase tracking-[0.12em] font-black text-slate-600 mb-2">
+                                        <div class="col-span-5">Search/Product</div>
+                                        <div class="col-span-3">Variant</div>
+                                        <div class="col-span-2 text-center">Number</div>
+                                        <div class="col-span-2 text-right">Total</div>
                                     </div>
-                                    <p class="text-2xl font-light text-slate-900">Total: <span class="font-black" x-text="formatMoney(grandTotal)"></span></p>
+
+                                    <div class="space-y-2">
+                                        <template x-for="(row, idx) in rows" :key="idx">
+                                            <div class="grid grid-cols-12 gap-3 items-center" :data-order-row="idx">
+                                                <div class="col-span-5">
+                                                    <select x-model.number="row.product_id"
+                                                            @change="onProductChange(idx)"
+                                                            class="order-form-select2 order-form-product-select w-full border border-slate-300 rounded-sm bg-white px-3 py-2 text-sm text-slate-800"
+                                                            :data-row-index="idx"
+                                                            data-placeholder="Search product">
+                                                        <option value="">Select product</option>
+                                                        <template x-for="p in products" :key="p.id">
+                                                            <option :value="p.id" x-text="p.name"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-3">
+                                                    <select x-model.number="row.variant_id"
+                                                            @change="syncRow(idx)"
+                                                            :disabled="!row.product_id || rowVariantOptions(idx).length === 0"
+                                                            class="order-form-select2 order-form-variant-select w-full border border-slate-300 rounded-sm bg-white px-2 py-2 text-xs text-slate-800 disabled:bg-slate-100 disabled:text-slate-400"
+                                                            :data-row-index="idx"
+                                                            data-placeholder="Select variant">
+                                                        <option value="" x-text="rowVariantOptions(idx).length ? 'Select variant' : 'No variant available'"></option>
+                                                        <template x-for="v in rowVariantOptions(idx)" :key="v.id">
+                                                            <option :value="v.id" x-text="variantLabel(v)"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <input type="number" min="0" x-model.number="row.qty" @input="syncRow(idx)" class="w-full border border-slate-300 rounded-sm bg-white px-2 py-2 text-sm text-center text-slate-800">
+                                                </div>
+                                                <div class="col-span-2 text-right text-sm font-semibold text-slate-700" x-text="formatMoney(row.line_total)"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <button type="button" @click="addRow()" class="mt-3 px-3 py-1.5 bg-slate-500 text-white text-xs uppercase tracking-[0.12em] font-bold rounded-sm hover:bg-slate-600">+Add Product</button>
+
+                                    <div class="mt-4 pt-3 border-t border-slate-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div class="flex items-center gap-2">
+                                            <button type="button"
+                                                    @click="addAllToCart()"
+                                                    :disabled="isAddingToCart"
+                                                    :class="isAddingToCart ? 'bg-rose-400 cursor-wait' : 'bg-rose-700 hover:bg-rose-800'"
+                                                    class="px-4 py-2 text-white text-sm font-black uppercase tracking-[0.12em] rounded-sm transition-colors">
+                                                <span x-text="isAddingToCart ? 'Adding...' : 'Add To Cart'"></span>
+                                            </button>
+                                            <button type="button"
+                                                    @click="savePurchaseForm()"
+                                                    :disabled="isSavingForm"
+                                                    :class="isSavingForm ? 'bg-slate-400 cursor-wait' : 'bg-slate-700 hover:bg-slate-800'"
+                                                    class="px-4 py-2 text-white text-sm font-black uppercase tracking-[0.12em] rounded-sm transition-colors">
+                                                <span x-text="isSavingForm ? 'Saving...' : 'Save Purchase Form'"></span>
+                                            </button>
+                                        </div>
+                                        <p class="text-2xl font-light text-slate-900">Total: <span class="font-black" x-text="formatMoney(grandTotal)"></span></p>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                @elseif($currentPanel === 'saved-forms')
+                    <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+                            <div>
+                                <h2 class="text-3xl font-light text-slate-900 uppercase tracking-wide">Saved Purchase Forms</h2>
+                                <p class="text-sm text-slate-500">Load a saved form, then add to cart to checkout.</p>
+                            </div>
+                            <p class="text-xs uppercase tracking-[0.12em] font-black text-slate-400">Latest {{ (int) ($savedPurchaseForms->count() ?? 0) }} forms</p>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[720px]">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                                        <th class="py-2 pr-3 font-black">Request</th>
+                                        <th class="py-2 px-3 font-black">Date</th>
+                                        <th class="py-2 px-3 font-black text-center">Rows</th>
+                                        <th class="py-2 px-3 font-black text-center">Qty</th>
+                                        <th class="py-2 px-3 font-black text-right">Total</th>
+                                        <th class="py-2 px-3 font-black">Status</th>
+                                        <th class="py-2 pl-3 font-black text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($savedPurchaseForms as $savedForm)
+                                        @php
+                                            $savedStatus = strtolower((string) $savedForm->status);
+                                            $isSelectedSaved = ((int) $selectedSavedRequestId === (int) $savedForm->id);
+                                        @endphp
+                                        <tr class="border-b border-slate-100 {{ $isSelectedSaved ? 'bg-sky-50' : '' }}">
+                                            <td class="py-2 pr-3">
+                                                <p class="text-sm font-semibold text-slate-800">{{ $savedForm->request_no }}</p>
+                                            </td>
+                                            <td class="py-2 px-3 text-sm text-slate-700">{{ $savedForm->created_at?->format('d M Y, h:i A') }}</td>
+                                            <td class="py-2 px-3 text-sm text-center text-slate-700">{{ (int) ($savedForm->items_count ?? 0) }}</td>
+                                            <td class="py-2 px-3 text-sm text-center text-slate-700">{{ (int) ($savedForm->total_qty ?? 0) }}</td>
+                                            <td class="py-2 px-3 text-sm text-right font-semibold text-slate-800">{{ $currency }}{{ number_format((float) ($savedForm->total_amount ?? 0), 2) }}</td>
+                                            <td class="py-2 px-3">
+                                                <span class="text-[11px] font-black px-2 py-1 rounded
+                                                    {{ $savedStatus === 'approved' ? 'bg-sky-100 text-sky-700' : '' }}
+                                                    {{ $savedStatus === 'cancelled' ? 'bg-rose-100 text-rose-700' : '' }}
+                                                    {{ $savedStatus === 'pending' ? 'bg-amber-100 text-amber-700' : '' }}
+                                                    {{ $savedStatus === 'saved' ? 'bg-slate-200 text-slate-700' : '' }}">
+                                                    {{ ucfirst((string) $savedForm->status) }}
+                                                </span>
+                                            </td>
+                                            <td class="py-2 pl-3 text-right">
+                                                <div class="inline-flex items-center gap-2">
+                                                    <a href="{{ route('account.index', ['panel' => 'order-form', 'saved' => $savedForm->id]) }}"
+                                                       class="inline-flex items-center px-3 py-1.5 border border-slate-300 rounded-sm text-xs font-black uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-100">
+                                                        Load To Form
+                                                    </a>
+                                                    <form method="POST" action="{{ route('account.saved-forms.checkout', $savedForm->id) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-emerald-700 bg-emerald-700 rounded-sm text-xs font-black uppercase tracking-[0.12em] text-white hover:bg-emerald-800">
+                                                            Checkout
+                                                        </button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('account.saved-forms.delete', $savedForm->id) }}" class="inline" onsubmit="return confirm('Delete this saved form?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-rose-700 bg-rose-700 rounded-sm text-xs font-black uppercase tracking-[0.12em] text-white hover:bg-rose-800">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-sm text-slate-500">No saved purchase forms yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 @elseif($currentPanel === 'profile')
@@ -245,13 +393,13 @@
                                     </div>
                                 </div>
 
-                                <div>
+                                {{-- <div>
                                     <label for="profile_address" class="block text-xs font-black uppercase tracking-[0.12em] text-slate-500 mb-1">Address</label>
                                     <textarea id="profile_address" name="address" rows="3" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200">{{ old('address', $user->address) }}</textarea>
                                     @error('address', 'profileUpdate')
                                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                                     @enderror
-                                </div>
+                                </div> --}}
 
                                 <div class="pt-2">
                                     <button type="submit" class="px-5 py-2 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.12em] rounded-sm hover:bg-slate-800">Save Changes</button>
@@ -310,9 +458,9 @@
                         {{-- <a href="{{ route('account.index', ['panel' => 'downloads']) }}" class="bg-white border border-slate-200 rounded-sm p-8 text-center hover:bg-slate-50">
                             <p class="text-xl font-light text-slate-900">Downloads</p>
                         </a> --}}
-                        <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="bg-white border border-slate-200 rounded-sm p-8 text-center hover:bg-slate-50">
+                        {{-- <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="bg-white border border-slate-200 rounded-sm p-8 text-center hover:bg-slate-50">
                             <p class="text-xl font-light text-slate-900">Addresses</p>
-                        </a>
+                        </a> --}}
                         <a href="{{ route('account.index', ['panel' => 'order-form']) }}" class="bg-white border border-slate-200 rounded-sm p-8 text-center hover:bg-slate-50">
                             <p class="text-xl font-light text-slate-900">Order form</p>
                         </a>
@@ -336,6 +484,9 @@
     if (session('success_profile')) {
         $accountToasts[] = ['type' => 'success', 'message' => session('success_profile')];
     }
+    if (session('error_profile')) {
+        $accountToasts[] = ['type' => 'error', 'message' => session('error_profile')];
+    }
     if (session('success_password')) {
         $accountToasts[] = ['type' => 'success', 'message' => session('success_password')];
     }
@@ -350,6 +501,10 @@
         }
     }
 @endphp
+@if(($panel ?? '') === 'order-form')
+    <script src="{{ asset('backend/assets/modules/jquery.min.js') }}"></script>
+    <script src="{{ asset('backend/assets/modules/select2/dist/js/select2.full.min.js') }}"></script>
+@endif
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const accountToasts = @json($accountToasts);
@@ -368,44 +523,214 @@
 
     document.addEventListener('alpine:init', () => {
         Alpine.data('orderFormPanel', (products, initialRows = [], currency = '$') => ({
-            products: products || [],
+            products: Array.isArray(products) ? products : [],
             rows: [],
             currency,
+            isAddingToCart: false,
+            isSavingForm: false,
 
             init() {
                 if (Array.isArray(initialRows) && initialRows.length > 0) {
                     this.rows = initialRows.map((r) => {
                         const pid = parseInt(r.product_id) || null;
+                        const vid = parseInt(r.variant_id) || null;
                         const qty = Math.max(0, parseInt(r.qty) || 0);
                         return {
                             product_id: pid,
+                            variant_id: vid,
                             qty: qty,
-                            unit_price: this.getProductPrice(pid),
+                            unit_price: this.getUnitPrice(pid, vid),
                             line_total: 0,
                         };
                     });
                 } else {
                     this.rows = Array.from({ length: 5 }, () => ({
                         product_id: null,
+                        variant_id: null,
                         qty: 0,
                         unit_price: 0,
                         line_total: 0,
                     }));
                 }
                 this.rows.forEach((_, idx) => this.syncRow(idx));
+                this.$nextTick(() => this.setupSelect2());
             },
 
             get grandTotal() {
                 return this.rows.reduce((sum, row) => sum + (parseFloat(row.line_total) || 0), 0);
             },
 
-            getProductPrice(productId) {
-                const product = this.products.find((p) => parseInt(p.id) === parseInt(productId));
-                return product ? (parseFloat(product.price) || 0) : 0;
+            getProduct(productId) {
+                return this.products.find((p) => parseInt(p.id) === parseInt(productId)) || null;
+            },
+
+            setupSelect2() {
+                const $ = window.jQuery;
+                if (!$ || !$.fn?.select2 || !this.$el) return;
+
+                const initOne = (el) => {
+                    const $el = $(el);
+                    if ($el.hasClass('select2-hidden-accessible')) {
+                        this.bindSelect2Events(el);
+                        return;
+                    }
+
+                    $el.select2({
+                        width: '100%',
+                        dropdownCssClass: 'order-form-dropdown',
+                        placeholder: el.dataset.placeholder || 'Select',
+                        allowClear: false,
+                    });
+                    this.bindSelect2Events(el);
+                };
+
+                this.$el.querySelectorAll('.order-form-select2').forEach(initOne);
+                this.$nextTick(() => this.syncSelect2Values());
+            },
+
+            bindSelect2Events(el) {
+                const $ = window.jQuery;
+                if (!$ || !$.fn?.select2 || !el) return;
+
+                const $el = $(el);
+                $el.off('.orderFormSelect2');
+                $el.on('select2:select.orderFormSelect2 select2:clear.orderFormSelect2', () => {
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            },
+
+            rebuildSelect2ForRow(index) {
+                const $ = window.jQuery;
+                if (!$ || !$.fn?.select2 || !this.$el) return;
+
+                const rowEl = this.$el.querySelector(`[data-order-row="${index}"]`);
+                if (!rowEl) return;
+
+                rowEl.querySelectorAll('.order-form-select2').forEach((el) => {
+                    const $el = $(el);
+                    if ($el.hasClass('select2-hidden-accessible')) {
+                        $el.select2('destroy');
+                    }
+                });
+
+                this.$nextTick(() => {
+                    rowEl.querySelectorAll('.order-form-select2').forEach((el) => {
+                        const $el = $(el);
+                        $el.select2({
+                            width: '100%',
+                            dropdownCssClass: 'order-form-dropdown',
+                            placeholder: el.dataset.placeholder || 'Select',
+                            allowClear: false,
+                        });
+                        this.bindSelect2Events(el);
+                    });
+                    this.syncSelect2Values(index);
+                });
+            },
+
+            syncSelect2Values(index = null) {
+                const $ = window.jQuery;
+                if (!$ || !$.fn?.select2 || !this.$el) return;
+
+                const syncElement = (el, row) => {
+                    if (!el || !row) return;
+                    const $el = $(el);
+                    if (!$el.hasClass('select2-hidden-accessible')) return;
+
+                    let value = '';
+                    if (el.classList.contains('order-form-product-select')) {
+                        value = row.product_id ? String(parseInt(row.product_id)) : '';
+                    } else if (el.classList.contains('order-form-variant-select')) {
+                        value = row.variant_id ? String(parseInt(row.variant_id)) : '';
+                    }
+
+                    $el.val(value).trigger('change.select2');
+                };
+
+                if (index !== null) {
+                    const idx = parseInt(index);
+                    const row = this.rows[idx];
+                    const rowEl = this.$el.querySelector(`[data-order-row="${idx}"]`);
+                    if (!row || !rowEl) return;
+                    syncElement(rowEl.querySelector('.order-form-product-select'), row);
+                    syncElement(rowEl.querySelector('.order-form-variant-select'), row);
+                    return;
+                }
+
+                this.rows.forEach((row, idx) => {
+                    const rowEl = this.$el.querySelector(`[data-order-row="${idx}"]`);
+                    if (!rowEl) return;
+                    syncElement(rowEl.querySelector('.order-form-product-select'), row);
+                    syncElement(rowEl.querySelector('.order-form-variant-select'), row);
+                });
+            },
+
+            rowVariants(index) {
+                const row = this.rows[index];
+                if (!row || !row.product_id) return [];
+                const product = this.getProduct(row.product_id);
+                return Array.isArray(product?.variants) ? product.variants : [];
+            },
+
+            rowVariantOptions(index) {
+                const row = this.rows[index];
+                const variants = this.rowVariants(index);
+                if (!row) return variants;
+
+                const selectedVariantId = parseInt(row.variant_id) || null;
+                if (!selectedVariantId) return variants;
+                if (variants.some((v) => parseInt(v.id) === selectedVariantId)) return variants;
+
+                return [
+                    {
+                        id: selectedVariantId,
+                        label: `Saved variant #${selectedVariantId} (Unavailable)`,
+                        price: 0,
+                        unavailable: true,
+                    },
+                    ...variants,
+                ];
+            },
+
+            onProductChange(index) {
+                const row = this.rows[index];
+                if (!row) return;
+
+                const variants = this.rowVariants(index);
+
+                if (!variants.length) {
+                    row.variant_id = null;
+                    this.syncRow(index);
+                    this.$nextTick(() => this.rebuildSelect2ForRow(index));
+                    return;
+                }
+
+                const selectedVariantId = parseInt(row.variant_id) || null;
+                const hasSelectedVariant = variants.some((v) => parseInt(v.id) === selectedVariantId);
+                if (!hasSelectedVariant) {
+                    row.variant_id = parseInt(variants[0].id) || null;
+                }
+                this.syncRow(index);
+                this.$nextTick(() => this.rebuildSelect2ForRow(index));
+            },
+
+            getUnitPrice(productId, variantId = null) {
+                const product = this.getProduct(productId);
+                if (!product) return 0;
+
+                const variants = Array.isArray(product.variants) ? product.variants : [];
+                if (variantId !== null && variantId !== '' && variants.length > 0) {
+                    const variant = variants.find((v) => parseInt(v.id) === parseInt(variantId));
+                    if (variant) {
+                        return parseFloat(variant.price) || 0;
+                    }
+                }
+
+                return parseFloat(product.price) || 0;
             },
 
             getMinimumQty(productId) {
-                const product = this.products.find((p) => parseInt(p.id) === parseInt(productId));
+                const product = this.getProduct(productId);
                 return product ? Math.max(1, parseInt(product.minimum_order_qty) || 1) : 1;
             },
 
@@ -414,25 +739,42 @@
                 if (!row) return;
 
                 if (!row.product_id) {
+                    row.variant_id = null;
                     row.unit_price = 0;
                     row.line_total = 0;
                     return;
                 }
 
-                row.unit_price = this.getProductPrice(row.product_id);
+                const variants = this.rowVariants(index);
+                if (!variants.length) {
+                    if (!row.variant_id) {
+                        row.variant_id = null;
+                    }
+                } else {
+                    const selectedVariantId = parseInt(row.variant_id) || null;
+                    const hasSelectedVariant = variants.some((v) => parseInt(v.id) === selectedVariantId);
+                    if (!hasSelectedVariant) {
+                        row.variant_id = parseInt(variants[0].id) || null;
+                    }
+                }
+
+                row.unit_price = this.getUnitPrice(row.product_id, row.variant_id);
                 const minQty = this.getMinimumQty(row.product_id);
                 const qty = Math.max(0, parseInt(row.qty) || 0);
                 row.qty = qty > 0 && qty < minQty ? minQty : qty;
                 row.line_total = (parseFloat(row.unit_price) || 0) * (parseInt(row.qty) || 0);
+                this.$nextTick(() => this.syncSelect2Values(index));
             },
 
             addRow() {
                 this.rows.push({
                     product_id: null,
+                    variant_id: null,
                     qty: 0,
                     unit_price: 0,
                     line_total: 0,
                 });
+                this.$nextTick(() => this.setupSelect2());
             },
 
             formatMoney(value) {
@@ -440,42 +782,152 @@
                 return `${this.currency}${amount.toFixed(2)}`;
             },
 
+            variantLabel(variant) {
+                if (!variant) return '';
+                if (variant.unavailable) return variant.label || 'Saved variant (Unavailable)';
+                const name = (variant.label || variant.name || '').toString().trim();
+                const price = parseFloat(variant.price || 0);
+                return `${name || 'Variant'} (${this.currency}${price.toFixed(2)})`;
+            },
+
+            normalizeRows() {
+                const normalized = [];
+
+                for (let index = 0; index < this.rows.length; index++) {
+                    const row = this.rows[index];
+                    const rowEl = this.$el?.querySelector(`[data-order-row="${index}"]`);
+                    const productSelectEl = rowEl?.querySelector('.order-form-product-select');
+                    const variantSelectEl = rowEl?.querySelector('.order-form-variant-select');
+                    const qtyInputEl = rowEl?.querySelector('input[type="number"]');
+
+                    const productId = parseInt(row.product_id || productSelectEl?.value) || 0;
+                    const qty = parseInt(row.qty || qtyInputEl?.value) || 0;
+                    if (!productId || qty <= 0) continue;
+
+                    row.product_id = productId;
+                    row.qty = qty;
+
+                    const product = this.getProduct(productId);
+                    let fixedQty = qty;
+                    let variantId = parseInt(row.variant_id || variantSelectEl?.value) || null;
+
+                    // If product is missing from current frontend list, still send the row.
+                    // Backend will do authoritative product/variant validation.
+                    if (product) {
+                        const minQty = Math.max(1, parseInt(product.minimum_order_qty) || 1);
+                        fixedQty = qty > 0 && qty < minQty ? minQty : qty;
+                        const variants = Array.isArray(product.variants) ? product.variants : [];
+
+                        if (variants.length > 0) {
+                            const validVariant = variants.some((v) => parseInt(v.id) === variantId);
+                            if (!validVariant) {
+                                return {
+                                    error: `Please select a variant for ${product.name}.`,
+                                };
+                            }
+                        } else {
+                            variantId = null;
+                        }
+                    }
+
+                    row.variant_id = variantId;
+                    row.qty = fixedQty;
+
+                    normalized.push({
+                        product_id: productId,
+                        variant_id: variantId,
+                        qty: fixedQty,
+                    });
+                }
+
+                if (!normalized.length) {
+                    return { error: 'Please select at least one product with quantity.' };
+                }
+
+                const merged = Object.values(
+                    normalized.reduce((acc, item) => {
+                        const key = `${item.product_id}|${item.variant_id || 0}`;
+                        if (!acc[key]) {
+                            acc[key] = { ...item };
+                        } else {
+                            acc[key].qty += item.qty;
+                        }
+                        return acc;
+                    }, {})
+                );
+
+                return { items: merged };
+            },
+
+            async postJson(url, payload) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json().catch(() => null);
+                if (!response.ok || (data && data.success === false)) {
+                    throw new Error(data?.message || 'Request failed.');
+                }
+
+                return data || { success: true };
+            },
+
             async addAllToCart() {
-                const validRows = this.rows.filter((r) => r.product_id && (parseInt(r.qty) || 0) > 0);
-                if (!validRows.length) {
-                    this.notify('Please add at least one product with quantity.', 'warning');
+                if (this.isAddingToCart) return;
+
+                const prepared = this.normalizeRows();
+                if (prepared.error) {
+                    this.notify(prepared.error, 'warning');
                     return;
                 }
 
-                let successCount = 0;
-                for (const row of validRows) {
-                    try {
-                        const res = await fetch('/frontend/cart/add', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content'),
-                            },
-                            body: JSON.stringify({
-                                product_id: parseInt(row.product_id),
-                                quantity: Math.max(1, parseInt(row.qty) || 1),
-                            }),
-                        });
+                this.isAddingToCart = true;
+                try {
+                    const data = await this.postJson("{{ route('account.order-form.add-to-cart') }}", {
+                        items: prepared.items,
+                    });
 
-                        if (res.ok) {
-                            successCount++;
-                        }
-                    } catch (e) {}
-                }
-
-                if (successCount > 0) {
                     if (window.Alpine && Alpine.store('cart')) {
                         await Alpine.store('cart').loadFromDB();
                     }
-                    this.notify(`${successCount} product(s) added to cart.`, 'success');
-                } else {
-                    this.notify('Failed to add products to cart.', 'error');
+                    this.notify(data?.message || 'Products added to cart.', 'success');
+                } catch (e) {
+                    this.notify(e?.message || 'Failed to add products to cart.', 'error');
+                } finally {
+                    this.isAddingToCart = false;
+                }
+            },
+
+            async savePurchaseForm() {
+                if (this.isSavingForm) return;
+
+                const prepared = this.normalizeRows();
+                if (prepared.error) {
+                    this.notify(prepared.error, 'warning');
+                    return;
+                }
+
+                this.isSavingForm = true;
+                try {
+                    const data = await this.postJson("{{ route('account.order-form.save') }}", {
+                        items: prepared.items,
+                    });
+                    this.notify(data?.message || 'Purchase form saved successfully.', 'success');
+                    if (data?.request_id) {
+                        setTimeout(() => {
+                            window.location.href = "{{ route('account.index', ['panel' => 'saved-forms']) }}" + `&saved=${data.request_id}`;
+                        }, 350);
+                    }
+                } catch (e) {
+                    this.notify(e?.message || 'Failed to save purchase form.', 'error');
+                } finally {
+                    this.isSavingForm = false;
                 }
             },
 

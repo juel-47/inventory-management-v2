@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SavedPurchaseForm;
 use App\Models\Wishlist;
 use App\Services\CheckoutTaxResolver;
 use Illuminate\Http\Request;
@@ -28,11 +29,21 @@ class CartController extends Controller
     /**
      * Show the checkout page
      */
-    public function checkout()
+    public function checkout(Request $request)
     {
         $user = Auth::user();
         $items = $this->getUserCartItems();
         $summary = $this->calculateCheckoutSummary($items);
+        $requestedSavedFormId = (int) $request->query('saved_form', 0);
+        $savedFormId = null;
+
+        if ($requestedSavedFormId > 0) {
+            $savedFormId = SavedPurchaseForm::query()
+                ->where('user_id', (int) $user->id)
+                ->whereKey($requestedSavedFormId)
+                ->value('id');
+            $savedFormId = $savedFormId ? (int) $savedFormId : null;
+        }
 
         $nameParts = preg_split('/\s+/', trim((string) ($user->name ?? '')));
         $firstName = $nameParts[0] ?? '';
@@ -48,6 +59,7 @@ class CartController extends Controller
             'total' => $summary['total'],
             'firstName' => $firstName,
             'lastName' => $lastName,
+            'savedFormId' => $savedFormId,
             'user' => $user,
         ]);
     }
@@ -78,9 +90,10 @@ class CartController extends Controller
 
         $productId = $validated['product_id'];
         $variantId = isset($validated['variant_id']) ? (int) $validated['variant_id'] : null;
-        $product = Product::findOrFail($productId);
+        $product = Product::with('inventoryStocks')->findOrFail($productId);
+        $variant = null;
         if ($variantId) {
-            $variant = ProductVariant::findOrFail($variantId);
+            $variant = ProductVariant::with('inventoryStocks')->findOrFail($variantId);
             if ((int) $variant->product_id !== (int) $productId) {
                 return response()->json([
                     'success' => false,
@@ -108,8 +121,29 @@ class CartController extends Controller
                         )
                         ->first();
 
+        $availableStock = $this->resolveAvailableStock($product, $variant);
+        $currentCartQty = (int) ($cartItem->quantity ?? 0);
+        $requestedCartQty = $currentCartQty + $quantity;
+
+        if ($availableStock < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This item is out of stock.',
+                'available_stock' => 0,
+            ], 422);
+        }
+
+        if ($requestedCartQty > $availableStock) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Requested quantity exceeds available stock. Available stock: ' . $availableStock . '.',
+                'available_stock' => $availableStock,
+                'requested_quantity' => $requestedCartQty,
+            ], 422);
+        }
+
         if ($cartItem) {
-            $cartItem->quantity = $cartItem->quantity + $quantity;
+            $cartItem->quantity = $requestedCartQty;
             $cartItem->save();
             $action = 'updated';
         } else {
@@ -224,7 +258,43 @@ class CartController extends Controller
         $cartItem = $query->first();
 
         if ($cartItem) {
-            $cartItem->quantity = $validated['quantity'];
+            $cartItem->loadMissing(['product.inventoryStocks', 'variant.inventoryStocks']);
+
+            if (!$cartItem->product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found for this cart item.',
+                ], 422);
+            }
+
+            if ($cartItem->variant && (int) $cartItem->variant->product_id !== (int) $cartItem->product_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid variant for this cart item.',
+                ], 422);
+            }
+
+            $availableStock = $this->resolveAvailableStock($cartItem->product, $cartItem->variant);
+            $requestedQty = (int) $validated['quantity'];
+
+            if ($availableStock < 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This item is out of stock.',
+                    'available_stock' => 0,
+                ], 422);
+            }
+
+            if ($requestedQty > $availableStock) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Requested quantity exceeds available stock. Available stock: ' . $availableStock . '.',
+                    'available_stock' => $availableStock,
+                    'requested_quantity' => $requestedQty,
+                ], 422);
+            }
+
+            $cartItem->quantity = $requestedQty;
             $cartItem->save();
         }
 
@@ -254,6 +324,7 @@ class CartController extends Controller
             'phone' => 'nullable|string|max:50|required_unless:ship_different,1',
             'address' => 'nullable|string|max:500|required_unless:ship_different,1',
             'outlet_name' => 'nullable|string|max:255',
+            'saved_form_id' => 'nullable|integer',
             'ship_different' => 'nullable|boolean',
             'shipping_first_name' => 'nullable|string|max:255|required_if:ship_different,1',
             'shipping_last_name' => 'nullable|string|max:255',
@@ -351,6 +422,14 @@ class CartController extends Controller
             Cart::where('user_id', Auth::id())
                 ->where('cart_type', 'frontend')
                 ->delete();
+
+            $savedFormId = (int) ($validated['saved_form_id'] ?? 0);
+            if ($savedFormId > 0) {
+                SavedPurchaseForm::query()
+                    ->where('user_id', (int) Auth::id())
+                    ->whereKey($savedFormId)
+                    ->delete();
+            }
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -474,7 +553,7 @@ class CartController extends Controller
     {
         return Cart::where('user_id', Auth::id())
                     ->where('cart_type', 'frontend')
-                    ->with(['product.category', 'variant'])
+                    ->with(['product.category', 'product.inventoryStocks', 'variant.inventoryStocks'])
                     ->get()
                     ->map(function ($item) {
                         if (!$item->product) {
@@ -492,6 +571,7 @@ class CartController extends Controller
                         $variant = $item->variant;
                         $price = $this->resolveCartItemUnitPrice($product, $variant);
                         $variantLabel = $this->resolveVariantLabel($variant);
+                        $availableStock = $this->resolveAvailableStock($product, $variant);
 
                         return [
                             'id' => $item->id,
@@ -503,10 +583,17 @@ class CartController extends Controller
                             'category' => $product->category->name ?? 'General',
                             'variant_label' => $variantLabel,
                             'quantity' => (int) ($item->quantity ?? 1),
+                            'available_stock' => (int) $availableStock,
                         ];
                     })
                     ->filter()
                     ->values();
+    }
+
+    private function resolveAvailableStock(Product $product, ?ProductVariant $variant): int
+    {
+        $stock = $variant ? $variant->inventory_stock : $product->inventory_stock;
+        return max(0, (int) $stock);
     }
 
     private function generateUniqueOrderNoForUser($user): string

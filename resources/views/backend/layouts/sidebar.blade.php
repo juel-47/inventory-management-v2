@@ -76,7 +76,7 @@
             @endcan
             @endcanany
 
-            @canany(['Manage Product Requests', 'Create Product Requests', 'View Product Requests'])
+            {{-- @canany(['Manage Product Requests', 'Create Product Requests', 'View Product Requests'])
             <li class="menu-header">{{ Auth::user()->can('Manage Product Requests') ? 'Outlet Request' : 'Product Request' }}</li>
             <li class="dropdown {{ setActive(['admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-box-open"></i>
@@ -103,7 +103,7 @@
                     @endcan
                 </ul>
             </li>
-            @endcanany
+            @endcanany --}}
 
 
 

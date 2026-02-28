@@ -148,8 +148,12 @@
                         })
                     });
 
-                    const data = await response.json();
-                    if (data.success) {
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (_) {}
+
+                    if (response.ok && data.success) {
                         await Alpine.store('cart').loadFromDB();
                         const msg = data.action === 'added' ? 'Added to cart ✓' : 'Updated in cart ✓';
                         
@@ -161,7 +165,7 @@
                     } else {
                         const bodyEl = document.querySelector('[x-data*="globalApp"]');
                         if (bodyEl && bodyEl._x_dataStack && bodyEl._x_dataStack[0]) {
-                            bodyEl._x_dataStack[0].notify('Failed to add to cart', 'error');
+                            bodyEl._x_dataStack[0].notify(data.message || 'Failed to add to cart', 'error');
                         }
                     }
                 } catch (error) {

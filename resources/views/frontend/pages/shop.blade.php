@@ -170,6 +170,9 @@
                                 $displayPath = (strpos($imagePath, 'http') === 0) 
                                     ? $imagePath 
                                     : asset('storage/' . ltrim($imagePath, '/'));
+                                $canViewInventory = auth()->check() && (
+                                    auth()->user()->hasRole('Outlet User') || auth()->user()->hasRole('User')
+                                );
 
                                 $pData = [
                                     'id' => $product->id,
@@ -179,16 +182,18 @@
                                     'outlet_price' => (float)$product->outlet_price,
                                     'category' => $product->category->name ?? 'General',
                                     'minimum_order_qty' => (int)($product->minimum_order_qty ?? 1),
+                                    'stock' => $canViewInventory ? (int)$product->inventory_stock : 0,
+                                    'inventory_visible' => $canViewInventory,
                                 ];
                                 $vData = $product->variants->map(fn($v) => [
-                                    'id' => $v->id,
-                                    'name' => $v->name,
-                                    'price' => $v->price > 0 ? (float)$v->price : (float)$product->price,
-                                    'outlet_price' => $v->outlet_price > 0 ? (float)$v->outlet_price : (float)$product->outlet_price,
-                                    'color' => is_object($v->color) ? $v->color->name : ($v->color ?: ''),
-                                    'size' => is_object($v->size) ? $v->size->name : ($v->size ?: ''),
-                                    'stock' => (int)$v->inventory_stock,
-                                ]);
+                                        'id' => $v->id,
+                                        'name' => $v->name,
+                                        'price' => $v->price > 0 ? (float)$v->price : (float)$product->price,
+                                        'outlet_price' => $v->outlet_price > 0 ? (float)$v->outlet_price : (float)$product->outlet_price,
+                                        'color' => is_object($v->color) ? $v->color->name : ($v->color ?: ''),
+                                        'size' => is_object($v->size) ? $v->size->name : ($v->size ?: ''),
+                                        'stock' => $canViewInventory ? (int)$v->inventory_stock : null,
+                                    ]);
                             @endphp
                             <div x-data="productItem({{ json_encode($pData) }}, {{ json_encode($vData) }})"
                                  class="group relative flex flex-col bg-white rounded-3xl border border-slate-100 p-4 hover:shadow-xl transition-all duration-300">
@@ -231,71 +236,98 @@
                                             <div class="flex flex-wrap gap-1.5">
                                                 <template x-for="(v, index) in variants" :key="v.id">
                                                     <button type="button"
-                                                            @click="v.stock > 0 ? (selectedVariantIndex = String(index)) : null"
-                                                            :disabled="v.stock <= 0"
-                                                            :class="v.stock <= 0
+                                                            @click="inventoryVisible ? (v.stock > 0 ? (selectedVariantIndex = String(index)) : null) : (selectedVariantIndex = String(index))"
+                                                            :disabled="inventoryVisible ? (v.stock <= 0) : false"
+                                                                :class="inventoryVisible && v.stock <= 0
                                                                 ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
                                                                 : (selectedVariantIndex === String(index)
                                                                     ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                                                                     : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600')"
                                                             class="px-2 py-1 rounded-lg border text-[10px] font-bold leading-none transition-colors">
-                                                        <span x-text="`${v.name || ([v.color, v.size].filter(Boolean).join(' ') || 'Variant')}${v.stock <= 0 ? ' - Out' : ''}`"></span>
+                                                        <span x-text="variantLabel(v)"></span>
                                                     </button>
                                                 </template>
                                             </div>
                                         </div>
                                     </template>
                                     
-                                    <div class="mt-auto flex items-center justify-between">
+                                    <div class="mt-auto">
                                         @auth
-                                            <div class="flex flex-col">
-                                                @if(auth()->user()->hasRole('Outlet User'))
+                                            <div class="space-y-3">
+                                                <div class="flex items-end justify-between gap-3">
                                                     <div class="flex flex-col">
-                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
-                                                        <span class="text-lg font-black text-slate-900 leading-none">
-                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
-                                                        </span>
-                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1 mt-1">Selling Price</span>
-                                                        <span class="text-md font-black text-slate-900 leading-none">
-                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
-                                                        </span>
+                                                        @if(auth()->user()->hasRole('Outlet User'))
+                                                            <div class="flex flex-col">
+                                                                <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
+                                                                <span class="text-lg font-black text-slate-900 leading-none">
+                                                                    {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
+                                                                </span>
+                                                                <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1 mt-1">Selling Price</span>
+                                                                <span class="text-sm font-black text-slate-900 leading-none">
+                                                                    {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
+                                                                </span>
+                                                            </div>
+                                                        @elseif(auth()->user()->hasRole('User'))
+                                                            <div class="flex flex-col">
+                                                                <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
+                                                                <span class="text-lg font-black text-slate-900 leading-none">
+                                                                    {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
+                                                                </span>
+                                                            </div>
+                                                        @else
+                                                            <div class="flex flex-col">
+                                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
+                                                                <span class="text-lg font-black text-slate-900 leading-none">
+                                                                    {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
+                                                                </span>
+                                                            </div>
+                                                        @endif
                                                     </div>
-                                                @elseif(auth()->user()->hasRole('User'))
-                                                    <div class="flex flex-col">
-                                                        <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Wholesale</span>
-                                                        <span class="text-lg font-black text-slate-900 leading-none">
-                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.outlet_price.toFixed(2) : {{ (float)$product->outlet_price }}"></span>
-                                                        </span>
+
+                                                    <div class="shrink-0 text-right">
+                                                        <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold"
+                                                              :class="stockPillClass"
+                                                              x-text="stockPillText"></span>
+                                                        <template x-if="(!hasVariants || selectedVariant) && maxAddableQty > 0">
+                                                            <p class="mt-1 text-[10px] font-semibold text-slate-400" x-text="`Max add: ${maxAddableQty}`"></p>
+                                                        </template>
+                                                        <template x-if="(!hasVariants || selectedVariant) && currentStock > 0 && maxAddableQty === 0">
+                                                            <p class="mt-1 text-[10px] font-semibold text-amber-600" x-text="`MOQ ${minimumOrderQty}, stock ${currentStock}`"></p>
+                                                        </template>
                                                     </div>
-                                                @else
-                                                    <div class="flex flex-col">
-                                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
-                                                        <span class="text-lg font-black text-slate-900 leading-none">
-                                                            {{$settings->currency_icon}}<span x-text="selectedVariant ? selectedVariant.price.toFixed(2) : {{ (float)$product->price }}"></span>
-                                                        </span>
+                                                </div>
+
+                                                <div class="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                                                    <div class="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                                        <span>MOQ: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
+                                                        <template x-if="!hasVariants || selectedVariant">
+                                                            <span>In stock: <span class="text-slate-600" x-text="currentStock"></span></span>
+                                                        </template>
+                                                        <template x-if="hasVariants && !selectedVariant">
+                                                            <span class="text-slate-500 normal-case tracking-normal">Select variant first</span>
+                                                        </template>
                                                     </div>
-                                                @endif
+
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <input type="number"
+                                                               x-model.number="qty"
+                                                               :min="minimumOrderQty"
+                                                               :max="maxAddableQty > 0 ? maxAddableQty : minimumOrderQty"
+                                                               :step="minimumOrderQty"
+                                                               @change="normalizeQty()"
+                                                               class="h-10 w-full rounded-lg border border-slate-200 bg-white text-center text-xs font-black text-slate-900 p-0 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none">
+
+                                                        <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(cannotAddMessage, 'error')"
+                                                                :class="canAdd
+                                                                    ? 'bg-slate-900 hover:bg-indigo-600 text-white shadow-md shadow-slate-200'
+                                                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                                                class="h-10 w-full rounded-lg flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-wider transition-all active:scale-95">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                                            Add
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-
-                                            {{-- <p class="text-[10px] font-bold text-slate-400 mb-2">
-                                                Min Order: <span x-text="minimumOrderQty"></span>
-                                            </p> --}}
-
-                                            <div class="flex items-center gap-2">
-                                                <!-- Manual Quantity Input -->
-                                                <input type="number" 
-                                                       x-model.number="qty" 
-                                                       :min="minimumOrderQty"
-                                                       :step="minimumOrderQty"
-                                                       @change="normalizeQty()"
-                                                       class="w-12 h-10 text-center bg-slate-100 border-none rounded-md text-xs font-black text-slate-900 p-0 focus:ring-1 focus:ring-indigo-200  focus:outline-red-100">
-                                                
-                                                <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(hasVariants && !selectedVariant ? 'Please select a variant' : 'Out of stock', 'error')" 
-                                                        :class="canAdd ? 'bg-slate-900 hover:bg-indigo-600' : 'bg-slate-200 cursor-not-allowed text-slate-400'"
-                                                        class="w-10 h-10 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-slate-100">
-                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                                                </button>
-</div>
                                         @else
                                             <div class="flex flex-col">
                                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Price</span>
@@ -338,31 +370,86 @@
                     get minimumOrderQty() {
                         return Math.max(1, parseInt(this.product.minimum_order_qty) || 1);
                     },
+                    get inventoryVisible() {
+                        return !!this.product.inventory_visible;
+                    },
                     get hasVariants() { return this.variants.length > 0 },
                     get selectedVariant() { 
                         return this.selectedVariantIndex !== '' ? this.variants[this.selectedVariantIndex] : null 
                     },
-                    get canAdd() { 
-                        if (this.hasVariants) {
-                            return this.selectedVariant !== null && this.selectedVariant.stock > 0;
+                    variantLabel(v) {
+                        const base = v.name || ([v.color, v.size].filter(Boolean).join(' ') || 'Variant');
+                        if (!this.inventoryVisible) {
+                            return base;
                         }
-                        return true;
+                        return v.stock <= 0 ? `${base} - Out` : `${base} - ${v.stock}`;
                     },
-                    normalizeQty() {
+                    get currentStock() {
+                        if (this.hasVariants) {
+                            return this.selectedVariant ? Math.max(0, parseInt(this.selectedVariant.stock) || 0) : 0;
+                        }
+                        return Math.max(0, parseInt(this.product.stock) || 0);
+                    },
+                    get maxAddableQty() {
+                        const stock = this.currentStock;
+                        const moq = this.minimumOrderQty;
+                        if (stock < moq) return 0;
+                        return Math.floor(stock / moq) * moq;
+                    },
+                    get canAdd() { 
+                        if (this.hasVariants && !this.selectedVariant) return false;
+                        const requestedQty = this.normalizedQty;
+                        return this.currentStock > 0 && this.maxAddableQty > 0 && requestedQty <= this.currentStock;
+                    },
+                    get cannotAddMessage() {
+                        if (this.hasVariants && !this.selectedVariant) {
+                            return 'Please select a variant';
+                        }
+                        if (this.currentStock <= 0) {
+                            return 'Out of stock';
+                        }
+                        if (this.maxAddableQty === 0) {
+                            return `Minimum order ${this.minimumOrderQty}, but stock is ${this.currentStock}`;
+                        }
+                        return `Available stock: ${this.currentStock}`;
+                    },
+                    get stockPillText() {
+                        if (this.hasVariants && !this.selectedVariant) {
+                            return 'Select variant';
+                        }
+                        if (this.currentStock <= 0) {
+                            return 'Out of stock';
+                        }
+                        if (this.currentStock <= 5) {
+                            return `Low stock: ${this.currentStock}`;
+                        }
+                        return `Available: ${this.currentStock}`;
+                    },
+                    get stockPillClass() {
+                        if (this.hasVariants && !this.selectedVariant) {
+                            return 'bg-slate-100 text-slate-500 border-slate-200';
+                        }
+                        if (this.currentStock <= 0) {
+                            return 'bg-rose-50 text-rose-600 border-rose-200';
+                        }
+                        if (this.currentStock <= 5) {
+                            return 'bg-amber-50 text-amber-700 border-amber-200';
+                        }
+                        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    },
+                    get normalizedQty() {
                         const inputQty = Math.max(1, parseInt(this.qty) || 1);
                         const moq = this.minimumOrderQty;
-
-                        if (inputQty < moq) {
-                            this.qty = moq;
-                            return this.qty;
+                        if (inputQty < moq) return moq;
+                        if (inputQty > moq) return Math.ceil(inputQty / moq) * moq;
+                        return moq;
+                    },
+                    normalizeQty() {
+                        let adjustedQty = this.normalizedQty;
+                        if (this.maxAddableQty > 0 && adjustedQty > this.maxAddableQty) {
+                            adjustedQty = this.maxAddableQty;
                         }
-
-                        if (inputQty > moq) {
-                            this.qty = Math.ceil(inputQty / moq) * moq;
-                            return this.qty;
-                        }
-
-                        this.qty = moq;
+                        this.qty = adjustedQty;
                         return this.qty;
                     },
                     
@@ -379,7 +466,7 @@
                             }
                         } catch (e) {
                             console.error('Add to cart error:', e);
-                            this.notify('Error adding to cart', 'error');
+                            this.notify(e?.message || 'Error adding to cart', 'error');
                         }
                     },
                     

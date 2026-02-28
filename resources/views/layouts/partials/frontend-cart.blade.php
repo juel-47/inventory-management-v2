@@ -67,14 +67,27 @@
                                                 </div>
                                                 <div class="flex flex-1 items-end justify-between text-sm">
                                                     {{-- Quantity Controls --}}
+                                                    <div class="space-y-1">
                                                     <div class="flex items-center gap-2 bg-slate-50 rounded-lg p-1">
                                                         <button @click="updateCartQty(item.id, item.quantity - 1)" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all">-</button>
                                                         <input type="number"
                                                                :value="item.quantity"
-                                                               readonly
-                                                               class="w-8 text-center bg-transparent border-none text-xs font-bold text-slate-900 p-0 focus:ring-0 cursor-not-allowed"
-                                                               title="Use +/- buttons to change quantity">
-                                                        <button @click="updateCartQty(item.id, item.quantity + 1)" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all">+</button>
+                                                               min="1"
+                                                               :max="item.available_stock ?? null"
+                                                               @change="updateCartQty(item.id, $event.target.value)"
+                                                               @keyup.enter="updateCartQty(item.id, $event.target.value)"
+                                                               class="w-12 text-center bg-white border border-slate-200 rounded-md text-xs font-bold text-slate-900 p-0 h-6 focus:ring-1 focus:ring-indigo-200 focus:border-indigo-300"
+                                                               title="Type quantity and press Enter">
+                                                        <button @click="updateCartQty(item.id, item.quantity + 1)"
+                                                                :disabled="item.available_stock !== undefined && item.available_stock !== null && item.quantity >= item.available_stock"
+                                                                :class="item.available_stock !== undefined && item.available_stock !== null && item.quantity >= item.available_stock
+                                                                    ? 'text-slate-300 cursor-not-allowed'
+                                                                    : 'text-slate-400 hover:text-indigo-600 hover:bg-white'"
+                                                                class="w-6 h-6 flex items-center justify-center rounded-md transition-all">+</button>
+                                                    </div>
+                                                    <template x-if="item.available_stock !== undefined && item.available_stock !== null">
+                                                        <p class="text-[10px] font-semibold text-slate-400" x-text="'In stock: ' + item.available_stock"></p>
+                                                    </template>
                                                     </div>
                                                     {{-- Remove --}}
                                                     <div class="flex">

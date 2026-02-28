@@ -181,17 +181,17 @@
             <div class="col-lg-12">
                 <div class="card border shadow-sm">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h4 class="text-dark"><i class="fas fa-history mr-2 text-primary"></i>Recent Product Requests</h4>
-                        <a href="{{ route('admin.product-requests.index') }}" class="btn btn-outline-primary btn-sm rounded-pill">View All</a>
+                        <h4 class="text-dark"><i class="fas fa-history mr-2 text-primary"></i>Recent Orders</h4>
+                        <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-primary btn-sm rounded-pill">View All</a>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
                                 <thead class="bg-whitesmoke">
                                     <tr>
-                                        <th class="pl-4">Request No</th>
+                                        <th class="pl-4">Order No</th>
                                         @if(Auth::user()->can('Manage Reports'))
-                                        <th>Requester</th>
+                                        <th>Customer</th>
                                         @endif
                                          <th>Date</th>
                                          <th class="text-right d-none">Total ({{@ $settings->base_currency_name }})</th>
@@ -203,9 +203,9 @@
                                 <tbody>
                                     @forelse($recentRequests as $request)
                                         <tr>
-                                            <td class="pl-4 font-weight-bold">{{ $request->request_no }}</td>
+                                            <td class="pl-4 font-weight-bold">{{ $request->order_no }}</td>
                                             @if(Auth::user()->can('Manage Reports'))
-                                            <td>{{ $request->user->name }}</td>
+                                            <td>{{ $request->user->name ?? 'N/A' }}</td>
                                             @endif
                                              <td>{{ $request->created_at->format('d M, Y') }}</td>
                                              <td class="text-right font-weight-bold text-dark d-none">{{ $settings->base_currency_icon . number_format($request->total_amount, 2) }}</td>
@@ -217,19 +217,20 @@
                                                         'approved' => 'info',
                                                         'shipped' => 'primary',
                                                         'completed' => 'success',
-                                                        'rejected' => 'danger'
+                                                        'rejected' => 'danger',
+                                                        'cancelled' => 'danger',
                                                     ];
                                                     $class = $statusClasses[$request->status] ?? 'dark';
                                                 @endphp
                                                 <span class="badge badge-{{ $class }} text-uppercase">{{ $request->status }}</span>
                                             </td>
                                             <td class="text-right pr-4">
-                                                <a href="{{ route('admin.product-requests.show', $request->id) }}" class="btn btn-primary btn-sm rounded-pill px-3">Details</a>
+                                                <a href="{{ route('admin.orders.show', $request->id) }}" class="btn btn-primary btn-sm rounded-pill px-3">Details</a>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted font-italic">No recent requests found.</td>
+                                            <td colspan="{{ Auth::user()->can('Manage Reports') ? 7 : 6 }}" class="text-center py-4 text-muted font-italic">No recent orders found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
