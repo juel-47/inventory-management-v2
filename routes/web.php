@@ -9,6 +9,7 @@ use App\Http\Controllers\Backend\TaxController;
 use App\Http\Controllers\Backend\ChildCategoryController;
 use App\Http\Controllers\Backend\ColorController;
 use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\DiscountController;
 use App\Http\Controllers\Backend\FrontendOrderController;
 use App\Http\Controllers\Backend\InventoryReportController;
 use App\Http\Controllers\Backend\IssueController;
@@ -47,7 +48,15 @@ Route::get('/sample/{filename}', function ($filename) {
 Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])->name('home');
 Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
 Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
-Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
+// B2B flow: cart page route is disabled for now (drawer + checkout flow).
+// Uncomment when dedicated cart page is required again.
+// Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
+
+if (app()->environment('local')) {
+    Route::get('/_preview/error/{code}', function (int $code) {
+        abort($code);
+    })->whereNumber('code')->name('error.preview');
+}
 
 // ── Frontend Cart API (DB-backed, auth users only) ──────────────────────────
 Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
@@ -177,6 +186,11 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::put('taxes/change-status', [TaxController::class, 'changeStatus'])->name('taxes.change-status');
     Route::put('taxes/set-default', [TaxController::class, 'setDefault'])->name('taxes.set-default');
     Route::resource('taxes', TaxController::class);
+
+    /** Discount Rules */
+    Route::put('discounts/change-status', [DiscountController::class, 'changeStatus'])->name('discounts.change-status');
+    Route::put('discounts/set-default', [DiscountController::class, 'setDefault'])->name('discounts.set-default');
+    Route::resource('discounts', DiscountController::class);
 
     /** Report Routes */
     Route::controller(ReportController::class)->group(function () {

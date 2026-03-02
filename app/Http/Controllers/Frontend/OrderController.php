@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -87,7 +88,9 @@ class OrderController extends Controller
         $subtotal = 0.0;
 
         $taxResolver = app(CheckoutTaxResolver::class);
+        $discountResolver = app(CheckoutDiscountResolver::class);
         $taxAmount = 0.0;
+        $discountAmount = 0.0;
         $appliedTaxSignatures = [];
         $hasDefaultFlatTax = false;
         $defaultFlatTaxValue = 0.0;
@@ -112,6 +115,9 @@ class OrderController extends Controller
             $unitPrice = $this->resolveCurrentUnitPrice($product, $variant, $user);
             $lineSubtotal = round($unitPrice * $qty, 2);
             $subtotal += $lineSubtotal;
+
+            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+            $discountAmount += (float) ($lineDiscount['amount'] ?? 0);
 
             $lineTax = $taxResolver->resolveForLine($product, $lineSubtotal);
             if ($lineTax['source'] === 'default' && $lineTax['type'] === 'flat') {
@@ -161,8 +167,8 @@ class OrderController extends Controller
 
         $subtotal = round($subtotal, 2);
         $taxAmount = round($taxAmount, 2);
-        $discountAmount = 0.0;
-        $total = round($subtotal + $taxAmount - $discountAmount, 2);
+        $discountAmount = round($discountAmount, 2);
+        $total = round(max(0, $subtotal + $taxAmount - $discountAmount), 2);
 
         $taxMeta = $this->buildTaxMeta($taxResolver, $appliedTaxSignatures);
 

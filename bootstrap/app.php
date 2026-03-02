@@ -5,6 +5,10 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -30,5 +34,68 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Throwable $exception, $request) {
+            // Keep default JSON API error formatting.
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return null;
+            }
+
+            // Keep Laravel default behavior for validation/auth redirects.
+            if ($exception instanceof ValidationException || $exception instanceof AuthenticationException) {
+                return null;
+            }
+
+            $status = $exception instanceof HttpExceptionInterface
+                ? (int) $exception->getStatusCode()
+                : 500;
+
+            $meta = match ($status) {
+                401 => [
+                    'badge' => 'Authentication Required',
+                    'heading' => 'You are not authorized for this request.',
+                    'message' => 'Please log in with a valid account to continue.',
+                ],
+                403 => [
+                    'badge' => 'Permission Required',
+                    'heading' => 'Access denied for this area.',
+                    'message' => 'You do not have the required permission to access this page.',
+                ],
+                404 => [
+                    'badge' => 'Not Found',
+                    'heading' => 'The page you requested does not exist.',
+                    'message' => 'The URL may be incorrect, or the page may have been moved.',
+                ],
+                419 => [
+                    'badge' => 'Session Timeout',
+                    'heading' => 'Your session has expired.',
+                    'message' => 'Please refresh the page and submit your request again.',
+                ],
+                429 => [
+                    'badge' => 'Rate Limit',
+                    'heading' => 'Too many requests from your side.',
+                    'message' => 'Please wait a short time and try again.',
+                ],
+                503 => [
+                    'badge' => 'Maintenance',
+                    'heading' => 'Service is temporarily unavailable.',
+                    'message' => 'The application is under maintenance or temporarily unavailable.',
+                ],
+                default => [
+                    'badge' => $status >= 500 ? 'Server Error' : 'Request Error',
+                    'heading' => $status >= 500
+                        ? 'An internal server error occurred.'
+                        : 'Your request could not be completed.',
+                    'message' => $status >= 500
+                        ? 'A temporary backend issue occurred while handling this request.'
+                        : 'Please review your request and try again.',
+                ],
+            };
+
+            $statusText = HttpResponse::$statusTexts[$status] ?? 'Error';
+
+            return response()->view('errors.unified', array_merge($meta, [
+                'status' => $status,
+                'title' => $status . ' | ' . $statusText,
+            ]), $status);
+        });
     })->create();

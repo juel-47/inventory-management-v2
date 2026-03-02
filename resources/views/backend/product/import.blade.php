@@ -263,6 +263,30 @@
                                         <td>50</td>
                                     </tr>
                                     <tr>
+                                        <td>discount_type</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>Product Discount Type (flat / percent)</td>
+                                        <td>percent</td>
+                                    </tr>
+                                    <tr>
+                                        <td>discount</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>Product Discount Value</td>
+                                        <td>10</td>
+                                    </tr>
+                                    <tr>
+                                        <td>vat_type</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>Product VAT Type (flat / percent), empty = dynamic default</td>
+                                        <td>percent</td>
+                                    </tr>
+                                    <tr>
+                                        <td>vat_value</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>Product VAT Value</td>
+                                        <td>7.5</td>
+                                    </tr>
+                                    <tr>
                                         <td>status</td>
                                         <td><span class="badge bg-secondary">No</span></td>
                                         <td>Status (1=active, 0=inactive)</td>

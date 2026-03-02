@@ -3,6 +3,8 @@
      ===================================================== --}}
 @php
     $frontendFlashToasts = [];
+    $initialWishlistCount = 0;
+    $initialCartCount = 0;
 
     if (session('success')) {
         $frontendFlashToasts[] = ['type' => 'success', 'message' => session('success')];
@@ -22,12 +24,24 @@
             $frontendFlashToasts[] = ['type' => 'error', 'message' => $errorMessage];
         }
     }
+
+    if (auth()->check()) {
+        $initialWishlistCount = (int) \App\Models\Wishlist::query()
+            ->where('user_id', auth()->id())
+            ->count();
+
+        $initialCartCount = (int) \App\Models\Cart::query()
+            ->where('user_id', auth()->id())
+            ->sum('quantity');
+    }
 @endphp
 <script>
     // User role (PHP-rendered, used for role-based pricing in cart)
     window.APP_USER_ROLE = '{{ auth()->user() ? (auth()->user()->hasRole('Outlet User') ? 'Outlet User' : (auth()->user()->hasRole('User') ? 'User' : 'Other')) : 'Guest' }}';
     window.APP_AUTHENTICATED = {{ auth()->check() ? 'true' : 'false' }};
     window.CSRF_TOKEN = '{{ csrf_token() }}';
+    window.APP_INITIAL_WISHLIST_COUNT = {{ $initialWishlistCount }};
+    window.APP_INITIAL_CART_COUNT = {{ $initialCartCount }};
     window.FRONTEND_FLASH_TOASTS = @json($frontendFlashToasts);
 
     document.addEventListener('alpine:init', () => {
@@ -35,20 +49,37 @@
         // ─── WISHLIST STORE ────────────────────────────────────
         Alpine.store('wishlist', {
             ids:   [],  // array of product_id's in wishlist
-            count: 0,
+            count: parseInt(window.APP_INITIAL_WISHLIST_COUNT || 0, 10) || 0,
+            hydrated: false,
+            hydrating: false,
 
             isWishlisted(productId) {
                 return this.ids.includes(parseInt(productId));
             },
 
-            async init() {
-                if (!window.APP_AUTHENTICATED) return;
+            async ensureHydrated(force = false) {
+                if (!window.APP_AUTHENTICATED) {
+                    this.hydrated = true;
+                    this.ids = [];
+                    this.count = 0;
+                    return;
+                }
+
+                if (!force && (this.hydrated || this.hydrating)) {
+                    return;
+                }
+
+                this.hydrating = true;
                 try {
                     const res  = await fetch('/wishlist/ids', { headers: { 'Accept': 'application/json' } });
                     const data = await res.json();
                     this.ids   = data.ids || [];
                     this.count = data.count || 0;
                 } catch (e) { /* silent */ }
+                finally {
+                    this.hydrated = true;
+                    this.hydrating = false;
+                }
             },
 
             async toggle(productId) {
@@ -105,14 +136,20 @@
             },
         });
 
-        // Initialise wishlist store after definition
-        Alpine.store('wishlist').init();
-
         // ─── CART STORE ───────────────────────────────────────
         Alpine.store('cart', {
-            items: [],
+            items: window.APP_AUTHENTICATED
+                ? []
+                : [...JSON.parse(localStorage.getItem('cart_items') || '[]')],
+            serverCount: parseInt(window.APP_INITIAL_CART_COUNT || 0, 10) || 0,
+            hydrated: !window.APP_AUTHENTICATED,
+            hydrating: false,
 
             get count() {
+                if (window.APP_AUTHENTICATED && !this.hydrated && this.items.length === 0) {
+                    return this.serverCount;
+                }
+
                 return this.items.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
             },
 
@@ -120,12 +157,22 @@
                 return this.items.reduce((total, item) => total + (parseFloat(item.price) * (parseInt(item.quantity) || 0)), 0);
             },
 
-            // Called on page load — fetch from DB (auth) or localStorage (guest)
-            async init() {
-                if (window.APP_AUTHENTICATED) {
+            async ensureHydrated(force = false) {
+                if (!window.APP_AUTHENTICATED) {
+                    this.hydrated = true;
+                    return;
+                }
+
+                if (!force && (this.hydrated || this.hydrating)) {
+                    return;
+                }
+
+                this.hydrating = true;
+                try {
                     await this.loadFromDB();
-                } else {
-                    this.items = [...JSON.parse(localStorage.getItem('cart_items') || '[]')];
+                } finally {
+                    this.hydrated = true;
+                    this.hydrating = false;
                 }
             },
 
@@ -135,10 +182,12 @@
                     const data = await res.json();
                     // Force reactivity by reassigning the array
                     this.items = [...(data.items || [])];
+                    this.serverCount = this.items.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
                 } catch (e) {
                     console.error('Cart load error:', e);
                     // Fallback to localStorage if request fails
                     this.items = JSON.parse(localStorage.getItem('cart_items') || '[]');
+                    this.serverCount = this.items.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
                 }
             },
 
@@ -192,6 +241,7 @@
                         throw e;
                     }
                 } else {
+                    await this.ensureHydrated();
                     // Guest: use localStorage only
                     const existingItem = this.items.find(item =>
                         item.product_id === product.id &&
@@ -242,6 +292,7 @@
                         console.error('Remove item error:', e);
                     }
                 } else {
+                    await this.ensureHydrated();
                     this.items = this.items.filter(item => item.id !== cartId);
                     this.save();
                 }
@@ -277,6 +328,7 @@
                         throw e;
                     }
                 } else {
+                    await this.ensureHydrated();
                     const item = this.items.find(i => i.id === cartId);
                     if (item) {
                         item.quantity = q;
@@ -289,6 +341,8 @@
             // Clear cart (called on logout)
             async clearLocal() {
                 this.items = [];
+                this.serverCount = 0;
+                this.hydrated = true;
                 localStorage.removeItem('cart_items');
             },
 
@@ -296,119 +350,6 @@
                 localStorage.setItem('cart_items', JSON.stringify(this.items));
             },
         });
-
-        // Initialise cart store
-        Alpine.store('cart').init();
-
-        // ─── WISHLIST ITEM COMPONENT ──────────────────────────
-        Alpine.data('wishlistItem', (item) => ({
-            qty: Math.max(1, parseInt(item.minimum_order_qty) || 1),
-            removing: false,
-            product: item,
-            variants: item.variants || [],
-            selectedVariantIndex: '',
-
-            get minimumOrderQty() {
-                return Math.max(1, parseInt(this.product.minimum_order_qty) || 1);
-            },
-            
-            get hasVariants() { 
-                return this.variants.length > 0;
-            },
-            
-            get uniqueVariantOptions() {
-                // Create unique variants by combining color and size
-                const seen = new Set();
-                const unique = [];
-                this.variants.forEach(v => {
-                    const key = `${v.color || 'default'}-${v.size || 'default'}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        unique.push(v);
-                    }
-                });
-                return unique;
-            },
-            
-            get selectedVariant() {
-                if (!this.hasVariants || this.selectedVariantIndex === '') return null;
-                return this.uniqueVariantOptions[parseInt(this.selectedVariantIndex)] || null;
-            },
-            
-            getSelectedPrice(priceType, label) {
-                if (this.selectedVariant) {
-                    if (priceType === 'outlet_price') {
-                        return (this.selectedVariant.variant_outlet_price || this.product.outlet_price).toFixed(2);
-                    } else if (priceType === 'price') {
-                        return (this.selectedVariant.variant_price || this.product.price).toFixed(2);
-                    }
-                } else {
-                    if (priceType === 'outlet_price') {
-                        return this.product.outlet_price.toFixed(2);
-                    } else if (priceType === 'price') {
-                        return this.product.price.toFixed(2);
-                    }
-                }
-                return (0).toFixed(2);
-            },
-
-            normalizeQty() {
-                const inputQty = Math.max(1, parseInt(this.qty) || 1);
-                const moq = this.minimumOrderQty;
-
-                if (inputQty < moq) {
-                    this.qty = moq;
-                    return this.qty;
-                }
-
-                if (inputQty > moq) {
-                    this.qty = Math.ceil(inputQty / moq) * moq;
-                    return this.qty;
-                }
-
-                this.qty = moq;
-                return this.qty;
-            },
-            
-            async addToCart() {
-                try {
-                    const variant = this.selectedVariant;
-                    
-                    if (this.hasVariants && !variant) {
-                        this.notify('Please select a variant', 'error');
-                        return;
-                    }
-                    
-                    const finalQty = this.normalizeQty();
-                    await Alpine.store('cart').addItem(this.product, variant, finalQty);
-                    this.removing = true;
-                    
-                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
-                    if (bodyEl?._x_dataStack?.[0]) {
-                        bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
-                        bodyEl._x_dataStack[0].isCartOpen = true;
-                    }
-                } catch (e) {
-                    console.error('Add to cart error:', e);
-                    this.notify(e?.message || 'Error adding to cart', 'error');
-                }
-            },
-            
-            async toggleWishlist(productId) {
-                try {
-                    await Alpine.store('wishlist').toggle(productId);
-                } catch (e) {
-                    console.error('Wishlist toggle error:', e);
-                }
-            },
-            
-            notify(message, type = 'error') {
-                const bodyEl = document.querySelector('[x-data*="globalApp"]');
-                if (bodyEl?._x_dataStack?.[0]) {
-                    bodyEl._x_dataStack[0].notify(message, type);
-                }
-            }
-        }));
 
         // ─── GLOBAL APP DATA ──────────────────────────────────
         Alpine.data('globalApp', () => ({
@@ -419,7 +360,12 @@
             searchQuery:    '',
 
             init() {
-                // Stores are pre-initialized above
+                this.$watch('isCartOpen', (isOpen) => {
+                    if (isOpen) {
+                        Alpine.store('cart').ensureHydrated();
+                    }
+                });
+
                 if (Array.isArray(window.FRONTEND_FLASH_TOASTS) && window.FRONTEND_FLASH_TOASTS.length > 0) {
                     window.FRONTEND_FLASH_TOASTS.forEach((toast, idx) => {
                         setTimeout(() => {
@@ -434,6 +380,30 @@
             get cartCount() { return Alpine.store('cart').count; },
             get cartItems() { return Alpine.store('cart').items; },
             get cartTotal() { return Alpine.store('cart').total; },
+            get cartDisplayTotal() {
+                return this.cartItems.reduce((total, item) => {
+                    const lineDiscounted = parseFloat(item.line_total_after_discount);
+                    if (!Number.isNaN(lineDiscounted)) {
+                        return total + lineDiscounted;
+                    }
+
+                    const unit = parseFloat(item.display_price ?? item.price) || 0;
+                    const qty = parseInt(item.quantity) || 0;
+                    return total + (unit * qty);
+                }, 0);
+            },
+            get cartOriginalTotal() {
+                return this.cartItems.reduce((total, item) => {
+                    const lineOriginal = parseFloat(item.line_total);
+                    if (!Number.isNaN(lineOriginal)) {
+                        return total + lineOriginal;
+                    }
+
+                    const unit = parseFloat(item.original_price ?? item.price) || 0;
+                    const qty = parseInt(item.quantity) || 0;
+                    return total + (unit * qty);
+                }, 0);
+            },
 
             // Wishlist getters
             get wishlistCount() { return Alpine.store('wishlist').count; },
@@ -510,19 +480,6 @@
                 }
             },
 
-            async clearAllWishlist() {
-                const result = await Alpine.store('wishlist').clearAll();
-                if (result && result.success) {
-                    this.notify('Wishlist cleared successfully', 'success');
-                    // Reload page after 1 second to show empty state
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    this.notify('Error clearing wishlist', 'error');
-                }
-            },
-
             // Logout: clear local stores before submitting
             handleLogout(formEl) {
                 Alpine.store('cart').clearLocal();
@@ -532,42 +489,5 @@
             },
         }));
 
-        // ─── WISHLIST PAGE COMPONENT ──────────────────────────
-        Alpine.data('wishlistPage', (initialCount = 0) => ({
-            showClearConfirm: false,
-            initialCount: parseInt(initialCount) || 0,
-
-            init() {
-                const store = Alpine.store('wishlist');
-                if (store.count === 0 && this.initialCount > 0) {
-                    store.count = this.initialCount;
-                }
-            },
-
-            get wishlistCount() {
-                return parseInt(Alpine.store('wishlist').count) || 0;
-            },
-
-            async clearAllWishlist() {
-                const result = await Alpine.store('wishlist').clearAll();
-                if (result && result.success) {
-                    this.showClearConfirm = false;
-                    // Get globalApp notification function
-                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
-                    if (bodyEl?._x_dataStack?.[0]) {
-                        bodyEl._x_dataStack[0].notify('Wishlist cleared successfully ✓', 'success');
-                    }
-                    // Reload page after 1 second to show empty state
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
-                    if (bodyEl?._x_dataStack?.[0]) {
-                        bodyEl._x_dataStack[0].notify('Error clearing wishlist', 'error');
-                    }
-                }
-            },
-        }));
     });
 </script>

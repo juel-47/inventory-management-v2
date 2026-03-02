@@ -474,6 +474,28 @@ class ProductsImport
             $product->raw_material_cost = floatval($getValue('raw_material_cost', 0));
             $product->transport_cost = floatval($getValue('transport_cost', 0));
             $product->tax = floatval($getValue('tax', 0));
+            $discountType = strtolower(trim((string) $getValue('discount_type', '')));
+            $discountValue = max(0, floatval($getValue('discount', 0)));
+            if (!in_array($discountType, ['flat', 'percent'], true) || $discountValue <= 0) {
+                $discountType = null;
+                $discountValue = 0;
+            } elseif ($discountType === 'percent' && $discountValue > 100) {
+                $discountValue = 100;
+            }
+
+            $vatType = strtolower(trim((string) $getValue('vat_type', '')));
+            $vatValue = max(0, floatval($getValue('vat_value', 0)));
+            if (!in_array($vatType, ['flat', 'percent'], true) || $vatValue <= 0) {
+                $vatType = null;
+                $vatValue = null;
+            } elseif ($vatType === 'percent' && $vatValue > 100) {
+                $vatValue = 100;
+            }
+
+            $product->discount_type = $discountType;
+            $product->discount = $discountValue;
+            $product->vat_type = $vatType;
+            $product->vat_value = $vatValue;
             $product->qty = intval($getValue('qty', 0));
             
             // ========== Look up Category, Brand, Vendor, Unit ==========
@@ -885,6 +907,18 @@ class ProductsImport
             elseif ($header === 'tax') {
                 $map['tax'] = $index;
             }
+            elseif (in_array($header, ['discount_type', 'discounttype'])) {
+                $map['discount_type'] = $index;
+            }
+            elseif (in_array($header, ['discount', 'discount_value'])) {
+                $map['discount'] = $index;
+            }
+            elseif (in_array($header, ['vat_type', 'tax_type'])) {
+                $map['vat_type'] = $index;
+            }
+            elseif (in_array($header, ['vat_value', 'tax_value'])) {
+                $map['vat_value'] = $index;
+            }
             elseif ($header === 'status') {
                 $map['status'] = $index;
             }
@@ -1127,6 +1161,28 @@ class ProductsImport
             $product->raw_material_cost = floatval($getValue('raw_material_cost', 0));
             $product->transport_cost = floatval($getValue('transport_cost', 0));
             $product->tax = floatval($getValue('tax', 0));
+            $discountType = strtolower(trim((string) $getValue('discount_type', '')));
+            $discountValue = max(0, floatval($getValue('discount', 0)));
+            if (!in_array($discountType, ['flat', 'percent'], true) || $discountValue <= 0) {
+                $discountType = null;
+                $discountValue = 0;
+            } elseif ($discountType === 'percent' && $discountValue > 100) {
+                $discountValue = 100;
+            }
+
+            $vatType = strtolower(trim((string) $getValue('vat_type', '')));
+            $vatValue = max(0, floatval($getValue('vat_value', 0)));
+            if (!in_array($vatType, ['flat', 'percent'], true) || $vatValue <= 0) {
+                $vatType = null;
+                $vatValue = null;
+            } elseif ($vatType === 'percent' && $vatValue > 100) {
+                $vatValue = 100;
+            }
+
+            $product->discount_type = $discountType;
+            $product->discount = $discountValue;
+            $product->vat_type = $vatType;
+            $product->vat_value = $vatValue;
             $product->qty = intval($getValue('qty', 0));
             $product->save();
 

@@ -28,10 +28,19 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn([
-                'minimum_order_quantity',
-                'discount'
-            ]);
+            $dropColumns = [];
+
+            if (Schema::hasColumn('products', 'minimum_order_qty')) {
+                $dropColumns[] = 'minimum_order_qty';
+            }
+
+            if (Schema::hasColumn('products', 'discount')) {
+                $dropColumns[] = 'discount';
+            }
+
+            if (!empty($dropColumns)) {
+                $table->dropColumn($dropColumns);
+            }
         });    
     }
 };

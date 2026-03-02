@@ -56,17 +56,29 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>
-                        <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Global Trade Hub</span>
+                        <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{{ optional($settings)->site_name ?? 'B2B Portal' }}</span>
                     </div>
                 </a>
             </div>
 
             {{-- Navigation Links --}}
             <div class="hidden md:flex items-center gap-8">
-                <a href="{{ route('shop') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">B2B Shop</a>
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">Blog</a>
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">Contact</a>
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">About Us</a>
+                <a href="{{ route('home') }}"
+                   class="text-sm font-semibold transition-colors {{ request()->routeIs('home') ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600' }}">
+                    Home
+                </a>
+                <a href="{{ route('shop') }}"
+                   class="text-sm font-semibold transition-colors {{ request()->routeIs('shop') ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600' }}">
+                    B2B Shop
+                </a>
+                <a href="{{ route('home') }}#about"
+                   class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
+                    About
+                </a>
+                <a href="{{ route('home') }}#contact"
+                   class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
+                    Contact Us
+                </a>
             </div>
 
             {{-- Right Icons --}}
@@ -107,7 +119,7 @@
                        title="Login to use Wishlist">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </a>
-                @endauth
+                @endif
 
                 {{-- Cart --}}
                 <button @click="isCartOpen = true" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300 relative group">
@@ -179,9 +191,27 @@
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                         <span class="text-sm font-bold hidden sm:block">Sign In</span>
                     </a>
-                @endauth
+                @endif
             </div>
 
+        </div>
+        <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 text-xs font-semibold md:hidden">
+            <a href="{{ route('home') }}"
+               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('home') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
+                Home
+            </a>
+            <a href="{{ route('shop') }}"
+               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('shop') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
+                B2B Shop
+            </a>
+            <a href="{{ route('home') }}#about"
+               class="whitespace-nowrap rounded-full border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:border-indigo-200 hover:text-indigo-600">
+                About
+            </a>
+            <a href="{{ route('home') }}#contact"
+               class="whitespace-nowrap rounded-full border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:border-indigo-200 hover:text-indigo-600">
+                Contact Us
+            </a>
         </div>
     </div>
 </nav>

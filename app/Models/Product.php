@@ -36,6 +36,10 @@ class Product extends Model
         'transport_cost',
         'tax',
         'minimum_order_qty',
+        'discount',
+        'discount_type',
+        'vat_type',
+        'vat_value',
     ];
 
     public function category()

@@ -135,6 +135,37 @@
                                 </div>
 
                                 <div class="row">
+                                    <div class="form-group col-md-3">
+                                        <label>Discount Type</label>
+                                        <select class="form-control" name="discount_type">
+                                            <option value="">No Discount</option>
+                                            <option value="percent" {{ old('discount_type') === 'percent' ? 'selected' : '' }}>Percent (%)</option>
+                                            <option value="flat" {{ old('discount_type') === 'flat' ? 'selected' : '' }}>Flat</option>
+                                        </select>
+                                        <small class="text-muted">Product-specific discount.</small>
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label>Discount Value</label>
+                                        <input type="number" class="form-control" name="discount" step="any"
+                                            value="{{ old('discount', 0) }}">
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label>Product VAT Type</label>
+                                        <select class="form-control" name="vat_type">
+                                            <option value="">Use Dynamic Default</option>
+                                            <option value="percent" {{ old('vat_type') === 'percent' ? 'selected' : '' }}>Percent (%)</option>
+                                            <option value="flat" {{ old('vat_type') === 'flat' ? 'selected' : '' }}>Flat</option>
+                                        </select>
+                                        <small class="text-muted">Keep empty to use global VAT.</small>
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label>Product VAT Value</label>
+                                        <input type="number" class="form-control" name="vat_value" step="any"
+                                            value="{{ old('vat_value', 0) }}">
+                                    </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="form-group col-md-4">
                                         <label>Status</label>
                                         <select class="form-control" name="status">

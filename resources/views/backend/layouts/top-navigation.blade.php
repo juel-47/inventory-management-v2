@@ -91,7 +91,7 @@
             @endcan
 
             <!-- More (Brands, Vendors, Settings) -->
-             <li class="nav-item dropdown {{ setActive(['admin.brand.*', 'admin.vendor.*', 'admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.taxes.*']) }}">
+             <li class="nav-item dropdown {{ setActive(['admin.brand.*', 'admin.vendor.*', 'admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.taxes.*', 'admin.discounts.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-ellipsis-h"></i><span>More</span></a>
                 <ul class="dropdown-menu">
                     @canany(['Manage Brands', 'Manage Vendors'])
@@ -113,6 +113,7 @@
                         <li class="{{ setActive(['admin.role.*']) }}"><a class="nav-link" href="{{ route('admin.role.index') }}">Roles</a></li>
                         <li class="{{ setActive(['admin.users.*']) }}"><a class="nav-link" href="{{ route('admin.users.index') }}">Users</a></li>
                         <li class="{{ setActive(['admin.taxes.*']) }}"><a class="nav-link" href="{{ route('admin.taxes.index') }}">Tax / VAT</a></li>
+                        <li class="{{ setActive(['admin.discounts.*']) }}"><a class="nav-link" href="{{ route('admin.discounts.index') }}">Discount</a></li>
                         <li class="{{ setActive(['admin.settings.*']) }}"><a class="nav-link" href="{{ route('admin.settings.index') }}">Settings</a></li>
                     @endcan
                 </ul>

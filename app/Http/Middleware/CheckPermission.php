@@ -60,7 +60,7 @@ class CheckPermission
             'Manage Products' => ['ProductController', 'BrandController', 'SizeController', 'ColorController', 'ReviewController', 'UnitController'],
             'Manage Brands' => ['BrandController'],
             'Manage Vendors' => ['VendorController'],
-            'Administration' => ['UserController', 'RolesController', 'PermissionController', 'SettingController', 'TaxController'],
+            'Administration' => ['UserController', 'RolesController', 'PermissionController', 'SettingController', 'TaxController', 'DiscountController'],
             'Manage Inventory' => ['IssueController', 'StockLedgerController', 'InventoryReportController'],
             'Manage Order Place' => ['BookingController', 'FrontendOrderController'],
             'Manage Order Receive' => ['PurchaseController'],

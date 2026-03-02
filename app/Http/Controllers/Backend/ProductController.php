@@ -157,6 +157,8 @@ class ProductController extends Controller implements HasMiddleware
     {
         DB::beginTransaction();
         try {
+            $discountConfig = $this->normalizeDiscountInput($request);
+            $vatConfig = $this->normalizeVatInput($request);
             $imagePath = $this->upload_image($request, 'image', 'uploads/products');
 
             $product = new Product();
@@ -180,10 +182,14 @@ class ProductController extends Controller implements HasMiddleware
             $product->product_type_id = $request->product_type_id;
             $product->custom_label = $request->custom_label;
             $product->self_number = $request->self_number;
-            $product->raw_material_cost = $request->raw_material_cost;
-            $product->transport_cost = $request->transport_cost;
-            $product->tax = $request->tax;
-            $product->minimum_order_qty = $request->minimum_order_qty ?? 1;
+            $product->raw_material_cost = max(0, (float) ($request->raw_material_cost ?? 0));
+            $product->transport_cost = max(0, (float) ($request->transport_cost ?? 0));
+            $product->tax = max(0, (float) ($request->tax ?? 0));
+            $product->minimum_order_qty = max(1, (int) ($request->minimum_order_qty ?? 1));
+            $product->discount_type = $discountConfig['type'];
+            $product->discount = $discountConfig['value'];
+            $product->vat_type = $vatConfig['type'];
+            $product->vat_value = $vatConfig['value'];
             
             // Set qty for backward compatibility if needed, but we reflect in InventoryStock
             $product->qty = $request->qty ?? 0;
@@ -301,6 +307,8 @@ class ProductController extends Controller implements HasMiddleware
     {
         DB::beginTransaction();
         try {
+            $discountConfig = $this->normalizeDiscountInput($request);
+            $vatConfig = $this->normalizeVatInput($request);
             $product = Product::findOrFail($id);
             $imagePath = $this->update_image($request, 'image', 'uploads/products', $product->thumb_image);
 
@@ -327,10 +335,14 @@ class ProductController extends Controller implements HasMiddleware
             $product->product_type_id = $request->product_type_id;
             $product->custom_label = $request->custom_label;
             $product->self_number = $request->self_number;
-            $product->raw_material_cost = $request->raw_material_cost;
-            $product->transport_cost = $request->transport_cost;
-            $product->tax = $request->tax;
-            $product->minimum_order_qty = $request->minimum_order_qty ?? 1;
+            $product->raw_material_cost = max(0, (float) ($request->raw_material_cost ?? 0));
+            $product->transport_cost = max(0, (float) ($request->transport_cost ?? 0));
+            $product->tax = max(0, (float) ($request->tax ?? 0));
+            $product->minimum_order_qty = max(1, (int) ($request->minimum_order_qty ?? 1));
+            $product->discount_type = $discountConfig['type'];
+            $product->discount = $discountConfig['value'];
+            $product->vat_type = $vatConfig['type'];
+            $product->vat_value = $vatConfig['value'];
             $product->save();
 
             // Handle Product Manual Stock Adjustment
@@ -600,5 +612,49 @@ class ProductController extends Controller implements HasMiddleware
             Toastr::error('Import failed: ' . $e->getMessage());
             return redirect()->back();
         }
+    }
+
+    private function normalizeDiscountInput(Request $request): array
+    {
+        $type = strtolower(trim((string) $request->input('discount_type', '')));
+        $value = max(0, (float) $request->input('discount', 0));
+
+        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+            return [
+                'type' => null,
+                'value' => 0.0,
+            ];
+        }
+
+        if ($type === 'percent' && $value > 100) {
+            throw new \InvalidArgumentException('Product discount percent cannot be greater than 100.');
+        }
+
+        return [
+            'type' => $type,
+            'value' => round($value, 2),
+        ];
+    }
+
+    private function normalizeVatInput(Request $request): array
+    {
+        $type = strtolower(trim((string) $request->input('vat_type', '')));
+        $value = max(0, (float) $request->input('vat_value', 0));
+
+        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+            return [
+                'type' => null,
+                'value' => null,
+            ];
+        }
+
+        if ($type === 'percent' && $value > 100) {
+            throw new \InvalidArgumentException('Product VAT percent cannot be greater than 100.');
+        }
+
+        return [
+            'type' => $type,
+            'value' => round($value, 2),
+        ];
     }
 }

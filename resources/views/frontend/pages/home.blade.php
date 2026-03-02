@@ -1,160 +1,297 @@
 @extends('layouts.frontend')
+
+@section('title', 'B2B Home')
+
 @section('content')
-<div class="min-h-screen bg-white">
+    @php
+        $currencyIcon = optional($settings)->currency_icon ?? 'Tk';
+        $roleContext = $roleContext ?? [];
 
-    <!-- Hero Slider -->
-    <section class="relative h-[80vh] min-h-[500px] overflow-hidden bg-slate-100" 
-             x-data="{ 
-                activeSlide: 0,
-                slides: [
-                    { 
-                        image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop', 
-                        title: 'Danish Souvenirs', 
-                        subtitle: 'Take a piece of Denmark home with you.',
-                        cta: 'Shop Now',
-                        bgColor: 'bg-indigo-950'
-                    },
-                    { 
-                        image: 'https://images.unsplash.com/photo-1590005354167-6da97870c91d?q=80&w=2081&auto=format&fit=crop', 
-                        title: 'Viking Heritage', 
-                        subtitle: 'Traditional crafts and timeless designs.',
-                        cta: 'Explore',
-                        bgColor: 'bg-slate-900'
-                    },
-                    { 
-                        image: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?q=80&w=2070&auto=format&fit=crop', 
-                        title: 'Hygge Memories', 
-                        subtitle: 'Cozy essentials for your collection.',
-                        cta: 'Discover',
-                        bgColor: 'bg-indigo-900'
-                    }
-                ],
-                next() { this.activeSlide = (this.activeSlide + 1) % this.slides.length },
-                prev() { this.activeSlide = (this.activeSlide - 1 + this.slides.length) % this.slides.length },
-                autoplay() { setInterval(() => this.next(), 6000) }
-             }"
-             x-init="autoplay()">
-        
-        <template x-for="(slide, index) in slides" :key="index">
-            <div x-show="activeSlide === index" 
-                 x-transition:enter="transition ease-out duration-1000"
-                 x-transition:enter-start="opacity-0 scale-105"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-1000"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-105"
-                 class="absolute inset-0 w-full h-full"
-                 :class="slide.bgColor">
-                
-                <!-- Background Image with Overlay -->
-                <div class="absolute inset-0 bg-slate-900/40 z-10"></div>
-                <img :src="slide.image" 
-                     class="w-full h-full object-cover" 
-                     :alt="slide.title"
-                     loading="eager">
-                
-                <!-- Content -->
-                <div class="absolute inset-0 z-20 flex items-center justify-center text-center px-4">
-                    <div class="max-w-4xl">
-                        <span x-text="slide.subtitle" 
-                              class="text-indigo-400 text-sm font-black uppercase tracking-[0.3em] mb-4 block transform transition-all duration-1000 delay-300"
-                              :class="activeSlide === index ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"></span>
-                        <h1 x-text="slide.title" 
-                            class="text-5xl md:text-8xl font-black text-white mb-8 leading-none transform transition-all duration-1000 delay-500"
-                            :class="activeSlide === index ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"></h1>
-                        <a href="{{ route('shop') }}" 
-                           class="inline-block px-10 md:px-12 py-4 md:py-5 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transform transition-all duration-1000 delay-700 shadow-2xl"
-                           :class="activeSlide === index ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
-                           <span x-text="slide.cta"></span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </template>
+        $isOutletUser = (bool) data_get($roleContext, 'isOutletUser', false);
+        $isStandardUser = (bool) data_get($roleContext, 'isStandardUser', false);
+        $isOutletCustomer = (bool) data_get($roleContext, 'isOutletCustomer', false);
+        $featuredCards = collect($featuredCards ?? []);
+        $topBrands = collect($topBrands ?? []);
 
-        <!-- Slider Controls -->
-        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-4">
-            <template x-for="(slide, index) in slides" :key="index">
-                <button @click="activeSlide = index" 
-                        class="h-1.5 transition-all duration-300 rounded-full"
-                        :class="activeSlide === index ? 'w-12 bg-white' : 'w-4 bg-white/30 hover:bg-white/50'"></button>
-            </template>
-        </div>
-    </section>
+        $categoriesPaginator = $categories ?? null;
+        $isCategoryPaginated = $categoriesPaginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+        $categoryItems = $isCategoryPaginated ? collect($categoriesPaginator->items()) : collect($categories ?? []);
+        $categoryTotal = $isCategoryPaginated ? (int) $categoriesPaginator->total() : $categoryItems->count();
 
-    <!-- Categories Section -->
-    {{-- <section class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div>
-                <span class="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4 block">Curated Collections</span>
-                <h2 class="text-4xl font-black text-slate-900">Shop by Category</h2>
-            </div>
-            <a href="{{ route('shop') }}" class="group flex items-center gap-3 text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors">
-                View All Categories
-                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-            </a>
-        </div>
+        $activeProductCount = (int) ($activeProductCount ?? 0);
+        $activeBrandCount = (int) ($activeBrandCount ?? 0);
+        $inStockProductCount = (int) ($inStockProductCount ?? 0);
+        $currentOutletId = (int) data_get($roleContext, 'outletId', $outletId ?? 0);
+    @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach($categories as $category)
-                <a href="{{ route('shop', ['category' => $category->id]) }}" 
-                   class="group relative h-80 rounded-[2.5rem] overflow-hidden bg-slate-100 shadow-sm border border-slate-100">
-                    @php
-                        $catImage = $category->image;
-                        $displayCatImage = (strpos($catImage, 'http') === 0) 
-                            ? $catImage 
-                            : (file_exists(public_path($catImage)) 
-                                ? asset($catImage) 
-                                : ($catImage ? asset('storage/' . $catImage) : 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=500&auto=format&fit=crop'));
-                    @endphp
-                    <img src="{{ $displayCatImage }}" 
-                         alt="{{ $category->name }}" 
-                         class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000">
-                    
-                    <div class="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                    
-                    <div class="absolute bottom-8 left-8 right-8">
-                        <span class="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1 block">
-                            {{ $category->subCategories->count() }} Subcategories
-                        </span>
-                        <h3 class="text-2xl font-black text-white mb-4">{{ $category->name }}</h3>
-                        <div class="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-4 transition-all duration-500">
-                            Explore Collection 
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    <div class="bg-slate-100 py-6 sm:py-8">
+        <div class="mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.5fr_1fr] lg:items-center">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-600">B2B Trading Desk</p>
+                        <h1 class="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
+                            Real-time wholesale catalog for outlet and corporate buyers.
+                        </h1>
+                        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                            Live stock visibility, MOQ-driven orders, and role-based prices from your existing backend inventory.
+                        </p>
+
+                        <div class="mt-4 flex flex-wrap gap-2.5">
+                            <a href="{{ route('shop') }}"
+                                class="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-slate-800">
+                                Browse Catalog
+                            </a>
+                            @auth
+                                {{-- B2B flow: keep cart page link disabled for now. Uncomment when full cart page is needed again.
+                                <a href="{{ route('cart.index') }}"
+                                    class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                    Open Cart
+                                </a>
+                                --}}
+                                <a href="{{ route('account.index', ['panel' => 'order-form']) }}"
+                                    class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                    Quick Order
+                                </a>
+                            @else
+                                <a href="{{ route('login') }}"
+                                    class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                    Login For Wholesale
+                                </a>
+                            @endauth
                         </div>
                     </div>
-                </a>
-            @endforeach
-        </div>
-    </section> --}}
 
-    <!-- Trust Section -->
-    <section class="py-24 border-t border-slate-100 bg-slate-50/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div class="flex flex-col items-center text-center group">
-                    <div class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform">
-                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">Categories</p>
+                            <p class="mt-1 text-2xl font-bold text-slate-900">{{ $categoryTotal }}</p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">Products</p>
+                            <p class="mt-1 text-2xl font-bold text-slate-900">{{ $activeProductCount }}</p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">Brands</p>
+                            <p class="mt-1 text-2xl font-bold text-slate-900">{{ $activeBrandCount }}</p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">In Stock</p>
+                            <p class="mt-1 text-2xl font-bold text-indigo-600">{{ $inStockProductCount }}</p>
+                            @if ($currentOutletId > 0)
+                                <p class="text-[10px] text-slate-500">Outlet {{ $currentOutletId }}</p>
+                            @endif
+                        </div>
                     </div>
-                    <h4 class="text-lg font-bold text-slate-900 mb-2">Authentic Quality</h4>
-                    <p class="text-sm text-slate-500 max-w-[250px]">Carefully selected souvenirs that embody the spirit of Denmark.</p>
                 </div>
-                <div class="flex flex-col items-center text-center group">
-                    <div class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform">
-                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </section>
+
+            <div class="grid gap-5 xl:grid-cols-[1.75fr_1fr]">
+                <section id="category-access-panel" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div class="mb-3.5 flex items-end justify-between gap-2">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Browse Faster</p>
+                            <h2 class="text-lg font-bold text-slate-900">Category Access</h2>
+                        </div>
+                        <a href="{{ route('shop') }}" class="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600 hover:text-indigo-500">View All</a>
                     </div>
-                    <h4 class="text-lg font-bold text-slate-900 mb-2">Fast Logistics</h4>
-                    <p class="text-sm text-slate-500 max-w-[250px]">Efficient B2B processing to keep your inventory moving.</p>
-                </div>
-                <div class="flex flex-col items-center text-center group">
-                    <div class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform">
-                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04c0 4.835 1.503 9.359 4.081 13.045a11.959 11.959 0 0112.537 0c2.578-3.686 4.081-8.11 4.081-13.045z"></path></svg>
+
+                    @if ($categoryItems->isEmpty())
+                        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">
+                            No active categories found.
+                        </div>
+                    @else
+                        <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach ($categoryItems as $category)
+                                <a href="{{ route('shop', ['category' => $category->id]) }}"
+                                    class="group rounded-xl border border-slate-200 bg-white px-3.5 py-3 transition hover:border-indigo-200 hover:bg-indigo-50/30">
+                                    <p class="line-clamp-1 text-sm font-bold text-slate-900 transition group-hover:text-indigo-600">{{ $category->name }}</p>
+                                    <p class="mt-1 text-[11px] font-medium text-slate-500">{{ (int) ($category->active_products_count ?? 0) }} active products</p>
+                                </a>
+                            @endforeach
+                        </div>
+
+                        @if ($isCategoryPaginated && $categoriesPaginator->hasPages())
+                            <div class="category-pagination mt-5 flex justify-center border-t border-slate-100 pt-4">
+                                {{ $categoriesPaginator->onEachSide(1)->links('vendor.pagination.tailwind') }}
+                            </div>
+                        @endif
+                    @endif
+                </section>
+
+                <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div class="mb-3.5">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Brand Performance</p>
+                        <h2 class="text-lg font-bold text-slate-900">Top Brands</h2>
                     </div>
-                    <h4 class="text-lg font-bold text-slate-900 mb-2">Secure B2B Portal</h4>
-                    <p class="text-sm text-slate-500 max-w-[250px]">Authorized access only for verified outlet and regular users.</p>
-                </div>
+
+                    @if ($topBrands->isEmpty())
+                        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">
+                            No active brands found.
+                        </div>
+                    @else
+                        <div class="space-y-2">
+                            @foreach ($topBrands as $brand)
+                                <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                                    <p class="line-clamp-1 text-sm font-semibold text-slate-900">{{ $brand->name }}</p>
+                                    <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600">
+                                        {{ (int) ($brand->active_products_count ?? 0) }} items
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </section>
             </div>
+
+            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <div class="mb-4 flex items-end justify-between gap-2">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Live Inventory Feed</p>
+                        <h2 class="text-lg font-bold text-slate-900">Latest Products</h2>
+                    </div>
+                    <a href="{{ route('shop', ['sort' => 'latest']) }}" class="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600 hover:text-indigo-500">
+                        View Latest
+                    </a>
+                </div>
+
+                @if ($featuredCards->isEmpty())
+                    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                        No active products available.
+                    </div>
+                @else
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-2">
+                        @foreach ($featuredCards as $card)
+                            <x-frontend.product-card
+                                :product="$card['product']"
+                                :variants="$card['variants']"
+                                :display-path="$card['display_path']"
+                                :category-name="$card['category_name']"
+                                :currency-icon="$currencyIcon"
+                                :is-outlet-user="$isOutletUser"
+                                :is-standard-user="$isStandardUser"
+                                :details-url="$card['details_url']"
+                                class="rounded-2xl p-3" />
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+
+            <section id="about" class="scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="max-w-3xl">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">About</p>
+                    <h2 class="mt-1.5 text-xl font-bold text-slate-900">B2B Inventory & Ordering Platform</h2>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                        This portal is built for outlet and trade customers to place wholesale orders with live stock visibility,
+                        variant selection, and role-based pricing from your backend product data.
+                    </p>
+                </div>
+            </section>
+
+            <section id="contact" class="scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">Contact Us</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900">{{ optional($settings)->site_name ?? config('app.name', 'Inventory B2B') }}</p>
+                        <p class="mt-1 text-sm text-slate-600">For order help and business support, connect from your account panel.</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">Support Links</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <a href="{{ route('shop') }}"
+                                class="inline-flex h-8 items-center rounded-md border border-slate-300 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                B2B Shop
+                            </a>
+                            @auth
+                                <a href="{{ route('account.index') }}"
+                                    class="inline-flex h-8 items-center rounded-md border border-slate-300 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                    My Account
+                                </a>
+                            @else
+                                <a href="{{ route('login') }}"
+                                    class="inline-flex h-8 items-center rounded-md border border-slate-300 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
+                                    Sign In
+                                </a>
+                            @endauth
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
-</div>
+    </div>
+@endsection
+
+@section('scripts')
+    @include('frontend.partials.product-card-script')
+
+    <script>
+        (function () {
+            let loadingCategoryPage = false;
+
+            async function loadCategoryPage(url, pushState = true) {
+                const currentPanel = document.getElementById('category-access-panel');
+                if (!currentPanel || loadingCategoryPage) {
+                    return;
+                }
+
+                loadingCategoryPage = true;
+                currentPanel.classList.add('opacity-60', 'pointer-events-none');
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load categories');
+                    }
+
+                    const html = await response.text();
+                    const parsed = new DOMParser().parseFromString(html, 'text/html');
+                    const nextPanel = parsed.getElementById('category-access-panel');
+
+                    if (!nextPanel) {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    const oldPanel = document.getElementById('category-access-panel');
+                    oldPanel.outerHTML = nextPanel.outerHTML;
+
+                    if (pushState) {
+                        window.history.pushState({ categoryPagination: true }, '', url);
+                    }
+                } catch (error) {
+                    window.location.href = url;
+                } finally {
+                    loadingCategoryPage = false;
+                    const refreshedPanel = document.getElementById('category-access-panel');
+                    if (refreshedPanel) {
+                        refreshedPanel.classList.remove('opacity-60', 'pointer-events-none');
+                    }
+                }
+            }
+
+            document.addEventListener('click', function (event) {
+                const paginationLink = event.target.closest('#category-access-panel .category-pagination a');
+                if (!paginationLink) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadCategoryPage(paginationLink.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                const hasCategoryPageParam = new URL(window.location.href).searchParams.has('category_page');
+                if (!hasCategoryPageParam) {
+                    return;
+                }
+
+                loadCategoryPage(window.location.href, false);
+            });
+        })();
+    </script>
 @endsection

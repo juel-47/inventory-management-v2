@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\InventoryStock;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\SavedPurchaseForm;
 use App\Models\Wishlist;
+use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +57,8 @@ class CartController extends Controller
             'vatRate' => $summary['vat_rate'],
             'vatAmount' => $summary['tax_amount'],
             'taxLabel' => $summary['tax_label'],
+            'taxBreakdown' => $summary['tax_breakdown'],
+            'discountBreakdown' => $summary['discount_breakdown'],
             'discountAmount' => $summary['discount_amount'],
             'total' => $summary['total'],
             'firstName' => $firstName,
@@ -90,10 +94,17 @@ class CartController extends Controller
 
         $productId = $validated['product_id'];
         $variantId = isset($validated['variant_id']) ? (int) $validated['variant_id'] : null;
-        $product = Product::with('inventoryStocks')->findOrFail($productId);
+        $product = Product::with('inventoryStocks')
+            ->where('status', 1)
+            ->whereHas('category', function ($query) {
+                $query->where('status', 1);
+            })
+            ->findOrFail($productId);
         $variant = null;
         if ($variantId) {
-            $variant = ProductVariant::with('inventoryStocks')->findOrFail($variantId);
+            $variant = ProductVariant::with('inventoryStocks')
+                ->where('status', 1)
+                ->findOrFail($variantId);
             if ((int) $variant->product_id !== (int) $productId) {
                 return response()->json([
                     'success' => false,
@@ -267,6 +278,13 @@ class CartController extends Controller
                 ], 422);
             }
 
+            if ((int) ($cartItem->product->status ?? 0) !== 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This product is inactive.',
+                ], 422);
+            }
+
             if ($cartItem->variant && (int) $cartItem->variant->product_id !== (int) $cartItem->product_id) {
                 return response()->json([
                     'success' => false,
@@ -275,7 +293,14 @@ class CartController extends Controller
             }
 
             $availableStock = $this->resolveAvailableStock($cartItem->product, $cartItem->variant);
-            $requestedQty = (int) $validated['quantity'];
+            $minimumOrderQty = max(1, (int) ($cartItem->product->minimum_order_qty ?? 1));
+            $requestedQty = max(1, (int) $validated['quantity']);
+
+            if ($requestedQty < $minimumOrderQty) {
+                $requestedQty = $minimumOrderQty;
+            } elseif ($requestedQty > $minimumOrderQty) {
+                $requestedQty = (int) (ceil($requestedQty / $minimumOrderQty) * $minimumOrderQty);
+            }
 
             if ($availableStock < 1) {
                 return response()->json([
@@ -298,7 +323,10 @@ class CartController extends Controller
             $cartItem->save();
         }
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'applied_quantity' => (int) ($cartItem?->quantity ?? 0),
+        ]);
     }
 
     /**
@@ -342,7 +370,7 @@ class CartController extends Controller
             ->where('cart_type', 'frontend')
             ->with(['product.category', 'variant'])
             ->get()
-            ->filter(fn ($item) => $item->product)
+            ->filter(fn ($item) => $item->product && (int) ($item->product->status ?? 0) === 1)
             ->values();
 
         if ($cartRows->isEmpty()) {
@@ -367,6 +395,22 @@ class CartController extends Controller
 
         DB::beginTransaction();
         try {
+            $outletId = $this->resolveOrderOutletId();
+            $requestedLines = $this->buildRequestedLinesFromCart($cartRows);
+            $stockRows = $this->lockInventoryForRequestedLines($requestedLines, $outletId);
+
+            foreach ($requestedLines as $key => $line) {
+                $available = (int) optional($stockRows->get($key))->quantity;
+                $requestedQty = (int) $line['requested_qty'];
+                if ($available < $requestedQty) {
+                    DB::rollBack();
+                    return redirect()
+                        ->route('checkout.index')
+                        ->with('error', 'Insufficient stock for ' . $line['name'] . '. Available: ' . $available . ', requested: ' . $requestedQty . '.')
+                        ->withInput();
+                }
+            }
+
             $orderNo = $this->generateUniqueOrderNoForUser(Auth::user());
 
             $order = Order::create([
@@ -487,21 +531,56 @@ class CartController extends Controller
             ->keyBy('id');
 
         $taxResolver = app(CheckoutTaxResolver::class);
+        $discountResolver = app(CheckoutDiscountResolver::class);
         $taxAmount = 0.0;
+        $productTaxAmount = 0.0;
+        $defaultTaxAmount = 0.0;
+        $discountAmount = 0.0;
         $appliedTaxSignatures = [];
+        $appliedDiscountSignatures = [];
+        $productDiscountAmount = 0.0;
+        $defaultDiscountAmount = 0.0;
+        $productTaxRates = [];
+        $defaultTaxRates = [];
+        $productDiscountRates = [];
+        $defaultDiscountRates = [];
         $hasDefaultFlatTax = false;
         $defaultFlatTaxValue = 0.0;
 
         foreach ($items as $item) {
             $lineSubtotal = ((float) $item['price']) * ((int) $item['quantity']);
             $product = $productsById->get((int) $item['product_id']);
+
+            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+            $lineDiscountAmount = (float) ($lineDiscount['amount'] ?? 0);
+            $discountAmount += $lineDiscountAmount;
+            if (($lineDiscount['source'] ?? 'none') === 'product') {
+                $productDiscountAmount += $lineDiscountAmount;
+                $this->addAppliedRate($productDiscountRates, $lineDiscount['type'] ?? null, $lineDiscount['value'] ?? 0);
+            } elseif (($lineDiscount['source'] ?? 'none') === 'default') {
+                $defaultDiscountAmount += $lineDiscountAmount;
+                $this->addAppliedRate($defaultDiscountRates, $lineDiscount['type'] ?? null, $lineDiscount['value'] ?? 0);
+            }
+            if (($lineDiscount['source'] ?? 'none') !== 'none') {
+                $appliedDiscountSignatures[] = ($lineDiscount['source'] . ':' . ($lineDiscount['type'] ?? 'none') . ':' . (string) $lineDiscount['value']);
+            }
+
             $lineTax = $taxResolver->resolveForLine($product, $lineSubtotal);
+            $lineTaxAmount = (float) ($lineTax['amount'] ?? 0);
 
             if ($lineTax['source'] === 'default' && $lineTax['type'] === 'flat') {
                 $hasDefaultFlatTax = true;
                 $defaultFlatTaxValue = max($defaultFlatTaxValue, (float) $lineTax['value']);
+                $this->addAppliedRate($defaultTaxRates, $lineTax['type'] ?? null, $lineTax['value'] ?? 0);
             } else {
-                $taxAmount += (float) $lineTax['amount'];
+                $taxAmount += $lineTaxAmount;
+                if (($lineTax['source'] ?? 'none') === 'product') {
+                    $productTaxAmount += $lineTaxAmount;
+                    $this->addAppliedRate($productTaxRates, $lineTax['type'] ?? null, $lineTax['value'] ?? 0);
+                } elseif (($lineTax['source'] ?? 'none') === 'default') {
+                    $defaultTaxAmount += $lineTaxAmount;
+                    $this->addAppliedRate($defaultTaxRates, $lineTax['type'] ?? null, $lineTax['value'] ?? 0);
+                }
             }
 
             if ($lineTax['source'] !== 'none') {
@@ -511,14 +590,23 @@ class CartController extends Controller
 
         if ($hasDefaultFlatTax && $items->isNotEmpty()) {
             $taxAmount += $defaultFlatTaxValue;
+            $defaultTaxAmount += $defaultFlatTaxValue;
         }
 
         $taxAmount = round($taxAmount, 2);
+        $productTaxAmount = round($productTaxAmount, 2);
+        $defaultTaxAmount = round($defaultTaxAmount, 2);
+        $discountAmount = round($discountAmount, 2);
+        $productDiscountAmount = round($productDiscountAmount, 2);
+        $defaultDiscountAmount = round($defaultDiscountAmount, 2);
         $taxLabel = 'VAT / Tax';
         $vatRate = null;
 
         $defaultTax = $taxResolver->getDefaultTax();
         $uniqueSignatures = array_values(array_unique($appliedTaxSignatures));
+        $isMixedTax = count($uniqueSignatures) > 1;
+        $uniqueDiscountSignatures = array_values(array_unique($appliedDiscountSignatures));
+        $isMixedDiscount = count($uniqueDiscountSignatures) > 1;
         if (count($uniqueSignatures) > 1) {
             $taxLabel = 'VAT / Tax (Mixed)';
         } elseif (count($uniqueSignatures) === 1) {
@@ -536,8 +624,7 @@ class CartController extends Controller
             $taxLabel = 'VAT (Flat)';
         }
 
-        $discountAmount = 0.0;
-        $total = $subtotal + $taxAmount - $discountAmount;
+        $total = max(0, $subtotal + $taxAmount - $discountAmount);
 
         return [
             'subtotal' => round($subtotal, 2),
@@ -546,32 +633,157 @@ class CartController extends Controller
             'total' => round($total, 2),
             'tax_label' => $taxLabel,
             'vat_rate' => $vatRate,
+            'tax_breakdown' => [
+                'product_vat' => $productTaxAmount,
+                'default_vat' => $defaultTaxAmount,
+                'total_vat' => $taxAmount,
+                'product_rate_label' => $this->buildAppliedRateLabel(array_values($productTaxRates)),
+                'default_rate_label' => $this->buildAppliedRateLabel(array_values($defaultTaxRates)),
+                'total_rate_label' => $this->buildCombinedRateLabel(array_values(array_merge($defaultTaxRates, $productTaxRates))),
+                'is_mixed' => $isMixedTax,
+            ],
+            'discount_breakdown' => [
+                'product_discount' => $productDiscountAmount,
+                'default_discount' => $defaultDiscountAmount,
+                'total_discount' => $discountAmount,
+                'product_rate_label' => $this->buildAppliedRateLabel(array_values($productDiscountRates)),
+                'default_rate_label' => $this->buildAppliedRateLabel(array_values($defaultDiscountRates)),
+                'total_rate_label' => $this->buildCombinedRateLabel(array_values(array_merge($defaultDiscountRates, $productDiscountRates))),
+                'is_mixed' => $isMixedDiscount,
+            ],
         ];
+    }
+
+    private function addAppliedRate(array &$bucket, ?string $type, $value): void
+    {
+        if (!$type) {
+            return;
+        }
+
+        $normalizedType = strtolower((string) $type);
+        if (!in_array($normalizedType, ['percent', 'flat'], true)) {
+            return;
+        }
+
+        $normalizedValue = max(0, (float) $value);
+        if ($normalizedValue <= 0) {
+            return;
+        }
+
+        if ($normalizedType === 'percent' && $normalizedValue > 100) {
+            $normalizedValue = 100.0;
+        }
+
+        $key = $normalizedType . ':' . number_format($normalizedValue, 4, '.', '');
+        $bucket[$key] = [
+            'type' => $normalizedType,
+            'value' => $normalizedValue,
+        ];
+    }
+
+    private function buildAppliedRateLabel(array $rates): ?string
+    {
+        if (empty($rates)) {
+            return null;
+        }
+
+        $labels = [];
+        foreach ($rates as $rate) {
+            $type = strtolower((string) ($rate['type'] ?? ''));
+            $value = max(0, (float) ($rate['value'] ?? 0));
+
+            if ($value <= 0) {
+                continue;
+            }
+
+            $formattedValue = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+            if ($type === 'percent') {
+                $labels[] = $formattedValue . '%';
+            } elseif ($type === 'flat') {
+                $labels[] = 'Flat ' . $formattedValue;
+            }
+        }
+
+        $labels = array_values(array_unique($labels));
+        sort($labels, SORT_NATURAL);
+
+        return !empty($labels) ? implode(', ', $labels) : null;
+    }
+
+    private function buildCombinedRateLabel(array $rates): ?string
+    {
+        if (empty($rates)) {
+            return null;
+        }
+
+        $percentTotal = 0.0;
+        $flatTotal = 0.0;
+
+        foreach ($rates as $rate) {
+            $type = strtolower((string) ($rate['type'] ?? ''));
+            $value = max(0, (float) ($rate['value'] ?? 0));
+
+            if ($value <= 0) {
+                continue;
+            }
+
+            if ($type === 'percent') {
+                $percentTotal += $value;
+            } elseif ($type === 'flat') {
+                $flatTotal += $value;
+            }
+        }
+
+        $parts = [];
+
+        if ($percentTotal > 0) {
+            $parts[] = rtrim(rtrim(number_format($percentTotal, 2, '.', ''), '0'), '.') . '%';
+        }
+
+        if ($flatTotal > 0) {
+            $parts[] = 'Flat ' . rtrim(rtrim(number_format($flatTotal, 2, '.', ''), '0'), '.');
+        }
+
+        return !empty($parts) ? implode(' + ', $parts) : null;
     }
 
     private function getUserCartItems()
     {
+        $discountResolver = app(CheckoutDiscountResolver::class);
+
         return Cart::where('user_id', Auth::id())
                     ->where('cart_type', 'frontend')
                     ->with(['product.category', 'product.inventoryStocks', 'variant.inventoryStocks'])
                     ->get()
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($discountResolver) {
                         if (!$item->product) {
                             return null;
                         }
 
+                        if ((int) ($item->product->status ?? 0) !== 1) {
+                            return null;
+                        }
+
                         $product = $item->product;
-                        $imagePath = $product->thumb_image;
+                        $imagePath = (string) ($product->thumb_image ?? '');
                         $imageUrl = (strpos($imagePath, 'http') === 0)
                             ? $imagePath
-                            : (file_exists(public_path($imagePath))
+                            : ($imagePath !== '' && file_exists(public_path($imagePath))
                                 ? asset($imagePath)
                                 : asset('storage/' . $imagePath));
 
                         $variant = $item->variant;
-                        $price = $this->resolveCartItemUnitPrice($product, $variant);
+                        $price = (float) $this->resolveCartItemUnitPrice($product, $variant);
                         $variantLabel = $this->resolveVariantLabel($variant);
                         $availableStock = $this->resolveAvailableStock($product, $variant);
+                        $quantity = (int) ($item->quantity ?? 1);
+                        $lineSubtotal = round($price * $quantity, 2);
+
+                        $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+                        $lineDiscountAmount = round((float) ($lineDiscount['amount'] ?? 0), 2);
+                        $discountPerUnit = $quantity > 0 ? ($lineDiscountAmount / $quantity) : 0.0;
+                        $displayPrice = round(max(0, $price - $discountPerUnit), 2);
+                        $lineTotalAfterDiscount = round(max(0, $lineSubtotal - $lineDiscountAmount), 2);
 
                         return [
                             'id' => $item->id,
@@ -579,10 +791,20 @@ class CartController extends Controller
                             'variant_id' => $variant?->id,
                             'name' => $product->name,
                             'price' => (float) $price,
+                            'original_price' => (float) $price,
+                            'display_price' => (float) $displayPrice,
+                            'has_discount' => $lineDiscountAmount > 0,
+                            'discount_source' => (string) ($lineDiscount['source'] ?? 'none'),
+                            'discount_type' => (string) ($lineDiscount['type'] ?? ''),
+                            'discount_value' => (float) ($lineDiscount['value'] ?? 0),
+                            'line_discount' => (float) $lineDiscountAmount,
+                            'line_total' => (float) $lineSubtotal,
+                            'line_total_after_discount' => (float) $lineTotalAfterDiscount,
                             'image' => $imageUrl,
                             'category' => $product->category->name ?? 'General',
                             'variant_label' => $variantLabel,
-                            'quantity' => (int) ($item->quantity ?? 1),
+                            'quantity' => $quantity,
+                            'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
                             'available_stock' => (int) $availableStock,
                         ];
                     })
@@ -592,8 +814,110 @@ class CartController extends Controller
 
     private function resolveAvailableStock(Product $product, ?ProductVariant $variant): int
     {
-        $stock = $variant ? $variant->inventory_stock : $product->inventory_stock;
-        return max(0, (int) $stock);
+        $outletId = $this->resolveOrderOutletId();
+        $stocks = $variant ? $variant->inventoryStocks : $product->inventoryStocks;
+
+        $stockRow = $this->findInventoryStockRowInCollection($stocks, $outletId)
+            ?? $this->fetchInventoryStockRow((int) $product->id, $variant?->id, $outletId);
+
+        return max(0, (int) ($stockRow?->quantity ?? 0));
+    }
+
+    private function buildRequestedLinesFromCart($cartRows): array
+    {
+        $requestedLines = [];
+        foreach ($cartRows as $item) {
+            $productId = (int) $item->product_id;
+            $variantId = $item->variant_id ? (int) $item->variant_id : null;
+            $key = $this->buildStockKey($productId, $variantId);
+            if (!isset($requestedLines[$key])) {
+                $requestedLines[$key] = [
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'requested_qty' => 0,
+                    'name' => (string) ($item->product?->name ?? ('Product #' . $productId)),
+                ];
+            }
+            $requestedLines[$key]['requested_qty'] += max(1, (int) $item->quantity);
+        }
+        return $requestedLines;
+    }
+
+    private function lockInventoryForRequestedLines(array $requestedLines, int $outletId)
+    {
+        if (empty($requestedLines)) {
+            return collect();
+        }
+
+        $query = InventoryStock::query()
+            ->where('outlet_id', $outletId)
+            ->where(function ($query) use ($requestedLines) {
+                foreach ($requestedLines as $line) {
+                    $query->orWhere(function ($or) use ($line) {
+                        $or->where('product_id', (int) $line['product_id']);
+                        if ($line['variant_id'] !== null) {
+                            $or->where('variant_id', (int) $line['variant_id']);
+                        } else {
+                            $or->whereNull('variant_id');
+                        }
+                    });
+                }
+            })
+            ->lockForUpdate();
+
+        return $query->get()
+            ->keyBy(fn ($row) => $this->buildStockKey((int) $row->product_id, $row->variant_id ? (int) $row->variant_id : null));
+    }
+
+    private function resolveOrderOutletId(): int
+    {
+        $user = Auth::user();
+        $userOutletId = $user?->outlet_id ?? null;
+
+        if (!empty($userOutletId)) {
+            return (int) $userOutletId;
+        }
+
+        return (int) config('inventory.default_outlet_id', 1);
+    }
+
+    private function findInventoryStockRowInCollection($stocks, int $outletId): ?InventoryStock
+    {
+        if (!$stocks) {
+            return null;
+        }
+
+        foreach ($stocks as $stock) {
+            if ((int) ($stock->outlet_id ?? 0) === $outletId) {
+                return $stock;
+            }
+        }
+
+        return null;
+    }
+
+    private function fetchInventoryStockRow(int $productId, ?int $variantId, int $outletId, bool $lock = false): ?InventoryStock
+    {
+        $query = InventoryStock::query()
+            ->where('product_id', $productId)
+            ->where('outlet_id', $outletId);
+
+        if ($variantId !== null) {
+            $query->where('variant_id', $variantId);
+        } else {
+            $query->whereNull('variant_id');
+        }
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
+    private function buildStockKey(int $productId, ?int $variantId): string
+    {
+        return $productId . '|' . ($variantId ?? 0);
     }
 
     private function generateUniqueOrderNoForUser($user): string

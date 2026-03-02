@@ -58,12 +58,24 @@
                                                 <div>
                                                     <div class="flex justify-between text-base font-bold text-slate-900">
                                                         <h3 class="line-clamp-1"><span x-text="item.name"></span></h3>
-                                                        <p class="ml-4" x-text="'{{ $settings->currency_icon }}' + (item.price * item.quantity).toFixed(2)"></p>
+                                                        <div class="ml-4 text-right">
+                                                            <p x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.line_total_after_discount ?? ((item.display_price ?? item.price) * item.quantity)) || 0).toFixed(2)"></p>
+                                                            <template x-if="item.has_discount">
+                                                                <p class="text-xs font-semibold text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.line_total ?? ((item.original_price ?? item.price) * item.quantity)) || 0).toFixed(2)"></p>
+                                                            </template>
+                                                        </div>
                                                     </div>
                                                     <p class="mt-1 text-[10px] font-black text-indigo-500 uppercase tracking-widest" x-text="item.category"></p>
                                                     <template x-if="item.variant_label">
                                                         <p class="mt-1 text-xs text-slate-500" x-text="item.variant_label"></p>
                                                     </template>
+                                                    <p class="mt-1 text-xs text-slate-500">
+                                                        Unit:
+                                                        <span x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.display_price ?? item.price) || 0).toFixed(2)"></span>
+                                                        <template x-if="item.has_discount">
+                                                            <span class="ml-1 text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.original_price ?? item.price) || 0).toFixed(2)"></span>
+                                                        </template>
+                                                    </p>
                                                 </div>
                                                 <div class="flex flex-1 items-end justify-between text-sm">
                                                     {{-- Quantity Controls --}}
@@ -117,7 +129,12 @@
                     <div x-show="cartItems.length > 0" class="border-t border-slate-100 px-6 py-8 bg-slate-50/50">
                         <div class="flex justify-between text-base font-bold text-slate-900">
                             <p>Subtotal</p>
-                            <p x-text="'{{ $settings->currency_icon }}' + cartTotal.toFixed(2)"></p>
+                            <div class="text-right">
+                                <p x-text="'{{ $settings->currency_icon }}' + cartDisplayTotal.toFixed(2)"></p>
+                                <template x-if="cartOriginalTotal > cartDisplayTotal">
+                                    <p class="text-xs font-semibold text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + cartOriginalTotal.toFixed(2)"></p>
+                                </template>
+                            </div>
                         </div>
                         <p class="mt-0.5 text-sm text-slate-500">Shipping and taxes calculated at checkout.</p>
                         <div class="mt-8">

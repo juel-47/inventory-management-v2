@@ -211,3 +211,7 @@
     </div>
 </div>
 @endsection
+
+@section('scripts')
+    @include('frontend.partials.wishlist-page-script')
+@endsection

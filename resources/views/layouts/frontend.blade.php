@@ -19,6 +19,24 @@
     <style>
         body { font-family: 'Outfit', sans-serif; }
         [x-cloak] { display: none !important; }
+
+        /* Global frontend cursor behavior for interactive controls */
+        a[href],
+        button,
+        [role="button"],
+        summary,
+        label[for],
+        input[type="button"],
+        input[type="submit"],
+        input[type="reset"] {
+            cursor: pointer;
+        }
+
+        button:disabled,
+        [role="button"][aria-disabled="true"],
+        input:disabled {
+            cursor: not-allowed;
+        }
     </style>
 
     @yield('head')
