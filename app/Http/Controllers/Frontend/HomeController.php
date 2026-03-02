@@ -232,6 +232,57 @@ class HomeController extends Controller
     }
 
     /**
+     * Live product search for navbar quick search dropdown.
+     */
+    public function liveSearch(Request $request)
+    {
+        $query = trim((string) $request->query('q', ''));
+        if (mb_strlen($query) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $roleContext = $this->resolveFrontendRoleContext($request);
+        $canSeeWholesalePrice = (bool) data_get($roleContext, 'isOutletUser', false)
+            || (bool) data_get($roleContext, 'isStandardUser', false);
+
+        $products = Product::query()
+            ->select(['id', 'name', 'slug', 'thumb_image', 'price', 'outlet_price', 'product_number', 'sku', 'category_id'])
+            ->with('category:id,name')
+            ->where('status', 1)
+            ->whereHas('category', function ($query) {
+                $query->where('status', 1);
+            })
+            ->where(function ($builder) use ($query) {
+                $builder->where('name', 'like', "%{$query}%")
+                    ->orWhere('product_number', 'like', "%{$query}%")
+                    ->orWhere('sku', 'like', "%{$query}%");
+            })
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
+        $results = $products->map(function (Product $product) use ($canSeeWholesalePrice): array {
+            $image = $this->resolveImageUrl((string) ($product->thumb_image ?? ''));
+            $displayPrice = $canSeeWholesalePrice
+                ? (float) (($product->outlet_price ?? 0) > 0 ? $product->outlet_price : $product->price)
+                : (float) ($product->price ?? 0);
+
+            return [
+                'id' => (int) $product->id,
+                'name' => (string) ($product->name ?? ''),
+                'category' => (string) ($product->category?->name ?? 'General'),
+                'sku' => (string) ($product->sku ?? ''),
+                'product_number' => (string) ($product->product_number ?? ''),
+                'price' => round($displayPrice, 2),
+                'url' => route('product.details', $product->slug),
+                'image' => (string) ($image ?? ''),
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
+    }
+
+    /**
      * Display product details.
      */
     public function productDetails($slug)
@@ -306,6 +357,8 @@ class HomeController extends Controller
             'thumb_image' => (string) ($displayPath ?? ''),
             'price' => (float) ($product->price ?? 0),
             'outlet_price' => (float) ($product->outlet_price ?? 0),
+            'discount_type' => (string) ($product->discount_type ?? ''),
+            'discount' => (float) ($product->discount ?? 0),
             'category' => $productCategoryName !== '' ? $productCategoryName : 'Category not set',
             'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
             'stock' => $canViewInventory ? (int) ($product->scoped_stock_qty ?? 0) : 0,

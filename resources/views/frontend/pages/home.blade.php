@@ -43,12 +43,6 @@
                                 Browse Catalog
                             </a>
                             @auth
-                                {{-- B2B flow: keep cart page link disabled for now. Uncomment when full cart page is needed again.
-                                <a href="{{ route('cart.index') }}"
-                                    class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
-                                    Open Cart
-                                </a>
-                                --}}
                                 <a href="{{ route('account.index', ['panel' => 'order-form']) }}"
                                     class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600">
                                     Quick Order
@@ -222,8 +216,6 @@
 @endsection
 
 @section('scripts')
-    @include('frontend.partials.product-card-script')
-
     <script>
         (function () {
             let loadingCategoryPage = false;

@@ -40,7 +40,7 @@
 {{-- =====================================================
      NAVIGATION BAR
      ===================================================== --}}
-<nav class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50">
+<nav class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50" x-data="navbarSearch(@js($settings->currency_icon ?? 'Tk'))">
     @php
         $isAdminAuth = auth()->check() && auth()->user()->hasRole('Admin');
         $isFrontendCustomer = auth()->check() && !$isAdminAuth;
@@ -84,7 +84,10 @@
             {{-- Right Icons --}}
             <div class="flex items-center gap-2 sm:gap-4">
                 {{-- Search --}}
-                <button class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300">
+                <button
+                    @click="toggleSearch()"
+                    :aria-expanded="searchOpen.toString()"
+                    class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
 
@@ -195,6 +198,73 @@
             </div>
 
         </div>
+        <div x-show="searchOpen"
+             x-transition
+             x-cloak
+             @keydown.escape.window="closeSearch()"
+             @click.away="closeSearch()"
+             class="pb-3">
+            <form action="{{ route('shop') }}" method="GET" class="relative" @submit="closeSearch()">
+                <input
+                    type="text"
+                    name="search"
+                    x-model.trim="searchQuery"
+                    x-ref="searchInput"
+                    @input="handleSearchInput()"
+                    placeholder="Search products by name / SKU / number"
+                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-24 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <button type="submit"
+                        class="absolute right-1.5 top-1/2 h-8 -translate-y-1/2 rounded-lg bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-[0.1em] text-white hover:bg-indigo-600">
+                    Search
+                </button>
+            </form>
+
+            <div x-show="searchOpen && searchQuery.length >= 2"
+                 x-transition
+                 class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                <div x-show="searchLoading" class="px-4 py-3 text-xs font-semibold text-slate-500">
+                    Searching products...
+                </div>
+
+                <template x-if="!searchLoading && searchResults.length > 0">
+                    <ul class="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                        <template x-for="item in searchResults" :key="item.id">
+                            <li>
+                                <a :href="item.url"
+                                   @click="closeSearch()"
+                                   class="flex items-center gap-3 px-3 py-2.5 transition hover:bg-slate-50">
+                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100">
+                                        <img x-show="item.image" :src="item.image" :alt="item.name" class="h-full w-full object-cover">
+                                        <div x-show="!item.image" class="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase text-slate-400">No Img</div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-semibold text-slate-800" x-text="item.name"></p>
+                                        <p class="truncate text-[11px] text-slate-500">
+                                            <span x-text="item.category"></span>
+                                            <span x-show="item.product_number"> • #<span x-text="item.product_number"></span></span>
+                                        </p>
+                                    </div>
+                                    <div class="text-right text-xs font-bold text-indigo-600" x-text="formatPrice(item.price)"></div>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+
+                <div x-show="showNoResults" class="px-4 py-3 text-xs font-semibold text-slate-500">
+                    No product found for "<span x-text="searchQuery"></span>".
+                </div>
+
+                <a :href="shopSearchUrl"
+                   @click="closeSearch()"
+                   class="block border-t border-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-50 hover:text-indigo-600">
+                    View all results in shop
+                </a>
+            </div>
+        </div>
         <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 text-xs font-semibold md:hidden">
             <a href="{{ route('home') }}"
                class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('home') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
@@ -215,3 +285,99 @@
         </div>
     </div>
 </nav>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        if (window.__navbarSearchRegistered) {
+            return;
+        }
+        window.__navbarSearchRegistered = true;
+
+        Alpine.data('navbarSearch', (currencyIcon = 'Tk') => ({
+            searchOpen: false,
+            searchQuery: @js((string) request('search', '')),
+            searchResults: [],
+            searchLoading: false,
+            searchDebounceTimer: null,
+
+            toggleSearch() {
+                this.searchOpen = !this.searchOpen;
+                if (this.searchOpen) {
+                    this.$nextTick(() => this.$refs.searchInput?.focus());
+                    if (this.searchQuery.length >= 2) {
+                        this.fetchLiveProducts();
+                    }
+                }
+            },
+
+            closeSearch() {
+                this.searchOpen = false;
+            },
+
+            handleSearchInput() {
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                }
+
+                if (this.searchQuery.length < 2) {
+                    this.searchResults = [];
+                    this.searchLoading = false;
+                    return;
+                }
+
+                this.searchDebounceTimer = setTimeout(() => {
+                    this.fetchLiveProducts();
+                }, 250);
+            },
+
+            async fetchLiveProducts() {
+                const query = this.searchQuery.trim();
+                if (query.length < 2) {
+                    this.searchResults = [];
+                    this.searchLoading = false;
+                    return;
+                }
+
+                this.searchLoading = true;
+
+                try {
+                    const endpoint = `{{ route('frontend.products.live-search') }}?q=${encodeURIComponent(query)}`;
+                    const response = await fetch(endpoint, {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Live search request failed');
+                    }
+
+                    const data = await response.json();
+                    this.searchResults = Array.isArray(data.results) ? data.results : [];
+                } catch (error) {
+                    this.searchResults = [];
+                } finally {
+                    this.searchLoading = false;
+                }
+            },
+
+            formatPrice(price) {
+                const amount = Number(price || 0);
+                return `${currencyIcon}${amount.toFixed(2)}`;
+            },
+
+            get showNoResults() {
+                return this.searchQuery.length >= 2 && !this.searchLoading && this.searchResults.length === 0;
+            },
+
+            get shopSearchUrl() {
+                const url = new URL('{{ route('shop') }}', window.location.origin);
+                if (this.searchQuery.trim() !== '') {
+                    url.searchParams.set('search', this.searchQuery.trim());
+                }
+                return url.toString();
+            },
+        }));
+    });
+</script>

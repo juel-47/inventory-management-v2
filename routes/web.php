@@ -48,6 +48,7 @@ Route::get('/sample/{filename}', function ($filename) {
 Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])->name('home');
 Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
 Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
+Route::get('/products/live-search', [\App\Http\Controllers\Frontend\HomeController::class, 'liveSearch'])->name('frontend.products.live-search');
 // B2B flow: cart page route is disabled for now (drawer + checkout flow).
 // Uncomment when dedicated cart page is required again.
 // Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');

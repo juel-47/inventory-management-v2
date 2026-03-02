@@ -8,7 +8,7 @@
         $shopCards = collect($shopCards ?? []);
     @endphp
 
-    <div class="bg-slate-50 min-h-screen" x-data="shopFilter()">
+    <div id="shop-page-root" class="bg-slate-50 min-h-screen" x-data="shopFilter()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Sidebar Filters -->
@@ -194,80 +194,160 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="mt-24 border-t border-slate-100">
+                    <div id="shop-pagination" class="mt-24 border-t border-slate-100">
                         {{ $products->links('vendor.pagination.tailwind') }}
                     </div>
                 </div>
             </div>
         </div>
 
-        @include('frontend.partials.product-card-script')
-
         <script>
-            function shopFilter() {
-                return {
-                    activeCat: {{ request('category', 'null') }},
-                    activeSub: {{ request('subcategory', 'null') }},
-                    minRange: {{ $min_range }},
-                    maxRange: {{ $max_range }},
-                    minPrice: {{ request('min_price', $min_range) }},
-                    maxPrice: {{ request('max_price', $max_range) }},
-                    sort: '{{ request('sort', 'latest') }}',
-                    search: '{{ request('search', '') }}',
+            (function () {
+                let loadingShopPage = false;
+                const shopBaseUrl = @json(route('shop'));
 
-                    toggleCategory(id) {
-                        if (this.activeCat === id) {
-                            this.activeCat = null;
-                            window.location.href = "{{ route('shop') }}";
-                        } else {
+                async function loadShopPage(url, pushState = true) {
+                    const currentRoot = document.getElementById('shop-page-root');
+                    if (!currentRoot || loadingShopPage) {
+                        return;
+                    }
+
+                    loadingShopPage = true;
+                    currentRoot.classList.add('opacity-60', 'pointer-events-none');
+
+                    try {
+                        const response = await fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to load shop page');
+                        }
+
+                        const html = await response.text();
+                        const parsed = new DOMParser().parseFromString(html, 'text/html');
+                        const nextRoot = parsed.getElementById('shop-page-root');
+
+                        if (!nextRoot) {
+                            window.location.href = url;
+                            return;
+                        }
+
+                        const oldRoot = document.getElementById('shop-page-root');
+                        oldRoot.outerHTML = nextRoot.outerHTML;
+
+                        if (pushState) {
+                            window.history.pushState({ shopAjax: true }, '', url);
+                        }
+                    } catch (error) {
+                        window.location.href = url;
+                    } finally {
+                        loadingShopPage = false;
+                        const refreshedRoot = document.getElementById('shop-page-root');
+                        if (refreshedRoot) {
+                            refreshedRoot.classList.remove('opacity-60', 'pointer-events-none');
+                        }
+                    }
+                }
+
+                window.shopFilter = function () {
+                    return {
+                        activeCat: {{ request('category', 'null') }},
+                        activeSub: {{ request('subcategory', 'null') }},
+                        minRange: {{ $min_range }},
+                        maxRange: {{ $max_range }},
+                        minPrice: {{ request('min_price', $min_range) }},
+                        maxPrice: {{ request('max_price', $max_range) }},
+                        sort: '{{ request('sort', 'latest') }}',
+                        search: '{{ request('search', '') }}',
+
+                        toggleCategory(id) {
+                            if (this.activeCat === id) {
+                                this.activeCat = null;
+                                this.updateUrl({
+                                    category: null,
+                                    subcategory: null,
+                                    childcategory: null,
+                                });
+                                return;
+                            }
+
                             this.updateUrl({
                                 category: id,
                                 subcategory: null,
                                 childcategory: null
                             });
+                        },
+
+                        toggleSubCategory(catId, subId) {
+                            this.updateUrl({
+                                category: catId,
+                                subcategory: subId,
+                                childcategory: null
+                            });
+                        },
+
+                        toggleChildCategory(catId, subId, childId) {
+                            this.updateUrl({
+                                category: catId,
+                                subcategory: subId,
+                                childcategory: childId
+                            });
+                        },
+
+                        applyFilters() {
+                            this.updateUrl({
+                                min_price: this.minPrice,
+                                max_price: this.maxPrice,
+                                sort: this.sort
+                            });
+                        },
+
+                        resetFilters() {
+                            loadShopPage(shopBaseUrl, true);
+                        },
+
+                        updateUrl(params) {
+                            const url = new URL(window.location.href);
+                            Object.keys(params).forEach(key => {
+                                if (params[key] === null || params[key] === undefined || params[key] === '') {
+                                    url.searchParams.delete(key);
+                                } else {
+                                    url.searchParams.set(key, params[key]);
+                                }
+                            });
+
+                            loadShopPage(url.toString(), true);
                         }
-                    },
+                    };
+                };
 
-                    toggleSubCategory(catId, subId) {
-                        this.updateUrl({
-                            category: catId,
-                            subcategory: subId,
-                            childcategory: null
-                        });
-                    },
-
-                    toggleChildCategory(catId, subId, childId) {
-                        this.updateUrl({
-                            category: catId,
-                            subcategory: subId,
-                            childcategory: childId
-                        });
-                    },
-
-                    applyFilters() {
-                        this.updateUrl({
-                            min_price: this.minPrice,
-                            max_price: this.maxPrice,
-                            sort: this.sort
-                        });
-                    },
-
-                    resetFilters() {
-                        window.location.href = "{{ route('shop') }}";
-                    },
-
-                    updateUrl(params) {
-                        const url = new URL(window.location.href);
-                        Object.keys(params).forEach(key => {
-                            if (params[key] === null || params[key] === undefined) {
-                                url.searchParams.delete(key);
-                            } else {
-                                url.searchParams.set(key, params[key]);
-                            }
-                        });
-                        window.location.href = url.toString();
+                document.addEventListener('click', function (event) {
+                    const paginationLink = event.target.closest('#shop-pagination a');
+                    if (!paginationLink) {
+                        return;
                     }
-                }
-            }
+
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    loadShopPage(paginationLink.href, true);
+                });
+
+                window.addEventListener('popstate', function () {
+                    const currentUrl = new URL(window.location.href);
+                    const shopUrl = new URL(shopBaseUrl);
+
+                    if (currentUrl.pathname !== shopUrl.pathname) {
+                        return;
+                    }
+
+                    loadShopPage(window.location.href, false);
+                });
+            })();
         </script>
     @endsection

@@ -23,12 +23,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\InventoryStock;
 use App\Models\StockLedger;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
+use App\Events\ProductsPublished;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -264,6 +266,7 @@ class ProductController extends Controller implements HasMiddleware
             }
 
             DB::commit();
+            $this->dispatchProductsPublishedEvent([$product->id], 'created');
             Toastr::success('Product Created Successfully!');
             return redirect()->route('admin.products.index');
 
@@ -586,6 +589,17 @@ class ProductController extends Controller implements HasMiddleware
             // Import using CSV/Excel processor
             $importer = new ProductsImport();
             $results = $importer->import($fullPath, $originalName);
+
+            $createdProductIds = collect($results['created_product_ids'] ?? [])
+                ->map(static fn ($id): int => (int) $id)
+                ->filter(static fn ($id): bool => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (!empty($createdProductIds)) {
+                $this->dispatchProductsPublishedEvent($createdProductIds, 'imported');
+            }
             
             // Delete temp file if it exists
             if ($tempPath) {
@@ -596,6 +610,10 @@ class ProductController extends Controller implements HasMiddleware
             
             if (!empty($results['errors'])) {
                 $message .= ' Errors found in some rows.';
+            }
+
+            if (!empty($createdProductIds)) {
+                $message .= ' Notification queue started for ' . count($createdProductIds) . ' new products.';
             }
             
             Toastr::success($message);
@@ -656,5 +674,43 @@ class ProductController extends Controller implements HasMiddleware
             'type' => $type,
             'value' => round($value, 2),
         ];
+    }
+
+    /**
+     * @param array<int, int|string> $productIds
+     */
+    private function dispatchProductsPublishedEvent(array $productIds, string $source): void
+    {
+        $ids = array_values(array_unique(array_map(
+            static fn ($id): int => (int) $id,
+            array_filter($productIds, static fn ($id): bool => (int) $id > 0)
+        )));
+        sort($ids);
+
+        if (empty($ids)) {
+            return;
+        }
+
+        $source = in_array($source, ['created', 'imported'], true) ? $source : 'created';
+        $dispatchLockKey = 'product-announcement:dispatch:' . $source . ':' . sha1(json_encode($ids));
+
+        // Guard against accidental double-submit / duplicate request replay.
+        if (!Cache::add($dispatchLockKey, 1, now()->addMinutes(10))) {
+            return;
+        }
+
+        try {
+            event(new ProductsPublished(
+                productIds: $ids,
+                source: $source,
+                actorId: Auth::id() ? (int) Auth::id() : null
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Unable to dispatch product announcement event', [
+                'source' => $source,
+                'product_ids_count' => count($ids),
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

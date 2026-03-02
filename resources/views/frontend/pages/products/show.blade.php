@@ -127,6 +127,11 @@
                                         <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
                                             <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Wholesale Price</p>
                                             <p class="mt-1 text-2xl font-bold">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
+                                            <template x-if="showOutletOriginalPrice">
+                                                <p class="mt-1 text-xs font-semibold text-slate-200/80 line-through">
+                                                    {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
+                                                </p>
+                                            </template>
                                         </div>
                                         <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
                                             <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">Selling Price</p>
@@ -137,6 +142,11 @@
                                     <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
                                         <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Wholesale Price</p>
                                         <p class="mt-1 text-2xl font-bold">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
+                                        <template x-if="showOutletOriginalPrice">
+                                            <p class="mt-1 text-xs font-semibold text-slate-200/80 line-through">
+                                                {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
+                                            </p>
+                                        </template>
                                     </div>
                                 @else
                                     <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
@@ -292,8 +302,6 @@
 @endsection
 
 @section('scripts')
-    @include('frontend.partials.product-card-script')
-
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('productDetail', (product, variants, initiallyWishlisted = false) => ({
@@ -367,12 +375,49 @@
                     return stock > 0 ? `${base} - ${stock}` : `${base} - Out`;
                 },
 
-                get outletDisplayPrice() {
-                    const price = this.selectedVariant
+                get normalizedDiscountType() {
+                    const type = String(this.product.discount_type || '').toLowerCase().trim();
+                    return ['flat', 'percent'].includes(type) ? type : '';
+                },
+
+                get discountValue() {
+                    return Math.max(0, parseFloat(this.product.discount) || 0);
+                },
+
+                get hasDiscount() {
+                    return this.normalizedDiscountType !== '' && this.discountValue > 0;
+                },
+
+                applyDiscount(price) {
+                    const numericPrice = Math.max(0, parseFloat(price) || 0);
+                    if (!this.hasDiscount) {
+                        return numericPrice;
+                    }
+
+                    if (this.normalizedDiscountType === 'percent') {
+                        const percent = Math.min(100, this.discountValue);
+                        return Math.max(0, numericPrice - ((numericPrice * percent) / 100));
+                    }
+
+                    return Math.max(0, numericPrice - this.discountValue);
+                },
+
+                get outletBasePrice() {
+                    return this.selectedVariant
                         ? (this.selectedVariant.outlet_price || this.selectedVariant.price || this.product.outlet_price || this.product.price || 0)
                         : (this.product.outlet_price || this.product.price || 0);
+                },
 
-                    return Number(price).toFixed(2);
+                get outletDisplayPrice() {
+                    return Number(this.applyDiscount(this.outletBasePrice)).toFixed(2);
+                },
+
+                get outletOriginalDisplayPrice() {
+                    return Number(this.outletBasePrice || 0).toFixed(2);
+                },
+
+                get showOutletOriginalPrice() {
+                    return this.hasDiscount && (this.outletBasePrice > this.applyDiscount(this.outletBasePrice));
                 },
 
                 get retailDisplayPrice() {

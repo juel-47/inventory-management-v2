@@ -1,4 +1,5 @@
 import './bootstrap';
+import './frontend/product-card';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
 

@@ -266,7 +266,8 @@ class ProductsImport
             'success' => 0,
             'skipped' => 0,
             'failed' => 0,
-            'errors' => []
+            'errors' => [],
+            'created_product_ids' => [],
         ];
         
         $zip = new ZipArchive();
@@ -345,12 +346,20 @@ class ProductsImport
                     $results['skipped']++;
                 } else {
                     $results['success']++;
+                    if ($status instanceof Product) {
+                        $results['created_product_ids'][] = (int) $status->id;
+                    }
                 }
             } catch (\Exception $e) {
                 $results['failed']++;
                 $results['errors'][] = 'Row ' . $rowIndex . ': ' . $e->getMessage();
             }
         }
+
+        $results['created_product_ids'] = array_values(array_unique(array_filter(
+            array_map(static fn ($id): int => (int) $id, $results['created_product_ids']),
+            static fn ($id): bool => $id > 0
+        )));
         
         return $results;
     }
@@ -752,7 +761,8 @@ class ProductsImport
             'success' => 0,
             'skipped' => 0,
             'failed' => 0,
-            'errors' => []
+            'errors' => [],
+            'created_product_ids' => [],
         ];
         
         if (!file_exists($filePath)) {
@@ -788,6 +798,9 @@ class ProductsImport
                     $results['skipped']++;
                 } else {
                     $results['success']++;
+                    if ($status instanceof Product) {
+                        $results['created_product_ids'][] = (int) $status->id;
+                    }
                 }
             } catch (\Exception $e) {
                 $results['failed']++;
@@ -802,6 +815,11 @@ class ProductsImport
         }
         
         fclose($handle);
+
+        $results['created_product_ids'] = array_values(array_unique(array_filter(
+            array_map(static fn ($id): int => (int) $id, $results['created_product_ids']),
+            static fn ($id): bool => $id > 0
+        )));
         
         return $results;
     }
