@@ -25,19 +25,26 @@ class DispatchProductAnnouncementChunksJob implements ShouldQueue, ShouldBeUniqu
     public function __construct(
         public array $productIds,
         public string $source = 'created',
-        public ?int $actorId = null
+        public ?int $actorId = null,
+        public ?string $customSubject = null,
+        public ?string $customMessage = null,
+        public ?string $campaignId = null
     ) {
         $this->productIds = array_values(array_unique(array_map(
             static fn ($id): int => (int) $id,
             array_filter($this->productIds, static fn ($id): bool => (int) $id > 0)
         )));
         sort($this->productIds);
-        $this->source = in_array($this->source, ['created', 'imported'], true) ? $this->source : 'created';
+        $this->source = in_array($this->source, ['created', 'imported', 'manual'], true) ? $this->source : 'created';
+        $this->customSubject = $this->normalizeNullableText($this->customSubject, 255);
+        $this->customMessage = $this->normalizeNullableText($this->customMessage, 5000);
+        $this->campaignId = $this->normalizeNullableText($this->campaignId, 255);
     }
 
     public function uniqueId(): string
     {
-        return 'dispatch-product-announcement:' . $this->source . ':' . sha1(json_encode($this->productIds));
+        $campaignToken = $this->campaignId ?: 'auto';
+        return 'dispatch-product-announcement:' . $this->source . ':' . $campaignToken . ':' . sha1(json_encode($this->productIds));
     }
 
     public function handle(): void
@@ -75,8 +82,21 @@ class DispatchProductAnnouncementChunksJob implements ShouldQueue, ShouldBeUniqu
                     $validProductIds,
                     $recipientIds,
                     $this->source,
-                    $this->actorId
+                    $this->actorId,
+                    $this->customSubject,
+                    $this->customMessage,
+                    $this->campaignId
                 )->onConnection('database')->onQueue('mail-notifications');
             });
+    }
+
+    private function normalizeNullableText(?string $value, int $maxLength): ?string
+    {
+        $trimmed = trim((string) $value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        return mb_substr($trimmed, 0, $maxLength);
     }
 }

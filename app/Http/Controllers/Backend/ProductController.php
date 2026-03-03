@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\DataTables\ProductAnnouncementDataTable;
 use App\DataTables\ProductDataTable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductCreateRequest;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\InventoryStock;
 use App\Models\StockLedger;
+use App\Jobs\DispatchProductAnnouncementChunksJob;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
 use App\Events\ProductsPublished;
@@ -266,7 +268,8 @@ class ProductController extends Controller implements HasMiddleware
             }
 
             DB::commit();
-            $this->dispatchProductsPublishedEvent([$product->id], 'created');
+            // Manual announcement only: auto product-create announcement is intentionally disabled.
+            // $this->dispatchProductsPublishedEvent([$product->id], 'created');
             Toastr::success('Product Created Successfully!');
             return redirect()->route('admin.products.index');
 
@@ -597,9 +600,10 @@ class ProductController extends Controller implements HasMiddleware
                 ->values()
                 ->all();
 
-            if (!empty($createdProductIds)) {
-                $this->dispatchProductsPublishedEvent($createdProductIds, 'imported');
-            }
+            // Manual announcement only: auto import announcement is intentionally disabled.
+            // if (!empty($createdProductIds)) {
+            //     $this->dispatchProductsPublishedEvent($createdProductIds, 'imported');
+            // }
             
             // Delete temp file if it exists
             if ($tempPath) {
@@ -612,10 +616,6 @@ class ProductController extends Controller implements HasMiddleware
                 $message .= ' Errors found in some rows.';
             }
 
-            if (!empty($createdProductIds)) {
-                $message .= ' Notification queue started for ' . count($createdProductIds) . ' new products.';
-            }
-            
             Toastr::success($message);
             
             if ($request->ajax()) {
@@ -630,6 +630,76 @@ class ProductController extends Controller implements HasMiddleware
             Toastr::error('Import failed: ' . $e->getMessage());
             return redirect()->back();
         }
+    }
+
+    /**
+     * Manual product announcement page (admin only).
+     */
+    public function announcementIndex(ProductAnnouncementDataTable $dataTable)
+    {
+        $categories = Category::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        $productTypes = ProductType::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        $vendors = Vendor::where('status', 1)
+            ->orderBy('shop_name')
+            ->get(['id', 'shop_name']);
+
+        return $dataTable->render('backend.product.announcement', compact('categories', 'productTypes', 'vendors'));
+    }
+
+    /**
+     * Queue manual product announcement emails to all active users.
+     */
+    public function sendAnnouncement(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => ['required', 'array', 'min:1'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $productIds = collect($validated['product_ids'] ?? [])
+            ->map(static fn ($id): int => (int) $id)
+            ->filter(static fn ($id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        $validProductIds = Product::query()
+            ->whereIn('id', $productIds)
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($validProductIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid products selected.',
+            ], 422);
+        }
+
+        $subject = trim((string) ($validated['subject'] ?? ''));
+        $message = trim((string) ($validated['message'] ?? ''));
+
+        DispatchProductAnnouncementChunksJob::dispatch(
+            productIds: $validProductIds,
+            source: 'manual',
+            actorId: Auth::id() ? (int) Auth::id() : null,
+            customSubject: $subject !== '' ? $subject : null,
+            customMessage: $message !== '' ? $message : null,
+            campaignId: 'manual-' . (string) Str::uuid()
+        )->onConnection('database')->onQueue('mail-notifications');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement queued for ' . count($validProductIds) . ' selected products.',
+        ]);
     }
 
     private function normalizeDiscountInput(Request $request): array

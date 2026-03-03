@@ -7,6 +7,7 @@ use App\Models\InventoryStock;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\ProductRequestItem;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         // If the user cannot manage requests, they only see their own.
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests')) {
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests')) {
             $query->where('user_id', Auth::id());
         }
 
@@ -46,11 +47,11 @@ class ProductRequestController extends Controller implements HasMiddleware
      */
     public function create(Request $request)
     {
-        // Only users with 'Create Product Requests' permission can create
+        // Only admin can create requests for outlet/users from backend
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Create Product Requests') && !$user->can('Manage Product Requests')) {
-             abort(403, 'You do not have permission to create product requests.');
+        if (!$user->hasRole('Admin')) {
+             abort(403, 'Only admin can create product requests for outlets/users.');
         }
 
         $products = Product::where('status', 1)
@@ -62,10 +63,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             $selectedIds = explode(',', $request->ids);
         }
 
-        $users = [];
-        if ($user->can('Manage Product Requests')) {
-            $users = \App\Models\User::where('status', 1)->orderBy('name', 'asc')->get();
-        }
+        $users = User::role(['Outlet User', 'User'])->where('status', 1)->orderBy('name', 'asc')->get();
 
         return view('backend.product-request.create', compact('products', 'users', 'selectedIds'));
     }
@@ -77,7 +75,7 @@ class ProductRequestController extends Controller implements HasMiddleware
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Create Product Requests') && !$user->can('Manage Product Requests')) {
+        if (!$user->hasRole('Admin')) {
             abort(403);
         }
 
@@ -87,6 +85,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'items.*.qty' => 'required|integer|min:1',
             'required_days' => 'nullable|integer|min:1',
+            'user_id' => 'required|integer|exists:users,id',
         ]);
 
         DB::beginTransaction();
@@ -94,14 +93,18 @@ class ProductRequestController extends Controller implements HasMiddleware
             $productRequest = new ProductRequest();
             $productRequest->request_no = 'REQ-' . strtoupper(Str::random(10));
             
-            // Assign user_id: use input if admin provided it, otherwise use Auth::id()
-            if ($user->can('Manage Product Requests') && $request->has('user_id')) {
-                $productRequest->user_id = $request->user_id;
-            } else {
-                $productRequest->user_id = Auth::id();
+            $targetUser = User::role(['Outlet User', 'User'])
+                ->where('status', 1)
+                ->whereKey((int) $request->input('user_id'))
+                ->first();
+
+            if (!$targetUser) {
+                throw new \InvalidArgumentException('Please select a valid active Outlet/User.');
             }
 
-            $productRequest->status = 'pending';
+            $productRequest->user_id = (int) $targetUser->id;
+            $productRequest->status = 'approved';
+            $productRequest->admin_note = 'Created by admin. Stock will be deducted only after Issue is created.';
             $productRequest->required_days = $request->required_days;
             $productRequest->note = $request->note;
             $productRequest->total_qty = 0; 
@@ -156,7 +159,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             $productRequest->save();
 
             DB::commit();
-            toastr()->success('Product Request created successfully!');
+            toastr()->success('Product Request created successfully! Stock will be deducted after Issue creation.');
             session()->flash('clear_request_basket', true);
             return redirect()->route('admin.product-requests.index');
 
@@ -176,7 +179,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403, 'Unauthorized access to this product request.');
         }
 
@@ -200,7 +203,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
@@ -222,7 +225,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
@@ -297,3 +300,5 @@ class ProductRequestController extends Controller implements HasMiddleware
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 }
+
+

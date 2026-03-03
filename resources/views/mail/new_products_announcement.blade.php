@@ -96,7 +96,7 @@
             <div class="head">
                 <h1>New Product Update</h1>
                 <p>
-                    {{ $source === 'imported' ? 'Bulk import completed with new products.' : 'A new product has been added.' }}
+                    {{ $announcementMessage ?? 'A new product has been added.' }}
                 </p>
             </div>
             <div class="content">
@@ -108,7 +108,7 @@
                     Hello {{ $recipientName }},
                 </p>
                 <p style="margin: 0; font-size: 13px; color: #334155;">
-                    Here is the latest product update. You can review product information below.
+                    {!! nl2br(e($announcementMessage ?? 'Here is the latest product update. You can review product information below.')) !!}
                 </p>
 
                 <table>

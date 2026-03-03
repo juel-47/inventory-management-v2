@@ -24,7 +24,7 @@
                             <div class="card-header-action">
                                 <a href="{{ route('admin.orders.view-invoice', $order->id) }}" class="btn btn-warning" target="_blank"><i class="fas fa-file-invoice mr-1"></i> View Invoice</a>
                                 <a href="{{ route('admin.orders.download-invoice', $order->id) }}" class="btn btn-info ml-2"><i class="fas fa-download mr-1"></i> Download PDF</a>
-                                <a href="{{ route('admin.orders.destroy', $order->id) }}" class="btn btn-danger ml-2 delete-item"><i class="fas fa-trash mr-1"></i> Delete</a>
+                                {{-- <a href="{{ route('admin.orders.destroy', $order->id) }}" class="btn btn-danger ml-2 delete-item"><i class="fas fa-trash mr-1"></i> Delete</a> --}}
                             </div>
                         </div>
                         <div class="card-body p-0">

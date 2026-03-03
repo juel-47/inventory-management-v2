@@ -45,6 +45,11 @@ class CheckPermission
             return 'View Product Stock';
         }
 
+        // Manual announcement screen/actions are managed under System/Administration menu.
+        if (str_contains($action, 'ProductController@announcementIndex') || str_contains($action, 'ProductController@sendAnnouncement')) {
+            return 'Administration';
+        }
+
         // ReviewController requires 'Create Product Requests' permission
         if (str_contains($action, 'ReviewController')) {
             return 'Create Product Requests';

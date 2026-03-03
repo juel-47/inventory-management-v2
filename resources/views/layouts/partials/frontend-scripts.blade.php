@@ -39,12 +39,22 @@
     // User role (PHP-rendered, used for role-based pricing in cart)
     window.APP_USER_ROLE = '{{ auth()->user() ? (auth()->user()->hasRole('Outlet User') ? 'Outlet User' : (auth()->user()->hasRole('User') ? 'User' : 'Other')) : 'Guest' }}';
     window.APP_AUTHENTICATED = {{ auth()->check() ? 'true' : 'false' }};
+    window.APP_AUTH_USER_ID = {{ auth()->check() ? auth()->id() : 'null' }};
     window.CSRF_TOKEN = '{{ csrf_token() }}';
     window.APP_INITIAL_WISHLIST_COUNT = {{ $initialWishlistCount }};
     window.APP_INITIAL_CART_COUNT = {{ $initialCartCount }};
     window.FRONTEND_FLASH_TOASTS = @json($frontendFlashToasts);
 
     document.addEventListener('alpine:init', () => {
+        const parseJsonArray = (value) => {
+            try {
+                const parsed = JSON.parse(value || '[]');
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        };
+        const authCartCacheKey = `cart_items_auth_${window.APP_AUTH_USER_ID || 0}`;
 
         // ─── WISHLIST STORE ────────────────────────────────────
         Alpine.store('wishlist', {
@@ -139,11 +149,15 @@
         // ─── CART STORE ───────────────────────────────────────
         Alpine.store('cart', {
             items: window.APP_AUTHENTICATED
-                ? []
-                : [...JSON.parse(localStorage.getItem('cart_items') || '[]')],
+                ? [...parseJsonArray(localStorage.getItem(authCartCacheKey))]
+                : [...parseJsonArray(localStorage.getItem('cart_items'))],
             serverCount: parseInt(window.APP_INITIAL_CART_COUNT || 0, 10) || 0,
             hydrated: !window.APP_AUTHENTICATED,
             hydrating: false,
+            serverSnapshot: {},
+            qtySyncTimers: {},
+            qtySyncVersions: {},
+            pendingQtyValues: {},
 
             get count() {
                 if (window.APP_AUTHENTICATED && !this.hydrated && this.items.length === 0) {
@@ -155,6 +169,108 @@
 
             get total() {
                 return this.items.reduce((total, item) => total + (parseFloat(item.price) * (parseInt(item.quantity) || 0)), 0);
+            },
+
+            _rebuildServerSnapshot() {
+                const snapshot = {};
+                this.items.forEach((item) => {
+                    const id = parseInt(item.id, 10);
+                    if (!Number.isNaN(id)) {
+                        snapshot[id] = Math.max(0, parseInt(item.quantity, 10) || 0);
+                    }
+                });
+                this.serverSnapshot = snapshot;
+            },
+
+            _persistCache() {
+                if (window.APP_AUTHENTICATED) {
+                    localStorage.setItem(authCartCacheKey, JSON.stringify(this.items));
+                } else {
+                    this.save();
+                }
+            },
+
+            _updateLineTotalsFromQuantity(item, quantity) {
+                const safeQty = Math.max(1, parseInt(quantity, 10) || 1);
+                const displayUnit = parseFloat(item.display_price ?? item.price) || 0;
+                const originalUnit = parseFloat(item.original_price ?? item.price) || 0;
+                item.quantity = safeQty;
+                item.line_total_after_discount = Number((displayUnit * safeQty).toFixed(2));
+                item.line_total = Number((originalUnit * safeQty).toFixed(2));
+            },
+
+            _applyLocalQuantity(cartId, quantity) {
+                const id = parseInt(cartId, 10);
+                const item = this.items.find((entry) => parseInt(entry.id, 10) === id);
+                if (!item) {
+                    return false;
+                }
+
+                this._updateLineTotalsFromQuantity(item, quantity);
+                this.items = [...this.items];
+                this.serverCount = this.items.reduce((total, entry) => total + (parseInt(entry.quantity, 10) || 0), 0);
+                this._persistCache();
+                return true;
+            },
+
+            _emitCartSyncError(message) {
+                window.dispatchEvent(new CustomEvent('cart-sync-error', {
+                    detail: {
+                        message: message || 'Failed to sync cart quantity.',
+                    },
+                }));
+            },
+
+            async _syncQuantityToDB(cartId, version) {
+                const id = parseInt(cartId, 10);
+                const latestVersion = parseInt(this.qtySyncVersions[id] || 0, 10);
+                if (latestVersion !== version) {
+                    return;
+                }
+
+                const qty = Math.max(1, parseInt(this.pendingQtyValues[id], 10) || 1);
+                try {
+                    const res = await fetch('/frontend/cart/update-qty', {
+                        method:  'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept':       'application/json',
+                            'X-CSRF-TOKEN': window.CSRF_TOKEN,
+                        },
+                        body: JSON.stringify({ cart_id: id, quantity: qty }),
+                    });
+
+                    let data = {};
+                    try {
+                        data = await res.json();
+                    } catch (_) {}
+
+                    if (!res.ok || data.success === false) {
+                        throw new Error(data.message || 'Failed to update quantity.');
+                    }
+
+                    if (parseInt(this.qtySyncVersions[id] || 0, 10) !== version) {
+                        return;
+                    }
+
+                    const appliedQty = Math.max(1, parseInt(data.applied_quantity, 10) || qty);
+                    this.serverSnapshot[id] = appliedQty;
+                    this._applyLocalQuantity(id, appliedQty);
+                    delete this.pendingQtyValues[id];
+                } catch (e) {
+                    if (parseInt(this.qtySyncVersions[id] || 0, 10) !== version) {
+                        return;
+                    }
+
+                    const fallbackQty = this.serverSnapshot[id];
+                    if (fallbackQty && fallbackQty > 0) {
+                        this._applyLocalQuantity(id, fallbackQty);
+                    } else {
+                        await this.loadFromDB();
+                    }
+
+                    this._emitCartSyncError(e?.message || 'Failed to update quantity.');
+                }
             },
 
             async ensureHydrated(force = false) {
@@ -182,12 +298,17 @@
                     const data = await res.json();
                     // Force reactivity by reassigning the array
                     this.items = [...(data.items || [])];
+                    this._persistCache();
                     this.serverCount = this.items.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
+                    this._rebuildServerSnapshot();
                 } catch (e) {
                     console.error('Cart load error:', e);
-                    // Fallback to localStorage if request fails
-                    this.items = JSON.parse(localStorage.getItem('cart_items') || '[]');
+                    // Fallback to cached cart if request fails
+                    this.items = window.APP_AUTHENTICATED
+                        ? [...parseJsonArray(localStorage.getItem(authCartCacheKey))]
+                        : [...parseJsonArray(localStorage.getItem('cart_items'))];
                     this.serverCount = this.items.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
+                    this._rebuildServerSnapshot();
                 }
             },
 
@@ -272,6 +393,15 @@
             },
 
             async removeItem(cartId) {
+                const id = parseInt(cartId, 10);
+                if (!Number.isNaN(id) && this.qtySyncTimers[id]) {
+                    clearTimeout(this.qtySyncTimers[id]);
+                    delete this.qtySyncTimers[id];
+                }
+                delete this.pendingQtyValues[id];
+                delete this.qtySyncVersions[id];
+                delete this.serverSnapshot[id];
+
                 if (window.APP_AUTHENTICATED) {
                     try {
                         const res = await fetch('/frontend/cart/remove', {
@@ -294,7 +424,7 @@
                 } else {
                     await this.ensureHydrated();
                     this.items = this.items.filter(item => item.id !== cartId);
-                    this.save();
+                    this._persistCache();
                 }
                 this.items = [...this.items];
             },
@@ -302,37 +432,42 @@
             async updateQuantity(cartId, qty) {
                 const q = Math.max(1, parseInt(qty) || 1);
                 if (window.APP_AUTHENTICATED) {
-                    try {
-                        const res = await fetch('/frontend/cart/update-qty', {
-                            method:  'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept':       'application/json',
-                                'X-CSRF-TOKEN': window.CSRF_TOKEN,
-                            },
-                            body: JSON.stringify({ cart_id: cartId, quantity: q }),
-                        });
-
-                        let data = {};
-                        try {
-                            data = await res.json();
-                        } catch (_) {}
-
-                        if (!res.ok || data.success === false) {
-                            throw new Error(data.message || 'Failed to update quantity.');
-                        }
-
-                        await this.loadFromDB();
-                    } catch (e) { 
-                        console.error('Update quantity error:', e);
-                        throw e;
+                    const id = parseInt(cartId, 10);
+                    if (Number.isNaN(id)) {
+                        return;
                     }
+
+                    const item = this.items.find((entry) => parseInt(entry.id, 10) === id);
+                    if (!item) {
+                        await this.loadFromDB();
+                        return;
+                    }
+
+                    if (typeof this.serverSnapshot[id] !== 'number') {
+                        this.serverSnapshot[id] = Math.max(1, parseInt(item.quantity, 10) || 1);
+                    }
+
+                    // Optimistic update: UI changes instantly, server sync runs in background.
+                    this._applyLocalQuantity(id, q);
+
+                    const nextVersion = (parseInt(this.qtySyncVersions[id] || 0, 10) + 1);
+                    this.qtySyncVersions[id] = nextVersion;
+                    this.pendingQtyValues[id] = q;
+
+                    if (this.qtySyncTimers[id]) {
+                        clearTimeout(this.qtySyncTimers[id]);
+                    }
+
+                    this.qtySyncTimers[id] = setTimeout(() => {
+                        delete this.qtySyncTimers[id];
+                        this._syncQuantityToDB(id, nextVersion);
+                    }, 280);
                 } else {
                     await this.ensureHydrated();
                     const item = this.items.find(i => i.id === cartId);
                     if (item) {
                         item.quantity = q;
-                        this.save();
+                        this._persistCache();
                         this.items = [...this.items];
                     }
                 }
@@ -343,7 +478,13 @@
                 this.items = [];
                 this.serverCount = 0;
                 this.hydrated = true;
+                this.serverSnapshot = {};
+                this.pendingQtyValues = {};
+                this.qtySyncVersions = {};
+                Object.values(this.qtySyncTimers).forEach((timerId) => clearTimeout(timerId));
+                this.qtySyncTimers = {};
                 localStorage.removeItem('cart_items');
+                localStorage.removeItem(authCartCacheKey);
             },
 
             save() {
@@ -366,6 +507,16 @@
                     }
                 });
 
+                if (window.APP_AUTHENTICATED) {
+                    // Warm cart data so first drawer open can render instantly.
+                    Alpine.store('cart').ensureHydrated();
+                }
+
+                window.addEventListener('cart-sync-error', (event) => {
+                    const message = event?.detail?.message || 'Failed to sync cart quantity.';
+                    this.notify(message, 'error');
+                });
+
                 if (Array.isArray(window.FRONTEND_FLASH_TOASTS) && window.FRONTEND_FLASH_TOASTS.length > 0) {
                     window.FRONTEND_FLASH_TOASTS.forEach((toast, idx) => {
                         setTimeout(() => {
@@ -380,6 +531,7 @@
             get cartCount() { return Alpine.store('cart').count; },
             get cartItems() { return Alpine.store('cart').items; },
             get cartTotal() { return Alpine.store('cart').total; },
+            get cartHydrating() { return Alpine.store('cart').hydrating; },
             get cartDisplayTotal() {
                 return this.cartItems.reduce((total, item) => {
                     const lineDiscounted = parseFloat(item.line_total_after_discount);
@@ -431,7 +583,6 @@
                 try {
                     await Alpine.store('cart').addItem(product, variant, quantity);
                     this.notify('Added to cart ✓');
-                    this.isCartOpen = true;
                 } catch (e) {
                     this.notify(e?.message || 'Add to cart failed.', 'error');
                 }
@@ -453,13 +604,34 @@
                     }
 
                     const item = this.cartItems.find(i => parseInt(i.id) === parseInt(cartId));
+                    if (!item) {
+                        await Alpine.store('cart').loadFromDB();
+                        return;
+                    }
+
+                    const moq = Math.max(1, parseInt(item.minimum_order_qty) || 1);
                     const stock = item && item.available_stock !== undefined && item.available_stock !== null
                         ? Math.max(0, parseInt(item.available_stock) || 0)
                         : null;
 
-                    if (stock !== null && val > stock) {
-                        this.notify(`Available stock: ${stock}`, 'error');
-                        val = stock;
+                    if (val > 0) {
+                        if (val < moq) {
+                            val = 0;
+                        } else if (val > moq) {
+                            val = Math.ceil(val / moq) * moq;
+                        }
+                    }
+
+                    if (stock !== null) {
+                        const maxAddable = Math.floor(stock / moq) * moq;
+                        if (maxAddable <= 0) {
+                            await this.removeFromCart(cartId);
+                            return;
+                        }
+                        if (val > maxAddable) {
+                            this.notify(`Available stock: ${maxAddable}`, 'error');
+                            val = maxAddable;
+                        }
                     }
 
                     if (val < 1) {

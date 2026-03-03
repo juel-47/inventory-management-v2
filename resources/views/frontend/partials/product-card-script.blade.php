@@ -281,7 +281,6 @@
                     const bodyEl = document.querySelector('[x-data*="globalApp"]');
                     if (bodyEl?._x_dataStack?.[0]) {
                         bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
-                        bodyEl._x_dataStack[0].isCartOpen = true;
                     }
                 } catch (e) {
                     console.error('Add to cart error:', e);

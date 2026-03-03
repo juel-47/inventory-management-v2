@@ -31,7 +31,10 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
         public array $productIds,
         public array $recipientIds,
         public string $source = 'created',
-        public ?int $actorId = null
+        public ?int $actorId = null,
+        public ?string $customSubject = null,
+        public ?string $customMessage = null,
+        public ?string $campaignId = null
     ) {
         $this->productIds = array_values(array_unique(array_map(
             static fn ($id): int => (int) $id,
@@ -45,13 +48,17 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
         )));
         sort($this->recipientIds);
 
-        $this->source = in_array($this->source, ['created', 'imported'], true) ? $this->source : 'created';
+        $this->source = in_array($this->source, ['created', 'imported', 'manual'], true) ? $this->source : 'created';
+        $this->customSubject = $this->normalizeNullableText($this->customSubject, 255);
+        $this->customMessage = $this->normalizeNullableText($this->customMessage, 5000);
+        $this->campaignId = $this->normalizeNullableText($this->campaignId, 255);
     }
 
     public function uniqueId(): string
     {
+        $campaignToken = $this->campaignId ?: 'auto';
         return 'send-product-announcement:' . $this->source . ':' .
-            sha1(json_encode($this->productIds)) . ':' . sha1(json_encode($this->recipientIds));
+            $campaignToken . ':' . sha1(json_encode($this->productIds)) . ':' . sha1(json_encode($this->recipientIds));
     }
 
     public function handle(): void
@@ -126,16 +133,19 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
                     source: $this->source,
                     totalProducts: $totalProducts,
                     products: $limitedRows,
-                    hiddenCount: $hiddenCount
+                    hiddenCount: $hiddenCount,
+                    customSubject: $this->customSubject,
+                    customMessage: $this->customMessage
                 ));
             } catch (\Throwable $e) {
                 // Allow retry for this recipient if current send failed.
                 Cache::forget($mailLockKey);
+                $errorMessage = (string) $e->getMessage();
                 Log::warning('Product announcement email failed', [
                     'user_id' => (int) $recipient->id,
                     'email' => (string) $recipient->email,
                     'source' => $this->source,
-                    'error' => $e->getMessage(),
+                    'error' => $errorMessage,
                 ]);
             }
         }
@@ -143,8 +153,9 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
 
     private function recipientAnnouncementLockKey(string $normalizedEmail): string
     {
+        $campaignToken = $this->campaignId ?: 'auto';
         return 'product-announcement:recipient:' . $this->source . ':' .
-            sha1(json_encode($this->productIds)) . ':' . sha1($normalizedEmail);
+            $campaignToken . ':' . sha1(json_encode($this->productIds)) . ':' . sha1($normalizedEmail);
     }
 
     private function formatRateLabel(string $type, mixed $rawValue): ?string
@@ -158,5 +169,15 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
 
         $formatted = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
         return $normalizedType === 'percent' ? $formatted . '%' : 'Flat ' . $formatted;
+    }
+
+    private function normalizeNullableText(?string $value, int $maxLength): ?string
+    {
+        $trimmed = trim((string) $value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        return mb_substr($trimmed, 0, $maxLength);
     }
 }

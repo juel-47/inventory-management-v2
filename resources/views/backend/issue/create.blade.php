@@ -20,10 +20,10 @@
                         <div class="row">
                             <div class="col-md-9">
                                 <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom-0 pb-0">
-                                        <h4 class="text-primary"><i class="fas fa-box-open mr-2"></i>Issue Items</h4>
-                                        <div class="d-flex align-items-center" style="gap: 15px;">
-                                            <div style="width: 250px;">
+                                    <div class="card-header bg-white border-bottom-0 pb-0">
+                                        <h4 class="text-primary mb-0"><i class="fas fa-box-open mr-2"></i>Issue Items</h4>
+                                        <div class="row mt-3">
+                                            <div class="col-12 col-md-6 col-lg-3 mb-2">
                                                 <select class="form-control select2" name="outlet_id" id="outlet_select" required>
                                                     <option value="" disabled selected>Select Outlet...</option>
                                                     @foreach($outletUsers as $outlet)
@@ -31,15 +31,15 @@
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            {{-- <div style="width: 250px;">
+                                            <div class="col-12 col-md-6 col-lg-3 mb-2">
                                                 <select class="form-control select2" id="import_request_select" data-placeholder="Import from Request...">
                                                     <option value=""></option>
                                                     @foreach($productRequests as $pr)
                                                         <option value="{{ $pr->id }}">#{{ $pr->request_no }} - {{ $pr->user->name }}</option>
                                                     @endforeach
                                                 </select>
-                                            </div> --}}
-                                            <div style="width: 250px;">
+                                            </div>
+                                            <div class="col-12 col-md-6 col-lg-4 mb-2">
                                                 <select class="form-control select2" id="import_order_select" data-placeholder="Import from Outlet/Shop Order...">
                                                     <option value=""></option>
                                                     @foreach($frontendOrders as $fo)
@@ -47,9 +47,11 @@
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            <button type="button" class="btn btn-primary" id="add_row_btn">
-                                                <i class="fas fa-plus"></i> Add Item
-                                            </button>
+                                            <div class="col-12 col-md-6 col-lg-2 mb-2 d-flex">
+                                                <button type="button" class="btn btn-primary btn-block" id="add_row_btn">
+                                                    <i class="fas fa-plus"></i> Add Item
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -172,20 +174,24 @@
         $(document).ready(function() {
             $('.select2').select2({ width: '100%', dropdownAutoWidth: true });
 
-            const importSourceItems = (data) => {
+            const importSourceItems = (data, sourceType, sourceId) => {
                 const items = data.items || [];
                 Swal.close();
                 $('#issue_items_body').empty();
                 rowCount = 0;
 
-                if (data.source_type === 'order') {
-                    $('#order_id_hidden').val($('#import_order_select').val());
+                if (sourceType === 'order') {
+                    $('#order_id_hidden').val(sourceId || '');
                     $('#product_request_id_hidden').val('');
-                    $('#import_request_select').val(null).trigger('change.select2');
+                    if ($('#import_request_select').length) {
+                        $('#import_request_select').val(null).trigger('change.select2');
+                    }
                 } else {
-                    $('#product_request_id_hidden').val($('#import_request_select').val());
+                    $('#product_request_id_hidden').val(sourceId || '');
                     $('#order_id_hidden').val('');
-                    $('#import_order_select').val(null).trigger('change.select2');
+                    if ($('#import_order_select').length) {
+                        $('#import_order_select').val(null).trigger('change.select2');
+                    }
                 }
 
                 if (data.user_id) {
@@ -203,12 +209,9 @@
                 });
             };
 
-            $('#import_request_select').on('change', function() {
-                const requestId = $(this).val();
-                if (!requestId) return;
-
+            const fetchSourceItems = (payload, title, sourceType, sourceId) => {
                 Swal.fire({
-                    title: 'Importing Request...',
+                    title: title,
                     text: 'Bringing items into the issue form.',
                     allowOutsideClick: false,
                     didOpen: () => { Swal.showLoading(); }
@@ -217,41 +220,37 @@
                 $.ajax({
                     url: "{{ route('admin.issues.get-request-items') }}",
                     method: "GET",
-                    data: { request_id: requestId },
-                    success: function(data) { importSourceItems(data); },
+                    data: payload,
+                    success: function(data) { importSourceItems(data, sourceType, sourceId); },
                     error: function() {
                         Swal.fire('Error', 'Failed to fetch request/order items.', 'error');
                     }
                 });
+            };
+
+            $('#import_request_select').on('change', function() {
+                const requestId = $(this).val();
+                if (!requestId) return;
+                fetchSourceItems({ request_id: requestId }, 'Importing Request...', 'request', requestId);
             });
 
             $('#import_order_select').on('change', function() {
                 const orderId = $(this).val();
                 if (!orderId) return;
-
-                Swal.fire({
-                    title: 'Importing Order...',
-                    text: 'Bringing order items into the issue form.',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading(); }
-                });
-
-                $.ajax({
-                    url: "{{ route('admin.issues.get-request-items') }}",
-                    method: "GET",
-                    data: { order_id: orderId },
-                    success: function(data) { importSourceItems(data); },
-                    error: function() {
-                        Swal.fire('Error', 'Failed to fetch request/order items.', 'error');
-                    }
-                });
+                fetchSourceItems({ order_id: orderId }, 'Importing Order...', 'order', orderId);
             });
 
             // Initialize logic: order_id takes priority, then request_id, else empty row
             if (orderIdParam) {
-                $('#import_order_select').val(orderIdParam).trigger('change');
+                if ($('#import_order_select').length) {
+                    $('#import_order_select').val(orderIdParam).trigger('change.select2');
+                }
+                fetchSourceItems({ order_id: orderIdParam }, 'Importing Order...', 'order', orderIdParam);
             } else if (requestIdParam) {
-                $('#import_request_select').val(requestIdParam).trigger('change');
+                if ($('#import_request_select').length) {
+                    $('#import_request_select').val(requestIdParam).trigger('change.select2');
+                }
+                fetchSourceItems({ request_id: requestIdParam }, 'Importing Request...', 'request', requestIdParam);
             } else {
                 addRow();
             }

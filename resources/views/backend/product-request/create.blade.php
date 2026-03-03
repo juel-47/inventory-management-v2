@@ -59,7 +59,7 @@
                                                 <h4 class="mb-0 text-white">Summary</h4>
                                             </div>
                                             <div class="card-body bg-light">
-                                                @if(Auth::user()->can('Manage Product Requests'))
+                                                @if(Auth::user()->hasRole('Admin'))
                                                     <div class="form-group mb-4">
                                                         <label class="font-weight-bold text-dark">Select Outlet / User</label>
                                                         <select name="user_id" class="form-control select2" required>
@@ -68,7 +68,7 @@
                                                                 <option value="{{ $u->id }}">{{ $u->outlet_name ?? $u->name }} ({{ $u->name }})</option>
                                                             @endforeach
                                                         </select>
-                                                        <small class="form-text text-muted">Select which outlet this request is for.</small>
+                                                        <small class="form-text text-muted">Select target Outlet/User. Stock will not be reduced on Request create.</small>
                                                     </div>
                                                     <hr>
                                                 @endif
@@ -500,3 +500,5 @@
         });
     </script>
 @endpush
+
+

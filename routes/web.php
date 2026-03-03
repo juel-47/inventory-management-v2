@@ -49,9 +49,8 @@ Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])
 Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
 Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
 Route::get('/products/live-search', [\App\Http\Controllers\Frontend\HomeController::class, 'liveSearch'])->name('frontend.products.live-search');
-// B2B flow: cart page route is disabled for now (drawer + checkout flow).
-// Uncomment when dedicated cart page is required again.
-// Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
+// Frontend cart page
+Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
 
 if (app()->environment('local')) {
     Route::get('/_preview/error/{code}', function (int $code) {
@@ -146,6 +145,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::get('products/import', [ProductController::class, 'importView'])->name('products.import.view');
     Route::post('products/import/preview', [ProductController::class, 'importPreview'])->name('products.import.preview');
     Route::post('products/import', [ProductController::class, 'importStore'])->name('products.import.store');
+    Route::get('products/announcement', [ProductController::class, 'announcementIndex'])->name('products.announcement.index');
+    Route::post('products/announcement/send', [ProductController::class, 'sendAnnouncement'])->name('products.announcement.send');
     Route::resource('products', ProductController::class);
 
     /** Product Type Routes */
@@ -163,7 +164,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::put('bookings/status-update', [BookingController::class, 'changeStatus'])->name('bookings.status-update');
     // Legacy route (Fallback to prevent RouteNotFoundException)
     Route::put('bookings/change-status', [BookingController::class, 'changeStatus'])->name('bookings.change-status');
-    
+
     Route::resource('bookings', BookingController::class);
 
     /** Purchase Routes */

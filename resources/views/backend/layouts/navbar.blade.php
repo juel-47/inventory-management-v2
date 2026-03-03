@@ -174,11 +174,15 @@
 
              <!-- Order Place -->
             @can('Manage Order Place')
-            <li class="nav-item dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*']) }}">
+            <li class="nav-item dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.product-requests.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-book"></i><span>Order Place</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}">All Order Place</a></li>
                     <li class="{{ setActive(['admin.orders.*']) }}"><a class="nav-link" href="{{ route('admin.orders.index') }}">Outlet/Shop Orders</a></li>
+                    @if(Auth::user()->hasRole('Admin'))
+                    <li class="{{ setActive(['admin.product-requests.index']) }}"><a class="nav-link" href="{{ route('admin.product-requests.index') }}">All Requests</a></li>
+                    <li class="{{ setActive(['admin.product-requests.create']) }}"><a class="nav-link" href="{{ route('admin.product-requests.create') }}">Create Request</a></li>
+                    @endif
                 </ul>
             </li>
             @endcan
@@ -261,7 +265,7 @@
 
         <!-- System -->
         @can('Administration')
-         <li class="nav-item dropdown {{ setActive(['admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.pricing-rules.*', 'admin.taxes.*', 'admin.discounts.*']) }}">
+         <li class="nav-item dropdown {{ setActive(['admin.permission.*', 'admin.role.*', 'admin.users.*', 'admin.settings.*', 'admin.pricing-rules.*', 'admin.taxes.*', 'admin.discounts.*', 'admin.products.announcement.*']) }}">
             <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-cogs"></i><span>System</span></a>
             <ul class="dropdown-menu">
             <li class="{{ setActive(['admin.users.*']) }}"><a class="nav-link" href="{{ route('admin.users.index') }}">Users</a></li>
@@ -270,6 +274,7 @@
             <li class="{{ setActive(['admin.pricing-rules.*']) }}"><a class="nav-link" href="{{ route('admin.pricing-rules.index') }}">Pricing Rules</a></li>
             <li class="{{ setActive(['admin.taxes.*']) }}"><a class="nav-link" href="{{ route('admin.taxes.index') }}">Tax / VAT</a></li>
             <li class="{{ setActive(['admin.discounts.*']) }}"><a class="nav-link" href="{{ route('admin.discounts.index') }}">Discount</a></li>
+            <li class="{{ setActive(['admin.products.announcement.*']) }}"><a class="nav-link" href="{{ route('admin.products.announcement.index') }}">Product Announcement</a></li>
             <li class="{{ setActive(['admin.settings.*']) }}"><a class="nav-link" href="{{ route('admin.settings.index') }}">Settings</a></li>
             </ul>
         </li>
@@ -327,3 +332,7 @@
       </li>
     </ul>
   </nav>
+
+
+
+

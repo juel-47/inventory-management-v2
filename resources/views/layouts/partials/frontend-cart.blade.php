@@ -81,18 +81,23 @@
                                                     {{-- Quantity Controls --}}
                                                     <div class="space-y-1">
                                                     <div class="flex items-center gap-2 bg-slate-50 rounded-lg p-1">
-                                                        <button @click="updateCartQty(item.id, item.quantity - 1)" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all">-</button>
+                                                        <button @click="updateCartQty(item.id, item.quantity - (Math.max(1, parseInt(item.minimum_order_qty) || 1)))" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all">-</button>
                                                         <input type="number"
                                                                :value="item.quantity"
-                                                               min="1"
-                                                               :max="item.available_stock ?? null"
+                                                               :min="Math.max(1, parseInt(item.minimum_order_qty) || 1)"
+                                                               :step="Math.max(1, parseInt(item.minimum_order_qty) || 1)"
+                                                               :max="item.available_stock !== undefined && item.available_stock !== null
+                                                                   ? (Math.floor((Math.max(0, parseInt(item.available_stock) || 0)) / (Math.max(1, parseInt(item.minimum_order_qty) || 1))) * (Math.max(1, parseInt(item.minimum_order_qty) || 1)))
+                                                                   : null"
                                                                @change="updateCartQty(item.id, $event.target.value)"
                                                                @keyup.enter="updateCartQty(item.id, $event.target.value)"
                                                                class="w-12 text-center bg-white border border-slate-200 rounded-md text-xs font-bold text-slate-900 p-0 h-6 focus:ring-1 focus:ring-indigo-200 focus:border-indigo-300"
                                                                title="Type quantity and press Enter">
-                                                        <button @click="updateCartQty(item.id, item.quantity + 1)"
-                                                                :disabled="item.available_stock !== undefined && item.available_stock !== null && item.quantity >= item.available_stock"
-                                                                :class="item.available_stock !== undefined && item.available_stock !== null && item.quantity >= item.available_stock
+                                                        <button @click="updateCartQty(item.id, item.quantity + (Math.max(1, parseInt(item.minimum_order_qty) || 1)))"
+                                                                :disabled="item.available_stock !== undefined && item.available_stock !== null
+                                                                    && item.quantity >= (Math.floor((Math.max(0, parseInt(item.available_stock) || 0)) / (Math.max(1, parseInt(item.minimum_order_qty) || 1))) * (Math.max(1, parseInt(item.minimum_order_qty) || 1)))"
+                                                                :class="item.available_stock !== undefined && item.available_stock !== null
+                                                                    && item.quantity >= (Math.floor((Math.max(0, parseInt(item.available_stock) || 0)) / (Math.max(1, parseInt(item.minimum_order_qty) || 1))) * (Math.max(1, parseInt(item.minimum_order_qty) || 1)))
                                                                     ? 'text-slate-300 cursor-not-allowed'
                                                                     : 'text-slate-400 hover:text-indigo-600 hover:bg-white'"
                                                                 class="w-6 h-6 flex items-center justify-center rounded-md transition-all">+</button>
@@ -110,8 +115,17 @@
                                         </li>
                                     </template>
 
+                                    <template x-if="cartHydrating && cartItems.length === 0">
+                                        <div class="text-center py-20">
+                                            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                                                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                            </div>
+                                            <p class="text-slate-500 font-medium">Loading cart...</p>
+                                        </div>
+                                    </template>
+
                                     {{-- Empty State --}}
-                                    <template x-if="cartItems.length === 0">
+                                    <template x-if="!cartHydrating && cartItems.length === 0">
                                         <div class="text-center py-20">
                                             <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                                 <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -125,7 +139,7 @@
                         </div>
                     </div>
 
-                    {{-- Cart Footer: Subtotal + Checkout --}}
+                    {{-- Cart Footer: Subtotal + View Cart --}}
                     <div x-show="cartItems.length > 0" class="border-t border-slate-100 px-6 py-8 bg-slate-50/50">
                         <div class="flex justify-between text-base font-bold text-slate-900">
                             <p>Subtotal</p>
@@ -139,9 +153,9 @@
                         <p class="mt-0.5 text-sm text-slate-500">Shipping and taxes calculated at checkout.</p>
                         <div class="mt-8">
                             @auth
-                            <a href="{{ route('checkout.index') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">Checkout</a>
+                            <a href="{{ route('cart.index') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">View Cart</a>
                         @else
-                            <a href="{{ route('login') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">Checkout</a>
+                            <a href="{{ route('cart.index') }}" class="flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all duration-300">View Cart</a>
                         @endauth
                         </div>
                         <div class="mt-6 flex justify-center text-center text-sm text-slate-500 uppercase tracking-widest font-bold">

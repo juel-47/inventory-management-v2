@@ -74,10 +74,10 @@
                                     <p class="mt-1 text-sm font-semibold text-slate-600">Login required</p>
                                 @endif
                             </div>
-                            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                            {{-- <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                                 <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">SKU</p>
                                 <p class="mt-1 line-clamp-1 text-sm font-semibold text-slate-700">{{ $productSku !== '' ? $productSku : 'Not set' }}</p>
-                            </div>
+                            </div> --}}
                             <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                                 <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">Product No</p>
                                 <p class="mt-1 line-clamp-1 text-sm font-semibold text-slate-700">{{ $productNumber !== '' ? $productNumber : 'Not set' }}</p>
@@ -566,7 +566,6 @@
                         const bodyEl = document.querySelector('[x-data*="globalApp"]');
                         if (bodyEl?._x_dataStack?.[0]) {
                             bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
-                            bodyEl._x_dataStack[0].isCartOpen = true;
                         }
                     } catch (e) {
                         console.error('Add to cart error:', e);

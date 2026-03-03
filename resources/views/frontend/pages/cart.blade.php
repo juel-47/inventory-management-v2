@@ -21,7 +21,13 @@
 
             <div class="grid gap-6 lg:grid-cols-[1.65fr_1fr]">
                 <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                    <template x-if="items.length === 0">
+                    <template x-if="initializing">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-10 text-center">
+                            <p class="text-base font-bold text-slate-800">Loading cart...</p>
+                        </div>
+                    </template>
+
+                    <template x-if="!initializing && items.length === 0">
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-10 text-center">
                             <p class="text-base font-bold text-slate-800">Your cart is empty.</p>
                             <p class="mt-1 text-sm text-slate-500">Add products from the catalog to create a B2B order.</p>
@@ -29,7 +35,7 @@
                         </div>
                     </template>
 
-                    <div class="space-y-3" x-show="items.length > 0">
+                    <div class="space-y-3" x-show="!initializing && items.length > 0">
                         <template x-for="item in items" :key="item.id">
                             <article class="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
                                 <div class="grid grid-cols-[84px_1fr] gap-3 sm:grid-cols-[92px_1fr] sm:gap-4">
@@ -152,7 +158,16 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('cartPage', (currencyIcon) => ({
                 currencyIcon,
+                initializing: true,
                 busyIds: [],
+
+                async init() {
+                    try {
+                        await Alpine.store('cart').ensureHydrated(true);
+                    } finally {
+                        this.initializing = false;
+                    }
+                },
 
                 get items() {
                     return Alpine.store('cart').items;
