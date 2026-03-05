@@ -107,8 +107,19 @@
                 <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" class="text-right">GRAND TOTAL</td>
                 <td class="text-right">{!! formatConverted($productRequest->total_amount) !!}</td>
             </tr>
+            @if($productRequest->order)
+            <tr>
+                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none;">PAID TOTAL</td>
+                <td class="text-right" style="color: #28a745; font-weight: bold;">{!! formatConverted($productRequest->order->paid_amount) !!}</td>
+            </tr>
+            <tr>
+                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none; font-weight: bold;">DUE BALANCE</td>
+                <td class="text-right" style="font-weight: bold; color: {{ $productRequest->order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 14px;">{!! formatConverted($productRequest->order->due_amount) !!}</td>
+            </tr>
+            @endif
         </tbody>
     </table>
+
 
     @if($productRequest->note)
     <div style="margin-top: 30px; padding: 10px; background: #f8f9fa; border-left: 3px solid #ddd;">

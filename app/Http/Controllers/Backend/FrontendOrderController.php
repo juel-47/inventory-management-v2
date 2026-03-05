@@ -26,7 +26,7 @@ class FrontendOrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['items.product', 'items.variant', 'items.vendor', 'user']);
+        $order->load(['items.product', 'items.variant', 'items.vendor', 'user', 'payments']);
         return view('backend.orders.show', compact('order'));
     }
 
@@ -39,6 +39,27 @@ class FrontendOrderController extends Controller
         $settings = GeneralSetting::first();
 
         return view('backend.orders.invoice', compact('order', 'settings'));
+    }
+
+    /**
+     * View order PI invoice in browser (HTML).
+     */
+    public function piInvoice(Order $order)
+    {
+        $order->load([
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant',
+            'user'
+        ]);
+        $settings = GeneralSetting::first();
+
+        return view('backend.orders.pi_invoice', compact('order', 'settings'));
     }
 
     /**

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Order Invoice #{{ $order->order_no }}</title>
+    <title>PI Invoice #{{ $order->order_no }}</title>
     <style>
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
@@ -175,14 +175,13 @@
     <div class="container">
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-print">Print Now</button>
-            <a href="{{ route('admin.orders.download-invoice', $order->id) }}" class="btn btn-download">Download PDF</a>
             <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
             <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
         </div>
 
         <div class="header clearfix">
             <div class="invoice-title">
-                <h1>Outlet/Shop Order</h1>
+                <h1>PI Invoice</h1>
                 <p><strong>Ref:</strong> #{{ $order->order_no }}</p>
                 <div style="margin-top: 10px;">
                     <span class="badge {{ $statusClass }}">{{ ucfirst($order->status) }}</span>
@@ -204,7 +203,7 @@
                     <strong>{{ $order->billing_name }}</strong><br>
                     Outlet/Shop: {{ $order->billing_outlet_name ?: ($order->user->outlet_name ?? 'N/A') }}<br>
                     Phone: {{ $order->billing_phone }}<br>
-                    Email: {{ $order->billing_email }}
+                    Email: {{ $order->pi_email ?: $order->billing_email }}
                 </p>
             </div>
             <div class="box-right">
@@ -221,17 +220,42 @@
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
-                    <th style="width: 12%;">Image</th>
-                    <th style="width: 33%;">Product</th>
-                    <th style="width: 17%;">Variant</th>
-                    <th style="width: 10%;" class="text-right">Qty</th>
-                    <th style="width: 12%;" class="text-right">Unit</th>
-                    <th style="width: 13%;" class="text-right">Total</th>
+                    <th style="width: 15%;">Image</th>
+                    <th style="width: 20%;">Product Information</th>
+                    <th style="width: 10%;">Product No</th>
+                    <th style="width: 15%;">Category</th>
+                    <th style="width: 10%;">Unit</th>
+                    <th style="width: 15%;">Variants Ordered</th>
+                    <th style="width: 10%;" class="text-right">Total Qty</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->items as $index => $item)
+                @php
+                    $groupedItems = [];
+                    foreach($order->items as $item) {
+                        $productId = $item->product_id;
+                        if (!isset($groupedItems[$productId])) {
+                            $groupedItems[$productId] = [
+                                'first_item' => $item,
+                                'total_qty' => 0,
+                                'variants' => []
+                            ];
+                        }
+                        $groupedItems[$productId]['total_qty'] += $item->quantity;
+                        $variantName = $item->variant_label ?: 'Standard';
+                        
+                        if (!isset($groupedItems[$productId]['variants'][$variantName])) {
+                            $groupedItems[$productId]['variants'][$variantName] = 0;
+                        }
+                        $groupedItems[$productId]['variants'][$variantName] += $item->quantity;
+                    }
+                    $index = 0;
+                @endphp
+
+                @foreach($groupedItems as $productId => $group)
                     @php
+                        $item = $group['first_item'];
+                        $index++;
                         $imagePath = (string) ($item->product_image ?? '');
                         $imageUrl = null;
                         if ($imagePath !== '') {
@@ -247,7 +271,7 @@
                         }
                     @endphp
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $index }}</td>
                         <td class="image-cell">
                             @if($imageUrl)
                                 <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
@@ -257,39 +281,89 @@
                         </td>
                         <td>
                             <strong>{{ $item->product_name }}</strong><br>
-                            <small>{{ $item->category_name ?: 'General' }}</small>
+
+                            @if($item->product)
+                                @if($item->product->slug)
+                                    <small><strong>Slug:</strong> {{ $item->product->slug }}</small><br>
+                                @endif
+                                @if($item->product->brand)
+                                    <small><strong>Brand:</strong> {{ $item->product->brand->name }}</small><br>
+                                @endif
+                                @if($item->product->vendor)
+                                    <small><strong>Vendor:</strong> {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
+                                @endif
+                                @if($item->product->barcode)
+                                    <small><strong>Barcode:</strong> {{ $item->product->barcode }}</small><br>
+                                @endif
+                                @if($item->product->self_number)
+                                    <small><strong>Shelf No:</strong> {{ $item->product->self_number }}</small><br>
+                                @endif
+                                @if($item->product->productType)
+                                    <small><strong>Type:</strong> {{ $item->product->productType->name }}</small><br>
+                                @endif
+                                @if($item->product->custom_label)
+                                    <small><strong>Label:</strong> {{ $item->product->custom_label }}</small><br>
+                                @endif
+                                @if($item->product->long_description)
+                                    <div style="font-size: 11px; margin-top: 5px; color: #555;">
+                                        <strong>Description:</strong><br>
+                                        {!! strip_tags($item->product->long_description) !!}
+                                    </div>
+                                @endif
+                            @else
+                                <small>No extra product details.</small>
+                            @endif
                         </td>
-                        <td>{{ $item->variant_label ?: 'Standard' }}</td>
-                        <td class="text-right">{{ $item->quantity }}</td>
-                        <td class="text-right">{{ $currency }}{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-right">{{ $currency }}{{ number_format($item->line_total, 2) }}</td>
+                        
+                        <!-- Product No Column -->
+                        <td>
+                            @if($item->product && $item->product->product_number)
+                                <small>{{ $item->product->product_number }}</small>
+                            @else
+                                <small>N/A</small>
+                            @endif
+                        </td>
+                        
+                        <!-- Category Column -->
+                        <td>
+                            @if($item->product)
+                                <small><strong>Main:</strong> {{ $item->product->category->name ?? 'N/A' }}</small><br>
+                                @if($item->product->subCategory)
+                                    <small><strong>Sub:</strong> {{ $item->product->subCategory->name }}</small><br>
+                                @endif
+                                @if($item->product->childCategory)
+                                    <small><strong>Child:</strong> {{ $item->product->childCategory->name }}</small><br>
+                                @endif
+                            @else
+                                <small>{{ $item->category_name ?: 'General' }}</small>
+                            @endif
+                        </td>
+                        
+                        <!-- Unit Column -->
+                        <td>
+                            @if($item->product && $item->product->unit)
+                                <small>{{ $item->product->unit->name }}</small>
+                            @else
+                                <small>N/A</small>
+                            @endif
+                        </td>
+
+                        <!-- Variants Column -->
+                        <td>
+                            @if(count($group['variants']) > 0)
+                                @foreach($group['variants'] as $vName => $vQty)
+                                    <div style="margin-bottom: 3px;">
+                                        <span class="badge badge-info" style="color: #0f0f0f; font-size: 11px;">{{ $vName }} &times; {{ $vQty }}</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                <small>Standard</small>
+                            @endif
+                        </td>
+
+                        <td class="text-right"><strong>{{ $group['total_qty'] }}</strong></td>
                     </tr>
                 @endforeach
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Subtotal</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">{{ $order->tax_label ?: 'VAT / Tax' }}</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Discount</td>
-                    <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Grand Total</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->total_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
-                    <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 5px 12px;">{{ $currency }}{{ number_format($order->paid_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6" style="text-align: right; border: none; font-weight: bold; padding: 8px 12px;">DUE BALANCE</td>
-                    <td style="text-align: right; font-weight: bold; color: {{ $order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 16px; padding: 8px 12px;">{{ $currency }}{{ number_format($order->due_amount, 2) }}</td>
-                </tr>
-
             </tbody>
         </table>
 

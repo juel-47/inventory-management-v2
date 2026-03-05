@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\DataTables\ProductRequestDataTable;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryStock;
 use App\Models\Product;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Support\Str;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+
 
 class ProductRequestController extends Controller implements HasMiddleware
 {
@@ -27,20 +28,11 @@ class ProductRequestController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ProductRequestDataTable $dataTable)
     {
-        $query = ProductRequest::with(['user'])->orderBy('id', 'desc');
-        
-        // If the user cannot manage requests, they only see their own.
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests')) {
-            $query->where('user_id', Auth::id());
-        }
-
-        $productRequests = $query->get();
-        return view('backend.product-request.index', compact('productRequests'));
+        return $dataTable->render('backend.product-request.index');
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -91,8 +83,6 @@ class ProductRequestController extends Controller implements HasMiddleware
         DB::beginTransaction();
         try {
             $productRequest = new ProductRequest();
-            $productRequest->request_no = 'REQ-' . strtoupper(Str::random(10));
-            
             $targetUser = User::role(['Outlet User', 'User'])
                 ->where('status', 1)
                 ->whereKey((int) $request->input('user_id'))
@@ -102,6 +92,8 @@ class ProductRequestController extends Controller implements HasMiddleware
                 throw new \InvalidArgumentException('Please select a valid active Outlet/User.');
             }
 
+            $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ-' : 'REQ-';
+            $productRequest->request_no = $prefix . strtoupper(Str::random(10));
             $productRequest->user_id = (int) $targetUser->id;
             $productRequest->status = 'approved';
             $productRequest->admin_note = 'Created by admin. Stock will be deducted only after Issue is created.';
@@ -158,10 +150,69 @@ class ProductRequestController extends Controller implements HasMiddleware
             $productRequest->total_amount = $totalAmount;
             $productRequest->save();
 
+            // Create Order record for Due Amount tracking
+            // Use same number as request for clarity
+            $orderNo = $productRequest->request_no;
+            
+            $order = \App\Models\Order::create([
+                'order_no' => $orderNo,
+                'user_id' => $targetUser->id,
+                'status' => 'pending',
+                'shipping_method' => 'admin_request',
+                'billing_name' => $targetUser->name,
+                'billing_email' => $targetUser->email,
+                'billing_phone' => $targetUser->phone,
+                'billing_address' => $targetUser->address,
+                'billing_outlet_name' => $targetUser->outlet_name,
+                'total_amount' => $totalAmount,
+                'due_amount' => $totalAmount,
+                'paid_amount' => 0,
+                'payment_status' => 'pending',
+                'placed_at' => now(),
+            ]);
+
+
+            foreach ($request->items as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                $unitPrice = 0;
+                $variantLabel = null;
+                if (!empty($item['variant_id'])) {
+                    $variant = \App\Models\ProductVariant::with(['color', 'size'])->find($item['variant_id']);
+                    if ($variant) {
+                        $variantLabel = trim(($variant->color->name ?? '') . ' ' . ($variant->size->name ?? ''));
+                        $unitPrice = ($variant->outlet_price > 0) ? $variant->outlet_price : $variant->price;
+                    }
+                }
+                if ($unitPrice <= 0) {
+                    $unitPrice = ($product->outlet_price > 0) ? $product->outlet_price : $product->price;
+                }
+
+                \App\Models\OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'variant_id' => $item['variant_id'] ?? null,
+                    'vendor_id' => $product->vendor_id,
+                    'product_name' => $product->name,
+                    'category_name' => $product->category->name ?? null,
+                    'variant_label' => $variantLabel,
+                    'product_image' => $product->thumb_image,
+                    'unit_price' => $unitPrice,
+                    'quantity' => $item['qty'],
+                    'line_total' => $item['qty'] * $unitPrice,
+                ]);
+
+            }
+
+            // Link Order to Product Request
+            $productRequest->order_id = $order->id;
+            $productRequest->save();
+
             DB::commit();
-            toastr()->success('Product Request created successfully! Stock will be deducted after Issue creation.');
+
+            toastr()->success('Product Request and Order created successfully! Stock can be managed via Issue creation.');
             session()->flash('clear_request_basket', true);
             return redirect()->route('admin.product-requests.index');
+
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -175,7 +226,8 @@ class ProductRequestController extends Controller implements HasMiddleware
      */
     public function show(string $id)
     {
-        $productRequest = ProductRequest::with(['user', 'items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
+        $productRequest = ProductRequest::with(['user', 'order.payments', 'items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
+
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -271,6 +323,15 @@ class ProductRequestController extends Controller implements HasMiddleware
                 'status' => $request->status,
                 'admin_note' => $request->admin_note
             ]);
+
+            // Sync Order status if linked
+            if ($productRequest->order) {
+                // Determine order status based on request status
+                // Laravel Order statuses: pending, approved, processing, shipped, completed, cancelled, rejected
+                $orderStatus = $request->status;
+                $productRequest->order->update(['status' => $orderStatus]);
+            }
+
             
             DB::commit();
             toastr()->success('Product Request updated successfully!');

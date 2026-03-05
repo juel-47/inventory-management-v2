@@ -16,6 +16,7 @@ class ProductRequest extends Model
         'required_days',
         'total_qty',
         'total_amount',
+        'order_id',
         'note',
         'admin_note'
     ];
@@ -25,7 +26,13 @@ class ProductRequest extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
     public function items()
+
     {
         return $this->hasMany(ProductRequestItem::class);
     }
