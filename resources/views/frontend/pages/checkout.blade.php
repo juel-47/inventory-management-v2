@@ -83,6 +83,10 @@
                                 <input type="email" name="email" value="{{ old('email', $user->email) }}" class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-indigo-200" />
                             </div>
                             <div>
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">PI Email (Optional)</label>
+                                <input type="email" name="pi_email" value="{{ old('pi_email') }}" class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-indigo-200" placeholder="For Product Info Invoice" />
+                            </div>
+                            <div>
                                 <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Phone</label>
                                 <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-indigo-200" />
                             </div>

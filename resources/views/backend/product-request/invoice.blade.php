@@ -50,6 +50,7 @@
             .btn-print { background: #ffc107; color: #000; }
             .btn-download { background: #3abaf4; color: #fff; }
             .btn-back { background: #6777ef; color: #fff; }
+            .btn-close { background: #6c757d; color: #fff; }
         }
 
         @media print {
@@ -161,6 +162,7 @@
             <button onclick="window.print()" class="btn btn-print">Print Now</button>
             <a href="{{ route('admin.product-requests.download-invoice', $productRequest->id) }}" class="btn btn-download">Download PDF</a>
             <a href="{{ route('admin.product-requests.index') }}" class="btn btn-back">Back to List</a>
+            <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
         </div>
 
         <div class="header clearfix">
@@ -247,9 +249,20 @@
                         <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right;">GRAND TOTAL</td>
                         <td style="text-align: right;">{!! formatConverted($productRequest->total_amount) !!}</td>
                     </tr>
+                    @if($productRequest->order)
+                    <tr>
+                        <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
+                        <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 5px 12px;">{!! formatConverted($productRequest->order->paid_amount) !!}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none; font-weight: bold; padding: 8px 12px;">DUE BALANCE</td>
+                        <td style="text-align: right; font-weight: bold; color: {{ $productRequest->order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 16px; padding: 8px 12px;">{!! formatConverted($productRequest->order->due_amount) !!}</td>
+                    </tr>
+                    @endif
                 </tbody>
             </table>
         </div>
+
 
         @if($productRequest->note)
         <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-left: 4px solid #ddd;">

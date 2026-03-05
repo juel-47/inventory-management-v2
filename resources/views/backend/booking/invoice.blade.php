@@ -63,7 +63,8 @@
                 color: #fff;
             }
 
-            .btn-back {
+            .btn-back { display: none; }
+            .btn-close {
                 background: #6c757d;
                 color: #fff;
             }
@@ -213,7 +214,7 @@
             <button onclick="window.print()" class="btn btn-print">Print Now</button>
             <a href="{{ route('admin.bookings.download-pdf', $targetBooking->id) }}" class="btn btn-download">Download
                 PDF</a>
-            <button onclick="window.close()" class="btn btn-back">Close</button>
+            <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
         </div>
 
         <div class="header clearfix">

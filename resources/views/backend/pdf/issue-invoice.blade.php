@@ -215,6 +215,7 @@
             .btn-secondary { background: #95a5a6; color: #fff; }
             .btn-info { background: #3498db; color: #fff; }
             .btn-primary { background: #2c3e50; color: #fff; }
+            .btn-close { background: #6c757d; color: #fff; }
         }
     </style>
 </head>
@@ -224,6 +225,7 @@
         <a href="{{ route('admin.issues.index') }}" class="btn btn-secondary">Back to List</a>
         <a href="#" onclick="window.print(); return false;" class="btn btn-info">Print Now</a>
         <a href="{{ route('admin.issues.download-invoice', $issue->id) }}" class="btn btn-primary">Download PDF</a>
+        <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
     </div>
     @endif
 

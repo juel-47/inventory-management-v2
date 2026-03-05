@@ -50,6 +50,19 @@
                 </li>
             @endcanany
 
+             @can('Manage Inventory')
+            <li class="menu-header">Inventory System</li>
+            <li class="dropdown {{ setActive(['admin.issues.*', 'admin.reports.stock', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
+                <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-warehouse"></i>
+                    <span>Inventory</span></a>
+                <ul class="dropdown-menu">
+                     <li class="{{ setActive(['admin.inventory-reports.index']) }}"><a class="nav-link" href="{{ route('admin.inventory-reports.index') }}"><i class="fas fa-boxes"></i> Current Stock</a></li>
+                     <li class="{{ setActive(['admin.issues.index']) }}"><a class="nav-link" href="{{ route('admin.issues.index') }}"><i class="fas fa-dolly"></i> Stock Issues</a></li>
+                     <li class="{{ setActive(['admin.stock-ledger.index']) }}"><a class="nav-link" href="{{ route('admin.stock-ledger.index') }}"><i class="fas fa-history"></i> Stock Ledger</a></li>
+                </ul>
+            </li>
+            @endcan
+
             @canany(['Manage Order Place', 'Manage Order Receive'])
             @can('Manage Order Place')
              <li class="menu-header">Order Place</li>
@@ -127,6 +140,19 @@
             </li>
             @endcan
 
+            @if(Auth::user()->hasRole('Admin'))
+            <li class="menu-header">Accounts</li>
+            <li class="dropdown {{ setActive(['admin.accounts.*']) }}">
+                <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-file-invoice-dollar"></i>
+                    <span>Accounts</span></a>
+                <ul class="dropdown-menu">
+                    <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}"><i class="fas fa-list-ul"></i> Transaction History</a></li>
+                    <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}"><i class="fas fa-plus-circle"></i> Record Payment</a></li>
+                    <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}"><i class="fas fa-exclamation-circle"></i> Due Orders</a></li>
+                </ul>
+            </li>
+            @endif
+
             @canany(['Manage Brands', 'Manage Vendors'])
             <li class="menu-header">Brands & Vendors</li>
             @can('Manage Brands')
@@ -151,18 +177,7 @@
             @endcanany
 
 
-            @can('Manage Inventory')
-            <li class="menu-header">Inventory System</li>
-            <li class="dropdown {{ setActive(['admin.issues.*', 'admin.reports.stock', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
-                <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-warehouse"></i>
-                    <span>Inventory Plane</span></a>
-                <ul class="dropdown-menu">
-                     <li class="{{ setActive(['admin.inventory-reports.index']) }}"><a class="nav-link" href="{{ route('admin.inventory-reports.index') }}"><i class="fas fa-boxes"></i> Current Stock</a></li>
-                     <li class="{{ setActive(['admin.issues.index']) }}"><a class="nav-link" href="{{ route('admin.issues.index') }}"><i class="fas fa-dolly"></i> Stock Issues</a></li>
-                     <li class="{{ setActive(['admin.stock-ledger.index']) }}"><a class="nav-link" href="{{ route('admin.stock-ledger.index') }}"><i class="fas fa-history"></i> Stock Ledger</a></li>
-                </ul>
-            </li>
-            @endcan
+           
 
             @can('Administration')
             <li class="menu-header">System</li>

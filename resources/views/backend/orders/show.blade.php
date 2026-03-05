@@ -132,6 +132,51 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Payment History (Admin Only) --}}
+                    @role('Admin')
+                    <div class="card">
+                        <div class="card-header border-bottom">
+                            <h4><i class="fas fa-history mr-2"></i>Payment History</h4>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Method</th>
+                                            <th>Transaction ID</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($order->payments as $payment)
+                                            <tr>
+                                                <td>{{ $payment->created_at->format('d M, Y h:i A') }}</td>
+                                                <td><span class="badge badge-info">{{ strtoupper($payment->payment_method) }}</span></td>
+                                                <td>{{ $payment->transaction_id ?? 'N/A' }}</td>
+                                                <td class="text-right font-weight-bold">{{ number_format($payment->amount, 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center py-3 text-muted">No payments recorded yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                    @if($order->payments->count() > 0)
+                                        <tfoot class="bg-light">
+                                            <tr>
+                                                <td colspan="3" class="text-right font-weight-bold">Total Paid</td>
+                                                <td class="text-right font-weight-bold text-success">{{ number_format($order->paid_amount, 2) }}</td>
+                                            </tr>
+                                        </tfoot>
+                                    @endif
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @endrole
                 </div>
 
                 <div class="col-12 col-lg-4">
@@ -180,6 +225,42 @@
                         </div>
                     </div>
 
+                    {{-- Payment Summary & History (Admin Only) --}}
+                    @role('Admin')
+                    <div class="card card-success mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4><i class="fas fa-money-bill-wave mr-2"></i>Payment Summary</h4>
+                            @if($order->due_amount > 0)
+                                <a href="{{ route('admin.accounts.record-payment', ['order_no' => $order->order_no]) }}" class="btn btn-sm btn-outline-white">
+                                    <i class="fas fa-plus mr-1"></i> Record via Account Module
+                                </a>
+                            @endif
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6 border-right">
+                                    <div class="text-muted small text-uppercase font-weight-bold">Paid</div>
+                                    <div class="h5 font-weight-bold text-success mb-0">{{ number_format($order->paid_amount, 2) }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small text-uppercase font-weight-bold">Due</div>
+                                    <div class="h5 font-weight-bold text-danger mb-0">{{ number_format($order->due_amount, 2) }}</div>
+                                </div>
+                            </div>
+                            
+                            @if($order->due_amount <= 0 && $order->total_amount > 0)
+                                <div class="alert alert-success text-center py-2 mb-0 mt-3">
+                                    <i class="fas fa-check-circle mr-1"></i> Full Paid
+                                </div>
+                            @elseif($order->due_amount > 0)
+                                <div class="text-center mt-3">
+                                    <span class="badge badge-warning">Partial Payment Pending</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endrole
+
                     <div class="card card-warning">
                         <div class="card-header">
                             <h4><i class="fas fa-user-cog mr-2"></i>Actions</h4>
@@ -197,7 +278,7 @@
                                     <select name="status" class="form-control" {{ $isLockedStatus ? 'disabled' : '' }}>
                                         <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="approved" {{ $order->status === 'approved' ? 'selected' : '' }}>Approve (Create Issue)</option>
-                                        <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancel</option>
+                                        <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                         @if(!in_array($order->status, ['pending', 'approved', 'cancelled'], true))
                                             <option value="{{ $order->status }}" selected>{{ ucfirst($order->status) }}</option>
                                         @endif

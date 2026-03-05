@@ -29,8 +29,8 @@
     {{ $attributes->merge(['class' => 'group relative flex flex-col rounded-3xl border border-slate-100 bg-white p-4 transition-all duration-300 hover:shadow-xl']) }}>
     <div class="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-slate-50">
         @if ($resolvedDisplayPath !== '')
-            <img src="{{ $resolvedDisplayPath }}" alt="{{ $productName }}"
-                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105">
+            <a href="{{ $resolvedDetailsUrl }}"><img src="{{ $resolvedDisplayPath }}" alt="{{ $productName }}"
+                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"></a>
         @else
             <div class="flex h-full w-full items-center justify-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 No image uploaded
@@ -207,7 +207,7 @@
             @else
                 <div class="flex flex-col">
                     <span class="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Price</span>
-                    <span class="rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-500">Login</span>
+                    <span class="rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-500"><a href="{{route('login')}}">Login</a></span>
                 </div>
             @endauth
         </div>

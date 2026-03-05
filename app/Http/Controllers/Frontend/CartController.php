@@ -352,6 +352,7 @@ class CartController extends Controller
             'phone' => 'nullable|string|max:50|required_unless:ship_different,1',
             'address' => 'nullable|string|max:500|required_unless:ship_different,1',
             'outlet_name' => 'nullable|string|max:255',
+            'pi_email' => 'nullable|email|max:255',
             'saved_form_id' => 'nullable|integer',
             'ship_different' => 'nullable|boolean',
             'shipping_first_name' => 'nullable|string|max:255|required_if:ship_different,1',
@@ -392,6 +393,7 @@ class CartController extends Controller
         $billingOutletName = $shipDifferent
             ? ($validated['shipping_outlet_name'] ?? null)
             : ($validated['outlet_name'] ?? null);
+        $piEmail = $validated['pi_email'] ?? null;
 
         DB::beginTransaction();
         try {
@@ -424,6 +426,7 @@ class CartController extends Controller
                 'billing_phone' => $billingPhone,
                 'billing_address' => $billingAddress,
                 'billing_outlet_name' => $billingOutletName,
+                'pi_email' => $piEmail,
                 'shipping_name' => $shipDifferent ? $shippingName : null,
                 'shipping_email' => $shipDifferent ? ($validated['shipping_email'] ?? null) : null,
                 'shipping_phone' => $shipDifferent ? ($validated['shipping_phone'] ?? null) : null,
@@ -437,6 +440,9 @@ class CartController extends Controller
                 'tax_amount' => $summary['tax_amount'],
                 'discount_amount' => $summary['discount_amount'],
                 'total_amount' => $summary['total'],
+                'paid_amount' => 0,
+                'due_amount' => $summary['total'],
+                'payment_status' => 'pending',
                 'tax_label' => $summary['tax_label'],
                 'vat_rate' => $summary['vat_rate'],
                 'placed_at' => now(),

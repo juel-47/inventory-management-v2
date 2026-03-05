@@ -3,6 +3,7 @@
 namespace App\DataTables;
 
 use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -60,16 +61,22 @@ class OrderDataTable extends DataTable
             })
             ->addColumn('action', function ($query) {
                 $view = "<a href='" . route('admin.orders.show', $query->id) . "' class='btn btn-primary btn-sm mr-1' title='Control Panel'><i class='fas fa-eye'></i></a>";
+                $pi_invoice = "<a href='" . route('admin.orders.pi-invoice', $query->id) . "' target='_blank' class='btn btn-success btn-sm mr-1' title='PI Invoice'>PI</a>";
                 $invoice = "<a href='" . route('admin.orders.view-invoice', $query->id) . "' target='_blank' class='btn btn-warning btn-sm mr-1' title='View Invoice'><i class='fas fa-file-invoice'></i></a>";
                 $download = "<a href='" . route('admin.orders.download-invoice', $query->id) . "' class='btn btn-info btn-sm mr-1' title='Download PDF'><i class='fas fa-download'></i></a>";
                 $delete = "<a href='" . route('admin.orders.destroy', $query->id) . "' class='btn btn-danger btn-sm delete-item' title='Delete'><i class='fas fa-trash'></i></a>";
                 $issue = '';
-                $canCreateIssue = auth()->check() && auth()->user()->can('Manage Inventory');
+                $canCreateIssue = Auth::check() && Auth::user()->hasRole('Admin');
                 if ($canCreateIssue && strtolower((string) $query->status) === 'approved') {
                     $issue = "<a href='" . route('admin.issues.create', ['order_id' => $query->id]) . "' class='btn btn-success btn-sm' title='Create Stock Issue'><i class='fas fa-box-open'></i></a>";
                 }
 
-                return $invoice . $download . $view . $issue . ' ' . $delete;
+                $pay = '';
+                if (Auth::user()->hasRole('Admin') && (float)$query->due_amount > 0) {
+                    $pay = "<a href='" . route('admin.accounts.record-payment', ['order_no' => $query->order_no]) . "' class='btn btn-dark btn-sm mr-1' title='Record Payment'><i class='fas fa-money-bill-wave'></i></a>";
+                }
+
+                return $pay . $pi_invoice . $invoice . $download . $view . $issue . ' ' . $delete;
             })
             ->rawColumns(['customer', 'items_count', 'status_badge', 'action'])
             ->setRowId('id');
@@ -82,10 +89,15 @@ class OrderDataTable extends DataTable
      */
     public function query(Order $model): QueryBuilder
     {
-        return $model->newQuery()
+        $query = $model->newQuery()
             ->with('user')
-            ->withCount('items')
-            ->orderByDesc('id');
+            ->withCount('items');
+
+        if (request()->filled('status')) {
+            $query->where('status', request()->status);
+        }
+
+        return $query->orderByDesc('id');
     }
 
     /**
@@ -96,7 +108,9 @@ class OrderDataTable extends DataTable
         return $this->builder()
             ->setTableId('order-table')
             ->columns($this->getColumns())
-            ->minifiedAjax()
+            ->ajax([
+                'data' => 'function(d) { d.status = $("#filter_status").val(); }'
+            ])
             ->orderBy(0)
             ->selectStyleSingle()
             ->buttons([
@@ -125,7 +139,7 @@ class OrderDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
-                ->width(180)
+                ->width(200)
                 ->addClass('text-center'),
         ];
     }

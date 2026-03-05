@@ -17,6 +17,7 @@ class Order extends Model
         'billing_phone',
         'billing_address',
         'billing_outlet_name',
+        'pi_email',
         'shipping_name',
         'shipping_email',
         'shipping_phone',
@@ -30,6 +31,9 @@ class Order extends Model
         'tax_amount',
         'discount_amount',
         'total_amount',
+        'paid_amount',
+        'due_amount',
+        'payment_status',
         'tax_label',
         'vat_rate',
         'placed_at',
@@ -41,6 +45,8 @@ class Order extends Model
         'tax_amount' => 'float',
         'discount_amount' => 'float',
         'total_amount' => 'float',
+        'paid_amount' => 'float',
+        'due_amount' => 'float',
         'vat_rate' => 'float',
         'placed_at' => 'datetime',
     ];
@@ -53,6 +59,11 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(OrderPayment::class);
     }
 }
 

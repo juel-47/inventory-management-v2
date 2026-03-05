@@ -719,49 +719,81 @@
                 }, 300); 
             });
 
+            // Cache for category data
+            const categoryCache = {
+                sub: {},
+                child: {}
+            };
+
             // Category Change
-            $('body').on('change', '#category', function() {
+            $('body').on('change', '#category', function(e, isInitialLoad = false) {
                 let id = $(this).val();
                 
-                // Clear and reset sub/child categories
-                $('#sub_category').html('<option value="">Sub Category</option>').trigger('change');
-                $('#child_category').html('<option value="">Child Category</option>').trigger('change');
+                // Clear and reset sub/child categories silently without triggering 'change' event
+                 // We don't want to trigger child change events that fetch products again
+                $('#sub_category').html('<option value="">--Sub Category--</option>');
+                $('#child_category').html('<option value="">--Child Category--</option>');
 
                 if (id) {
-                    $.ajax({
-                        url: "{{ route('admin.get-subCategories') }}",
-                        method: 'GET',
-                        data: { id: id },
-                        success: function(data) {
-                            $.each(data, function(i, item) {
-                                $('#sub_category').append(`<option value="${item.id}">${item.name}</option>`);
-                            });
-                        }
-                    });
+                    if (categoryCache.sub[id]) {
+                        // Use cached data
+                        $.each(categoryCache.sub[id], function(i, item) {
+                            $('#sub_category').append(`<option value="${item.id}">${item.name}</option>`);
+                        });
+                    } else {
+                        // Fetch from server and cache
+                        $.ajax({
+                            url: "{{ route('admin.get-subCategories') }}",
+                            method: 'GET',
+                            data: { id: id },
+                            success: function(data) {
+                                categoryCache.sub[id] = data; // Cache results
+                                $.each(data, function(i, item) {
+                                    $('#sub_category').append(`<option value="${item.id}">${item.name}</option>`);
+                                });
+                            }
+                        });
+                    }
                 }
-                fetchProducts();
+                
+                // Only fetch products if this wasn't called during the initial page load setup
+                if (!isInitialLoad) {
+                    fetchProducts();
+                }
             });
 
             // Sub Category Change
-            $('body').on('change', '#sub_category', function() {
+            $('body').on('change', '#sub_category', function(e, isInitialLoad = false) {
                 let id = $(this).val();
                 
-                // Clear and reset child categories
-                $('#child_category').html('<option value="">Child Category</option>').trigger('change');
+                // Clear and reset child categories silently
+                $('#child_category').html('<option value="">--Child Category--</option>');
 
                 if (id) {
-                    $.ajax({
-                        url: "{{ route('admin.get-child-categories') }}",
-                        method: 'GET',
-                        data: { id: id },
-                        success: function(data) {
-                            $.each(data, function(i, item) {
-                                $('#child_category').append(`<option value="${item.id}">${item.name}</option>`);
-                            });
-                        }
-                    });
+                    if (categoryCache.child[id]) {
+                        // Use cached data
+                        $.each(categoryCache.child[id], function(i, item) {
+                            $('#child_category').append(`<option value="${item.id}">${item.name}</option>`);
+                        });
+                    } else {
+                        // Fetch from server and cache
+                        $.ajax({
+                            url: "{{ route('admin.get-child-categories') }}",
+                            method: 'GET',
+                            data: { id: id },
+                            success: function(data) {
+                                categoryCache.child[id] = data; // Cache results
+                                $.each(data, function(i, item) {
+                                    $('#child_category').append(`<option value="${item.id}">${item.name}</option>`);
+                                });
+                            }
+                        });
+                    }
                 }
-                fetchProducts();
+                
+                if (!isInitialLoad) {
+                    fetchProducts();
+                }
             });
 
             // Child Category Filter

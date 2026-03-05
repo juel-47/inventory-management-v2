@@ -79,10 +79,10 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
     Route::post('/frontend/cart/clear',          [\App\Http\Controllers\Frontend\CartController::class, 'clear'])->name('frontend.cart.clear');
 
     // ── Wishlist ─────────────────────────────────────────────────────────────
-    Route::get('/wishlist',                      [WishlistController::class, 'index'])->name('wishlist.index');
-    Route::post('/wishlist/toggle',              [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-    Route::get('/wishlist/ids',                  [WishlistController::class, 'getIds'])->name('wishlist.ids');
-    Route::post('/wishlist/clear',               [WishlistController::class, 'clearAll'])->name('wishlist.clear');
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::get('/wishlist/ids', [WishlistController::class, 'getIds'])->name('wishlist.ids');
+    Route::post('/wishlist/clear', [WishlistController::class, 'clearAll'])->name('wishlist.clear');
 });
 
 // Route::get('/dashboard', function () {
@@ -95,7 +95,7 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
 //     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 // });
 
-
+/** Backend Routes */
 Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::put('users/change-status', [UserController::class, 'changeStatus'])->name('users.change-status');
@@ -175,6 +175,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
     /** Frontend Orders (Customer Orders) */
     Route::get('orders', [FrontendOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}/pi-invoice', [FrontendOrderController::class, 'piInvoice'])->name('orders.pi-invoice');
     Route::get('orders/{order}/view-invoice', [FrontendOrderController::class, 'viewInvoice'])->name('orders.view-invoice');
     Route::get('orders/{order}/download-invoice', [FrontendOrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
     Route::get('orders/{order}', [FrontendOrderController::class, 'show'])->name('orders.show');
@@ -257,6 +258,13 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::post('cart/remove', 'remove')->name('cart.remove');
         Route::post('cart/clear', 'clear')->name('cart.clear');
     });
+    /** Accounts & Payments */
+    Route::get('accounts', [\App\Http\Controllers\Backend\AccountController::class, 'index'])->name('accounts.index');
+    Route::get('accounts/record-payment', [\App\Http\Controllers\Backend\AccountController::class, 'create'])->name('accounts.record-payment');
+    Route::get('accounts/search-order', [\App\Http\Controllers\Backend\AccountController::class, 'searchOrder'])->name('accounts.search-order');
+    Route::get('accounts/due-orders', [\App\Http\Controllers\Backend\AccountController::class, 'dueOrders'])->name('accounts.due-orders');
+    Route::post('accounts/orders/{order}/payment', [\App\Http\Controllers\Backend\AccountController::class, 'storePayment'])->name('accounts.store-payment');
+
 });
 
 require __DIR__ . '/auth.php';
