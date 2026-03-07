@@ -33,7 +33,8 @@
                                             <th>local currency Total</th>
                                             <th>Vendor Total price</th>
                                             <th>Status</th>
-                                            <th>Action</th>
+                                            <th>Invoice Attachments</th>
+                                            <th style="min-width: 180px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -63,11 +64,64 @@
                                                     @endif
                                                 </td>
                                                 <td>
+                                                    @php
+                                                        $attachmentList = $purchase->attachments;
+                                                        if ($attachmentList->isEmpty() && $purchase->invoice_attachment) {
+                                                            $attachmentList = collect([
+                                                                (object) [
+                                                                    'id' => null,
+                                                                    'file_path' => $purchase->invoice_attachment,
+                                                                    'original_name' => basename($purchase->invoice_attachment),
+                                                                ]
+                                                            ]);
+                                                        }
+                                                    @endphp
+
+                                                    @if($attachmentList->count() > 0)
+                                                        <div class="dropdown d-inline-block">
+                                                            <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                <i class="fas fa-paperclip"></i> {{ $attachmentList->count() }}
+                                                            </button>
+                                                            <div class="dropdown-menu dropdown-menu-right p-1" style="min-width: 260px;">
+                                                                @foreach($attachmentList as $index => $attachment)
+                                                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1">
+                                                                        <a href="{{ asset('storage/' . $attachment->file_path) }}"
+                                                                           class="text-dark text-truncate pr-2"
+                                                                           style="max-width: 190px;"
+                                                                           title="{{ $attachment->original_name ?? ('Attachment ' . ($index + 1)) }}"
+                                                                           download>
+                                                                            {{ $attachment->original_name ?? ('Attachment ' . ($index + 1)) }}
+                                                                        </a>
+
+                                                                        @if(!empty($attachment->id))
+                                                                            <form action="{{ route('admin.purchases.delete-attachment', [$purchase->id, $attachment->id]) }}" method="POST" class="attachment-delete-form">
+                                                                                @csrf
+                                                                                @method('DELETE')
+                                                                                <button type="submit" class="btn btn-link text-danger p-0" title="Delete Attachment">
+                                                                                    <i class="fas fa-trash-alt"></i>
+                                                                                </button>
+                                                                            </form>
+                                                                        @endif
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="badge badge-light">No Attachment</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-nowrap" style="min-width: 180px;">
                                                     <a href="{{ route('admin.purchases.view-invoice', $purchase->id) }}" target="_blank" class="btn btn-warning btn-sm" title="View Invoice"><i class="fas fa-file-invoice"></i></a>
                                                     <a href="{{ route('admin.purchases.download-pdf', $purchase->id) }}" class="btn btn-secondary btn-sm ml-1" title="Download PDF"><i class="fas fa-download"></i></a>
-                                                    @if($purchase->invoice_attachment)
-                                                        <a href="{{ asset('storage/' . $purchase->invoice_attachment) }}" class="btn btn-info btn-sm ml-1" title="Download Attachment"><i class="fas fa-paperclip"></i></a>
-                                                    @endif
+                                                    <button type="button"
+                                                            class="btn btn-primary btn-sm ml-1 upload-attachment-btn"
+                                                            data-toggle="modal"
+                                                            data-target="#uploadAttachmentModal"
+                                                            data-url="{{ route('admin.purchases.upload-attachments', $purchase->id) }}"
+                                                            data-invoice="{{ $purchase->invoice_no }}"
+                                                            title="Upload Invoice Attachment">
+                                                        <i class="fas fa-file-upload"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -80,6 +134,38 @@
             </div>
         </div>
     </section>
+
+    <div class="modal fade" id="uploadAttachmentModal" tabindex="-1" role="dialog" aria-labelledby="uploadAttachmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="uploadAttachmentForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadAttachmentModalLabel">Upload Invoice Attachment</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">Invoice No: <strong id="attachmentPurchaseNo">-</strong></p>
+                        <div class="form-group mb-0">
+                            <label>Only Invoice File (PDF, Excel, Image)</label>
+                            <input type="file"
+                                   class="form-control"
+                                   name="invoice_attachments[]"
+                                   multiple
+                                   accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png">
+                            <small class="text-muted">Max 50MB per file.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -87,9 +173,38 @@
         $("#table-1").dataTable({
             "order": [[0, "desc"]],
             "columnDefs": [
-                { "sortable": false, "targets": [8] }
+                { "sortable": false, "targets": [9] }
             ],
             "order": [[0, "desc"]]
+        });
+
+        $(document).on('click', '.upload-attachment-btn', function () {
+            const uploadUrl = $(this).data('url');
+            const invoiceNo = $(this).data('invoice');
+
+            $('#uploadAttachmentForm').attr('action', uploadUrl);
+            $('#attachmentPurchaseNo').text(invoiceNo);
+        });
+
+        $(document).on('submit', '.attachment-delete-form', function (e) {
+            e.preventDefault();
+            const form = this;
+
+            Swal.fire({
+                title: 'Delete Attachment?',
+                text: "This file will be removed permanently.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    toastr.info('Delete cancelled');
+                }
+            });
         });
     </script>
 @endpush

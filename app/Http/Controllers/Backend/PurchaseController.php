@@ -8,6 +8,7 @@ use App\Models\InventoryStock;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Purchase;
+use App\Models\PurchaseAttachment;
 use App\Models\PurchaseDetail;
 use App\Models\StockLedger;
 use App\Models\Vendor;
@@ -15,6 +16,7 @@ use App\Models\PricingRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Brian2694\Toastr\Facades\Toastr;
 
 class PurchaseController extends Controller
@@ -24,7 +26,7 @@ class PurchaseController extends Controller
      */
     public function index()
     {
-        $purchases = Purchase::with(['vendor', 'user', 'details'])->orderBy('id', 'desc')->get(); // Using get() for simple list first, or DataTable later if requested in plan
+        $purchases = Purchase::with(['vendor', 'user', 'details', 'attachments'])->orderBy('id', 'desc')->get(); // Using get() for simple list first, or DataTable later if requested in plan
         return view('backend.purchase.index', compact('purchases'));
     }
 
@@ -96,7 +98,7 @@ class PurchaseController extends Controller
             'items.*.product_id' => 'required',
             'items.*.qty' => 'required|numeric|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
-            'invoice_attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf,xlsx,xls|max:5120', // Max 5MB
+            'invoice_attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf,xlsx,xls|max:51200', // Max 50MB
         ]);
 
         DB::beginTransaction();
@@ -115,6 +117,8 @@ class PurchaseController extends Controller
             $purchase->total_amount = 0; // Will calculate
             $purchase->status = 1;
 
+            $storedInvoiceAttachment = null;
+
             // Handle Invoice Attachment Upload
             if ($request->hasFile('invoice_attachment')) {
                 $file = $request->file('invoice_attachment');
@@ -122,12 +126,28 @@ class PurchaseController extends Controller
                 $path = $file->storeAs('attachments/purchases', $filename, 'public');
                 
                 // Ensure visibility is public (helps on some environments)
-                \Illuminate\Support\Facades\Storage::disk('public')->setVisibility($path, 'public');
+                Storage::disk('public')->setVisibility($path, 'public');
                 
                 $purchase->invoice_attachment = $path;
+                $storedInvoiceAttachment = [
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                ];
             }
 
             $purchase->save();
+
+            if ($storedInvoiceAttachment) {
+                $purchase->attachments()->create([
+                    'file_path' => $storedInvoiceAttachment['file_path'],
+                    'original_name' => $storedInvoiceAttachment['original_name'],
+                    'mime_type' => $storedInvoiceAttachment['mime_type'],
+                    'file_size' => $storedInvoiceAttachment['file_size'],
+                    'uploaded_by' => Auth::id(),
+                ]);
+            }
 
             // Calculate costs in System Currency (Input is Vendor Currency)
             $vendor = Vendor::findOrFail($request->vendor_id);
@@ -393,7 +413,7 @@ class PurchaseController extends Controller
      */
     public function show(string $id)
     {
-        $purchase = Purchase::with(['vendor', 'user', 'details.product'])->findOrFail($id);
+        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->findOrFail($id);
         return view('backend.purchase.show', compact('purchase'));
     }
 
@@ -402,7 +422,7 @@ class PurchaseController extends Controller
      */
     public function viewInvoice(string $id)
     {
-        $purchase = Purchase::with(['vendor', 'user', 'details.product'])->findOrFail($id);
+        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->findOrFail($id);
         $settings = \App\Models\GeneralSetting::first();
         return view('backend.purchase.invoice', compact('purchase', 'settings'));
     }
@@ -412,11 +432,100 @@ class PurchaseController extends Controller
      */
     public function downloadPdf(string $id)
     {
-        $purchase = Purchase::with(['vendor', 'user', 'details.product'])->findOrFail($id);
+        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->findOrFail($id);
         $settings = \App\Models\GeneralSetting::first();
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('backend.purchase.print_pdf', compact('purchase', 'settings'));
         return $pdf->download('purchase_' . $purchase->invoice_no . '.pdf');
+    }
+
+    /**
+     * Upload invoice attachments from purchase listing or details page.
+     */
+    public function uploadAttachments(Request $request, string $id)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $storedPaths = [];
+
+        $request->validate([
+            'invoice_attachments' => 'required|array|min:1',
+            'invoice_attachments.*' => 'file|mimes:jpeg,png,jpg,pdf,xlsx,xls|max:5120',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->file('invoice_attachments', []) as $file) {
+                $filename = 'invoice_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('attachments/purchases/' . $purchase->id, $filename, 'public');
+                Storage::disk('public')->setVisibility($path, 'public');
+                $storedPaths[] = $path;
+
+                $purchase->attachments()->create([
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                ]);
+
+                // Keep legacy single attachment populated for backward compatibility.
+                if (empty($purchase->invoice_attachment)) {
+                    $purchase->invoice_attachment = $path;
+                    $purchase->save();
+                }
+            }
+
+            DB::commit();
+            Toastr::success('Invoice attachment uploaded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            foreach ($storedPaths as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+            Toastr::error('Upload failed: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Delete a single purchase attachment.
+     */
+    public function deleteAttachment(string $id, string $attachmentId)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $attachment = PurchaseAttachment::where('purchase_id', $purchase->id)->findOrFail($attachmentId);
+
+        DB::beginTransaction();
+        try {
+            $filePath = $attachment->file_path;
+            $legacyMatchesThis = $purchase->invoice_attachment === $filePath;
+
+            if ($filePath && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+
+            $attachment->delete();
+
+            if ($legacyMatchesThis) {
+                $nextAttachmentPath = PurchaseAttachment::where('purchase_id', $purchase->id)
+                    ->orderByDesc('id')
+                    ->value('file_path');
+
+                $purchase->invoice_attachment = $nextAttachmentPath;
+                $purchase->save();
+            }
+
+            DB::commit();
+            Toastr::success('Attachment deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Toastr::error('Delete failed: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
     }
 
     /**
@@ -427,7 +536,7 @@ class PurchaseController extends Controller
         try {
             DB::beginTransaction();
 
-            $purchase = Purchase::with('details')->findOrFail($id);
+            $purchase = Purchase::with(['details', 'attachments'])->findOrFail($id);
 
             // Revert Stock
             foreach ($purchase->details as $detail) {
@@ -453,6 +562,17 @@ class PurchaseController extends Controller
                         'balance_qty' => $stock->quantity,
                         'date' => date('Y-m-d') 
                     ]);
+                }
+            }
+
+            $attachmentPaths = $purchase->attachments->pluck('file_path')->filter()->unique()->values()->all();
+            if ($purchase->invoice_attachment) {
+                $attachmentPaths[] = $purchase->invoice_attachment;
+            }
+            $attachmentPaths = array_values(array_unique($attachmentPaths));
+            foreach ($attachmentPaths as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
                 }
             }
 

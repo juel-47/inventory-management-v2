@@ -108,12 +108,20 @@
                                         <p class="section-lead">{{ $purchase->note }}</p>
                                     @endif
 
-                                    @if($purchase->invoice_attachment)
+                                    @if($purchase->attachments->count() > 0 || $purchase->invoice_attachment)
                                         <div class="section-title">Attachment</div>
                                         <div class="section-lead mt-1">
-                                            <a href="{{ asset('storage/' . $purchase->invoice_attachment) }}" target="_blank" class="btn btn-info btn-sm">
-                                                <i class="fas fa-file-download mr-1"></i> View Invoice Attachment
-                                            </a>
+                                            @if($purchase->attachments->count() > 0)
+                                                @foreach($purchase->attachments as $index => $attachment)
+                                                    <a href="{{ asset('storage/' . $attachment->file_path) }}" target="_blank" class="btn btn-info btn-sm mb-1">
+                                                        <i class="fas fa-file-download mr-1"></i> Attachment {{ $index + 1 }}
+                                                    </a>
+                                                @endforeach
+                                            @elseif($purchase->invoice_attachment)
+                                                <a href="{{ asset('storage/' . $purchase->invoice_attachment) }}" target="_blank" class="btn btn-info btn-sm">
+                                                    <i class="fas fa-file-download mr-1"></i> View Invoice Attachment
+                                                </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>

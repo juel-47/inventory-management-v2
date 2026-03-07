@@ -171,6 +171,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::get('purchases/get-booking-details', [PurchaseController::class, 'getBookingDetails'])->name('purchases.get-booking-details');
     Route::get('purchases/{id}/invoice', [PurchaseController::class, 'viewInvoice'])->name('purchases.view-invoice');
     Route::get('purchases/{id}/download-pdf', [PurchaseController::class, 'downloadPdf'])->name('purchases.download-pdf');
+    Route::post('purchases/{id}/attachments', [PurchaseController::class, 'uploadAttachments'])->name('purchases.upload-attachments');
+    Route::delete('purchases/{id}/attachments/{attachmentId}', [PurchaseController::class, 'deleteAttachment'])->name('purchases.delete-attachment');
     Route::resource('purchases', PurchaseController::class);
 
     /** Frontend Orders (Customer Orders) */
