@@ -129,7 +129,7 @@
                             <li>Upload an Excel file (.xlsx, .xls, or .csv)</li>
                             <li>The first row should contain column headers</li>
                             <li>Category, Brand, Vendor, Unit can be matched by name or ID</li>
-                            <li>For variants, use color_name and size_name columns</li>
+                            <li>For variants, use combined columns like variant_1_color_name, variant_1_size_name, variant_1_qty, variant_1_outlet_price, variant_1_price</li>
                             <li>Maximum file size: 199MB</li>
                         </ul>
                     </div>
@@ -297,34 +297,40 @@
                                         <td colspan="4"><strong>Variant Columns (Optional)</strong></td>
                                     </tr>
                                     <tr>
-                                        <td>color_name</td>
+                                        <td>variant_1_color_name</td>
                                         <td><span class="badge bg-secondary">No</span></td>
-                                        <td>Variant Color</td>
+                                        <td>Variant Color (1st combo)</td>
                                         <td>Red</td>
                                     </tr>
                                     <tr>
-                                        <td>size_name</td>
+                                        <td>variant_1_size_name</td>
                                         <td><span class="badge bg-secondary">No</span></td>
-                                        <td>Variant Size</td>
+                                        <td>Variant Size (1st combo)</td>
                                         <td>Large</td>
                                     </tr>
                                     <tr>
-                                        <td>variant_price</td>
+                                        <td>variant_1_qty</td>
                                         <td><span class="badge bg-secondary">No</span></td>
-                                        <td>Variant Price</td>
+                                        <td>Variant Quantity (1st combo)</td>
+                                        <td>50</td>
+                                    </tr>
+                                    <tr>
+                                        <td>variant_1_outlet_price</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>Variant Whole Sale Price (1st combo)</td>
                                         <td>1600</td>
                                     </tr>
                                     <tr>
-                                        <td>variant_outlet_price</td>
+                                        <td>variant_1_price</td>
                                         <td><span class="badge bg-secondary">No</span></td>
-                                        <td>Variant Outlet Price</td>
-                                        <td>1500</td>
+                                        <td>Variant Outlet/Customer Price (1st combo)</td>
+                                        <td>1700</td>
                                     </tr>
                                     <tr>
-                                        <td>variant_qty</td>
+                                        <td>variant_2_..., variant_3_...</td>
                                         <td><span class="badge bg-secondary">No</span></td>
-                                        <td>Variant Quantity</td>
-                                        <td>50</td>
+                                        <td>Use next index for more variant combinations (color can stay blank to reuse previous color)</td>
+                                        <td>variant_2_color_name, variant_2_size_name...</td>
                                     </tr>
                                 </tbody>
                             </table>

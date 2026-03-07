@@ -555,9 +555,10 @@ class CartController extends Controller
 
         foreach ($items as $item) {
             $lineSubtotal = ((float) $item['price']) * ((int) $item['quantity']);
+            $lineQty = max(1, (int) ($item['quantity'] ?? 1));
             $product = $productsById->get((int) $item['product_id']);
 
-            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $lineQty);
             $lineDiscountAmount = (float) ($lineDiscount['amount'] ?? 0);
             $discountAmount += $lineDiscountAmount;
             if (($lineDiscount['source'] ?? 'none') === 'product') {
@@ -785,7 +786,7 @@ class CartController extends Controller
                         $quantity = (int) ($item->quantity ?? 1);
                         $lineSubtotal = round($price * $quantity, 2);
 
-                        $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+                        $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $quantity);
                         $lineDiscountAmount = round((float) ($lineDiscount['amount'] ?? 0), 2);
                         $discountPerUnit = $quantity > 0 ? ($lineDiscountAmount / $quantity) : 0.0;
                         $displayPrice = round(max(0, $price - $discountPerUnit), 2);

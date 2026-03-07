@@ -16,7 +16,7 @@ class WishlistController extends Controller
     public function index()
     {
         $wishlistItems = Wishlist::where('user_id', Auth::id())
-            ->with(['product.category', 'product.variants'])
+            ->with(['product.category', 'product.variants.color', 'product.variants.size'])
             ->get()
             ->map(function ($item) {
                 if (!$item->product) return null;
@@ -30,15 +30,28 @@ class WishlistController extends Controller
                         : asset('storage/' . $imagePath));
 
                 // Format variants
-                $variants = $product->variants ? $product->variants->map(function ($v) {
+                $variants = $product->variants ? $product->variants->map(function ($v) use ($product) {
+                    $colorRelation = $v->getRelation('color');
+                    $sizeRelation = $v->getRelation('size');
+                    $colorName = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($v->color ?? '')));
+                    $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($v->size ?? '')));
+                    $label = trim((string) ($v->name ?? ''));
+                    if ($label === '') {
+                        $label = trim(implode(' ', array_filter([$colorName, $sizeName])));
+                    }
+                    if ($label === '') {
+                        $label = 'Variant #' . $v->id;
+                    }
+
                     return [
                         'id'              => $v->id,
                         'product_id'      => $v->product_id,
-                        'color'           => $v->color,
-                        'size'            => $v->size,
+                        'name'            => $label,
+                        'color'           => $colorName,
+                        'size'            => $sizeName,
                         'stock'           => (int)$v->inventory_stock,
-                        'variant_price'   => $v->variant_price,
-                        'variant_outlet_price' => $v->variant_outlet_price,
+                        'price'           => (float) ($v->price ?: $product->price ?: 0),
+                        'outlet_price'    => (float) ($v->outlet_price ?: $v->price ?: $product->outlet_price ?: $product->price ?: 0),
                     ];
                 })->toArray() : [];
 

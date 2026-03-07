@@ -10,9 +10,10 @@ class CheckoutDiscountResolver
     private ?Discount $defaultDiscount = null;
     private bool $defaultDiscountLoaded = false;
 
-    public function resolveForLine($product, float $lineSubtotal): array
+    public function resolveForLine($product, float $lineSubtotal, int $quantity = 1): array
     {
         $lineSubtotal = max(0, $lineSubtotal);
+        $quantity = max(1, $quantity);
         $productDiscount = $this->resolveProductDiscount($product);
 
         if ($productDiscount !== null) {
@@ -20,7 +21,13 @@ class CheckoutDiscountResolver
                 'source' => 'product',
                 'type' => $productDiscount['type'],
                 'value' => $productDiscount['value'],
-                'amount' => $this->calculateAmount($lineSubtotal, $productDiscount['type'], $productDiscount['value']),
+                'amount' => $this->calculateAmount(
+                    $lineSubtotal,
+                    $productDiscount['type'],
+                    $productDiscount['value'],
+                    $quantity,
+                    true
+                ),
             ];
         }
 
@@ -33,7 +40,13 @@ class CheckoutDiscountResolver
                 'source' => 'default',
                 'type' => $type,
                 'value' => $value,
-                'amount' => $this->calculateAmount($lineSubtotal, $type, $value),
+                'amount' => $this->calculateAmount(
+                    $lineSubtotal,
+                    $type,
+                    $value,
+                    $quantity,
+                    true
+                ),
             ];
         }
 
@@ -98,13 +111,23 @@ class CheckoutDiscountResolver
         ];
     }
 
-    private function calculateAmount(float $lineSubtotal, string $type, float $value): float
+    private function calculateAmount(
+        float $lineSubtotal,
+        string $type,
+        float $value,
+        int $quantity = 1,
+        bool $flatPerUnit = false
+    ): float
     {
         if ($lineSubtotal <= 0 || $value <= 0) {
             return 0.0;
         }
 
         if ($type === 'flat') {
+            if ($flatPerUnit) {
+                return round(min($lineSubtotal, $value * max(1, $quantity)), 2);
+            }
+
             return round(min($lineSubtotal, $value), 2);
         }
 

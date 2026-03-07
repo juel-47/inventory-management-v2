@@ -118,11 +118,11 @@
                             <span class="font-semibold text-slate-900" x-text="totalUnits"></span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Subtotal (After Discount)</span>
+                            <span class="text-slate-500">Subtotal</span>
                             <span class="font-semibold text-slate-900" x-text="formatMoney(subtotal)"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="discountTotal > 0">
-                            <span class="text-slate-500">Saved</span>
+                            <span class="text-slate-500">Discount</span>
                             <span class="font-semibold text-emerald-600" x-text="'-' + formatMoney(discountTotal)"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="discountTotal > 0">

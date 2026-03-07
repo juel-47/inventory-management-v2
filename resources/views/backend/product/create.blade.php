@@ -173,7 +173,7 @@
                                             <option value="0">Inactive</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-4">
+                                    <div class="form-group col-md-4" id="product-stock-group">
                                         <label>Opening Stock</label>
                                         <input type="number" class="form-control" name="qty" value="{{ old('qty', 0) }}">
                                         <small class="text-muted">Only used if no variants are added.</small>
@@ -236,8 +236,8 @@
                                         <table class="table table-bordered table-responsive">
                                             <thead>
                                                 <tr>
-                                                        <th width="15%">Type</th>
-                                                        <th width="20%">Variant</th>
+                                                        <th width="20%" class="variant-color-col">Color</th>
+                                                        <th width="20%" class="variant-size-col">Size</th>
                                                         <th width="15%">Opening Stock</th>
                                                         <th width="15%">Whole Sale Price</th>
                                                         <th width="15%">Outlet/Customer Price</th>
@@ -345,23 +345,15 @@
 
                 let html = `
                     <tr id="variant-row-${variantCount}">
-                        <td>
-                            <select class="form-control variant-type" data-row="${variantCount}">
-                                <option value="color">Color</option>
-                                <option value="size">Size</option>
+                        <td class="variant-color-cell">
+                            <select name="variants[${variantCount}][color_id]" class="form-control">
+                                ${colorOptions}
                             </select>
                         </td>
-                        <td>
-                            <div class="color-select-wrapper-${variantCount}">
-                                <select name="variants[${variantCount}][color_id]" class="form-control">
-                                    ${colorOptions}
-                                </select>
-                            </div>
-                            <div class="size-select-wrapper-${variantCount}" style="display:none;">
-                                <select name="variants[${variantCount}][size_id]" class="form-control">
-                                    ${sizeOptions}
-                                </select>
-                            </div>
+                        <td class="variant-size-cell">
+                            <select name="variants[${variantCount}][size_id]" class="form-control">
+                                ${sizeOptions}
+                            </select>
                         </td>
                         <td>
                             <input type="number" name="variants[${variantCount}][qty]" class="form-control" value="0">
@@ -377,21 +369,6 @@
                 `;
                 $('#variant-list').append(html);
                 variantCount++;
-            });
-
-            $(document).on('change', '.variant-type', function() {
-                let rowId = $(this).data('row');
-                let type = $(this).val();
-                
-                if (type === 'color') {
-                    $(`.color-select-wrapper-${rowId}`).show();
-                    $(`.size-select-wrapper-${rowId}`).hide();
-                    $(`.size-select-wrapper-${rowId} select`).val('');
-                } else {
-                    $(`.color-select-wrapper-${rowId}`).hide();
-                    $(`.size-select-wrapper-${rowId}`).show();
-                    $(`.color-select-wrapper-${rowId} select`).val('');
-                }
             });
 
             $(document).on('click', '.remove-variant', function() {

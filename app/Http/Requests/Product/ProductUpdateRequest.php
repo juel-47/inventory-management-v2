@@ -43,8 +43,13 @@ class ProductUpdateRequest extends FormRequest
             'discount' => ['nullable', 'numeric', 'min:0'],
             'vat_type' => ['nullable', 'in:flat,percent'],
             'vat_value' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.name' => ['nullable', 'string', 'max:200'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'variants.*.color_id' => ['nullable', 'integer', 'exists:colors,id'],
+            'variants.*.size_id' => ['nullable', 'integer', 'exists:sizes,id'],
             'current_stock' => ['nullable', 'numeric'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.outlet_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.current_stock' => ['nullable', 'numeric'],
             // qty removed from product update form
         ];

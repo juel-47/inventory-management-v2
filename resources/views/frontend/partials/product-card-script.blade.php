@@ -77,43 +77,81 @@
                 return stock <= 0 ? `${base} - Out` : `${base} - ${stock}`;
             },
 
-            get normalizedDiscountType() {
+            get productNormalizedDiscountType() {
                 const type = String(this.product.discount_type || '').toLowerCase().trim();
                 return ['flat', 'percent'].includes(type) ? type : '';
             },
 
-            get discountValue() {
+            get productDiscountValue() {
                 return Math.max(0, parseFloat(this.product.discount) || 0);
+            },
+
+            get globalNormalizedDiscountType() {
+                const type = String(this.product.global_discount_type || '').toLowerCase().trim();
+                return ['flat', 'percent'].includes(type) ? type : '';
+            },
+
+            get globalDiscountValue() {
+                return Math.max(0, parseFloat(this.product.global_discount) || 0);
+            },
+
+            get normalizedDiscountType() {
+                if (this.productNormalizedDiscountType !== '' && this.productDiscountValue > 0) {
+                    return this.productNormalizedDiscountType;
+                }
+
+                if (this.globalNormalizedDiscountType !== '' && this.globalDiscountValue > 0) {
+                    return this.globalNormalizedDiscountType;
+                }
+
+                return '';
+            },
+
+            get discountValue() {
+                if (this.productNormalizedDiscountType !== '' && this.productDiscountValue > 0) {
+                    return this.productDiscountValue;
+                }
+
+                if (this.globalNormalizedDiscountType !== '' && this.globalDiscountValue > 0) {
+                    return this.globalDiscountValue;
+                }
+
+                return 0;
             },
 
             get hasDiscount() {
                 return this.normalizedDiscountType !== '' && this.discountValue > 0;
             },
 
+            get hasProductDiscount() {
+                return this.productNormalizedDiscountType !== '' && this.productDiscountValue > 0;
+            },
+
             get discountBadgeText() {
-                if (!this.hasDiscount) {
+                if (!this.hasProductDiscount) {
                     return '';
                 }
 
-                if (this.normalizedDiscountType === 'percent') {
-                    return `${this.discountValue}% OFF`;
+                if (this.productNormalizedDiscountType === 'percent') {
+                    return `${this.productDiscountValue}% OFF`;
                 }
 
-                return `FLAT ${this.discountValue.toFixed(2)} OFF`;
+                return `FLAT ${this.productDiscountValue.toFixed(2)} OFF`;
             },
 
             applyDiscount(price) {
                 const numericPrice = Math.max(0, parseFloat(price) || 0);
-                if (!this.hasDiscount) {
+                // Product card price should only reflect product-specific discounts.
+                if (!this.hasProductDiscount) {
                     return numericPrice;
                 }
 
-                if (this.normalizedDiscountType === 'percent') {
-                    const percent = Math.min(100, this.discountValue);
+                if (this.productNormalizedDiscountType === 'percent') {
+                    const percent = Math.min(100, this.productDiscountValue);
                     return Math.max(0, numericPrice - ((numericPrice * percent) / 100));
                 }
 
-                return Math.max(0, numericPrice - this.discountValue);
+                return Math.max(0, numericPrice - this.productDiscountValue);
             },
 
             get outletBasePrice() {
@@ -145,7 +183,7 @@
             },
 
             get showOutletOriginalPrice() {
-                return this.hasDiscount && (this.outletBasePrice > this.applyDiscount(this.outletBasePrice));
+                return this.hasProductDiscount && (this.outletBasePrice > this.applyDiscount(this.outletBasePrice));
             },
 
             get showRetailOriginalPrice() {

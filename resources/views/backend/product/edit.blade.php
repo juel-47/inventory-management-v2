@@ -177,7 +177,7 @@
                                             <option {{ $product->status == 0 ? 'selected' : '' }} value="0">Inactive</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-4">
+                                    <div class="form-group col-md-4" id="product-stock-group">
                                         <label>Current Stock</label>
                                         <input type="text" class="form-control" name="current_stock" value="{{ $product->inventory_stock }}">
                                     </div>
@@ -237,8 +237,8 @@
                                         <table class="table table-bordered table-responsive">
                                             <thead>
                                                 <tr>
-                                                    <th width="15%">Type</th>
-                                                    <th width="20%">Variant</th>
+                                                    <th width="20%" class="variant-color-col">Color</th>
+                                                    <th width="20%" class="variant-size-col">Size</th>
                                                     <th width="15%">Current Stock</th>
                                                     <th width="15%">Whole Sale Price</th>
                                                     <th width="15%">Outlet/Customer Price</th>
@@ -248,30 +248,22 @@
                                             <tbody id="variant-list">
                                                 @foreach ($product->variants as $index => $variant)
                                                     <tr id="variant-row-{{ $index }}">
-                                                        <td>
-                                                            <select class="form-control variant-type" data-row="{{ $index }}">
-                                                                <option value="color" {{ $variant->color_id ? 'selected' : '' }}>Color</option>
-                                                                <option value="size" {{ $variant->size_id ? 'selected' : '' }}>Size</option>
+                                                        <td class="variant-color-cell">
+                                                            <input type="hidden" name="variants[{{ $index }}][id]" value="{{ $variant->id }}">
+                                                            <select name="variants[{{ $index }}][color_id]" class="form-control">
+                                                                <option value="">Select Color</option>
+                                                                @foreach($colors as $color)
+                                                                    <option value="{{ $color->id }}" {{ $variant->color_id == $color->id ? 'selected' : '' }}>{{ $color->name }}</option>
+                                                                @endforeach
                                                             </select>
                                                         </td>
-                                                        <td>
-                                                            <input type="hidden" name="variants[{{ $index }}][id]" value="{{ $variant->id }}">
-                                                            <div class="color-select-wrapper-{{ $index }}" style="{{ $variant->color_id ? '' : 'display:none;' }}">
-                                                                <select name="variants[{{ $index }}][color_id]" class="form-control">
-                                                                    <option value="">Select Color</option>
-                                                                    @foreach($colors as $color)
-                                                                        <option value="{{ $color->id }}" {{ $variant->color_id == $color->id ? 'selected' : '' }}>{{ $color->name }}</option>
-                                                                    @endforeach
-                                                                </select>
-                                                            </div>
-                                                            <div class="size-select-wrapper-{{ $index }}" style="{{ $variant->size_id ? '' : 'display:none;' }}">
-                                                                <select name="variants[{{ $index }}][size_id]" class="form-control">
-                                                                    <option value="">Select Size</option>
-                                                                    @foreach($sizes as $size)
-                                                                        <option value="{{ $size->id }}" {{ $variant->size_id == $size->id ? 'selected' : '' }}>{{ $size->name }}</option>
-                                                                    @endforeach
-                                                                </select>
-                                                            </div>
+                                                        <td class="variant-size-cell">
+                                                            <select name="variants[{{ $index }}][size_id]" class="form-control">
+                                                                <option value="">Select Size</option>
+                                                                @foreach($sizes as $size)
+                                                                    <option value="{{ $size->id }}" {{ $variant->size_id == $size->id ? 'selected' : '' }}>{{ $size->name }}</option>
+                                                                @endforeach
+                                                            </select>
                                                         </td>
                                                         <td>
                                                             <input type="text" class="form-control" name="variants[{{ $index }}][current_stock]" value="{{ $variant->inventory_stock }}">
@@ -386,23 +378,15 @@
 
                 let html = `
                     <tr id="variant-row-${variantCount}">
-                        <td>
-                            <select class="form-control variant-type" data-row="${variantCount}">
-                                <option value="color">Color</option>
-                                <option value="size">Size</option>
+                        <td class="variant-color-cell">
+                            <select name="variants[${variantCount}][color_id]" class="form-control">
+                                ${colorOptions}
                             </select>
                         </td>
-                        <td>
-                            <div class="color-select-wrapper-${variantCount}">
-                                <select name="variants[${variantCount}][color_id]" class="form-control">
-                                    ${colorOptions}
-                                </select>
-                            </div>
-                            <div class="size-select-wrapper-${variantCount}" style="display:none;">
-                                <select name="variants[${variantCount}][size_id]" class="form-control">
-                                    ${sizeOptions}
-                                </select>
-                            </div>
+                        <td class="variant-size-cell">
+                            <select name="variants[${variantCount}][size_id]" class="form-control">
+                                ${sizeOptions}
+                            </select>
                         </td>
                         <td>
                              <input type="text" class="form-control" name="variants[${variantCount}][current_stock]" value="0">
@@ -418,21 +402,6 @@
                 `;
                 $('#variant-list').append(html);
                 variantCount++;
-            });
-
-            $(document).on('change', '.variant-type', function() {
-                let rowId = $(this).data('row');
-                let type = $(this).val();
-                
-                if (type === 'color') {
-                    $(`.color-select-wrapper-${rowId}`).show();
-                    $(`.size-select-wrapper-${rowId}`).hide();
-                    $(`.size-select-wrapper-${rowId} select`).val('');
-                } else {
-                    $(`.color-select-wrapper-${rowId}`).hide();
-                    $(`.size-select-wrapper-${rowId}`).show();
-                    $(`.color-select-wrapper-${rowId} select`).val('');
-                }
             });
 
             $(document).on('click', '.remove-variant', function(){

@@ -53,9 +53,11 @@ class AccountController extends Controller
                             ? (float) ($variant->outlet_price ?: $variant->price ?: $product->outlet_price ?: $product->price)
                             : (float) ($variant->price ?: $product->price);
 
+                        $colorRelation = $variant->getRelation('color');
+                        $sizeRelation = $variant->getRelation('size');
                         $name = trim((string) ($variant->name ?? ''));
-                        $color = trim((string) ($variant->color ?? ''));
-                        $size = trim((string) ($variant->size ?? ''));
+                        $color = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($variant->color ?? '')));
+                        $size = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($variant->size ?? '')));
 
                         $labelParts = [];
                         if ($name !== '') {
@@ -74,7 +76,7 @@ class AccountController extends Controller
 
                         return [
                             'id' => (int) $variant->id,
-                            'name' => (string) ($variant->name ?? ''),
+                            'name' => $label,
                             'label' => $label,
                             'price' => $variantPrice,
                         ];
@@ -93,7 +95,11 @@ class AccountController extends Controller
 
         $productsForOrderForm = Product::query()
             ->where('status', 1)
-            ->with(['variants:id,product_id,name,color,size,price,outlet_price'])
+            ->with([
+                'variants:id,product_id,name,color,size,color_id,size_id,price,outlet_price',
+                'variants.color:id,name',
+                'variants.size:id,name',
+            ])
             ->orderBy('name')
             ->get(['id', 'name', 'price', 'outlet_price', 'minimum_order_qty'])
             ->map($mapOrderFormProduct)

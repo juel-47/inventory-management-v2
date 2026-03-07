@@ -43,7 +43,13 @@ class ProductCreateRequest extends FormRequest
             'discount' => ['nullable', 'numeric', 'min:0'],
             'vat_type' => ['nullable', 'in:flat,percent'],
             'vat_value' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.name' => ['nullable', 'string', 'max:200'],
+            'qty' => ['nullable', 'numeric', 'min:0'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.color_id' => ['nullable', 'integer', 'exists:colors,id'],
+            'variants.*.size_id' => ['nullable', 'integer', 'exists:sizes,id'],
+            'variants.*.qty' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.outlet_price' => ['nullable', 'numeric', 'min:0'],
             // qty removed from product create form
         ];
     }

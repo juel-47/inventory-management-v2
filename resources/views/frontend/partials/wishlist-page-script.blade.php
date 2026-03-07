@@ -24,7 +24,7 @@
                 const seen = new Set();
                 const unique = [];
                 this.variants.forEach((v) => {
-                    const key = `${v.color || 'default'}-${v.size || 'default'}`;
+                    const key = `${v.id || 'default'}-${v.color || 'default'}-${v.size || 'default'}`;
                     if (!seen.has(key)) {
                         seen.add(key);
                         unique.push(v);
@@ -43,11 +43,11 @@
             getSelectedPrice(priceType) {
                 if (this.selectedVariant) {
                     if (priceType === 'outlet_price') {
-                        return (this.selectedVariant.variant_outlet_price || this.product.outlet_price).toFixed(2);
+                        return (this.selectedVariant.outlet_price || this.selectedVariant.price || this.product.outlet_price || this.product.price).toFixed(2);
                     }
 
                     if (priceType === 'price') {
-                        return (this.selectedVariant.variant_price || this.product.price).toFixed(2);
+                        return (this.selectedVariant.price || this.product.price).toFixed(2);
                     }
                 } else {
                     if (priceType === 'outlet_price') {

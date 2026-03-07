@@ -92,7 +92,7 @@
                                                 <th width="8%">Tax</th>
                                                 <th width="8%">Transport</th>
                                                 <th width="9%">Local Unit Cost</th>
-                                                <th width="7%">Sale Price</th>
+                                                <th width="7%">WholeSale Price</th>
                                                 <th width="7%">Outlet Price</th>
                                                 <th width="3%"></th>
                                             </tr>

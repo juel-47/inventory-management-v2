@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Services\CheckoutDiscountResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
+    private ?array $defaultDiscountContext = null;
+
     /**
      * Display the frontend home page (empty products as requested).
      */
@@ -359,6 +362,8 @@ class HomeController extends Controller
             'outlet_price' => (float) ($product->outlet_price ?? 0),
             'discount_type' => (string) ($product->discount_type ?? ''),
             'discount' => (float) ($product->discount ?? 0),
+            'global_discount_type' => (string) ($this->resolveDefaultDiscountContext()['type'] ?? ''),
+            'global_discount' => (float) ($this->resolveDefaultDiscountContext()['value'] ?? 0),
             'category' => $productCategoryName !== '' ? $productCategoryName : 'Category not set',
             'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
             'stock' => $canViewInventory ? (int) ($product->scoped_stock_qty ?? 0) : 0,
@@ -460,6 +465,7 @@ class HomeController extends Controller
         $canViewInventory = (bool) ($roleContext['canViewInventory'] ?? false);
         $displayPath = $this->resolveImageUrl((string) ($product->thumb_image ?? ''));
         $categoryName = trim((string) optional($product->category)->name);
+        $globalDiscount = $this->resolveDefaultDiscountContext();
 
         $productPayload = [
             'id' => (int) $product->id,
@@ -470,6 +476,8 @@ class HomeController extends Controller
             'outlet_price' => (float) ($product->outlet_price ?? 0),
             'discount_type' => (string) ($product->discount_type ?? ''),
             'discount' => (float) ($product->discount ?? 0),
+            'global_discount_type' => (string) ($globalDiscount['type'] ?? ''),
+            'global_discount' => (float) ($globalDiscount['value'] ?? 0),
             'category' => $categoryName !== '' ? $categoryName : 'Category not set',
             'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
             'stock' => $canViewInventory ? (int) ($product->scoped_stock_qty ?? 0) : 0,
@@ -491,15 +499,70 @@ class HomeController extends Controller
 
     private function mapVariantForCard($variant, Product $product, bool $canViewInventory): array
     {
+        $variantLabel = $this->resolveVariantDisplayName($variant);
+        $colorRelation = $variant->getRelation('color');
+        $sizeRelation = $variant->getRelation('size');
+        $colorName = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ''));
+        $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ''));
+
         return [
             'id' => (int) $variant->id,
-            'name' => (string) ($variant->name ?? ''),
+            'name' => $variantLabel,
             'price' => $variant->price > 0 ? (float) $variant->price : (float) ($product->price ?? 0),
             'outlet_price' => $variant->outlet_price > 0 ? (float) $variant->outlet_price : (float) ($product->outlet_price ?? 0),
-            'color' => is_object($variant->color) ? (string) $variant->color->name : (string) ($variant->color ?? ''),
-            'size' => is_object($variant->size) ? (string) $variant->size->name : (string) ($variant->size ?? ''),
+            'color' => $colorName !== '' ? $colorName : (string) ($variant->color ?? ''),
+            'size' => $sizeName !== '' ? $sizeName : (string) ($variant->size ?? ''),
             'stock' => $canViewInventory ? (int) ($variant->scoped_stock_qty ?? 0) : null,
         ];
+    }
+
+    private function resolveDefaultDiscountContext(): array
+    {
+        if ($this->defaultDiscountContext !== null) {
+            return $this->defaultDiscountContext;
+        }
+
+        $resolver = app(CheckoutDiscountResolver::class);
+        $defaultDiscount = $resolver->getDefaultDiscount();
+
+        $type = strtolower(trim((string) ($defaultDiscount->type ?? '')));
+        $value = max(0, (float) ($defaultDiscount->value ?? 0));
+
+        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+            $this->defaultDiscountContext = [
+                'type' => '',
+                'value' => 0.0,
+            ];
+
+            return $this->defaultDiscountContext;
+        }
+
+        if ($type === 'percent' && $value > 100) {
+            $value = 100.0;
+        }
+
+        $this->defaultDiscountContext = [
+            'type' => $type,
+            'value' => $value,
+        ];
+
+        return $this->defaultDiscountContext;
+    }
+
+    private function resolveVariantDisplayName($variant): string
+    {
+        $name = trim((string) ($variant->name ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        $colorRelation = $variant->getRelation('color');
+        $sizeRelation = $variant->getRelation('size');
+        $colorName = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($variant->color ?? '')));
+        $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($variant->size ?? '')));
+
+        $fallback = trim(implode(' ', array_filter([$colorName, $sizeName])));
+        return $fallback !== '' ? $fallback : ('Variant #' . (int) $variant->id);
     }
 
     private function resolveImageUrl(?string $path): ?string

@@ -119,8 +119,20 @@
                 <div class="mb-3">
                     <div class="d-flex flex-wrap" style="gap: 4px;">
                         @foreach($product->variants->take(3) as $variant)
+                            @php
+                                $variantLabel = trim((string) ($variant->name ?? ''));
+                                if ($variantLabel === '') {
+                                    $variantLabel = trim(implode(' ', array_filter([
+                                        is_object($variant->getRelation('color') ?? null) ? optional($variant->getRelation('color'))->name : null,
+                                        is_object($variant->getRelation('size') ?? null) ? optional($variant->getRelation('size'))->name : null,
+                                        $variant->color ?? null,
+                                        $variant->size ?? null,
+                                    ])));
+                                }
+                                $variantLabel = $variantLabel !== '' ? $variantLabel : ('Variant #' . $variant->id);
+                            @endphp
                             <span class="badge badge-light border text-muted shadow-none py-1 px-2" style="font-size: 9px; font-weight: 500;">
-                                {{ $variant->name }}
+                                {{ $variantLabel }}
                             </span>
                         @endforeach
                         @if($product->variants->count() > 3)
@@ -151,9 +163,21 @@
                                 <span class="font-weight-bold text-dark" style="font-size: 15px;">{{ formatConverted($product->purchase_price) }}</span>
                             </div>
                             @endif
+                                @php
+                                    $variantLabel = trim((string) ($v->name ?? ''));
+                                    if ($variantLabel === '') {
+                                        $variantLabel = trim(implode(' ', array_filter([
+                                            is_object($v->getRelation('color') ?? null) ? optional($v->getRelation('color'))->name : null,
+                                            is_object($v->getRelation('size') ?? null) ? optional($v->getRelation('size'))->name : null,
+                                            $v->color ?? null,
+                                            $v->size ?? null,
+                                        ])));
+                                    }
+                                    $variantLabel = $variantLabel !== '' ? $variantLabel : ('Variant #' . $v->id);
+                                @endphp
                                 <div class="mb-3 pb-2 border-bottom">
                                     <div class="mb-1">
-                                        <span class="badge badge-secondary" style="font-size: 10px;">{{ $v->name }}</span>
+                                        <span class="badge badge-secondary" style="font-size: 10px;">{{ $variantLabel }}</span>
                                     </div>
                                     @if($userCanManage)
                                         <div class="d-flex justify-content-between align-items-center mb-1">

@@ -41,11 +41,13 @@
             <span class="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-sm backdrop-blur">
                 {{ $resolvedCategoryName }}
             </span>
-            <template x-if="hasDiscount">
-                <span class="rounded-lg bg-emerald-600/95 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                    <span x-text="discountBadgeText"></span>
-                </span>
-            </template>
+            @auth
+                <template x-if="hasProductDiscount">
+                    <span class="rounded-lg bg-emerald-600/95 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                        <span x-text="discountBadgeText"></span>
+                    </span>
+                </template>
+            @endauth
         </div>
 
         <div class="absolute right-3 top-3">

@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use App\Models\InventoryStock;
 use App\Models\StockLedger;
 use App\Jobs\DispatchProductAnnouncementChunksJob;
@@ -164,6 +165,8 @@ class ProductController extends Controller implements HasMiddleware
             $discountConfig = $this->normalizeDiscountInput($request);
             $vatConfig = $this->normalizeVatInput($request);
             $imagePath = $this->upload_image($request, 'image', 'uploads/products');
+            $variantRows = $this->extractVariantRows($request->input('variants', []), false);
+            $hasVariantRows = !empty($variantRows);
 
             $product = new Product();
             $product->thumb_image = $imagePath;
@@ -196,11 +199,11 @@ class ProductController extends Controller implements HasMiddleware
             $product->vat_value = $vatConfig['value'];
             
             // Set qty for backward compatibility if needed, but we reflect in InventoryStock
-            $product->qty = $request->qty ?? 0;
+            $product->qty = $hasVariantRows ? 0 : max(0, (int) ($request->qty ?? 0));
             $product->save();
 
             // Handle Product Opening Stock
-            if ($product->qty > 0 && !$request->has('variants')) {
+            if ($product->qty > 0 && !$hasVariantRows) {
                 $stock = InventoryStock::firstOrCreate([
                     'product_id' => $product->id,
                     'variant_id' => null,
@@ -222,48 +225,37 @@ class ProductController extends Controller implements HasMiddleware
             }
 
             // Handle Variants
-            if ($request->has('variants')) {
-                foreach ($request->variants as $variant) {
-                    if (!empty($variant['color_id']) || !empty($variant['size_id'])) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = $variant['color_id'] ?? null;
-                        $productVariant->size_id = $variant['size_id'] ?? null;
-                        $productVariant->qty = $variant['qty'] ?? 0;
+            foreach ($variantRows as $row) {
+                $productVariant = new ProductVariant();
+                $productVariant->product_id = $product->id;
+                $productVariant->color_id = $row['color_id'];
+                $productVariant->size_id = $row['size_id'];
+                $productVariant->qty = $row['qty'];
+                $productVariant->name = $this->resolveVariantDisplayName($row['color_id'], $row['size_id']);
+                $productVariant->price = $row['price'];
+                $productVariant->outlet_price = $row['outlet_price'];
+                $productVariant->save();
 
-                        // Generate name for backward compatibility
-                        $colorName = $productVariant->color_id ? Color::find($productVariant->color_id)->name : '';
-                        $sizeName = $productVariant->size_id ? Size::find($productVariant->size_id)->name : '';
-                        $productVariant->name = trim($colorName . ' ' . $sizeName);
-                        
-                        // Save variant prices
-                        $productVariant->price = $variant['price'] ?? 0;
-                        $productVariant->outlet_price = $variant['outlet_price'] ?? 0;
+                // Variant Opening Stock
+                if ($productVariant->qty > 0) {
+                    $stock = InventoryStock::firstOrCreate([
+                        'product_id' => $product->id,
+                        'variant_id' => $productVariant->id,
+                        'outlet_id' => 1 // Default
+                    ]);
+                    $stock->increment('quantity', $productVariant->qty);
 
-                        $productVariant->save();
-
-                        // Variant Opening Stock
-                        if ($productVariant->qty > 0) {
-                            $stock = InventoryStock::firstOrCreate([
-                                'product_id' => $product->id,
-                                'variant_id' => $productVariant->id,
-                                'outlet_id' => 1 // Default
-                            ]);
-                            $stock->increment('quantity', $productVariant->qty);
-
-                            StockLedger::create([
-                                'product_id' => $product->id,
-                                'variant_id' => $productVariant->id,
-                                'outlet_id' => 1,
-                                'reference_type' => 'opening',
-                                'reference_id' => $productVariant->id,
-                                'in_qty' => $productVariant->qty,
-                                'out_qty' => 0,
-                                'balance_qty' => $stock->quantity,
-                                'date' => date('Y-m-d')
-                            ]);
-                        }
-                    }
+                    StockLedger::create([
+                        'product_id' => $product->id,
+                        'variant_id' => $productVariant->id,
+                        'outlet_id' => 1,
+                        'reference_type' => 'opening',
+                        'reference_id' => $productVariant->id,
+                        'in_qty' => $productVariant->qty,
+                        'out_qty' => 0,
+                        'balance_qty' => $stock->quantity,
+                        'date' => date('Y-m-d')
+                    ]);
                 }
             }
 
@@ -273,6 +265,9 @@ class ProductController extends Controller implements HasMiddleware
             Toastr::success('Product Created Successfully!');
             return redirect()->route('admin.products.index');
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             Toastr::error('Error: ' . $e->getMessage());
@@ -315,6 +310,8 @@ class ProductController extends Controller implements HasMiddleware
         try {
             $discountConfig = $this->normalizeDiscountInput($request);
             $vatConfig = $this->normalizeVatInput($request);
+            $variantRows = $this->extractVariantRows($request->input('variants', []), true);
+            $hasVariantRows = !empty($variantRows);
             $product = Product::findOrFail($id);
             $imagePath = $this->update_image($request, 'image', 'uploads/products', $product->thumb_image);
 
@@ -349,11 +346,14 @@ class ProductController extends Controller implements HasMiddleware
             $product->discount = $discountConfig['value'];
             $product->vat_type = $vatConfig['type'];
             $product->vat_value = $vatConfig['value'];
+            if ($hasVariantRows) {
+                $product->qty = 0;
+            }
             $product->save();
 
             // Handle Product Manual Stock Adjustment
             $adjustment = 0;
-            if ($request->has('current_stock')) {
+            if (!$hasVariantRows && $request->has('current_stock')) {
                 $currentDbStock = $product->inventory_stock;
                 $submittedStock = (float)$request->current_stock;
                 
@@ -387,70 +387,55 @@ class ProductController extends Controller implements HasMiddleware
 
             // Non-destructive Variant Update
             $keepVariantIds = [];
-            if ($request->has('variants')) {
-                foreach ($request->variants as $vData) {
-                    if (!empty($vData['color_id']) || !empty($vData['size_id'])) {
-                        
-                        $variant = null;
-                        if (isset($vData['id'])) {
-                            $variant = ProductVariant::find($vData['id']);
-                        }
+            foreach ($variantRows as $vData) {
+                $variant = null;
+                if (isset($vData['id'])) {
+                    $variant = ProductVariant::where('product_id', $product->id)->find($vData['id']);
+                }
 
-                        if (!$variant) {
-                            $variant = new ProductVariant();
-                            $variant->product_id = $product->id;
-                        }
+                if (!$variant) {
+                    $variant = new ProductVariant();
+                    $variant->product_id = $product->id;
+                }
 
-                        $variant->color_id = $vData['color_id'] ?? null;
-                        $variant->size_id = $vData['size_id'] ?? null;
-                        
-                        // Generate name
-                        $colorName = $variant->color_id ? Color::find($variant->color_id)->name : '';
-                        $sizeName = $variant->size_id ? Size::find($variant->size_id)->name : '';
-                        $variant->name = trim($colorName . ' ' . $sizeName);
-                        
-                        // Save variant prices
-                        $variant->price = $vData['price'] ?? 0;
-                        $variant->outlet_price = $vData['outlet_price'] ?? 0;
-                        
-                        $variant->save();
-                        
-                        $keepVariantIds[] = $variant->id;
+                $variant->color_id = $vData['color_id'];
+                $variant->size_id = $vData['size_id'];
+                $variant->name = $this->resolveVariantDisplayName($vData['color_id'], $vData['size_id']);
+                $variant->price = $vData['price'];
+                $variant->outlet_price = $vData['outlet_price'];
+                $variant->save();
+                
+                $keepVariantIds[] = $variant->id;
 
-                        // Variant Manual Stock Adjustment
-                        $vAdjustment = 0;
-                        $vCurrentDbStock = $variant->inventory_stock ?? 0; // New variant starts at 0
+                // Variant Manual Stock Adjustment
+                $vAdjustment = 0;
+                $vCurrentDbStock = $variant->inventory_stock ?? 0; // New variant starts at 0
+                $vSubmittedVal = (float) ($vData['current_stock'] ?? 0);
+                if ($vSubmittedVal != $vCurrentDbStock) {
+                    $vAdjustment = $vSubmittedVal - $vCurrentDbStock;
+                }
+                
+                if ($vAdjustment != 0) {
+                    $vStock = InventoryStock::firstOrCreate([
+                        'product_id' => $product->id,
+                        'variant_id' => $variant->id,
+                        'outlet_id' => 1
+                    ]);
+                    $vStock->increment('quantity', $vAdjustment);
 
-                        if (isset($vData['current_stock'])) {
-                             $vSubmittedVal = (float)$vData['current_stock'];
-                             if ($vSubmittedVal != $vCurrentDbStock) {
-                                  $vAdjustment = $vSubmittedVal - $vCurrentDbStock;
-                             }
-                        }
-                        
-                        if ($vAdjustment != 0) {
-                            $vStock = InventoryStock::firstOrCreate([
-                                'product_id' => $product->id,
-                                'variant_id' => $variant->id,
-                                'outlet_id' => 1
-                            ]);
-                            $vStock->increment('quantity', $vAdjustment);
-
-                            StockLedger::create([
-                                'product_id' => $product->id,
-                                'variant_id' => $variant->id,
-                                'outlet_id' => 1,
-                                'reference_type' => 'adjustment',
-                                'reference_id' => $variant->id,
-                                'in_qty' => $vAdjustment > 0 ? $vAdjustment : 0,
-                                'out_qty' => $vAdjustment < 0 ? abs($vAdjustment) : 0,
-                                'balance_qty' => $vStock->quantity,
-                                'date' => date('Y-m-d')
-                            ]);
-                            
-                            $variant->increment('qty', $vAdjustment);
-                        }
-                    }
+                    StockLedger::create([
+                        'product_id' => $product->id,
+                        'variant_id' => $variant->id,
+                        'outlet_id' => 1,
+                        'reference_type' => 'adjustment',
+                        'reference_id' => $variant->id,
+                        'in_qty' => $vAdjustment > 0 ? $vAdjustment : 0,
+                        'out_qty' => $vAdjustment < 0 ? abs($vAdjustment) : 0,
+                        'balance_qty' => $vStock->quantity,
+                        'date' => date('Y-m-d')
+                    ]);
+                    
+                    $variant->increment('qty', $vAdjustment);
                 }
             }
 
@@ -466,6 +451,9 @@ class ProductController extends Controller implements HasMiddleware
             
             return redirect()->route('admin.products.index');
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             Toastr::error('Error: ' . $e->getMessage());
@@ -700,6 +688,77 @@ class ProductController extends Controller implements HasMiddleware
             'success' => true,
             'message' => 'Announcement queued for ' . count($validProductIds) . ' selected products.',
         ]);
+    }
+
+    /**
+     * @param mixed $rawRows
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractVariantRows($rawRows, bool $isUpdate): array
+    {
+        if (!is_array($rawRows)) {
+            return [];
+        }
+
+        $rows = [];
+        $seenPairs = [];
+
+        foreach ($rawRows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $colorId = isset($row['color_id']) && $row['color_id'] !== '' ? (int) $row['color_id'] : null;
+            $sizeId = isset($row['size_id']) && $row['size_id'] !== '' ? (int) $row['size_id'] : null;
+
+            if ($colorId === null && $sizeId === null) {
+                continue;
+            }
+
+            $pairKey = ($colorId ?? 0) . '|' . ($sizeId ?? 0);
+            if (isset($seenPairs[$pairKey])) {
+                throw ValidationException::withMessages([
+                    'variants' => 'Duplicate variant combination found. Please keep each color-size combination unique.',
+                ]);
+            }
+            $seenPairs[$pairKey] = true;
+
+            $prepared = [
+                'color_id' => $colorId,
+                'size_id' => $sizeId,
+                'price' => max(0, (float) ($row['price'] ?? 0)),
+                'outlet_price' => max(0, (float) ($row['outlet_price'] ?? 0)),
+            ];
+
+            if ($isUpdate) {
+                if (!empty($row['id'])) {
+                    $prepared['id'] = (int) $row['id'];
+                }
+                $prepared['current_stock'] = max(0, (float) ($row['current_stock'] ?? 0));
+            } else {
+                $prepared['qty'] = max(0, (int) ($row['qty'] ?? 0));
+            }
+
+            $rows[] = $prepared;
+        }
+
+        return $rows;
+    }
+
+    private function resolveVariantDisplayName(?int $colorId, ?int $sizeId): string
+    {
+        $colorName = '';
+        $sizeName = '';
+
+        if ($colorId) {
+            $colorName = trim((string) optional(Color::find($colorId))->name);
+        }
+        if ($sizeId) {
+            $sizeName = trim((string) optional(Size::find($sizeId))->name);
+        }
+
+        $name = trim(implode(' ', array_filter([$colorName, $sizeName])));
+        return $name !== '' ? $name : 'Default';
     }
 
     private function normalizeDiscountInput(Request $request): array

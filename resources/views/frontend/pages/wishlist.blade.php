@@ -128,7 +128,7 @@
                                                         ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                                                         : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600')"
                                                 class="px-2 py-1 rounded-lg border text-[10px] font-bold leading-none transition-colors">
-                                            <span x-text="`${v.color ? v.color + (v.size ? ' - ' + v.size : '') : (v.size || 'Variant')}${v.stock <= 0 ? ' - Out' : ''}`"></span>
+                                            <span x-text="`${(v.name || [v.color, v.size].filter(Boolean).join(' / ') || 'Variant')}${v.stock <= 0 ? ' - Out' : ''}`"></span>
                                         </button>
                                     </template>
                                 </div>

@@ -392,17 +392,21 @@ class ProductsImport
                 $keyVariations = [];
                 
                 if ($key === 'color_name') {
-                    $keyVariations = ['color_name', 'color', 'colour', 'variant_1_color'];
+                    $keyVariations = ['color_name', 'color', 'colour', 'variant_1_color_name', 'variant_1_color'];
                 } elseif ($key === 'size_name') {
-                    $keyVariations = ['size_name', 'size', 'variant_1_size'];
+                    $keyVariations = ['size_name', 'size', 'variant_1_size_name', 'variant_1_size'];
                 } elseif ($key === 'variant_price') {
-                    $keyVariations = ['variant_price', 'var_price', 'vprice', 'variant_1_price', 'variant_1_size_price'];
+                    $keyVariations = ['variant_price', 'var_price', 'vprice', 'selling_price', 'variant_1_price', 'variant_1_selling_price', 'variant_1_size_price'];
+                } elseif ($key === 'variant_outlet_price') {
+                    $keyVariations = ['variant_outlet_price', 'variant_outlet', 'wholesale_price', 'whole_sale_price', 'variant_1_outlet_price', 'variant_1_wholesale_price'];
                 } elseif ($key === 'variant_qty') {
                     $keyVariations = ['variant_qty', 'variant_quantity', 'var_qty', 'vqty', 'variant_1_qty', 'variant_1_size_qty'];
                 } elseif ($key === 'image') {
                     $keyVariations = ['image', 'image_url', 'img', 'product_image', 'thumb_image'];
                 } elseif ($key === 'product_type') {
                     $keyVariations = ['product_type', 'producttype', 'type', 'product_type_name'];
+                } elseif ($key === 'minimum_order_qty') {
+                    $keyVariations = ['minimum_order_qty', 'min_order_qty', 'minimum_qty', 'minimum_order_quantity'];
                 } elseif ($key === 'custom_label') {
                     $keyVariations = ['custom_label', 'customlabel', 'label', 'customer_label'];
                 } else {
@@ -601,7 +605,13 @@ class ProductsImport
             }
             // Product Type
             $product->product_type = $getValue('product_type');
-            $product->product_type_id = null;
+            $productTypeId = $getValue('product_type_id');
+            if (!empty($productTypeId) && ProductType::find((int) $productTypeId)) {
+                $product->product_type_id = (int) $productTypeId;
+            } else {
+                $product->product_type_id = null;
+            }
+            $product->minimum_order_qty = max(1, intval($getValue('minimum_order_qty', 1)));
             
             $product->save();
             
@@ -627,80 +637,77 @@ class ProductsImport
                 ]);
             }
 
-            // ========== Handle Variants (One at a time to keep them separate) ==========
+            // ========== Handle Combined Variants (color + size pair) ==========
             $variantsAddedCount = 0;
-            
-            for ($i = 1; $i <= 10; $i++) {
-                // Check for Color Variant
-                $varColorName = $rowData['variant_' . $i . '_color'] ?? null;
-                if (!empty($varColorName)) {
-                    $varPrice = floatval($rowData['variant_' . $i . '_price'] ?? $product->price);
-                    $varQty = intval($rowData['variant_' . $i . '_qty'] ?? 0);
-                    
-                    $color = Color::whereRaw('LOWER(name) = ?', [strtolower($varColorName)])->first();
-                    if (!$color) {
-                        $color = Color::create(['name' => $varColorName, 'status' => 1]);
-                    }
-                    
-                    // Check if this COLOR variant already exists for this product
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->where('color_id', $color->id)
-                        ->whereNull('size_id')
-                        ->first();
-                    
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = $color->id;
-                        $productVariant->size_id = null;
-                        $productVariant->color = $color->name;
-                        $productVariant->size = null;
-                        $productVariant->name = $color->name;
-                        $productVariant->price = $varPrice;
-                        $productVariant->outlet_price = $product->outlet_price;
-                        $productVariant->qty = $varQty;
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $varQty);
-                        $variantsAddedCount++;
-                        // Log::info('Excel - Color variant added: ' . $color->name);
-                    }
+            $variantIndexes = $this->collectVariantIndexes(array_keys($rowData));
+            $lastColorName = null;
+            $lastSizeName = null;
+
+            foreach ($variantIndexes as $i) {
+                $varColorName = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_color_name',
+                    'variant_{i}_color',
+                    'color_name_{i}',
+                    'color_{i}',
+                ]);
+                $varSizeName = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_size_name',
+                    'variant_{i}_size',
+                    'size_name_{i}',
+                    'size_{i}',
+                ]);
+
+                if (($varColorName === null || $varColorName === '') && $varSizeName !== null && $lastColorName !== null) {
+                    $varColorName = $lastColorName;
                 }
-                
-                // Check for Size Variant
-                $varSizeName = $rowData['variant_' . $i . '_size'] ?? null;
-                if (!empty($varSizeName)) {
-                    $varPrice = floatval($rowData['variant_' . $i . '_size_price'] ?? $product->price);
-                    $varQty = intval($rowData['variant_' . $i . '_size_qty'] ?? 0);
-                    
-                    $size = Size::whereRaw('LOWER(name) = ?', [strtolower($varSizeName)])->first();
-                    if (!$size) {
-                        $size = Size::create(['name' => $varSizeName, 'status' => 1]);
-                    }
-                    
-                    // Check if this SIZE variant already exists for this product
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->whereNull('color_id')
-                        ->where('size_id', $size->id)
-                        ->first();
-                        
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = null;
-                        $productVariant->size_id = $size->id;
-                        $productVariant->color = null;
-                        $productVariant->size = $size->name;
-                        $productVariant->name = $size->name;
-                        $productVariant->price = $varPrice;
-                        $productVariant->outlet_price = $product->outlet_price;
-                        $productVariant->qty = $varQty;
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $varQty);
-                        $variantsAddedCount++;
-                        // Log::info('Excel - Size variant added: ' . $size->name);
-                    }
+                if (($varSizeName === null || $varSizeName === '') && $varColorName !== null && $lastSizeName !== null) {
+                    $varSizeName = $lastSizeName;
+                }
+                if ($varColorName !== null && $varColorName !== '') {
+                    $lastColorName = $varColorName;
+                }
+                if ($varSizeName !== null && $varSizeName !== '') {
+                    $lastSizeName = $varSizeName;
+                }
+
+                $varQtyRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_qty',
+                    'variant_{i}_quantity',
+                    'variant_{i}_stock',
+                    'qty_{i}',
+                    'quantity_{i}',
+                    'stock_{i}',
+                    'variant_{i}_size_qty',
+                ]);
+                $varOutletPriceRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_outlet_price',
+                    'variant_{i}_outlet',
+                    'variant_{i}_wholesale_price',
+                    'variant_{i}_whole_sale_price',
+                    'outlet_price_{i}',
+                    'outlet_{i}',
+                    'wholesale_price_{i}',
+                    'whole_sale_price_{i}',
+                ]);
+                $varPriceRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_price',
+                    'variant_{i}_selling_price',
+                    'price_{i}',
+                    'selling_price_{i}',
+                    'variant_{i}_size_price',
+                ]);
+
+                $created = $this->createCombinedVariant(
+                    $product,
+                    $varColorName,
+                    $varSizeName,
+                    $varPriceRaw !== null ? (float) $varPriceRaw : null,
+                    $varOutletPriceRaw !== null ? (float) $varOutletPriceRaw : null,
+                    $varQtyRaw !== null ? (int) $varQtyRaw : 0
+                );
+
+                if ($created) {
+                    $variantsAddedCount++;
                 }
             }
             
@@ -708,43 +715,18 @@ class ProductsImport
             if ($variantsAddedCount === 0) {
                 $colorName = $getValue('color_name');
                 $sizeName = $getValue('size_name');
-                
-                if (!empty($colorName) || !empty($sizeName)) {
-                    $colorId = null;
-                    if (!empty($colorName)) {
-                        $color = Color::whereRaw('LOWER(name) = ?', [strtolower($colorName)])->first();
-                        if (!$color) $color = Color::create(['name' => $colorName, 'status' => 1]);
-                        $colorId = $color->id;
-                    }
-                    
-                    $sizeId = null;
-                    if (!empty($sizeName)) {
-                        $size = Size::whereRaw('LOWER(name) = ?', [strtolower($sizeName)])->first();
-                        if (!$size) $size = Size::create(['name' => $sizeName, 'status' => 1]);
-                        $sizeId = $size->id;
-                    }
-                    
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->where('color_id', $colorId)
-                        ->where('size_id', $sizeId)
-                        ->first();
-                        
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = $colorId;
-                        $productVariant->size_id = $sizeId;
-                        $productVariant->color = $colorName;
-                        $productVariant->size = $sizeName;
-                        $productVariant->name = trim(($colorName ?? '') . ' ' . ($sizeName ?? ''));
-                        $productVariant->price = floatval($getValue('variant_price', $product->price));
-                        $productVariant->outlet_price = floatval($getValue('variant_outlet_price', $product->outlet_price));
-                        $productVariant->qty = intval($getValue('variant_qty', 0));
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $productVariant->qty);
-                    }
-                }
+                $variantPrice = $getValue('variant_price');
+                $variantOutletPrice = $getValue('variant_outlet_price');
+                $variantQty = $getValue('variant_qty', 0);
+
+                $this->createCombinedVariant(
+                    $product,
+                    $colorName,
+                    $sizeName,
+                    $variantPrice !== null && $variantPrice !== '' ? (float) $variantPrice : null,
+                    $variantOutletPrice !== null && $variantOutletPrice !== '' ? (float) $variantOutletPrice : null,
+                    (int) $variantQty
+                );
             }
             DB::commit();
             return $product;
@@ -876,9 +858,16 @@ class ProductsImport
             elseif (in_array($header, ['product_type_name', 'product_type', 'producttype', 'type'])) {
                 $map['product_type'] = $index;
             }
+            elseif (in_array($header, ['product_type_id', 'producttype_id'])) {
+                $map['product_type_id'] = $index;
+            }
             // Custom Label
             elseif (in_array($header, ['custom_label', 'customlabel', 'label', 'customer_label'])) {
                 $map['custom_label'] = $index;
+            }
+            // Minimum Order Qty
+            elseif (in_array($header, ['minimum_order_qty', 'min_order_qty', 'minimum_qty', 'minimum_order_quantity'])) {
+                $map['minimum_order_qty'] = $index;
             }
             // Self Number
             elseif (in_array($header, ['self_number', 'selfnumber', 'self_no'])) {
@@ -940,54 +929,55 @@ class ProductsImport
             elseif ($header === 'status') {
                 $map['status'] = $index;
             }
-            // Variant fields
+            // Variant fields (single/fallback)
             elseif (in_array($header, ['color_name', 'color', 'colour'])) {
                 $map['color_name'] = $index;
             }
             elseif (in_array($header, ['size_name', 'size'])) {
                 $map['size_name'] = $index;
             }
-            elseif (in_array($header, ['variant_price'])) {
+            elseif (in_array($header, ['variant_price', 'selling_price'])) {
                 $map['variant_price'] = $index;
             }
-            elseif (in_array($header, ['variant_outlet_price', 'variant_outlet'])) {
+            elseif (in_array($header, ['variant_outlet_price', 'variant_outlet', 'wholesale_price', 'whole_sale_price'])) {
                 $map['variant_outlet_price'] = $index;
             }
             elseif (in_array($header, ['variant_qty', 'variant_quantity'])) {
                 $map['variant_qty'] = $index;
             }
-            // New variant format (variant_1_color, variant_1_size, variant_1_price, variant_1_qty, etc.)
-            elseif (preg_match('/^variant_(\d+)_color$/', $header, $matches)) {
-                $map['variant_' . $matches[1] . '_color'] = $index;
+            // Combined variant format:
+            // variant_1_color_name, variant_1_size_name, variant_1_qty, variant_1_outlet_price, variant_1_price
+            elseif (preg_match('/^variant_(\d+)_(color_name|color|colour)$/', $header, $matches)) {
+                $map['variant_' . $matches[1] . '_color_name'] = $index;
             }
-            elseif (preg_match('/^variant_(\d+)_size$/', $header, $matches)) {
-                $map['variant_' . $matches[1] . '_size'] = $index;
+            elseif (preg_match('/^variant_(\d+)_(size_name|size)$/', $header, $matches)) {
+                $map['variant_' . $matches[1] . '_size_name'] = $index;
             }
-            elseif (preg_match('/^variant_(\d+)_price$/', $header, $matches)) {
-                $map['variant_' . $matches[1] . '_price'] = $index;
-            }
-            elseif (preg_match('/^variant_(\d+)_qty$/', $header, $matches)) {
+            elseif (preg_match('/^variant_(\d+)_(qty|quantity|stock|size_qty)$/', $header, $matches)) {
                 $map['variant_' . $matches[1] . '_qty'] = $index;
             }
-            // New format: variant_1_size_price, variant_1_size_qty
-            elseif (preg_match('/^variant_(\d+)_size_price$/', $header, $matches)) {
-                $map['variant_' . $matches[1] . '_size_price'] = $index;
+            elseif (preg_match('/^variant_(\d+)_(outlet_price|outlet|wholesale_price|whole_sale_price)$/', $header, $matches)) {
+                $map['variant_' . $matches[1] . '_outlet_price'] = $index;
             }
-            elseif (preg_match('/^variant_(\d+)_size_qty$/', $header, $matches)) {
-                $map['variant_' . $matches[1] . '_size_qty'] = $index;
+            elseif (preg_match('/^variant_(\d+)_(price|selling_price|size_price)$/', $header, $matches)) {
+                $map['variant_' . $matches[1] . '_price'] = $index;
             }
-            // Old variant format (color_1, size_1, price_1, qty_1, etc.)
-            elseif (preg_match('/^color_(\d+)$/', $header, $matches)) {
-                $map['color_' . $matches[1]] = $index;
+            // Alternate indexed format:
+            // color_name_1, size_name_1, qty_1, outlet_price_1, price_1
+            elseif (preg_match('/^(color_name|color|colour)_(\d+)$/', $header, $matches)) {
+                $map['variant_' . $matches[2] . '_color_name'] = $index;
             }
-            elseif (preg_match('/^size_(\d+)$/', $header, $matches)) {
-                $map['size_' . $matches[1]] = $index;
+            elseif (preg_match('/^(size_name|size)_(\d+)$/', $header, $matches)) {
+                $map['variant_' . $matches[2] . '_size_name'] = $index;
             }
-            elseif (preg_match('/^price_(\d+)$/', $header, $matches)) {
-                $map['price_' . $matches[1]] = $index;
+            elseif (preg_match('/^(qty|quantity|stock)_(\d+)$/', $header, $matches)) {
+                $map['variant_' . $matches[2] . '_qty'] = $index;
             }
-            elseif (preg_match('/^qty_(\d+)$/', $header, $matches)) {
-                $map['qty_' . $matches[1]] = $index;
+            elseif (preg_match('/^(outlet_price|outlet|wholesale_price|whole_sale_price)_(\d+)$/', $header, $matches)) {
+                $map['variant_' . $matches[2] . '_outlet_price'] = $index;
+            }
+            elseif (preg_match('/^(price|selling_price|size_price)_(\d+)$/', $header, $matches)) {
+                $map['variant_' . $matches[2] . '_price'] = $index;
             }
         }
         
@@ -1007,9 +997,17 @@ class ProductsImport
                 if (!isset($columnMap[$key]) || !isset($row[$columnMap[$key]])) {
                     // Try variations for color and size
                     if ($key === 'color_name') {
-                        $altKeys = ['color', 'colour'];
+                        $altKeys = ['color', 'colour', 'variant_1_color_name', 'variant_1_color'];
                     } elseif ($key === 'size_name') {
-                        $altKeys = ['size'];
+                        $altKeys = ['size', 'variant_1_size_name', 'variant_1_size'];
+                    } elseif ($key === 'variant_price') {
+                        $altKeys = ['variant_price', 'selling_price'];
+                    } elseif ($key === 'variant_outlet_price') {
+                        $altKeys = ['variant_outlet_price', 'variant_outlet', 'wholesale_price', 'whole_sale_price'];
+                    } elseif ($key === 'variant_qty') {
+                        $altKeys = ['variant_qty', 'variant_quantity'];
+                    } elseif ($key === 'minimum_order_qty') {
+                        $altKeys = ['minimum_order_qty', 'min_order_qty', 'minimum_qty', 'minimum_order_quantity'];
                     } elseif ($key === 'image') {
                         $altKeys = ['image', 'image_url', 'img', 'thumb_image', 'product_image'];
                     } elseif ($key === 'product_type') {
@@ -1166,7 +1164,12 @@ class ProductsImport
             $product->vendor_id = $vendorId;
             $product->unit_id = $unitId;
             $product->product_type = $productTypeNameRaw;
-            $product->product_type_id = null;
+            $productTypeId = $getValue('product_type_id');
+            if (!empty($productTypeId) && ProductType::find((int) $productTypeId)) {
+                $product->product_type_id = (int) $productTypeId;
+            } else {
+                $product->product_type_id = null;
+            }
             $product->product_number = $productNumber;
             $product->long_description = $getValue('long_description');
             $product->purchase_price = floatval($getValue('purchase_price', 0));
@@ -1201,6 +1204,7 @@ class ProductsImport
             $product->discount = $discountValue;
             $product->vat_type = $vatType;
             $product->vat_value = $vatValue;
+            $product->minimum_order_qty = max(1, intval($getValue('minimum_order_qty', 1)));
             $product->qty = intval($getValue('qty', 0));
             $product->save();
 
@@ -1226,72 +1230,77 @@ class ProductsImport
                 ]);
             }
 
-            // ========== Handle Variants (One at a time to keep them separate) ==========
+            // ========== Handle Combined Variants (color + size pair) ==========
             $variantsAddedCount = 0;
-            
-            for ($i = 1; $i <= 10; $i++) {
-                // Color Variant
-                $varColorName = $getValue('variant_' . $i . '_color');
-                if (!empty($varColorName)) {
-                    $varPrice = floatval($getValue('variant_' . $i . '_price', $product->price));
-                    $varQty = intval($getValue('variant_' . $i . '_qty', 0));
-                    
-                    $color = Color::whereRaw('LOWER(name) = ?', [strtolower($varColorName)])->first();
-                    if (!$color) $color = Color::create(['name' => $varColorName, 'status' => 1]);
-                    
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->where('color_id', $color->id)
-                        ->whereNull('size_id')
-                        ->first();
-                        
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = $color->id;
-                        $productVariant->size_id = null;
-                        $productVariant->color = $color->name;
-                        $productVariant->size = null;
-                        $productVariant->name = $color->name;
-                        $productVariant->price = $varPrice;
-                        $productVariant->outlet_price = $product->outlet_price;
-                        $productVariant->qty = $varQty;
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $varQty);
-                        $variantsAddedCount++;
-                    }
+            $variantIndexes = $this->collectVariantIndexes(array_keys($columnMap));
+            $lastColorName = null;
+            $lastSizeName = null;
+
+            foreach ($variantIndexes as $i) {
+                $varColorName = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_color_name',
+                    'variant_{i}_color',
+                    'color_name_{i}',
+                    'color_{i}',
+                ]);
+                $varSizeName = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_size_name',
+                    'variant_{i}_size',
+                    'size_name_{i}',
+                    'size_{i}',
+                ]);
+
+                if (($varColorName === null || $varColorName === '') && $varSizeName !== null && $lastColorName !== null) {
+                    $varColorName = $lastColorName;
                 }
-                
-                // Size Variant
-                $varSizeName = $getValue('variant_' . $i . '_size');
-                if (!empty($varSizeName)) {
-                    $varPrice = floatval($getValue('variant_' . $i . '_size_price', $product->price));
-                    $varQty = intval($getValue('variant_' . $i . '_size_qty', 0));
-                    
-                    $size = Size::whereRaw('LOWER(name) = ?', [strtolower($varSizeName)])->first();
-                    if (!$size) $size = Size::create(['name' => $varSizeName, 'status' => 1]);
-                    
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->whereNull('color_id')
-                        ->where('size_id', $size->id)
-                        ->first();
-                        
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = null;
-                        $productVariant->size_id = $size->id;
-                        $productVariant->color = null;
-                        $productVariant->size = $size->name;
-                        $productVariant->name = $size->name;
-                        $productVariant->price = $varPrice;
-                        $productVariant->outlet_price = $product->outlet_price;
-                        $productVariant->qty = $varQty;
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $varQty);
-                        $variantsAddedCount++;
-                    }
+                if (($varSizeName === null || $varSizeName === '') && $varColorName !== null && $lastSizeName !== null) {
+                    $varSizeName = $lastSizeName;
+                }
+                if ($varColorName !== null && $varColorName !== '') {
+                    $lastColorName = $varColorName;
+                }
+                if ($varSizeName !== null && $varSizeName !== '') {
+                    $lastSizeName = $varSizeName;
+                }
+
+                $varQtyRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_qty',
+                    'variant_{i}_quantity',
+                    'variant_{i}_stock',
+                    'qty_{i}',
+                    'quantity_{i}',
+                    'stock_{i}',
+                    'variant_{i}_size_qty',
+                ]);
+                $varOutletPriceRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_outlet_price',
+                    'variant_{i}_outlet',
+                    'variant_{i}_wholesale_price',
+                    'variant_{i}_whole_sale_price',
+                    'outlet_price_{i}',
+                    'outlet_{i}',
+                    'wholesale_price_{i}',
+                    'whole_sale_price_{i}',
+                ]);
+                $varPriceRaw = $this->getVariantFieldValue($getValue, $i, [
+                    'variant_{i}_price',
+                    'variant_{i}_selling_price',
+                    'price_{i}',
+                    'selling_price_{i}',
+                    'variant_{i}_size_price',
+                ]);
+
+                $created = $this->createCombinedVariant(
+                    $product,
+                    $varColorName,
+                    $varSizeName,
+                    $varPriceRaw !== null ? (float) $varPriceRaw : null,
+                    $varOutletPriceRaw !== null ? (float) $varOutletPriceRaw : null,
+                    $varQtyRaw !== null ? (int) $varQtyRaw : 0
+                );
+
+                if ($created) {
+                    $variantsAddedCount++;
                 }
             }
             
@@ -1299,41 +1308,18 @@ class ProductsImport
             if ($variantsAddedCount === 0) {
                 $colorName = $getValue('color_name');
                 $sizeName = $getValue('size_name');
-                if (!empty($colorName) || !empty($sizeName)) {
-                    $colorId = null;
-                    if (!empty($colorName)) {
-                        $color = Color::whereRaw('LOWER(name) = ?', [strtolower($colorName)])->first();
-                        if (!$color) $color = Color::create(['name' => $colorName, 'status' => 1]);
-                        $colorId = $color->id;
-                    }
-                    $sizeId = null;
-                    if (!empty($sizeName)) {
-                        $size = Size::whereRaw('LOWER(name) = ?', [strtolower($sizeName)])->first();
-                        if (!$size) $size = Size::create(['name' => $sizeName, 'status' => 1]);
-                        $sizeId = $size->id;
-                    }
-                    
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->where('color_id', $colorId)
-                        ->where('size_id', $sizeId)
-                        ->first();
-                        
-                    if (!$existingVariant) {
-                        $productVariant = new ProductVariant();
-                        $productVariant->product_id = $product->id;
-                        $productVariant->color_id = $colorId;
-                        $productVariant->size_id = $sizeId;
-                        $productVariant->color = $colorName;
-                        $productVariant->size = $sizeName;
-                        $productVariant->name = trim(($colorName ?? '') . ' ' . ($sizeName ?? ''));
-                        $productVariant->price = floatval($getValue('variant_price', $product->price));
-                        $productVariant->outlet_price = floatval($getValue('variant_outlet_price', $product->outlet_price));
-                        $productVariant->qty = intval($getValue('variant_qty', 0));
-                        $productVariant->save();
-                        
-                        $this->updateVariantStock($product, $productVariant, $productVariant->qty);
-                    }
-                }
+                $variantPrice = $getValue('variant_price');
+                $variantOutletPrice = $getValue('variant_outlet_price');
+                $variantQty = $getValue('variant_qty', 0);
+
+                $this->createCombinedVariant(
+                    $product,
+                    $colorName,
+                    $sizeName,
+                    $variantPrice !== null && $variantPrice !== '' ? (float) $variantPrice : null,
+                    $variantOutletPrice !== null && $variantOutletPrice !== '' ? (float) $variantOutletPrice : null,
+                    (int) $variantQty
+                );
             }
 
             DB::commit();
@@ -1343,6 +1329,120 @@ class ProductsImport
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Collect variant indexes from headers/keys.
+     *
+     * @param array<int, string> $keys
+     * @return array<int, int>
+     */
+    private function collectVariantIndexes(array $keys): array
+    {
+        $indexes = [];
+
+        foreach ($keys as $key) {
+            $normalized = strtolower(trim((string) $key));
+
+            if (preg_match('/^variant_(\d+)_(color_name|color|colour|size_name|size|qty|quantity|stock|wholesale_price|whole_sale_price|price|selling_price|outlet_price|outlet|size_price|size_qty)$/', $normalized, $match)) {
+                $indexes[(int) $match[1]] = true;
+                continue;
+            }
+
+            if (preg_match('/^(color_name|color|colour|size_name|size|qty|quantity|stock|wholesale_price|whole_sale_price|price|selling_price|outlet_price|outlet)_(\d+)$/', $normalized, $match)) {
+                $indexes[(int) $match[2]] = true;
+            }
+        }
+
+        $indexes = array_keys($indexes);
+        sort($indexes);
+
+        return $indexes;
+    }
+
+    /**
+     * Read first non-empty value from multiple indexed variant key patterns.
+     */
+    private function getVariantFieldValue(callable $getter, int $index, array $patterns): ?string
+    {
+        foreach ($patterns as $pattern) {
+            $key = str_replace('{i}', (string) $index, $pattern);
+            $value = $getter($key, null);
+
+            if ($value === null) {
+                continue;
+            }
+
+            $value = trim((string) $value);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function createCombinedVariant(
+        Product $product,
+        ?string $colorName,
+        ?string $sizeName,
+        ?float $variantPrice,
+        ?float $variantOutletPrice,
+        int $qty
+    ): bool {
+        $colorName = trim((string) $colorName);
+        $sizeName = trim((string) $sizeName);
+
+        if ($colorName === '' && $sizeName === '') {
+            return false;
+        }
+
+        $colorId = null;
+        if ($colorName !== '') {
+            $color = Color::whereRaw('LOWER(name) = ?', [strtolower($colorName)])->first();
+            if (!$color) {
+                $color = Color::create(['name' => $colorName, 'status' => 1]);
+            }
+            $colorId = $color->id;
+            $colorName = $color->name;
+        }
+
+        $sizeId = null;
+        if ($sizeName !== '') {
+            $size = Size::whereRaw('LOWER(name) = ?', [strtolower($sizeName)])->first();
+            if (!$size) {
+                $size = Size::create(['name' => $sizeName, 'status' => 1]);
+            }
+            $sizeId = $size->id;
+            $sizeName = $size->name;
+        }
+
+        $existingVariant = ProductVariant::where('product_id', $product->id)
+            ->where('color_id', $colorId)
+            ->where('size_id', $sizeId)
+            ->first();
+
+        if ($existingVariant) {
+            return false;
+        }
+
+        $productVariant = new ProductVariant();
+        $productVariant->product_id = $product->id;
+        $productVariant->color_id = $colorId;
+        $productVariant->size_id = $sizeId;
+        $productVariant->color = $colorName !== '' ? $colorName : null;
+        $productVariant->size = $sizeName !== '' ? $sizeName : null;
+        $productVariant->name = trim(implode(' ', array_filter([$colorName, $sizeName]))) ?: 'Default';
+        // Keep same meaning as Product create form:
+        // price = Outlet/Customer price, outlet_price = Whole Sale price.
+        $productVariant->price = $variantPrice !== null ? max(0, $variantPrice) : (float) $product->price;
+        $productVariant->outlet_price = $variantOutletPrice !== null ? max(0, $variantOutletPrice) : (float) $product->outlet_price;
+        $productVariant->qty = max(0, $qty);
+        $productVariant->save();
+
+        $this->updateVariantStock($product, $productVariant, $productVariant->qty);
+
+        return true;
     }
 
     // ========== Image Handle Method ==========

@@ -375,13 +375,46 @@
                     return stock > 0 ? `${base} - ${stock}` : `${base} - Out`;
                 },
 
-                get normalizedDiscountType() {
+                get productNormalizedDiscountType() {
                     const type = String(this.product.discount_type || '').toLowerCase().trim();
                     return ['flat', 'percent'].includes(type) ? type : '';
                 },
 
-                get discountValue() {
+                get productDiscountValue() {
                     return Math.max(0, parseFloat(this.product.discount) || 0);
+                },
+
+                get globalNormalizedDiscountType() {
+                    const type = String(this.product.global_discount_type || '').toLowerCase().trim();
+                    return ['flat', 'percent'].includes(type) ? type : '';
+                },
+
+                get globalDiscountValue() {
+                    return Math.max(0, parseFloat(this.product.global_discount) || 0);
+                },
+
+                get normalizedDiscountType() {
+                    if (this.productNormalizedDiscountType !== '' && this.productDiscountValue > 0) {
+                        return this.productNormalizedDiscountType;
+                    }
+
+                    if (this.globalNormalizedDiscountType !== '' && this.globalDiscountValue > 0) {
+                        return this.globalNormalizedDiscountType;
+                    }
+
+                    return '';
+                },
+
+                get discountValue() {
+                    if (this.productNormalizedDiscountType !== '' && this.productDiscountValue > 0) {
+                        return this.productDiscountValue;
+                    }
+
+                    if (this.globalNormalizedDiscountType !== '' && this.globalDiscountValue > 0) {
+                        return this.globalDiscountValue;
+                    }
+
+                    return 0;
                 },
 
                 get hasDiscount() {

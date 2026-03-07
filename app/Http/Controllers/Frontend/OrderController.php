@@ -116,7 +116,7 @@ class OrderController extends Controller
             $lineSubtotal = round($unitPrice * $qty, 2);
             $subtotal += $lineSubtotal;
 
-            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal);
+            $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $qty);
             $discountAmount += (float) ($lineDiscount['amount'] ?? 0);
 
             $lineTax = $taxResolver->resolveForLine($product, $lineSubtotal);
