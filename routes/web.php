@@ -49,6 +49,7 @@ Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])
 Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
 Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
 Route::get('/products/live-search', [\App\Http\Controllers\Frontend\HomeController::class, 'liveSearch'])->name('frontend.products.live-search');
+Route::get('/frontend/reviews/product/{productId}', [ReviewController::class, 'getProductReviews'])->name('frontend.reviews.product');
 // Frontend cart page
 Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
 
@@ -83,6 +84,9 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::get('/wishlist/ids', [WishlistController::class, 'getIds'])->name('wishlist.ids');
     Route::post('/wishlist/clear', [WishlistController::class, 'clearAll'])->name('wishlist.clear');
+    Route::get('/frontend/reviews/user-product/{productId}', [ReviewController::class, 'getUserProductReview'])->name('frontend.reviews.user-product');
+    Route::post('/frontend/reviews/store', [ReviewController::class, 'store'])->name('frontend.reviews.store');
+    Route::delete('/frontend/reviews/{reviewId}', [ReviewController::class, 'destroy'])->name('frontend.reviews.destroy');
 });
 
 // Route::get('/dashboard', function () {

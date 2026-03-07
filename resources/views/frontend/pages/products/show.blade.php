@@ -19,6 +19,15 @@
         $detailVariantData = collect($detailVariantData ?? []);
         $isWishlisted = (bool) ($isWishlisted ?? false);
         $relatedCards = collect($relatedCards ?? []);
+        $canSubmitReview = $isOutletUser || $isStandardUser;
+        $reviewConfig = [
+            'productId' => (int) $product->id,
+            'listUrl' => route('frontend.reviews.product', $product->id),
+            'userReviewUrl' => $canSubmitReview ? route('frontend.reviews.user-product', $product->id) : null,
+            'storeUrl' => $canSubmitReview ? route('frontend.reviews.store') : null,
+            'deleteUrlTemplate' => $canSubmitReview ? route('frontend.reviews.destroy', ['reviewId' => '__REVIEW_ID__']) : null,
+            'canSubmit' => $canSubmitReview,
+        ];
     @endphp
 
     <div class="bg-slate-100 py-6 sm:py-8">
@@ -268,6 +277,181 @@
                 </div>
             </section>
 
+            <section x-data="productReviews(@js($reviewConfig))"
+                class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+                <div class="grid gap-5 lg:grid-cols-[320px_1fr]">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Customer Feedback</p>
+                            <h2 class="mt-1 text-xl font-bold text-slate-900">Product Reviews</h2>
+                            <p class="mt-1 text-sm text-slate-500">Verified customer ratings and comments for this product.</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="flex items-end gap-2">
+                                <span class="text-4xl font-bold leading-none text-slate-900" x-text="averageRatingDisplay"></span>
+                                <span class="pb-1 text-sm font-semibold text-slate-500">/ 5</span>
+                            </div>
+
+                            <div class="mt-3 flex items-center gap-1">
+                                <template x-for="star in starRange" :key="`average-star-${star}`">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+                                        :class="star <= Math.round(averageRating) ? 'text-amber-400' : 'text-slate-200'">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.069-3.292z" />
+                                    </svg>
+                                </template>
+                            </div>
+
+                            <p class="mt-3 text-sm font-semibold text-slate-700" x-text="reviewCountText"></p>
+                            <p class="mt-1 text-xs text-slate-500">Latest reviews are shown below. Submitting again updates your existing review.</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                            <p class="font-semibold">Quick note</p>
+                            <p class="mt-1">Ratings use a 1 to 5 scale and comments are limited to 500 characters.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        @if ($canSubmitReview)
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Write Review</p>
+                                        <h3 class="mt-1 text-lg font-bold text-slate-900">Share your experience</h3>
+                                        <p class="mt-1 text-sm text-slate-500">Your rating helps other outlet customers decide faster.</p>
+                                    </div>
+                                    <template x-if="userReview">
+                                        <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                                            Your review is saved
+                                        </span>
+                                    </template>
+                                </div>
+
+                                <div class="mt-4 flex flex-wrap items-center gap-2">
+                                    <template x-for="star in starRange" :key="`input-star-${star}`">
+                                        <button type="button"
+                                            @click="setRating(star)"
+                                            :disabled="submitting || deleting"
+                                            class="rounded-md p-1 transition"
+                                            :class="star <= form.rating ? 'text-amber-400' : 'text-slate-300'">
+                                            <svg class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.069-3.292z" />
+                                            </svg>
+                                        </button>
+                                    </template>
+                                    <span class="text-sm font-semibold text-slate-600" x-text="ratingLabel"></span>
+                                </div>
+
+                                <label class="mt-4 block">
+                                    <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Comment</span>
+                                    <textarea x-model.trim="form.comment"
+                                        maxlength="500"
+                                        rows="4"
+                                        class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:bg-white"
+                                        placeholder="Write a short review about product quality, packaging, or value."></textarea>
+                                </label>
+
+                                <div class="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                                    <span x-text="`${form.comment.length}/500 characters`"></span>
+                                    <span x-show="loadingUserReview">Checking your existing review...</span>
+                                </div>
+
+                                <p x-show="formError" x-text="formError" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
+                                <div class="mt-4 flex flex-wrap items-center gap-2">
+                                    <button type="button"
+                                        @click="submitReview()"
+                                        :disabled="submitting || deleting || form.rating < 1"
+                                        class="inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                        x-text="submitting ? 'Saving...' : (userReview ? 'Update Review' : 'Submit Review')"></button>
+
+                                    <button type="button"
+                                        x-show="userReview"
+                                        @click="deleteReview()"
+                                        :disabled="submitting || deleting"
+                                        class="inline-flex h-10 items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                        x-text="deleting ? 'Removing...' : 'Delete Review'"></button>
+                                </div>
+                            </div>
+                        @elseif (auth()->check())
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Review Access</p>
+                                <h3 class="mt-1 text-lg font-bold text-slate-900">This account cannot submit reviews</h3>
+                                <p class="mt-1 text-sm text-slate-500">Only customer accounts with outlet access can add or update product reviews.</p>
+                            </div>
+                        @else
+                            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700">Login Required</p>
+                                <h3 class="mt-1 text-lg font-bold text-slate-900">Sign in to leave a review</h3>
+                                <p class="mt-1 text-sm text-slate-600">Customer feedback can be submitted after login with an outlet or user account.</p>
+                                <a href="{{ route('login') }}"
+                                    class="mt-3 inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-slate-800">
+                                    Login Now
+                                </a>
+                            </div>
+                        @endif
+
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">All Reviews</p>
+                                    <h3 class="mt-1 text-lg font-bold text-slate-900">What customers are saying</h3>
+                                </div>
+                                <button type="button"
+                                    @click="fetchReviews()"
+                                    :disabled="loadingReviews"
+                                    class="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                    Refresh
+                                </button>
+                            </div>
+
+                            <p x-show="loadError" x-text="loadError" class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
+                            <div x-show="loadingReviews" class="mt-4 space-y-3">
+                                <div class="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+                                <div class="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+                            </div>
+
+                            <div x-show="!loadingReviews && reviews.length === 0" class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                                No reviews yet for this product.
+                            </div>
+
+                            <div x-show="!loadingReviews && reviews.length > 0" class="mt-4 space-y-3">
+                                <template x-for="review in reviews" :key="review.id">
+                                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                        <div class="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <p class="text-sm font-bold text-slate-900" x-text="review.user"></p>
+                                                    <span x-show="isOwnReview(review.id)"
+                                                        class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
+                                                        You
+                                                    </span>
+                                                </div>
+                                                <div class="mt-2 flex items-center gap-1">
+                                                    <template x-for="star in starRange" :key="`review-${review.id}-star-${star}`">
+                                                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"
+                                                            :class="star <= review.rating ? 'text-amber-400' : 'text-slate-200'">
+                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.069-3.292z" />
+                                                        </svg>
+                                                    </template>
+                                                </div>
+                                            </div>
+
+                                            <p class="text-xs font-semibold text-slate-400" x-text="review.created_at"></p>
+                                        </div>
+
+                                        <p x-show="review.comment" x-text="review.comment" class="mt-3 text-sm leading-relaxed text-slate-600"></p>
+                                        <p x-show="!review.comment" class="mt-3 text-sm italic text-slate-400">No written comment provided.</p>
+                                    </article>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             @if ($relatedCards->count() > 0)
                 <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
                     <div class="flex items-end justify-between gap-3">
@@ -304,6 +488,212 @@
 @section('scripts')
     <script>
         document.addEventListener('alpine:init', () => {
+            Alpine.data('productReviews', (config) => ({
+                config,
+                starRange: [1, 2, 3, 4, 5],
+                averageRating: 0,
+                totalReviews: 0,
+                reviews: [],
+                userReview: null,
+                form: {
+                    rating: 0,
+                    comment: '',
+                },
+                loadingReviews: true,
+                loadingUserReview: false,
+                submitting: false,
+                deleting: false,
+                loadError: '',
+                formError: '',
+
+                init() {
+                    this.fetchReviews();
+
+                    if (this.config.canSubmit && this.config.userReviewUrl) {
+                        this.fetchUserReview();
+                    }
+                },
+
+                get averageRatingDisplay() {
+                    return Number(this.averageRating || 0).toFixed(this.totalReviews > 0 ? 1 : 0);
+                },
+
+                get reviewCountText() {
+                    if (this.totalReviews === 0) {
+                        return 'No ratings yet';
+                    }
+
+                    return `${this.totalReviews} review${this.totalReviews === 1 ? '' : 's'}`;
+                },
+
+                get ratingLabel() {
+                    const labels = {
+                        0: 'Select rating',
+                        1: 'Poor',
+                        2: 'Fair',
+                        3: 'Good',
+                        4: 'Very good',
+                        5: 'Excellent',
+                    };
+
+                    return labels[this.form.rating] || 'Select rating';
+                },
+
+                get csrfToken() {
+                    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                },
+
+                setRating(star) {
+                    if (this.submitting || this.deleting) {
+                        return;
+                    }
+
+                    this.form.rating = Number(star) || 0;
+                    this.formError = '';
+                },
+
+                isOwnReview(reviewId) {
+                    return Number(this.userReview?.id || 0) === Number(reviewId || 0);
+                },
+
+                async request(url, options = {}) {
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            ...(options.headers || {}),
+                        },
+                    });
+
+                    const contentType = response.headers.get('content-type') || '';
+                    const payload = contentType.includes('application/json')
+                        ? await response.json()
+                        : null;
+
+                    if (!response.ok) {
+                        const message = payload?.message
+                            || (response.status === 401 ? 'Please login to continue.' : 'Unable to complete the review request.');
+                        throw new Error(message);
+                    }
+
+                    return payload;
+                },
+
+                async fetchReviews() {
+                    this.loadingReviews = true;
+                    this.loadError = '';
+
+                    try {
+                        const payload = await this.request(this.config.listUrl);
+                        this.averageRating = Number(payload?.average_rating || 0);
+                        this.totalReviews = Number(payload?.total_reviews || 0);
+                        this.reviews = Array.isArray(payload?.reviews) ? payload.reviews : [];
+                    } catch (error) {
+                        this.loadError = error.message || 'Unable to load reviews right now.';
+                        this.reviews = [];
+                        this.averageRating = 0;
+                        this.totalReviews = 0;
+                    } finally {
+                        this.loadingReviews = false;
+                    }
+                },
+
+                async fetchUserReview() {
+                    this.loadingUserReview = true;
+
+                    try {
+                        const payload = await this.request(this.config.userReviewUrl);
+                        this.userReview = payload?.review || null;
+                        this.form.rating = Number(this.userReview?.rating || 0);
+                        this.form.comment = this.userReview?.comment || '';
+                    } catch (error) {
+                        this.userReview = null;
+                    } finally {
+                        this.loadingUserReview = false;
+                    }
+                },
+
+                async submitReview() {
+                    if (!this.config.canSubmit || this.submitting || this.deleting) {
+                        return;
+                    }
+
+                    if (this.form.rating < 1) {
+                        this.formError = 'Please select a rating first.';
+                        return;
+                    }
+
+                    this.submitting = true;
+                    this.formError = '';
+
+                    try {
+                        const body = new URLSearchParams({
+                            _token: this.csrfToken,
+                            product_id: String(this.config.productId),
+                            rating: String(this.form.rating),
+                            comment: this.form.comment || '',
+                        });
+
+                        const payload = await this.request(this.config.storeUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            },
+                            body: body.toString(),
+                        });
+
+                        this.notify(payload?.message || 'Review saved successfully.', 'success');
+                        await Promise.all([this.fetchReviews(), this.fetchUserReview()]);
+                    } catch (error) {
+                        this.formError = error.message || 'Unable to save your review.';
+                        this.notify(this.formError, 'error');
+                    } finally {
+                        this.submitting = false;
+                    }
+                },
+
+                async deleteReview() {
+                    if (!this.userReview?.id || this.submitting || this.deleting) {
+                        return;
+                    }
+
+                    if (!window.confirm('Delete your review for this product?')) {
+                        return;
+                    }
+
+                    this.deleting = true;
+                    this.formError = '';
+
+                    try {
+                        await this.request(this.config.deleteUrlTemplate.replace('__REVIEW_ID__', this.userReview.id), {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': this.csrfToken,
+                            },
+                        });
+
+                        this.userReview = null;
+                        this.form.rating = 0;
+                        this.form.comment = '';
+                        this.notify('Review deleted successfully.', 'success');
+                        await this.fetchReviews();
+                    } catch (error) {
+                        this.formError = error.message || 'Unable to delete your review.';
+                        this.notify(this.formError, 'error');
+                    } finally {
+                        this.deleting = false;
+                    }
+                },
+
+                notify(message, type = 'info') {
+                    const bodyEl = document.querySelector('[x-data*="globalApp"]');
+                    if (bodyEl?._x_dataStack?.[0]) {
+                        bodyEl._x_dataStack[0].notify(message, type);
+                    }
+                },
+            }));
+
             Alpine.data('productDetail', (product, variants, initiallyWishlisted = false) => ({
                 qty: Math.max(1, parseInt(product.minimum_order_qty, 10) || 1),
                 product,
