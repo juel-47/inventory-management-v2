@@ -3,87 +3,69 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>General Settings</h1>
+            <h1>Settings</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></div>
+                <div class="breadcrumb-item active">Settings</div>
+            </div>
         </div>
 
         <div class="section-body">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body py-4">
+                    <h4 class="mb-2">Overview</h4>
+                    <p class="text-muted mb-0">Organize and adjust all settings from one place.</p>
+                </div>
+            </div>
+
             <div class="row">
-                <div class="col-12 col-md-8 col-lg-8">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h4><i class="fas fa-cog mr-2"></i> Configure Site & Currency</h4>
-                        </div>
-                        <div class="card-body">
-                            <form action="{{ route('admin.settings.update') }}" method="POST">
-                                @csrf
-                                @method('PUT')
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Site Name</label>
-                                            <input type="text" name="site_name" class="form-control" value="{{ $setting->site_name ?? '' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Contact Email</label>
-                                            <input type="email" name="contact_email" class="form-control" value="{{ $setting->contact_email ?? '' }}">
-                                        </div>
-                                    </div>
+                <div class="col-12 col-lg-6 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="row no-gutters h-100">
+                            <div class="col-4 d-flex align-items-center justify-content-center text-white" style="background: #5b6ee1;">
+                                <i class="fas fa-cog" style="font-size: 54px;"></i>
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body d-flex flex-column h-100">
+                                    <h4 class="mb-2">General</h4>
+                                    <p class="text-muted flex-grow-1 mb-3">Site title, contact email and address information.</p>
+                                    <a href="{{ route('admin.settings.general') }}" class="font-weight-bold">Change Setting <i class="fas fa-angle-right ml-1"></i></a>
                                 </div>
-
-                                <div class="form-group">
-                                    <label>Address</label>
-                                    <textarea name="address" class="form-control" rows="3">{{ $setting->address ?? '' }}</textarea>
-                                </div>
-
-                                <hr>
-                                <h5 class="mb-3 text-primary">System Default Currency</h5>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Select Your System Currency</label>
-                                            <select name="system_currency_select" id="system_currency_select" class="form-control select2">
-                                                @foreach(config('settings.currency_list') as $currency)
-                                                     <option value="{{ $currency['code'] }}" data-icon="{{ $currency['symbol'] }}" 
-                                                         {{ ($setting->currency_name ?? 'USD') == $currency['code'] ? 'selected' : '' }}>
-                                                         {{ $currency['name'] }} ({{ $currency['code'] }})
-                                                     </option>
-                                                @endforeach
-                                            </select>
-                                             <input type="hidden" name="currency_name" id="currency_name" value="{{ $setting->currency_name ?? 'USD' }}">
-                                             <input type="hidden" name="currency_icon" id="currency_icon" value="{{ $setting->currency_icon ?? '$' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 text-center">
-                                        <div class="form-group">
-                                            <label>Currency Icon</label>
-                                             <div class="h3" id="system_icon_display">{{ $setting->currency_icon ?? '$' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="card-footer text-right">
-                                    <button type="submit" class="btn btn-primary btn-lg px-5">Save Settings</button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4 col-lg-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h4><i class="fas fa-info-circle mr-2"></i> Help Info</h4>
+                <div class="col-12 col-lg-6 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="row no-gutters h-100">
+                            <div class="col-4 d-flex align-items-center justify-content-center text-white" style="background: #5b6ee1;">
+                                <i class="fas fa-dollar-sign" style="font-size: 54px;"></i>
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body d-flex flex-column h-100">
+                                    <h4 class="mb-2">Currency</h4>
+                                    <p class="text-muted flex-grow-1 mb-3">Set your default system currency and symbol.</p>
+                                    <a href="{{ route('admin.settings.currency') }}" class="font-weight-bold">Change Setting <i class="fas fa-angle-right ml-1"></i></a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <h6>How it works:</h6>
-                            <p class="text-muted">The system uses the **System Default Currency** for all internal entries and default displays. When dealing with **Vendors**, you can define their specific currency rate relative to this System Currency.</p>
-                            <div class="alert alert-light border text-center">
-                                <strong>System Currency:</strong><br>
-                                 <span class="h4 font-weight-bold system_code_label">{{ $setting->currency_name ?? 'USD' }}</span> (<span class="system_icon_label">{{ $setting->currency_icon ?? '$' }}</span>)
-                             </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="row no-gutters h-100">
+                            <div class="col-4 d-flex align-items-center justify-content-center text-white" style="background: #5b6ee1;">
+                                <i class="fas fa-envelope" style="font-size: 54px;"></i>
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body d-flex flex-column h-100">
+                                    <h4 class="mb-2">Email Configuration</h4>
+                                    <p class="text-muted flex-grow-1 mb-3">Configure SMTP credentials and test outgoing email.</p>
+                                    <a href="{{ route('admin.settings.email') }}" class="font-weight-bold">Change Setting <i class="fas fa-angle-right ml-1"></i></a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -92,20 +74,3 @@
     </section>
 @endsection
 
-@push('scripts')
-    <script>
-        $(document).ready(function() {
-            // System Currency Selection
-            $('#system_currency_select').on('change', function() {
-                let code = $(this).val();
-                let icon = $(this).find(':selected').data('icon');
-                
-                $('#currency_name').val(code);
-                $('#currency_icon').val(icon);
-                $('#system_icon_display').text(icon);
-                $('.system_code_label').text(code);
-                $('.system_icon_label').text(icon);
-            });
-        });
-    </script>
-@endpush
