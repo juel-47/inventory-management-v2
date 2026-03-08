@@ -67,6 +67,7 @@ class ProductRequestDataTable extends DataTable
                     $pay = '<a href="' . route('admin.accounts.record-payment', ['order_no' => $query->order->order_no]) . '" class="btn btn-dark btn-sm mr-1" title="Record Payment"><i class="fas fa-money-bill-wave"></i></a>';
                 }
                 
+                $piInvoice = '<a href="' . route('admin.product-requests.pi-invoice', $query->id) . '" class="btn btn-success btn-sm mr-1" title="PI Invoice" target="_blank">PI</a>';
                 $viewInvoice = '<a href="' . route('admin.product-requests.view-invoice', $query->id) . '" class="btn btn-warning btn-sm mr-1" title="View Invoice" target="_blank"><i class="fas fa-file-invoice"></i></a>';
                 $downloadPdf = '<a href="' . route('admin.product-requests.download-invoice', $query->id) . '" class="btn btn-info btn-sm mr-1" title="Download PDF"><i class="fas fa-download"></i></a>';
                 $show = '<a href="' . route('admin.product-requests.show', $query->id) . '" class="btn btn-primary btn-sm mr-1" title="Details"><i class="fas fa-eye"></i></a>';
@@ -76,7 +77,7 @@ class ProductRequestDataTable extends DataTable
                     $delete = '<a href="' . route('admin.product-requests.destroy', $query->id) . '" class="btn btn-danger btn-sm delete-item" title="Delete"><i class="fas fa-trash"></i></a>';
                 }
 
-                return $pay . $viewInvoice . $downloadPdf . $show . $delete;
+                return $pay . $piInvoice . $viewInvoice . $downloadPdf . $show . $delete;
             })
             ->rawColumns(['customer', 'items_count', 'status_badge', 'action'])
             ->setRowId('id');

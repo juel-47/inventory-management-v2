@@ -175,6 +175,7 @@
     <div class="container">
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-print">Print Now</button>
+            <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-download">Edit PI Info</a>
             <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
             <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
         </div>
@@ -215,6 +216,12 @@
                 </p>
             </div>
         </div>
+
+        @unless($hasSavedPiInfo)
+            <div style="margin-bottom: 18px; background: #fff7ed; color: #9a3412; padding: 14px 16px; border-left: 4px solid #fb923c;">
+                <strong>Draft PI:</strong> manual CTN information has not been saved yet. The packing section below is currently prefilled from the order quantities.
+            </div>
+        @endunless
 
         <table>
             <thead>
@@ -366,6 +373,12 @@
                 @endforeach
             </tbody>
         </table>
+
+        @include('backend.pi._packing_table', [
+            'items' => $order->items,
+            'piInfo' => $piInfo,
+            'piTotals' => $piTotals,
+        ])
 
         @if($order->ship_different)
             <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-left: 4px solid #6777ef;">

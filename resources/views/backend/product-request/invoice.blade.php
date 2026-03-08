@@ -263,6 +263,13 @@
             </table>
         </div>
 
+        @if($hasSavedPiInfo)
+            @include('backend.pi._packing_table', [
+                'piInfo' => $piInfo,
+                'piTotals' => $piTotals,
+            ])
+        @endif
+
 
         @if($productRequest->note)
         <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-left: 4px solid #ddd;">

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Order Invoice #{{ $order->order_no }}</title>
+    <title>PI Invoice #{{ $productRequest->request_no }}</title>
     <style>
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
@@ -23,7 +23,7 @@
                 padding: 40px 0;
             }
             .container {
-                max-width: 900px;
+                max-width: 960px;
                 background: #fff;
                 box-shadow: 0 0 15px rgba(0,0,0,0.1);
                 border-radius: 4px;
@@ -113,11 +113,6 @@
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
-        .total-row td {
-            font-weight: bold;
-            background-color: #f8f9fa;
-            border-top: 2px solid #ddd;
-        }
         .badge {
             display: inline-block;
             padding: 4px 8px;
@@ -129,7 +124,6 @@
         }
         .badge-warning { background-color: #ffc107; color: #000; }
         .badge-info { background-color: #17a2b8; }
-        .badge-primary { background-color: #6777ef; }
         .badge-success { background-color: #28a745; }
         .badge-danger { background-color: #dc3545; }
         .text-right { text-align: right; }
@@ -159,33 +153,30 @@
 </head>
 <body>
     @php
-        $status = strtolower((string) $order->status);
+        $status = strtolower((string) $productRequest->status);
         $statusClass = match($status) {
             'pending' => 'badge-warning',
             'approved' => 'badge-info',
-            'processing' => 'badge-primary',
-            'shipped' => 'badge-primary',
             'completed' => 'badge-success',
             'rejected', 'cancelled' => 'badge-danger',
             default => 'badge-info',
         };
-        $currency = $settings->currency_icon ?? '$';
     @endphp
 
     <div class="container">
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-print">Print Now</button>
-            <a href="{{ route('admin.orders.download-invoice', $order->id) }}" class="btn btn-download">Download PDF</a>
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
+            <a href="{{ route('admin.product-requests.show', $productRequest->id) }}" class="btn btn-download">Edit PI Info</a>
+            <a href="{{ route('admin.product-requests.index') }}" class="btn btn-back">Back to List</a>
             <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
         </div>
 
         <div class="header clearfix">
             <div class="invoice-title">
-                <h1>Outlet/Shop Order</h1>
-                <p><strong>Ref:</strong> #{{ $order->order_no }}</p>
+                <h1>PI Invoice</h1>
+                <p><strong>Ref:</strong> #{{ $productRequest->request_no }}</p>
                 <div style="margin-top: 10px;">
-                    <span class="badge {{ $statusClass }}">{{ ucfirst($order->status) }}</span>
+                    <span class="badge {{ $statusClass }}">{{ ucfirst($productRequest->status) }}</span>
                 </div>
             </div>
             <div class="company-info">
@@ -201,115 +192,106 @@
             <div class="box-left">
                 <h4>Customer Details:</h4>
                 <p>
-                    <strong>{{ $order->billing_name }}</strong><br>
-                    Outlet/Shop: {{ $order->billing_outlet_name ?: ($order->user->outlet_name ?? 'N/A') }}<br>
-                    Phone: {{ $order->billing_phone }}<br>
-                    Email: {{ $order->billing_email }}
+                    <strong>{{ $productRequest->user->name }}</strong><br>
+                    Outlet/Shop: {{ $productRequest->user->outlet_name ?? 'N/A' }}<br>
+                    Phone: {{ $productRequest->user->phone ?? 'N/A' }}<br>
+                    Email: {{ $productRequest->order?->pi_email ?: ($productRequest->user->email ?? 'N/A') }}
                 </p>
             </div>
             <div class="box-right">
-                <h4>Order Details:</h4>
+                <h4>Request Details:</h4>
                 <p>
-                    <strong>Date:</strong> {{ $order->created_at?->format('d M, Y h:i A') }}<br>
-                    <strong>Source:</strong> {{ $order->shipping_method ?: 'frontend_checkout' }}<br>
-                    <strong>Status:</strong> {{ strtoupper($order->status) }}
+                    <strong>Date:</strong> {{ $productRequest->created_at?->format('d M, Y h:i A') }}<br>
+                    <strong>Source:</strong> {{ $productRequest->order?->shipping_method ?: 'admin_request' }}<br>
+                    <strong>Status:</strong> {{ strtoupper($productRequest->status) }}
                 </p>
             </div>
         </div>
+
+        @unless($hasSavedPiInfo)
+            <div style="margin-bottom: 18px; background: #fff7ed; color: #9a3412; padding: 14px 16px; border-left: 4px solid #fb923c;">
+                <strong>Draft PI:</strong> manual CTN information has not been saved yet. The packing section is currently prefilled from the request quantities.
+            </div>
+        @endunless
 
         <table>
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
                     <th style="width: 12%;">Image</th>
-                    <th style="width: 33%;">Product</th>
-                    <th style="width: 17%;">Variant</th>
-                    <th style="width: 10%;" class="text-right">Qty</th>
-                    <th style="width: 12%;" class="text-right">Unit</th>
-                    <th style="width: 13%;" class="text-right">Total</th>
+                    <th style="width: 23%;">Product Information</th>
+                    <th style="width: 10%;">Product No</th>
+                    <th style="width: 14%;">Category</th>
+                    <th style="width: 10%;">Unit</th>
+                    <th style="width: 16%;">Variant</th>
+                    <th style="width: 10%;" class="text-right">Total Qty</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->items as $index => $item)
+                @foreach($productRequest->items as $index => $item)
                     @php
-                        $imagePath = (string) ($item->product_image ?? '');
-                        $imageUrl = null;
-                        if ($imagePath !== '') {
-                            if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                $imageUrl = $imagePath;
-                            } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
-                                $imageUrl = asset(ltrim($imagePath, '/'));
-                            } elseif (str_starts_with($imagePath, 'storage/')) {
-                                $imageUrl = asset($imagePath);
-                            } else {
-                                $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                            }
+                        $imagePath = (string) ($item->product->thumb_image ?? '');
+                        $imageUrl = $imagePath !== '' ? asset('storage/' . ltrim($imagePath, '/')) : null;
+                        $variantText = trim((string) ($item->variant->name ?? ''));
+                        if ($variantText === '') {
+                            $variantText = trim(collect([
+                                $item->variant->color->name ?? null,
+                                $item->variant->size->name ?? null,
+                            ])->filter()->implode(' / '));
                         }
                     @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td class="image-cell">
                             @if($imageUrl)
-                                <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
+                                <img src="{{ $imageUrl }}" alt="{{ $item->product->name ?? 'Item' }}">
                             @else
                                 <span class="image-empty">No Image</span>
                             @endif
                         </td>
                         <td>
-                            <strong>{{ $item->product_name }}</strong><br>
-                            <small>{{ $item->category_name ?: 'General' }}</small>
+                            <strong>{{ $item->product->name ?? ('Product #' . $item->product_id) }}</strong><br>
+                            @if($item->product?->brand)
+                                <small><strong>Brand:</strong> {{ $item->product->brand->name }}</small><br>
+                            @endif
+                            @if($item->product?->vendor)
+                                <small><strong>Vendor:</strong> {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
+                            @endif
+                            @if($item->product?->productType)
+                                <small><strong>Type:</strong> {{ $item->product->productType->name }}</small><br>
+                            @endif
+                            @if($item->product?->custom_label)
+                                <small><strong>Label:</strong> {{ $item->product->custom_label }}</small>
+                            @endif
                         </td>
-                        <td>{{ $item->variant_label ?: 'Standard' }}</td>
-                        <td class="text-right">{{ $item->quantity }}</td>
-                        <td class="text-right">{{ $currency }}{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-right">{{ $currency }}{{ number_format($item->line_total, 2) }}</td>
+                        <td>{{ $item->product?->product_number ?? 'N/A' }}</td>
+                        <td>
+                            <small><strong>Main:</strong> {{ $item->product?->category?->name ?? 'N/A' }}</small><br>
+                            @if($item->product?->subCategory)
+                                <small><strong>Sub:</strong> {{ $item->product->subCategory->name }}</small><br>
+                            @endif
+                            @if($item->product?->childCategory)
+                                <small><strong>Child:</strong> {{ $item->product->childCategory->name }}</small>
+                            @endif
+                        </td>
+                        <td>{{ $item->product?->unit?->name ?? 'N/A' }}</td>
+                        <td>{{ $variantText !== '' ? $variantText : 'Standard' }}</td>
+                        <td class="text-right"><strong>{{ $item->qty }}</strong></td>
                     </tr>
                 @endforeach
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Subtotal</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">{{ $order->tax_label ?: 'VAT / Tax' }}</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Discount</td>
-                    <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="6" class="text-right">Grand Total</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->total_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
-                    <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 5px 12px;">{{ $currency }}{{ number_format($order->paid_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6" style="text-align: right; border: none; font-weight: bold; padding: 8px 12px;">DUE BALANCE</td>
-                    <td style="text-align: right; font-weight: bold; color: {{ $order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 16px; padding: 8px 12px;">{{ $currency }}{{ number_format($order->due_amount, 2) }}</td>
-                </tr>
-
             </tbody>
         </table>
 
-        {{-- @if($hasSavedPiInfo)
-            @include('backend.pi._packing_table', [
-                'piInfo' => $piInfo,
-                'piTotals' => $piTotals,
-            ])
-        @endif --}}
+        @include('backend.pi._packing_table', [
+            'items' => $productRequest->items,
+            'piInfo' => $piInfo,
+            'piTotals' => $piTotals,
+        ])
 
-        @if($order->ship_different)
+        @if($productRequest->note)
             <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-left: 4px solid #6777ef;">
-                <strong>Shipping Address:</strong><br>
-                {{ $order->shipping_name ?: 'N/A' }} |
-                {{ $order->shipping_phone ?: 'N/A' }} |
-                {{ $order->shipping_email ?: 'N/A' }}<br>
-                {{ $order->shipping_address ?: 'N/A' }},
-                {{ $order->shipping_city ?: '' }} {{ $order->shipping_state ?: '' }},
-                {{ $order->shipping_zip_code ?: '' }},
-                {{ $order->shipping_country ?: '' }}
+                <strong>Requester Note:</strong><br>
+                {{ $productRequest->note }}
             </div>
         @endif
 

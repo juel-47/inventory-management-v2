@@ -181,6 +181,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
     /** Frontend Orders (Customer Orders) */
     Route::get('orders', [FrontendOrderController::class, 'index'])->name('orders.index');
+    Route::post('orders/{order}/pi-info', [FrontendOrderController::class, 'savePiInfo'])->name('orders.pi-info.save');
     Route::get('orders/{order}/pi-invoice', [FrontendOrderController::class, 'piInvoice'])->name('orders.pi-invoice');
     Route::get('orders/{order}/view-invoice', [FrontendOrderController::class, 'viewInvoice'])->name('orders.view-invoice');
     Route::get('orders/{order}/download-invoice', [FrontendOrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
@@ -216,6 +217,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
 
     /** Product Request Routes */
+    Route::post('product-requests/{id}/pi-info', [ProductRequestController::class, 'savePiInfo'])->name('product-requests.pi-info.save');
+    Route::get('product-requests/{id}/pi-invoice', [ProductRequestController::class, 'piInvoice'])->name('product-requests.pi-invoice');
     Route::get('product-requests/{id}/view-invoice', [ProductRequestController::class, 'viewInvoice'])->name('product-requests.view-invoice');
     Route::get('product-requests/{id}/invoice', [ProductRequestController::class, 'printPdf'])->name('product-requests.download-invoice');
     Route::put('product-requests/update-status/{id}', [ProductRequestController::class, 'updateStatus'])->name('product-requests.update-status');

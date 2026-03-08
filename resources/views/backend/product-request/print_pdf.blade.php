@@ -120,6 +120,13 @@
         </tbody>
     </table>
 
+    @if($hasSavedPiInfo)
+        @include('backend.pi._packing_table', [
+            'piInfo' => $piInfo,
+            'piTotals' => $piTotals,
+        ])
+    @endif
+
 
     @if($productRequest->note)
     <div style="margin-top: 30px; padding: 10px; background: #f8f9fa; border-left: 3px solid #ddd;">

@@ -24,6 +24,7 @@
                         <div class="card-header">
                             <h4><i class="fas fa-list mr-2"></i>Itemized List</h4>
                             <div class="card-header-action">
+                                <a href="{{ route('admin.product-requests.pi-invoice', $productRequest->id) }}" class="btn btn-success" target="_blank"><i class="fas fa-file-signature mr-1"></i> PI Invoice</a>
                                 <a href="{{ route('admin.product-requests.view-invoice', $productRequest->id) }}" class="btn btn-warning" target="_blank"><i class="fas fa-file-invoice mr-1"></i> View Invoice</a>
                                 <a href="{{ route('admin.product-requests.download-invoice', $productRequest->id) }}" class="btn btn-info ml-2"><i class="fas fa-download mr-1"></i> Download PDF</a>
                             </div>
@@ -126,6 +127,30 @@
                             </div>
                         </div>
                     </div>
+
+                    @can('Manage Product Requests')
+                        @include('backend.pi._editor', [
+                            'title' => 'Manual PI / CTN Info',
+                            'subtitle' => 'Save request-wise carton details here before sending or printing the PI invoice.',
+                            'formAction' => route('admin.product-requests.pi-info.save', $productRequest->id),
+                            'piInvoiceUrl' => route('admin.product-requests.pi-invoice', $productRequest->id),
+                            'items' => $productRequest->items,
+                            'piInfo' => $piInfo,
+                            'piTotals' => $piTotals,
+                        ])
+                    @else
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px;">
+                                <div>
+                                    <h4 class="mb-1"><i class="fas fa-file-signature text-primary mr-2"></i>PI Information</h4>
+                                    <div class="text-muted small">Your request PI can be viewed once the admin finishes the carton details.</div>
+                                </div>
+                                <a href="{{ route('admin.product-requests.pi-invoice', $productRequest->id) }}" class="btn btn-success" target="_blank">
+                                    <i class="fas fa-external-link-alt mr-1"></i> Open PI Invoice
+                                </a>
+                            </div>
+                        </div>
+                    @endcan
 
                     {{-- Notes Card --}}
                     @if($productRequest->note)

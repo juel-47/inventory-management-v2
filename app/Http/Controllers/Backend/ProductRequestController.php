@@ -8,6 +8,7 @@ use App\Models\InventoryStock;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\ProductRequestItem;
+use App\Support\PiInfoSupport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,17 +81,29 @@ class ProductRequestController extends Controller implements HasMiddleware
             'user_id' => 'required|integer|exists:users,id',
         ]);
 
+        $targetUser = User::role(['Outlet User', 'User'])
+            ->where('status', 1)
+            ->whereKey((int) $request->input('user_id'))
+            ->first();
+
+        if (!$targetUser) {
+            Toastr::error('Please select a valid active Outlet/User.');
+            return redirect()->back()->withInput();
+        }
+
+        $billingAddress = $this->resolveOrderBillingAddress($targetUser);
+        $missingProfileFields = $this->missingOrderProfileFields($targetUser);
+        if (!empty($missingProfileFields)) {
+            $message = 'Selected user profile is incomplete. Missing: ' . implode(', ', $missingProfileFields) . '.';
+            Toastr::error($message);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['user_id' => $message]);
+        }
+
         DB::beginTransaction();
         try {
             $productRequest = new ProductRequest();
-            $targetUser = User::role(['Outlet User', 'User'])
-                ->where('status', 1)
-                ->whereKey((int) $request->input('user_id'))
-                ->first();
-
-            if (!$targetUser) {
-                throw new \InvalidArgumentException('Please select a valid active Outlet/User.');
-            }
 
             $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ-' : 'REQ-';
             $productRequest->request_no = $prefix . strtoupper(Str::random(10));
@@ -162,7 +175,7 @@ class ProductRequestController extends Controller implements HasMiddleware
                 'billing_name' => $targetUser->name,
                 'billing_email' => $targetUser->email,
                 'billing_phone' => $targetUser->phone,
-                'billing_address' => $targetUser->address,
+                'billing_address' => $billingAddress,
                 'billing_outlet_name' => $targetUser->outlet_name,
                 'total_amount' => $totalAmount,
                 'due_amount' => $totalAmount,
@@ -221,6 +234,44 @@ class ProductRequestController extends Controller implements HasMiddleware
         }
     }
 
+    private function missingOrderProfileFields(User $user): array
+    {
+        $requiredFields = [
+            'name' => 'Name',
+            'email' => 'Email',
+            'phone' => 'Phone',
+        ];
+
+        $missing = [];
+        foreach ($requiredFields as $field => $label) {
+            $value = trim((string) ($user->{$field} ?? ''));
+            if ($value === '') {
+                $missing[] = $label;
+            }
+        }
+
+        return $missing;
+    }
+
+    private function resolveOrderBillingAddress(User $user): string
+    {
+        $candidates = [
+            $user->address,
+            $user->outlet_name,
+            $user->name,
+            'N/A',
+        ];
+
+        foreach ($candidates as $candidate) {
+            $value = trim((string) $candidate);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return 'N/A';
+    }
+
     /**
      * Display the specified resource.
      */
@@ -243,7 +294,11 @@ class ProductRequestController extends Controller implements HasMiddleware
              $item->current_stock = $stock ? $stock->quantity : 0;
         }
 
-        return view('backend.product-request.show', compact('productRequest'));
+        $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
+
+        return view('backend.product-request.show', compact('productRequest', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
     }
 
     /**
@@ -251,7 +306,7 @@ class ProductRequestController extends Controller implements HasMiddleware
      */
     public function viewInvoice($id)
     {
-        $productRequest = ProductRequest::with(['user', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
+        $productRequest = ProductRequest::with(['user', 'order', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -260,8 +315,44 @@ class ProductRequestController extends Controller implements HasMiddleware
         }
 
         $settings = \App\Models\GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
 
-        return view('backend.product-request.invoice', compact('productRequest', 'settings'));
+        return view('backend.product-request.invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+    }
+
+    /**
+     * View Request PI Invoice (HTML)
+     */
+    public function piInvoice($id)
+    {
+        $productRequest = ProductRequest::with([
+            'user',
+            'order',
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant.color',
+            'items.variant.size',
+        ])->findOrFail($id);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+            abort(403);
+        }
+
+        $settings = \App\Models\GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
+
+        return view('backend.product-request.pi_invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
     }
 
     /**
@@ -273,7 +364,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         ini_set('memory_limit', '512M');
         set_time_limit(300);
 
-        $productRequest = ProductRequest::with(['user', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
+        $productRequest = ProductRequest::with(['user', 'order', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
         
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -282,17 +373,79 @@ class ProductRequestController extends Controller implements HasMiddleware
         }
 
         $settings = \App\Models\GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
 
         // Configure DomPDF wrapper for better performance
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif'
-        ])->loadView('backend.product-request.print_pdf', compact('productRequest', 'settings'));
+        ])->loadView('backend.product-request.print_pdf', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
         $filename = 'request-' . $productRequest->request_no . '.pdf';
         
         return $pdf->download($filename);
+    }
+
+    /**
+     * Save manual PI/CTN information for a request.
+     */
+    public function savePiInfo(Request $request, $id)
+    {
+        $productRequest = ProductRequest::with('items')->findOrFail($id);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->can('Manage Product Requests')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'pi_type' => 'required|in:simple,advanced',
+            'shipment_qty' => 'required|integer|min:0',
+            'shipment_date' => 'nullable|date',
+            'packing_note' => 'nullable|string|max:2000',
+            'pi_rows' => 'nullable|array',
+            'pi_rows.*.ordered_qty' => 'nullable|integer|min:0',
+            'pi_rows.*.ctn_no' => 'nullable|string|max:100',
+            'pi_rows.*.ctn_size' => 'nullable|string|max:100',
+            'pi_rows.*.pcs_per_ctn' => 'nullable|integer|min:0',
+            'pi_rows.*.ctn_qty' => 'nullable|integer|min:0',
+            'pi_rows.*.total_pcs' => 'nullable|integer|min:0',
+            'pi_rows.*.nw_kg' => 'nullable|numeric|min:0',
+            'pi_rows.*.gw_kg' => 'nullable|numeric|min:0',
+            'pi_rows.*.note' => 'nullable|string|max:500',
+            'advanced_blocks' => 'nullable|array',
+            'advanced_blocks.*.block_key' => 'nullable|string|max:100',
+            'advanced_blocks.*.product_id' => 'nullable|integer',
+            'advanced_blocks.*.title' => 'nullable|string|max:255',
+            'advanced_blocks.*.color_label' => 'nullable|string|max:255',
+            'advanced_blocks.*.image' => 'nullable|string|max:500',
+            'advanced_blocks.*.variant_headers_csv' => 'nullable|string|max:1000',
+            'advanced_blocks.*.color_headers_csv' => 'nullable|string|max:500',
+            'advanced_blocks.*.size_headers_csv' => 'nullable|string|max:500',
+            'advanced_blocks.*.rows' => 'nullable|array',
+            'advanced_blocks.*.rows.*.ctn_qty' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.ctn_no' => 'nullable|string|max:100',
+            'advanced_blocks.*.rows.*.variants' => 'nullable|array',
+            'advanced_blocks.*.rows.*.variants.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.colors' => 'nullable|array',
+            'advanced_blocks.*.rows.*.colors.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.sizes' => 'nullable|array',
+            'advanced_blocks.*.rows.*.sizes.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.pcs' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.total_pcs' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.nw_kg' => 'nullable|numeric|min:0',
+            'advanced_blocks.*.rows.*.gw_kg' => 'nullable|numeric|min:0',
+        ]);
+
+        $productRequest->pi_info = PiInfoSupport::sanitizePayload($validated);
+        $productRequest->save();
+
+        Toastr::success('PI info saved successfully!');
+        return redirect()->route('admin.product-requests.show', $productRequest->id);
     }
 
     /**
@@ -361,5 +514,3 @@ class ProductRequestController extends Controller implements HasMiddleware
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 }
-
-

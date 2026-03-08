@@ -49,6 +49,7 @@ class Order extends Model
         'due_amount' => 'float',
         'vat_rate' => 'float',
         'placed_at' => 'datetime',
+        'pi_info' => 'array',
     ];
 
     public function user()
@@ -66,4 +67,3 @@ class Order extends Model
         return $this->hasMany(OrderPayment::class);
     }
 }
-

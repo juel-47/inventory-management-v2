@@ -147,6 +147,13 @@
         </tbody>
     </table>
 
+    {{-- @if($hasSavedPiInfo)
+        @include('backend.pi._packing_table', [
+            'piInfo' => $piInfo,
+            'piTotals' => $piTotals,
+        ])
+    @endif --}}
+
     @if($order->ship_different)
         <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #6777ef;">
             <div style="font-weight: bold; font-size: 11px;">Shipping Info:</div>

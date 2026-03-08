@@ -21,6 +21,10 @@ class ProductRequest extends Model
         'admin_note'
     ];
 
+    protected $casts = [
+        'pi_info' => 'array',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

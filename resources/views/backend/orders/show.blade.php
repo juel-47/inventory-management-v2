@@ -22,6 +22,7 @@
                         <div class="card-header">
                             <h4><i class="fas fa-list mr-2"></i>Order Items</h4>
                             <div class="card-header-action">
+                                <a href="{{ route('admin.orders.pi-invoice', $order->id) }}" class="btn btn-success" target="_blank"><i class="fas fa-file-signature mr-1"></i> PI Invoice</a>
                                 <a href="{{ route('admin.orders.view-invoice', $order->id) }}" class="btn btn-warning" target="_blank"><i class="fas fa-file-invoice mr-1"></i> View Invoice</a>
                                 <a href="{{ route('admin.orders.download-invoice', $order->id) }}" class="btn btn-info ml-2"><i class="fas fa-download mr-1"></i> Download PDF</a>
                                 {{-- <a href="{{ route('admin.orders.destroy', $order->id) }}" class="btn btn-danger ml-2 delete-item"><i class="fas fa-trash mr-1"></i> Delete</a> --}}
@@ -100,6 +101,16 @@
                             </div>
                         </div>
                     </div>
+
+                    @include('backend.pi._editor', [
+                        'title' => 'Manual PI / CTN Info',
+                        'subtitle' => 'Save carton and packing details first, then open the PI invoice for review or sharing.',
+                        'formAction' => route('admin.orders.pi-info.save', $order->id),
+                        'piInvoiceUrl' => route('admin.orders.pi-invoice', $order->id),
+                        'items' => $order->items,
+                        'piInfo' => $piInfo,
+                        'piTotals' => $piTotals,
+                    ])
 
                     <div class="card">
                         <div class="card-header border-bottom">

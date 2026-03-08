@@ -6,6 +6,7 @@ use App\DataTables\OrderDataTable;
 use App\Http\Controllers\Controller;
 use App\Models\GeneralSetting;
 use App\Models\Order;
+use App\Support\PiInfoSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -26,8 +27,12 @@ class FrontendOrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['items.product', 'items.variant', 'items.vendor', 'user', 'payments']);
-        return view('backend.orders.show', compact('order'));
+        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.vendor', 'user', 'payments']);
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
+
+        return view('backend.orders.show', compact('order', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
     }
 
     /**
@@ -35,10 +40,13 @@ class FrontendOrderController extends Controller
      */
     public function viewInvoice(Order $order)
     {
-        $order->load(['items.product', 'items.variant', 'user']);
+        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
         $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        return view('backend.orders.invoice', compact('order', 'settings'));
+        return view('backend.orders.invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
     }
 
     /**
@@ -54,12 +62,67 @@ class FrontendOrderController extends Controller
             'items.product.vendor',
             'items.product.unit',
             'items.product.productType',
-            'items.variant',
+            'items.variant.color',
+            'items.variant.size',
             'user'
         ]);
         $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        return view('backend.orders.pi_invoice', compact('order', 'settings'));
+        return view('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+    }
+
+    /**
+     * Save manual PI/CTN information for an order.
+     */
+    public function savePiInfo(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'pi_type' => 'required|in:simple,advanced',
+            'shipment_qty' => 'required|integer|min:0',
+            'shipment_date' => 'nullable|date',
+            'packing_note' => 'nullable|string|max:2000',
+            'pi_rows' => 'nullable|array',
+            'pi_rows.*.ordered_qty' => 'nullable|integer|min:0',
+            'pi_rows.*.ctn_no' => 'nullable|string|max:100',
+            'pi_rows.*.ctn_size' => 'nullable|string|max:100',
+            'pi_rows.*.pcs_per_ctn' => 'nullable|integer|min:0',
+            'pi_rows.*.ctn_qty' => 'nullable|integer|min:0',
+            'pi_rows.*.total_pcs' => 'nullable|integer|min:0',
+            'pi_rows.*.nw_kg' => 'nullable|numeric|min:0',
+            'pi_rows.*.gw_kg' => 'nullable|numeric|min:0',
+            'pi_rows.*.note' => 'nullable|string|max:500',
+            'advanced_blocks' => 'nullable|array',
+            'advanced_blocks.*.block_key' => 'nullable|string|max:100',
+            'advanced_blocks.*.product_id' => 'nullable|integer',
+            'advanced_blocks.*.title' => 'nullable|string|max:255',
+            'advanced_blocks.*.color_label' => 'nullable|string|max:255',
+            'advanced_blocks.*.image' => 'nullable|string|max:500',
+            'advanced_blocks.*.variant_headers_csv' => 'nullable|string|max:1000',
+            'advanced_blocks.*.color_headers_csv' => 'nullable|string|max:500',
+            'advanced_blocks.*.size_headers_csv' => 'nullable|string|max:500',
+            'advanced_blocks.*.rows' => 'nullable|array',
+            'advanced_blocks.*.rows.*.ctn_qty' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.ctn_no' => 'nullable|string|max:100',
+            'advanced_blocks.*.rows.*.variants' => 'nullable|array',
+            'advanced_blocks.*.rows.*.variants.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.colors' => 'nullable|array',
+            'advanced_blocks.*.rows.*.colors.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.sizes' => 'nullable|array',
+            'advanced_blocks.*.rows.*.sizes.*' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.pcs' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.total_pcs' => 'nullable|integer|min:0',
+            'advanced_blocks.*.rows.*.nw_kg' => 'nullable|numeric|min:0',
+            'advanced_blocks.*.rows.*.gw_kg' => 'nullable|numeric|min:0',
+        ]);
+
+        $order->pi_info = PiInfoSupport::sanitizePayload($validated);
+        $order->save();
+
+        Toastr::success('PI info saved successfully!');
+        return redirect()->route('admin.orders.show', $order->id);
     }
 
     /**
@@ -70,14 +133,17 @@ class FrontendOrderController extends Controller
         ini_set('memory_limit', '512M');
         set_time_limit(300);
 
-        $order->load(['items.product', 'items.variant', 'user']);
+        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
         $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
-        ])->loadView('backend.orders.print_pdf', compact('order', 'settings'));
+        ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
         return $pdf->download('order-' . $order->order_no . '.pdf');
     }
