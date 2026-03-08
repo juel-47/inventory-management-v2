@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Product;
 use App\Models\StockLedger;
+use Illuminate\Http\Request;
 
 class StockLedgerController extends Controller
 {
@@ -12,6 +13,39 @@ class StockLedgerController extends Controller
     {
         if ($request->ajax()) {
             $data = StockLedger::with(['product', 'variant'])->select('stock_ledgers.*');
+
+            if ($request->filled('product_id')) {
+                $data->where('product_id', $request->integer('product_id'));
+            }
+
+            if ($request->filled('variant_id')) {
+                $data->where('variant_id', $request->integer('variant_id'));
+            }
+
+            if ($request->filled('reference_type')) {
+                $data->where('reference_type', $request->string('reference_type')->toString());
+            }
+
+            if ($request->filled('movement_type')) {
+                $movementType = $request->string('movement_type')->toString();
+
+                if ($movementType === 'in') {
+                    $data->where('in_qty', '>', 0);
+                }
+
+                if ($movementType === 'out') {
+                    $data->where('out_qty', '>', 0);
+                }
+            }
+
+            if ($request->filled('date_from')) {
+                $data->whereDate('created_at', '>=', $request->date('date_from')->toDateString());
+            }
+
+            if ($request->filled('date_to')) {
+                $data->whereDate('created_at', '<=', $request->date('date_to')->toDateString());
+            }
+
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('date', function($row){
@@ -53,7 +87,34 @@ class StockLedgerController extends Controller
                 ->rawColumns(['image', 'type'])
                 ->make(true);
         }
-            
-        return view('backend.stock_ledger.index');
+
+        $products = Product::query()
+            ->select('products.id', 'products.name')
+            ->whereIn('products.id', StockLedger::query()->select('product_id')->whereNotNull('product_id')->distinct())
+            ->with(['variants' => function ($query) {
+                $query->select('id', 'product_id', 'name', 'color', 'size')
+                    ->whereIn('id', StockLedger::query()->select('variant_id')->whereNotNull('variant_id')->distinct());
+            }])
+            ->orderByDesc('products.id')
+            ->get();
+
+        $ledgerProducts = $products->mapWithKeys(function ($product) {
+            return [
+                (string) $product->id => $product->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'label' => $variant->name ?: trim(collect([$variant->color, $variant->size])->filter()->implode(' ')) ?: 'Variant #' . $variant->id,
+                    ];
+                })->values()->all(),
+            ];
+        })->toArray();
+
+        $referenceTypes = StockLedger::query()
+            ->whereNotNull('reference_type')
+            ->distinct()
+            ->orderBy('reference_type')
+            ->pluck('reference_type');
+
+        return view('backend.stock_ledger.index', compact('products', 'ledgerProducts', 'referenceTypes'));
     }
 }

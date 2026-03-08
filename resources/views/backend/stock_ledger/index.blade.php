@@ -15,6 +15,76 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
+                            <h4>Filter Ledger</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-product">Product</label>
+                                        <select id="filter-product" class="form-control select2" data-placeholder="Select Product">
+                                            <option value="">All Products</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-variant">Variant</label>
+                                        <select id="filter-variant" class="form-control select2" data-placeholder="Select Variant">
+                                            <option value="">All Variants</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-reference-type">Reference Type</label>
+                                        <select id="filter-reference-type" class="form-control">
+                                            <option value="">All References</option>
+                                            @foreach ($referenceTypes as $referenceType)
+                                                <option value="{{ $referenceType }}">{{ ucfirst($referenceType) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-movement-type">Movement</label>
+                                        <select id="filter-movement-type" class="form-control">
+                                            <option value="">All</option>
+                                            <option value="in">IN</option>
+                                            <option value="out">OUT</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-date-from">Date From</label>
+                                        <input type="date" id="filter-date-from" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-date-to">Date To</label>
+                                        <input type="date" id="filter-date-to" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <div>
+                                            <button type="button" class="btn btn-danger border" id="reset-ledger-filters">Reset</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
                             <h4>Inventory Movement History</h4>
                         </div>
                         <div class="card-body">
@@ -48,7 +118,32 @@
 
 @push('scripts')
     <script>
-        $("#table-ledger").dataTable({
+        const ledgerProducts = @json($ledgerProducts);
+
+        function renderVariantOptions(productId) {
+            const $variant = $('#filter-variant');
+            const variants = productId && Object.prototype.hasOwnProperty.call(ledgerProducts, String(productId))
+                ? ledgerProducts[String(productId)]
+                : [];
+
+            $variant.empty().append('<option value="">All Variants</option>');
+
+            variants.forEach(function (variant) {
+                $variant.append(new Option(variant.label, variant.id));
+            });
+
+            $variant.trigger('change.select2');
+        }
+
+        $('.select2').select2({
+            width: '100%',
+            allowClear: true,
+            placeholder: function () {
+                return $(this).data('placeholder') || 'Select Option';
+            }
+        });
+
+        const ledgerTable = $("#table-ledger").DataTable({
             dom: 'Bfrtip',
             buttons: [
                 {
@@ -77,7 +172,17 @@
             ],
             processing: true,
             serverSide: true,
-            ajax: "{{ route('admin.stock-ledger.index') }}",
+            ajax: {
+                url: "{{ route('admin.stock-ledger.index') }}",
+                data: function (d) {
+                    d.product_id = $('#filter-product').val();
+                    d.variant_id = $('#filter-variant').val();
+                    d.reference_type = $('#filter-reference-type').val();
+                    d.movement_type = $('#filter-movement-type').val();
+                    d.date_from = $('#filter-date-from').val();
+                    d.date_to = $('#filter-date-to').val();
+                }
+            },
             columns: [
                 {data: 'date', name: 'created_at'},
                 {data: 'image', name: 'image', orderable: false, searchable: false},
@@ -91,5 +196,26 @@
             ],
             order: [[0, "desc"]]
         });
+
+        $('#filter-product').on('change', function () {
+            renderVariantOptions($(this).val());
+            ledgerTable.ajax.reload();
+        });
+
+        $('#filter-reference-type, #filter-movement-type, #filter-date-from, #filter-date-to, #filter-variant').on('change', function () {
+            ledgerTable.ajax.reload();
+        });
+
+        $('#reset-ledger-filters').on('click', function () {
+            $('#filter-product').val('').trigger('change.select2');
+            $('#filter-reference-type').val('');
+            $('#filter-movement-type').val('');
+            $('#filter-date-from').val('');
+            $('#filter-date-to').val('');
+            renderVariantOptions('');
+            ledgerTable.ajax.reload();
+        });
+
+        renderVariantOptions($('#filter-product').val());
     </script>
 @endpush

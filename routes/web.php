@@ -3,6 +3,8 @@
 use App\Http\Controllers\Backend\BookingController;
 use App\Http\Controllers\Backend\BrandController;
 // use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Backend\AccountController as BackendAccountController;
+use App\Http\Controllers\Backend\CartController as BackendCartController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\SubCategoryController;
 use App\Http\Controllers\Backend\TaxController;
@@ -29,8 +31,11 @@ use App\Http\Controllers\Backend\UserController;
 use App\Http\Controllers\Backend\VendorController;
 use App\Http\Controllers\Backend\ProductTypeController;
 use App\Http\Controllers\Backend\ReviewController;
-use App\Http\Controllers\Backend\CartController;
 use App\Http\Controllers\Backend\CustomProductRequestController;
+use App\Http\Controllers\Frontend\AccountController as FrontendAccountController;
+use App\Http\Controllers\Frontend\CartController as FrontendCartController;
+use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\OrderController as FrontendCustomerOrderController;
 use App\Http\Controllers\Frontend\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -45,13 +50,15 @@ Route::get('/sample/{filename}', function ($filename) {
     abort(404);
 })->name('admin.products.sample.download');
 
-Route::get('/', [\App\Http\Controllers\Frontend\HomeController::class, 'index'])->name('home');
-Route::get('/shop', [\App\Http\Controllers\Frontend\HomeController::class, 'shop'])->name('shop');
-Route::get('/product/{slug}', [\App\Http\Controllers\Frontend\HomeController::class, 'productDetails'])->name('product.details');
-Route::get('/products/live-search', [\App\Http\Controllers\Frontend\HomeController::class, 'liveSearch'])->name('frontend.products.live-search');
+Route::controller(HomeController::class)->group(function () {
+    Route::get('/', 'index')->name('home');
+    Route::get('/shop', 'shop')->name('shop');
+    Route::get('/product/{slug}', 'productDetails')->name('product.details');
+    Route::get('/products/live-search', 'liveSearch')->name('frontend.products.live-search');
+});
 Route::get('/frontend/reviews/product/{productId}', [ReviewController::class, 'getProductReviews'])->name('frontend.reviews.product');
 // Frontend cart page
-Route::get('/cart', [\App\Http\Controllers\Frontend\CartController::class, 'index'])->name('cart.index');
+Route::get('/cart', [FrontendCartController::class, 'index'])->name('cart.index');
 
 if (app()->environment('local')) {
     Route::get('/_preview/error/{code}', function (int $code) {
@@ -61,23 +68,31 @@ if (app()->environment('local')) {
 
 // ── Frontend Cart API (DB-backed, auth users only) ──────────────────────────
 Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
-    Route::get('/my-account', [\App\Http\Controllers\Frontend\AccountController::class, 'index'])->name('account.index');
-    Route::post('/my-account/profile', [\App\Http\Controllers\Frontend\AccountController::class, 'updateProfile'])->name('account.profile.update');
-    Route::post('/my-account/password', [\App\Http\Controllers\Frontend\AccountController::class, 'updatePassword'])->name('account.password.update');
-    Route::post('/my-account/order-form/add-to-cart', [\App\Http\Controllers\Frontend\AccountController::class, 'addOrderFormToCart'])->name('account.order-form.add-to-cart');
-    Route::post('/my-account/order-form/save', [\App\Http\Controllers\Frontend\AccountController::class, 'saveOrderForm'])->name('account.order-form.save');
-    Route::post('/my-account/saved-forms/{savedRequest}/checkout', [\App\Http\Controllers\Frontend\AccountController::class, 'checkoutSavedForm'])->name('account.saved-forms.checkout');
-    Route::delete('/my-account/saved-forms/{savedRequest}', [\App\Http\Controllers\Frontend\AccountController::class, 'deleteSavedForm'])->name('account.saved-forms.delete');
-    Route::get('/checkout', [\App\Http\Controllers\Frontend\CartController::class, 'checkout'])->name('checkout.index');
-    Route::post('/checkout/place-order', [\App\Http\Controllers\Frontend\CartController::class, 'placeOrder'])->name('checkout.place-order');
-    Route::get('/my-orders', [\App\Http\Controllers\Frontend\OrderController::class, 'index'])->name('orders.index');
-    Route::get('/my-orders/{order}', [\App\Http\Controllers\Frontend\OrderController::class, 'show'])->name('orders.show');
-    Route::post('/my-orders/{order}/reorder', [\App\Http\Controllers\Frontend\OrderController::class, 'reorder'])->name('orders.reorder');
-    Route::get('/frontend/cart/items',           [\App\Http\Controllers\Frontend\CartController::class, 'items'])->name('frontend.cart.items');
-    Route::post('/frontend/cart/add',            [\App\Http\Controllers\Frontend\CartController::class, 'add'])->name('frontend.cart.add');
-    Route::post('/frontend/cart/remove',         [\App\Http\Controllers\Frontend\CartController::class, 'remove'])->name('frontend.cart.remove');
-    Route::post('/frontend/cart/update-qty',     [\App\Http\Controllers\Frontend\CartController::class, 'updateQuantity'])->name('frontend.cart.update-qty');
-    Route::post('/frontend/cart/clear',          [\App\Http\Controllers\Frontend\CartController::class, 'clear'])->name('frontend.cart.clear');
+    Route::controller(FrontendAccountController::class)->group(function () {
+        Route::get('/my-account', 'index')->name('account.index');
+        Route::post('/my-account/profile', 'updateProfile')->name('account.profile.update');
+        Route::post('/my-account/password', 'updatePassword')->name('account.password.update');
+        Route::post('/my-account/order-form/add-to-cart', 'addOrderFormToCart')->name('account.order-form.add-to-cart');
+        Route::post('/my-account/order-form/save', 'saveOrderForm')->name('account.order-form.save');
+        Route::post('/my-account/saved-forms/{savedRequest}/checkout', 'checkoutSavedForm')->name('account.saved-forms.checkout');
+        Route::delete('/my-account/saved-forms/{savedRequest}', 'deleteSavedForm')->name('account.saved-forms.delete');
+    });
+
+    Route::controller(FrontendCartController::class)->group(function () {
+        Route::get('/checkout', 'checkout')->name('checkout.index');
+        Route::post('/checkout/place-order', 'placeOrder')->name('checkout.place-order');
+        Route::get('/frontend/cart/items', 'items')->name('frontend.cart.items');
+        Route::post('/frontend/cart/add', 'add')->name('frontend.cart.add');
+        Route::post('/frontend/cart/remove', 'remove')->name('frontend.cart.remove');
+        Route::post('/frontend/cart/update-qty', 'updateQuantity')->name('frontend.cart.update-qty');
+        Route::post('/frontend/cart/clear', 'clear')->name('frontend.cart.clear');
+    });
+
+    Route::controller(FrontendCustomerOrderController::class)->group(function () {
+        Route::get('/my-orders', 'index')->name('orders.index');
+        Route::get('/my-orders/{order}', 'show')->name('orders.show');
+        Route::post('/my-orders/{order}/reorder', 'reorder')->name('orders.reorder');
+    });
 
     // ── Wishlist ─────────────────────────────────────────────────────────────
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -128,8 +143,10 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
 
     /** vendor */
-    Route::get('vendor/get-details', [VendorController::class, 'getVendorDetails'])->name('vendor.get-details');
-    Route::put('vendor/change-status', [VendorController::class, 'changeStatus'])->name('vendor.change-status');
+    Route::controller(VendorController::class)->group(function () {
+        Route::get('vendor/get-details', 'getVendorDetails')->name('vendor.get-details');
+        Route::put('vendor/change-status', 'changeStatus')->name('vendor.change-status');
+    });
     Route::resource('vendor', VendorController::class);
 
     /** Unit Routes */
@@ -145,12 +162,14 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::resource('sizes', SizeController::class);
 
     /** Product Routes */
-    Route::put('products/change-status', [ProductController::class, 'changeStatus'])->name('products.change-status');
-    Route::get('products/import', [ProductController::class, 'importView'])->name('products.import.view');
-    Route::post('products/import/preview', [ProductController::class, 'importPreview'])->name('products.import.preview');
-    Route::post('products/import', [ProductController::class, 'importStore'])->name('products.import.store');
-    Route::get('products/announcement', [ProductController::class, 'announcementIndex'])->name('products.announcement.index');
-    Route::post('products/announcement/send', [ProductController::class, 'sendAnnouncement'])->name('products.announcement.send');
+    Route::controller(ProductController::class)->group(function () {
+        Route::put('products/change-status', 'changeStatus')->name('products.change-status');
+        Route::get('products/import', 'importView')->name('products.import.view');
+        Route::post('products/import/preview', 'importPreview')->name('products.import.preview');
+        Route::post('products/import', 'importStore')->name('products.import.store');
+        Route::get('products/announcement', 'announcementIndex')->name('products.announcement.index');
+        Route::post('products/announcement/send', 'sendAnnouncement')->name('products.announcement.send');
+    });
     Route::resource('products', ProductController::class);
 
     /** Product Type Routes */
@@ -165,29 +184,35 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('bookings/download-pdf/{id}', 'downloadPdf')->name('bookings.download-pdf');
     });
     // New route (Primary)
-    Route::put('bookings/status-update', [BookingController::class, 'changeStatus'])->name('bookings.status-update');
-    // Legacy route (Fallback to prevent RouteNotFoundException)
-    Route::put('bookings/change-status', [BookingController::class, 'changeStatus'])->name('bookings.change-status');
+    Route::controller(BookingController::class)->group(function () {
+        Route::put('bookings/status-update', 'changeStatus')->name('bookings.status-update');
+        // Legacy route (Fallback to prevent RouteNotFoundException)
+        Route::put('bookings/change-status', 'changeStatus')->name('bookings.change-status');
+    });
 
     Route::resource('bookings', BookingController::class);
 
     /** Purchase Routes */
-    Route::get('purchases/get-booking-details', [PurchaseController::class, 'getBookingDetails'])->name('purchases.get-booking-details');
-    Route::get('purchases/{id}/invoice', [PurchaseController::class, 'viewInvoice'])->name('purchases.view-invoice');
-    Route::get('purchases/{id}/download-pdf', [PurchaseController::class, 'downloadPdf'])->name('purchases.download-pdf');
-    Route::post('purchases/{id}/attachments', [PurchaseController::class, 'uploadAttachments'])->name('purchases.upload-attachments');
-    Route::delete('purchases/{id}/attachments/{attachmentId}', [PurchaseController::class, 'deleteAttachment'])->name('purchases.delete-attachment');
+    Route::controller(PurchaseController::class)->group(function () {
+        Route::get('purchases/get-booking-details', 'getBookingDetails')->name('purchases.get-booking-details');
+        Route::get('purchases/{id}/invoice', 'viewInvoice')->name('purchases.view-invoice');
+        Route::get('purchases/{id}/download-pdf', 'downloadPdf')->name('purchases.download-pdf');
+        Route::post('purchases/{id}/attachments', 'uploadAttachments')->name('purchases.upload-attachments');
+        Route::delete('purchases/{id}/attachments/{attachmentId}', 'deleteAttachment')->name('purchases.delete-attachment');
+    });
     Route::resource('purchases', PurchaseController::class);
 
     /** Frontend Orders (Customer Orders) */
-    Route::get('orders', [FrontendOrderController::class, 'index'])->name('orders.index');
-    Route::post('orders/{order}/pi-info', [FrontendOrderController::class, 'savePiInfo'])->name('orders.pi-info.save');
-    Route::get('orders/{order}/pi-invoice', [FrontendOrderController::class, 'piInvoice'])->name('orders.pi-invoice');
-    Route::get('orders/{order}/view-invoice', [FrontendOrderController::class, 'viewInvoice'])->name('orders.view-invoice');
-    Route::get('orders/{order}/download-invoice', [FrontendOrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
-    Route::get('orders/{order}', [FrontendOrderController::class, 'show'])->name('orders.show');
-    Route::put('orders/{order}/status', [FrontendOrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::delete('orders/{order}', [FrontendOrderController::class, 'destroy'])->name('orders.destroy');
+    Route::controller(FrontendOrderController::class)->group(function () {
+        Route::get('orders', 'index')->name('orders.index');
+        Route::post('orders/{order}/pi-info', 'savePiInfo')->name('orders.pi-info.save');
+        Route::get('orders/{order}/pi-invoice', 'piInvoice')->name('orders.pi-invoice');
+        Route::get('orders/{order}/view-invoice', 'viewInvoice')->name('orders.view-invoice');
+        Route::get('orders/{order}/download-invoice', 'downloadInvoice')->name('orders.download-invoice');
+        Route::get('orders/{order}', 'show')->name('orders.show');
+        Route::put('orders/{order}/status', 'updateStatus')->name('orders.update-status');
+        Route::delete('orders/{order}', 'destroy')->name('orders.destroy');
+    });
 
     /** Pricing Rules (Multipliers) */
     Route::resource('pricing-rules', PricingRuleController::class);
@@ -217,29 +242,39 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
 
     /** Product Request Routes */
-    Route::post('product-requests/{id}/pi-info', [ProductRequestController::class, 'savePiInfo'])->name('product-requests.pi-info.save');
-    Route::get('product-requests/{id}/pi-invoice', [ProductRequestController::class, 'piInvoice'])->name('product-requests.pi-invoice');
-    Route::get('product-requests/{id}/view-invoice', [ProductRequestController::class, 'viewInvoice'])->name('product-requests.view-invoice');
-    Route::get('product-requests/{id}/invoice', [ProductRequestController::class, 'printPdf'])->name('product-requests.download-invoice');
-    Route::put('product-requests/update-status/{id}', [ProductRequestController::class, 'updateStatus'])->name('product-requests.update-status');
+    Route::controller(ProductRequestController::class)->group(function () {
+        Route::post('product-requests/{id}/pi-info', 'savePiInfo')->name('product-requests.pi-info.save');
+        Route::get('product-requests/{id}/pi-invoice', 'piInvoice')->name('product-requests.pi-invoice');
+        Route::get('product-requests/{id}/view-invoice', 'viewInvoice')->name('product-requests.view-invoice');
+        Route::get('product-requests/{id}/invoice', 'printPdf')->name('product-requests.download-invoice');
+        Route::put('product-requests/update-status/{id}', 'updateStatus')->name('product-requests.update-status');
+    });
     Route::resource('product-requests', ProductRequestController::class);
 
     /** Custom Product Request Routes */
-    Route::put('custom-product-requests/update-status/{id}', [CustomProductRequestController::class, 'updateStatus'])->name('custom-product-requests.update-status');
+    Route::controller(CustomProductRequestController::class)->group(function () {
+        Route::put('custom-product-requests/update-status/{id}', 'updateStatus')->name('custom-product-requests.update-status');
+    });
     Route::resource('custom-product-requests', CustomProductRequestController::class);
 
     // Settings
-    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::controller(SettingController::class)->group(function () {
+        Route::get('settings', 'index')->name('settings.index');
+        Route::put('settings', 'update')->name('settings.update');
+    });
 
     /** Inventory Plane Routes */
-    Route::get('issues/get-request-items', [IssueController::class, 'getRequestItems'])->name('issues.get-request-items');
-    Route::get('issues/{id}/view-invoice', [IssueController::class, 'viewInvoice'])->name('issues.view-invoice');
-    Route::get('issues/{id}/invoice', [IssueController::class, 'downloadInvoice'])->name('issues.download-invoice');
+    Route::controller(IssueController::class)->group(function () {
+        Route::get('issues/get-request-items', 'getRequestItems')->name('issues.get-request-items');
+        Route::get('issues/{id}/view-invoice', 'viewInvoice')->name('issues.view-invoice');
+        Route::get('issues/{id}/invoice', 'downloadInvoice')->name('issues.download-invoice');
+    });
     Route::resource('issues', IssueController::class);
     Route::get('stock-ledger', [StockLedgerController::class, 'index'])->name('stock-ledger.index');
-    Route::get('inventory-reports/export-pdf', [InventoryReportController::class, 'exportPdf'])->name('inventory-reports.export-pdf');
-    Route::get('inventory-reports', [InventoryReportController::class, 'index'])->name('inventory-reports.index');
+    Route::controller(InventoryReportController::class)->group(function () {
+        Route::get('inventory-reports/export-pdf', 'exportPdf')->name('inventory-reports.export-pdf');
+        Route::get('inventory-reports', 'index')->name('inventory-reports.index');
+    });
 
     /** profile routes */
     Route::controller(ProfileController::class)->group(function () {
@@ -258,7 +293,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     });
 
     /** Cart Routes (Database Cart System) */
-    Route::controller(CartController::class)->group(function () {
+    Route::controller(BackendCartController::class)->group(function () {
         Route::get('cart/count', 'getCount')->name('cart.count');
         Route::get('cart/items', 'getItems')->name('cart.items');
         Route::get('cart/product-ids', 'getProductIds')->name('cart.product-ids');
@@ -268,11 +303,13 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::post('cart/clear', 'clear')->name('cart.clear');
     });
     /** Accounts & Payments */
-    Route::get('accounts', [\App\Http\Controllers\Backend\AccountController::class, 'index'])->name('accounts.index');
-    Route::get('accounts/record-payment', [\App\Http\Controllers\Backend\AccountController::class, 'create'])->name('accounts.record-payment');
-    Route::get('accounts/search-order', [\App\Http\Controllers\Backend\AccountController::class, 'searchOrder'])->name('accounts.search-order');
-    Route::get('accounts/due-orders', [\App\Http\Controllers\Backend\AccountController::class, 'dueOrders'])->name('accounts.due-orders');
-    Route::post('accounts/orders/{order}/payment', [\App\Http\Controllers\Backend\AccountController::class, 'storePayment'])->name('accounts.store-payment');
+    Route::controller(BackendAccountController::class)->group(function () {
+        Route::get('accounts', 'index')->name('accounts.index');
+        Route::get('accounts/record-payment', 'create')->name('accounts.record-payment');
+        Route::get('accounts/search-order', 'searchOrder')->name('accounts.search-order');
+        Route::get('accounts/due-orders', 'dueOrders')->name('accounts.due-orders');
+        Route::post('accounts/orders/{order}/payment', 'storePayment')->name('accounts.store-payment');
+    });
 
 });
 
