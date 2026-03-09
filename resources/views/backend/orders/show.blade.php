@@ -82,8 +82,8 @@
                                                 <td class="text-center">
                                                     <span class="badge badge-info px-3">{{ $item->quantity }}</span>
                                                 </td>
-                                                <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                                                <td class="text-right font-weight-bold text-primary">{{ number_format($item->line_total, 2) }}</td>
+                                                <td class="text-right">{{ formatConverted($item->unit_price, 2) }}</td>
+                                                <td class="text-right font-weight-bold text-primary">{{ formatConverted($item->line_total, 2) }}</td>
                                             </tr>
                                         @empty
                                             <tr>
@@ -94,7 +94,7 @@
                                     <tfoot class="bg-whitesmoke">
                                         <tr>
                                             <td colspan="6" class="text-right font-weight-bold text-muted text-uppercase small">Grand Total</td>
-                                            <td class="text-right font-weight-bold h6 text-primary mb-0">{{ number_format($order->total_amount, 2) }}</td>
+                                            <td class="text-right font-weight-bold h6 text-primary mb-0">{{ formatConverted($order->total_amount, 2) }}</td>
                                         </tr>
                                     </tfoot>
                                 </table>

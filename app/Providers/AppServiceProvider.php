@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\GeneralSetting;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
@@ -24,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
         // \Illuminate\Support\Facades\View::share('settings', getSettings());
         try {
             if (Schema::hasTable('general_settings')) {
-                $settings = \App\Models\GeneralSetting::first();
+                $settings =GeneralSetting::first();
                 view()->share('settings', $settings);
 
                 if ($settings) {
