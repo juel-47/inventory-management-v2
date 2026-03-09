@@ -91,7 +91,7 @@
                 </div>
                 <div class="collapse show" id="mycard-collapse">
                     <div class="card-body">
-                        <form action="{{ route('admin.reports.stock') }}" method="GET">
+                        <form id="stock-filter-form" action="{{ route('admin.reports.stock') }}" method="GET">
                             <div class="row">
                                 <div class="col-md-5">
                                     <div class="form-group">
@@ -131,13 +131,13 @@
                         <div class="card-header">
                             <h4>Detailed Stock List</h4>
                             <div class="card-header-action">
-                                <button class="btn btn-primary btn-sm" id="btn-export-excel">
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-export-excel">
                                     <i class="fas fa-file-excel"></i> Export Excel
                                 </button>
-                                <button class="btn btn-primary btn-sm ml-1" id="btn-export-pdf">
+                                <button type="button" class="btn btn-primary btn-sm ml-1" id="btn-export-pdf">
                                     <i class="fas fa-file-pdf"></i> Export PDF
                                 </button>
-                                <button class="btn btn-primary btn-sm ml-1" id="btn-print">
+                                <button type="button" class="btn btn-primary btn-sm ml-1" id="btn-print">
                                     <i class="fas fa-print"></i> Print
                                 </button>
                             </div>
@@ -212,201 +212,141 @@
 
 @push('scripts')
     <script>
-        // Prepare export header text
-        var exportHeader = '{{ $settings->site_name ?? "Inventory Management System" }}\n';
-        exportHeader += 'Email: {{ $settings->contact_email ?? "N/A" }}\n';
-        exportHeader += 'Address: {{ $settings->address ?? "N/A" }}\n';
-        exportHeader += '-------------------------------------------\n';
-        exportHeader += 'Stock Valuation Report\n';
-        exportHeader += 'Generated on: {{ date("F d, Y h:i A") }}\n';
-        exportHeader += '-------------------------------------------\n\n';
+        const exportMeta = {
+            site_name: @json($settings->site_name ?? 'Inventory Management System'),
+            contact_email: @json($settings->contact_email ?? 'N/A'),
+            address: @json($settings->address ?? 'N/A'),
+            generated_on: @json(date('F d, Y h:i A'))
+        };
+        const exportFileName = 'stock-report-' + @json(date('Y-m-d'));
 
-        var table = $("#table-stock").dataTable({
-            dom: 'Brt',
-            paging: false,
-            info: false,
-            searching: false,
-            buttons: [
-                {
-                    extend: 'copy',
-                    messageTop: exportHeader
-                },
-                {
-                    extend: 'csv',
-                    messageTop: exportHeader
-                },
-                {
-                    extend: 'excel',
-                    messageTop: exportHeader,
-                    title: ''
-                },
-                {
-                    extend: 'pdf',
-                    messageTop: '',
-                    title: '',
-                    exportOptions: {
-                        format: {
-                            body: function (data, row, column, node) {
-                                // column 0 is the product info column which contains Image, Name and SKU
-                                if (column === 0) {
-                                    // Extract only the product name (font-weight-bold class)
-                                    var nameElement = $(node).find('.font-weight-bold');
-                                    if (nameElement.length > 0) {
-                                        return nameElement.text().trim();
-                                    }
-                                }
-                                return data;
+        function buildExportHeaderText() {
+            return [
+                exportMeta.site_name,
+                'Email: ' + exportMeta.contact_email,
+                'Address: ' + exportMeta.address,
+                '-------------------------------------------',
+                'Stock Valuation Report',
+                'Generated on: ' + exportMeta.generated_on,
+                '-------------------------------------------',
+                ''
+            ].join('\n');
+        }
+
+        function buildPdfHeaderBlocks() {
+            return [
+                { text: exportMeta.site_name + '\n', fontSize: 16, bold: true, alignment: 'center' },
+                { text: 'Email: ' + exportMeta.contact_email + '\n', fontSize: 10, alignment: 'center' },
+                { text: 'Address: ' + exportMeta.address + '\n\n', fontSize: 10, alignment: 'center' },
+                { text: 'Stock Valuation Report\n', fontSize: 14, bold: true, alignment: 'center', color: '#007bff' },
+                { text: 'Generated on: ' + exportMeta.generated_on + '\n\n', fontSize: 10, alignment: 'center' }
+            ];
+        }
+
+        function initStockDataTable() {
+            const cleanCellText = function (value) {
+                return $('<div>').html(value).text().replace(/\s+/g, ' ').trim();
+            };
+
+            const commonExportOptions = {
+                format: {
+                    body: function (data, row, column, node) {
+                        // Product column: keep only product title text (avoid image/extra markup)
+                        if (column === 0) {
+                            const nameElement = $(node).find('.font-weight-bold').first();
+                            if (nameElement.length) {
+                                return nameElement.text().trim();
                             }
                         }
-                    },
-                    customize: function(doc) {
-                        doc.content.splice(0, 0, {
-                            text: [
-                                { text: '{{ $settings->site_name ?? "Inventory Management System" }}\n', fontSize: 16, bold: true, alignment: 'center' },
-                                { text: 'Email: {{ $settings->contact_email ?? "N/A" }}\n', fontSize: 10, alignment: 'center' },
-                                { text: 'Address: {{ $settings->address ?? "N/A" }}\n\n', fontSize: 10, alignment: 'center' },
-                                { text: 'Stock Valuation Report\n', fontSize: 14, bold: true, alignment: 'center', color: '#007bff' },
-                                { text: 'Generated on: {{ date("F d, Y h:i A") }}\n\n', fontSize: 10, alignment: 'center' }
-                            ]
-                        });
+
+                        // Category / Brand column: export as two labeled lines.
+                        if (column === 1) {
+                            const category = $(node).find('.badge').first().text().trim() || '-';
+                            const brand = $(node).find('.text-muted').first().text().trim() || '-';
+                            return 'Category: ' + category + '\nBrand: ' + brand;
+                        }
+
+                        // Category/Brand and Stock columns contain HTML badges/spans; export clean text.
+                        return cleanCellText(data);
                     }
-                },
-                {
-                    extend: 'print',
-                    messageTop: function() {
-                        return $('.export-header').html();
-                    },
-                    title: ''
                 }
-            ]
-        });
+            };
 
-        // Hide default DataTables buttons (we'll use our custom styled buttons)
-        $('.dt-buttons').hide();
+            const table = $('#table-stock').DataTable({
+                dom: 'Brt',
+                paging: false,
+                info: false,
+                searching: false,
+                buttons: [
+                    {
+                        extend: 'copy',
+                        messageTop: buildExportHeaderText(),
+                        exportOptions: commonExportOptions
+                    },
+                    {
+                        extend: 'csv',
+                        messageTop: buildExportHeaderText(),
+                        filename: exportFileName,
+                        exportOptions: commonExportOptions
+                    },
+                    {
+                        extend: 'excel',
+                        messageTop: buildExportHeaderText(),
+                        title: 'Stock Report',
+                        filename: exportFileName,
+                        exportOptions: commonExportOptions
+                    },
+                    {
+                        extend: 'pdf',
+                        messageTop: '',
+                        title: 'Stock Report',
+                        filename: exportFileName,
+                        exportOptions: commonExportOptions,
+                        customize: function (doc) {
+                            doc.content.splice(0, 0, {
+                                text: buildPdfHeaderBlocks()
+                            });
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        messageTop: function () {
+                            return $('.export-header').html();
+                        },
+                        title: ''
+                    }
+                ]
+            });
 
-        // Wire up custom export buttons
+            $('#table-stock_wrapper .dt-buttons').hide();
+            return table;
+        }
+
+        let table = initStockDataTable();
+
         function initExportButtons() {
-            $('#btn-export-excel').off('click').on('click', function() {
-                table.DataTable().button('.buttons-excel').trigger();
+            $('#btn-export-excel').off('click').on('click', function () {
+                table.button(2).trigger();
             });
 
-            $('#btn-export-pdf').off('click').on('click', function() {
-                table.DataTable().button('.buttons-pdf').trigger();
+            $('#btn-export-pdf').off('click').on('click', function () {
+                table.button(3).trigger();
             });
 
-            $('#btn-print').off('click').on('click', function() {
-                table.DataTable().button('.buttons-print').trigger();
+            $('#btn-print').off('click').on('click', function () {
+                table.button(4).trigger();
             });
         }
 
-        // Initialize export buttons
         initExportButtons();
 
-        // AJAX Filter on Change
-        $('select[name="category_id"], select[name="brand_id"]').on('change', function() {
-            let category_id = $('select[name="category_id"]').val();
-            let brand_id = $('select[name="brand_id"]').val();
-
-            $.ajax({
-                url: "{{ route('admin.reports.stock') }}",
-                method: 'GET',
-                data: {
-                    category_id: category_id,
-                    brand_id: brand_id
-                },
-                beforeSend: function() {
-                    // Optional: Show loader or opacity
-                    $('#table-stock').css('opacity', '0.5');
-                },
-                success: function(response) {
-                    $('#table-stock').css('opacity', '1');
-                    
-                    // Update Summary Cards
-                    $('#span-total-qty').text(response.totalQty);
-                    $('#span-total-value').text(response.totalValue);
-                    $('#span-potential-revenue').text(response.potentialRevenue);
-                    $('#span-potential-profit').text(response.potentialProfit);
-                    
-                    // Update Footer Totals (Reuse summary values)
-                    $('#span-grand-total-value').text(response.totalValue);
-                    $('#span-grand-total-profit').text(response.potentialProfit);
-
-                    // Update Table Content
-                    $('#pagination-container').html(response.pagination);
-                    
-                    // Destroy datatable, replace body, re-init datatable
-                    table.fnDestroy(); 
-                    $('#stock-table-body').html(response.html);
-                    table = $("#table-stock").dataTable({
-                        dom: 'Brt',
-                        paging: false,
-                        info: false,
-                        searching: false,
-                        buttons: [
-                            {
-                                extend: 'copy',
-                                messageTop: exportHeader
-                            },
-                            {
-                                extend: 'csv',
-                                messageTop: exportHeader
-                            },
-                            {
-                                extend: 'excel',
-                                messageTop: exportHeader,
-                                title: ''
-                            },
-                            {
-                                extend: 'pdf',
-                                messageTop: '',
-                                title: '',
-                                exportOptions: {
-                                    format: {
-                                        body: function (data, row, column, node) {
-                                            // column 0 is the product info column which contains Image, Name and SKU
-                                            if (column === 0) {
-                                                // Extract only the product name (font-weight-bold class)
-                                                var nameElement = $(node).find('.font-weight-bold');
-                                                if (nameElement.length > 0) {
-                                                    return nameElement.text().trim();
-                                                }
-                                            }
-                                            return data;
-                                        }
-                                    }
-                                },
-                                customize: function(doc) {
-                                    doc.content.splice(0, 0, {
-                                        text: [
-                                            { text: '{{ $settings->site_name ?? "Inventory Management System" }}\n', fontSize: 16, bold: true, alignment: 'center' },
-                                            { text: 'Email: {{ $settings->contact_email ?? "N/A" }}\n', fontSize: 10, alignment: 'center' },
-                                            { text: 'Address: {{ $settings->address ?? "N/A" }}\n\n', fontSize: 10, alignment: 'center' },
-                                            { text: 'Stock Valuation Report\n', fontSize: 14, bold: true, alignment: 'center', color: '#007bff' },
-                                            { text: 'Generated on: {{ date("F d, Y h:i A") }}\n\n', fontSize: 10, alignment: 'center' }
-                                        ]
-                                    });
-                                }
-                            },
-                            {
-                                extend: 'print',
-                                messageTop: function() {
-                                    return $('.export-header').html();
-                                },
-                                title: ''
-                            }
-                        ]
-                    });
-                    
-                    // Hide default buttons and reinitialize custom export buttons
-                    $('.dt-buttons').hide();
-                    initExportButtons();
-                },
-                error: function(xhr) {
-                    console.error(xhr);
-                    $('#table-stock').css('opacity', '1');
-                    alert('Error loading data');
-                }
-            });
-        });
+        // Stable filter behavior: submit on both native change and Select2 select event.
+        $(document).on(
+            'change select2:select',
+            '#stock-filter-form select[name="category_id"], #stock-filter-form select[name="brand_id"]',
+            function () {
+                $('#stock-filter-form').trigger('submit');
+            }
+        );
     </script>
 @endpush
