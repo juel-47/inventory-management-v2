@@ -12,14 +12,14 @@
         </div>
 
         <div class="section-body">
-            @if (session('email_test_message'))
+            {{-- @if (session('email_test_message'))
                 <div class="alert {{ session('email_test_status') === 'success' ? 'alert-success' : 'alert-danger' }} alert-dismissible fade show" role="alert">
                     {{ session('email_test_message') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-            @endif
+            @endif --}}
 
             <div class="row">
                 <div class="col-12 col-lg-8">
