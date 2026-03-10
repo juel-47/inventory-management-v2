@@ -14,7 +14,7 @@
         $latestCategoryBlocks = collect($latestCategoryBlocks ?? []);
     @endphp
 
-    <div class="bg-slate-100 py-6 sm:py-8">
+    <div class="bg-slate-100">
         @if ($sliders->isNotEmpty())
             <section class="w-full overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 shadow-sm">
                 <div class="relative" data-home-slider>
@@ -71,7 +71,7 @@
             </section>
         @endif
 
-        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8 py-8">
             @if ($latestCategoryBlocks->isEmpty())
                 <section class="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
                     No active categories with products found.
