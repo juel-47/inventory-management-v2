@@ -162,6 +162,7 @@
                         </div>
 
                         <div class="flex items-center gap-4">
+                            @auth
                             <div class="flex items-center gap-2">
                                 <label
                                     class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Sort
@@ -186,7 +187,9 @@
                                         <option value="{{ $type->id }}" {{ $selectedType === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>
+                            </div>     
+                            @endauth
+                           
                         </div>
                     </div>
 
