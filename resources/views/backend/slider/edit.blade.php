@@ -21,11 +21,6 @@
                                 enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
-                                <div class="form-group">
-                                    <label>Current Banner</label>
-                                    <br>
-                                    <img src="{{ $slider->banner ? asset('storage/' . $slider->banner) : asset('uploads/default.png') }}" width="220px" alt="" class="img-thumbnail mb-3">
-                                </div>
                                 <div class="row">
                                     <div class="form-group col-md-6">
                                         <label>Title</label>
@@ -58,10 +53,20 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Banner (Max 2MB)</label>
-                                    <div id="image-preview" class="image-preview">
-                                        <label for="image-upload" id="image-label">Choose File</label>
-                                        <input type="file" name="banner" id="image-upload" />
+                                    
+                                    <div class="row">
+                                        
+                                        <div class="col-md-6">
+                                            <div class="small text-muted mb-2">Current Banner</div>
+                                            <img src="{{ $slider->banner ? asset('storage/' . $slider->banner) : asset('uploads/default.png') }}" width="220px" alt="" class="img-thumbnail">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label>Banner (Max 2MB)</label>
+                                            <div id="image-preview" class="image-preview">
+                                                <label for="image-upload" id="image-label">Choose File</label>
+                                                <input type="file" name="banner" id="image-upload" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
