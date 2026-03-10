@@ -25,6 +25,7 @@ class CategoryUpdateRequest extends FormRequest
         return [
             'name' => ['required', 'max:255', 'unique:categories,name,' . $id],
             'status' => ['required', 'boolean'],
+            'frontend_show' => ['nullable', 'boolean'],
         ];
     }
 }

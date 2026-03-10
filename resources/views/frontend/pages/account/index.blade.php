@@ -147,12 +147,21 @@
                                                 <span class="text-slate-500"> for {{ (int) ($order->total_units ?? 0) }} units</span>
                                             </td>
                                             <td class="py-3 pl-4 text-[11px] uppercase tracking-[0.12em] font-black">
+                                                @php
+                                                    $hasPi = \App\Support\PiInfoSupport::hasContent($order->pi_info);
+                                                @endphp
                                                 <a href="{{ route('orders.show', $order->id) }}" class="text-slate-700 hover:text-indigo-600">View</a>
                                                 <span class="text-slate-300 mx-1">|</span>
                                                 <form method="POST" action="{{ route('orders.reorder', $order->id) }}" class="inline">
                                                     @csrf
                                                     <button type="submit" class="text-slate-700 hover:text-indigo-600">Reorder</button>
                                                 </form>
+                                                @if($hasPi)
+                                                    <span class="text-slate-300 mx-1">|</span>
+                                                    <a href="{{ route('orders.pi-invoice', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI</a>
+                                                    <span class="text-slate-300 mx-1">|</span>
+                                                    <a href="{{ route('orders.pi-invoice.download', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI PDF</a>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

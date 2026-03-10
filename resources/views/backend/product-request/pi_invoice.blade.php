@@ -161,15 +161,38 @@
             'rejected', 'cancelled' => 'badge-danger',
             default => 'badge-info',
         };
+        $isFrontend = (bool) ($isFrontend ?? false);
+        $backUrl = $backUrl ?? null;
+        $downloadUrl = $downloadUrl ?? null;
+        $isPdf = (bool) ($isPdf ?? false);
     @endphp
 
+    @if($isPdf)
+        <style>
+            body { background: #fff !important; padding: 0 !important; }
+            .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 24px !important; }
+            .no-print { display: none !important; }
+        </style>
+    @endif
+
     <div class="container">
-        <div class="no-print">
-            <button onclick="window.print()" class="btn btn-print">Print Now</button>
-            <a href="{{ route('admin.product-requests.show', $productRequest->id) }}" class="btn btn-download">Edit PI Info</a>
-            <a href="{{ route('admin.product-requests.index') }}" class="btn btn-back">Back to List</a>
-            <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
-        </div>
+        @if(!$isPdf)
+            <div class="no-print">
+                <button onclick="window.print()" class="btn btn-print">Print Now</button>
+                @if($downloadUrl)
+                    <a href="{{ $downloadUrl }}" class="btn btn-download">Download PDF</a>
+                @endif
+                @if($isFrontend)
+                    @if($backUrl)
+                        <a href="{{ $backUrl }}" class="btn btn-back">Back</a>
+                    @endif
+                @else
+                    <a href="{{ route('admin.product-requests.show', $productRequest->id) }}" class="btn btn-download">Edit PI Info</a>
+                    <a href="{{ route('admin.product-requests.index') }}" class="btn btn-back">Back to List</a>
+                @endif
+                <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
+            </div>
+        @endif
 
         <div class="header clearfix">
             <div class="invoice-title">
@@ -232,6 +255,25 @@
                     @php
                         $imagePath = (string) ($item->product->thumb_image ?? '');
                         $imageUrl = $imagePath !== '' ? asset('storage/' . ltrim($imagePath, '/')) : null;
+                        $imageBase64 = null;
+                        if ($isPdf && $imagePath !== '') {
+                            $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
+                            $candidates = [
+                                public_path('storage/' . $normalized),
+                                storage_path('app/public/' . $normalized),
+                                public_path(ltrim($imagePath, '/')),
+                            ];
+                            foreach ($candidates as $candidate) {
+                                if (is_file($candidate)) {
+                                    $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
+                                    $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
+                                    $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
+                                    break;
+                                }
+                            }
+                        }
+
+                        $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
                         $variantText = trim((string) ($item->variant->name ?? ''));
                         if ($variantText === '') {
                             $variantText = trim(collect([
@@ -243,8 +285,8 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td class="image-cell">
-                            @if($imageUrl)
-                                <img src="{{ $imageUrl }}" alt="{{ $item->product->name ?? 'Item' }}">
+                            @if($imageSrc)
+                                <img src="{{ $imageSrc }}" alt="{{ $item->product->name ?? 'Item' }}">
                             @else
                                 <span class="image-empty">No Image</span>
                             @endif

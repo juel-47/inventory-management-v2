@@ -10,10 +10,13 @@ use App\Models\ProductRequest;
 use App\Models\ProductRequestItem;
 use App\Support\PiInfoSupport;
 use App\Models\User;
+use App\Mail\ProductRequestPiInvoiceReadyMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Routing\Controllers\HasMiddleware;
 
@@ -352,7 +355,9 @@ class ProductRequestController extends Controller implements HasMiddleware
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
 
-        return view('backend.product-request.pi_invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+        $downloadUrl = route('admin.product-requests.pi-invoice.download', $productRequest->id);
+
+        return view('backend.product-request.pi_invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'downloadUrl'));
     }
 
     /**
@@ -387,6 +392,48 @@ class ProductRequestController extends Controller implements HasMiddleware
         $filename = 'request-' . $productRequest->request_no . '.pdf';
         
         return $pdf->download($filename);
+    }
+
+    /**
+     * Download Request PI Invoice (PDF)
+     */
+    public function downloadPiInvoice($id)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $productRequest = ProductRequest::with([
+            'user',
+            'order',
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant.color',
+            'items.variant.size',
+        ])->findOrFail($id);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+            abort(403);
+        }
+
+        $settings = \App\Models\GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif'
+        ])->loadView('backend.product-request.pi_invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
+
+        return $pdf->download('pi-invoice-' . $productRequest->request_no . '.pdf');
     }
 
     /**
@@ -443,6 +490,8 @@ class ProductRequestController extends Controller implements HasMiddleware
 
         $productRequest->pi_info = PiInfoSupport::sanitizePayload($validated);
         $productRequest->save();
+
+        $this->notifyPiReady($productRequest);
 
         Toastr::success('PI info saved successfully!');
         return redirect()->route('admin.product-requests.show', $productRequest->id);
@@ -512,5 +561,35 @@ class ProductRequestController extends Controller implements HasMiddleware
 
         $productRequest->delete(); // Items deleted by cascade
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
+    }
+
+    private function notifyPiReady(ProductRequest $productRequest): void
+    {
+        $productRequest->loadMissing(['user', 'order']);
+
+        $recipient = $productRequest->order?->pi_email
+            ?: $productRequest->order?->billing_email
+            ?: ($productRequest->user?->email ?? null);
+
+        if (!$recipient) {
+            return;
+        }
+
+        $attachPdf = (bool) config('mail.attach_pi_pdf', true);
+
+        try {
+            Mail::to($recipient)->send(new ProductRequestPiInvoiceReadyMail(
+                $productRequest,
+                route('product-requests.pi-invoice', $productRequest->id),
+                route('product-requests.pi-invoice.download', $productRequest->id),
+                $attachPdf
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send PI invoice email for product request.', [
+                'product_request_id' => $productRequest->id,
+                'recipient' => $recipient,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

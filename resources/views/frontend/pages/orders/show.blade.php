@@ -9,6 +9,17 @@
             <p class="text-sm text-slate-500 mt-2">Order No: {{ $order->order_no }}</p>
         </div>
         <div class="flex items-center gap-3">
+            @php
+                $hasPi = \App\Support\PiInfoSupport::hasContent($order->pi_info);
+            @endphp
+            @if($hasPi)
+                <a href="{{ route('orders.pi-invoice', $order->id) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800">
+                    View PI
+                </a>
+                <a href="{{ route('orders.pi-invoice.download', $order->id) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+                    Download PI
+                </a>
+            @endif
             <form method="POST" action="{{ route('orders.reorder', $order->id) }}">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-indigo-200 hover:text-indigo-600">

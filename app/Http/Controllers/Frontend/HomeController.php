@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
-use App\Models\Brand;
+use App\Models\ProductType;
+use App\Models\Slider;
 use App\Services\CheckoutDiscountResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
@@ -23,97 +25,67 @@ class HomeController extends Controller
         $isOutletCustomer = $roleContext['isOutletCustomer'];
         $outletId = $roleContext['outletId'] ?? $this->resolveRequestOutletId($request);
 
-        $categories = Category::with(['subCategories' => function($q) {
-                $q->where('status', 1);
-            }, 'subCategories.childCategories' => function($q) {
-                $q->where('status', 1);
-            }])
-            ->withCount([
-                'products as active_products_count' => function ($query) {
+        $sliders = Schema::hasTable('sliders')
+            ? Slider::query()
+                ->where('status', 1)
+                ->orderBy('serial')
+                ->get()
+            : collect();
+        $latestCategories = Category::query()
+            ->where('status', 1)
+            ->where('frontend_show', 1)
+            ->whereHas('products', function ($query) {
+                $query->where('status', 1);
+            })
+            ->withMax([
+                'products as latest_product_created_at' => function ($query) {
                     $query->where('status', 1);
                 }
-            ])
-            ->where('status', 1)
-            ->orderBy('name')
-            ->paginate(12, ['*'], 'category_page')
-            ->withQueryString();
-
-        $featuredQuery = Product::query()
+            ], 'created_at')
             ->with([
-                'category:id,name',
-                'variants' => function ($query) use ($roleContext) {
-                    $this->configureVariantQuery($query, $roleContext);
-                },
-            ])
-            ->where('status', 1)
-            ->whereHas('category', function ($query) {
-                $query->where('status', 1);
-            });
+                'products' => function ($query) use ($roleContext, $isOutletCustomer, $outletId) {
+                    $query->where('status', 1)
+                        ->latest()
+                        ->take(4)
+                        ->with([
+                            'category:id,name',
+                            'variants' => function ($variantQuery) use ($roleContext) {
+                                $this->configureVariantQuery($variantQuery, $roleContext);
+                            },
+                        ]);
 
-        if ($isOutletCustomer) {
-            $featuredQuery->withSum([
-                'inventoryStocks as scoped_stock_qty' => function ($query) use ($outletId) {
-                    $query->where('outlet_id', $outletId);
-                }
-            ], 'quantity');
-        }
-
-        $featuredProducts = $featuredQuery->latest()->take(12)->get();
-        $featuredCards = $featuredProducts
-            ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
-            ->values();
-
-        $activeProductCount = Product::query()
-            ->where('status', 1)
-            ->whereHas('category', function ($query) {
-                $query->where('status', 1);
-            })
-            ->count();
-
-        $activeBrandCount = Brand::query()
-            ->where('status', 1)
-            ->count();
-
-        $inStockProductCount = Product::query()
-            ->where('status', 1)
-            ->whereHas('category', function ($query) {
-                $query->where('status', 1);
-            })
-            ->whereHas('inventoryStocks', function ($query) use ($outletId, $isOutletCustomer) {
-                if ($isOutletCustomer) {
-                    $query->where('outlet_id', $outletId);
-                }
-                $query->where('quantity', '>', 0);
-            })
-            ->count();
-
-        $topBrands = Brand::query()
-            ->where('status', 1)
-            ->withCount([
-                'products as active_products_count' => function ($query) {
-                    $query->where('status', 1);
+                    if ($isOutletCustomer) {
+                        $query->withSum([
+                            'inventoryStocks as scoped_stock_qty' => function ($stockQuery) use ($outletId) {
+                                $stockQuery->where('outlet_id', $outletId);
+                            }
+                        ], 'quantity');
+                    }
                 }
             ])
-            ->orderByDesc('active_products_count')
-            ->orderBy('name')
-            ->take(8)
+            ->orderByDesc('latest_product_created_at')
+            ->take(6)
             ->get();
 
-        $inStockFeaturedCount = $isOutletCustomer
-            ? $featuredProducts->filter(fn ($product) => (int) ($product->scoped_stock_qty ?? 0) > 0)->count()
-            : 0;
+        $latestCategoryBlocks = $latestCategories
+            ->map(function (Category $category) use ($roleContext): array {
+                $cards = $category->products
+                    ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
+                    ->values();
+
+                return [
+                    'category' => $category,
+                    'cards' => $cards,
+                ];
+            })
+            ->values();
 
         return view('frontend.pages.home', [
-            'categories' => $categories,
-            'featuredCards' => $featuredCards,
+            'sliders' => $sliders,
+            'latestCategoryBlocks' => $latestCategoryBlocks,
             'roleContext' => $roleContext,
             'isOutletCustomer' => $isOutletCustomer,
             'outletId' => $outletId,
-            'inStockFeaturedCount' => $inStockFeaturedCount,
-            'activeProductCount' => $activeProductCount,
-            'activeBrandCount' => $activeBrandCount,
-            'inStockProductCount' => $inStockProductCount,
-            'topBrands' => $topBrands,
         ]);
     }
 
@@ -175,6 +147,16 @@ class HomeController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
+        // Occasion / Type Filter (legacy + new)
+        if ($request->filled('product_type')) {
+            $type = (string) $request->product_type;
+            if (ctype_digit($type)) {
+                $query->where('product_type_id', (int) $type);
+            } else {
+                $query->where('product_type', $type);
+            }
+        }
+
         // Sorting
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
@@ -214,6 +196,11 @@ class HomeController extends Controller
             ->where('status', 1)
             ->get();
 
+        $productTypes = ProductType::query()
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         // Get absolute price range for slider
         $min_range = Product::where('status', 1)
             ->whereHas('category', function($q) { $q->where('status', 1); })
@@ -226,6 +213,7 @@ class HomeController extends Controller
             'products' => $products,
             'shopCards' => $shopCards,
             'categories' => $categories,
+            'productTypes' => $productTypes,
             'min_range' => $min_range,
             'max_range' => $max_range,
             'isOutletCustomer' => $isOutletCustomer,

@@ -133,12 +133,13 @@
 
             <!-- Categories -->
             @can('Manage Categories')
-            <li class="nav-item dropdown {{ setActive(['admin.category.*', 'admin.sub-category.*', 'admin.child-category.*']) }}">
+            <li class="nav-item dropdown {{ setActive(['admin.category.*', 'admin.sub-category.*', 'admin.child-category.*', 'admin.slider.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-list"></i><span>Categories</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.category.*']) }}"><a class="nav-link" href="{{ route('admin.category.index') }}">Category</a></li>
                     <li class="{{ setActive(['admin.sub-category.*']) }}"><a class="nav-link" href="{{ route('admin.sub-category.index') }}">Sub Category</a></li>
                     <li class="{{ setActive(['admin.child-category.*']) }}"><a class="nav-link" href="{{ route('admin.child-category.index') }}">Child Category</a></li>
+                    <li class="{{ setActive(['admin.slider.*']) }}"><a class="nav-link" href="{{ route('admin.slider.index') }}">Slider</a></li>
                     <li class="{{ setActive(['admin.product-types.*']) }}"><a class="nav-link"
                                 href="{{ route('admin.product-types.index') }}">Occasion Type </a></li>
                 </ul>
@@ -329,6 +330,11 @@
           <a href="{{ route('admin.profile') }}" class="dropdown-item has-icon">
             <i class="far fa-user"></i> Profile
           </a>
+          @can('Administration')
+          <a href="{{ route('admin.settings.index') }}" class="dropdown-item has-icon">
+            <i class="fas fa-cogs"></i> Settings
+          </a>
+          @endcan
           <div class="dropdown-divider"></div>
            <!-- Authentication -->
            <form method="POST" action="{{ route('logout') }}">
@@ -342,7 +348,5 @@
       </li>
     </ul>
   </nav>
-
-
 
 

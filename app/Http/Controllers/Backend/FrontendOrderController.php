@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\OrderDataTable;
 use App\Http\Controllers\Controller;
+use App\Mail\OrderPiInvoiceReadyMail;
 use App\Models\GeneralSetting;
 use App\Models\Order;
 use App\Support\PiInfoSupport;
@@ -11,6 +12,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class FrontendOrderController extends Controller
 {
@@ -71,7 +74,9 @@ class FrontendOrderController extends Controller
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        return view('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+        $downloadUrl = route('admin.orders.pi-invoice.download', $order->id);
+
+        return view('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'downloadUrl'));
     }
 
     /**
@@ -121,6 +126,8 @@ class FrontendOrderController extends Controller
         $order->pi_info = PiInfoSupport::sanitizePayload($validated);
         $order->save();
 
+        $this->notifyPiReady($order);
+
         Toastr::success('PI info saved successfully!');
         return redirect()->route('admin.orders.show', $order->id);
     }
@@ -146,6 +153,40 @@ class FrontendOrderController extends Controller
         ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
         return $pdf->download('order-' . $order->order_no . '.pdf');
+    }
+
+    /**
+     * Download order PI invoice as PDF.
+     */
+    public function downloadPiInvoice(Order $order)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $order->load([
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant.color',
+            'items.variant.size',
+            'user',
+        ]);
+        $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
+
+        $pdf = Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif',
+        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
+
+        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
     }
 
     /**
@@ -175,5 +216,31 @@ class FrontendOrderController extends Controller
             'status' => 'success',
             'message' => 'Order deleted successfully!',
         ]);
+    }
+
+    private function notifyPiReady(Order $order): void
+    {
+        $order->loadMissing('user');
+        $recipient = $order->pi_email ?: $order->billing_email ?: ($order->user?->email ?? null);
+        if (!$recipient) {
+            return;
+        }
+
+        $attachPdf = (bool) config('mail.attach_pi_pdf', true);
+
+        try {
+            Mail::to($recipient)->send(new OrderPiInvoiceReadyMail(
+                $order,
+                route('orders.pi-invoice', $order->id),
+                route('orders.pi-invoice.download', $order->id),
+                $attachPdf
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send PI invoice email for order.', [
+                'order_id' => $order->id,
+                'recipient' => $recipient,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

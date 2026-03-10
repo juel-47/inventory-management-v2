@@ -170,15 +170,38 @@
             default => 'badge-info',
         };
         $currency = $settings->currency_icon ?? '$';
+        $isFrontend = (bool) ($isFrontend ?? false);
+        $backUrl = $backUrl ?? null;
+        $downloadUrl = $downloadUrl ?? null;
+        $isPdf = (bool) ($isPdf ?? false);
     @endphp
 
+    @if($isPdf)
+        <style>
+            body { background: #fff !important; padding: 0 !important; }
+            .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 24px !important; }
+            .no-print { display: none !important; }
+        </style>
+    @endif
+
     <div class="container">
-        <div class="no-print">
-            <button onclick="window.print()" class="btn btn-print">Print Now</button>
-            <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-download">Edit PI Info</a>
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
-            <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
-        </div>
+        @if(!$isPdf)
+            <div class="no-print">
+                <button onclick="window.print()" class="btn btn-print">Print Now</button>
+                @if($downloadUrl)
+                    <a href="{{ $downloadUrl }}" class="btn btn-download">Download PDF</a>
+                @endif
+                @if($isFrontend)
+                    @if($backUrl)
+                        <a href="{{ $backUrl }}" class="btn btn-back">Back</a>
+                    @endif
+                @else
+                    <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-download">Edit PI Info</a>
+                    <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
+                @endif
+                <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
+            </div>
+        @endif
 
         <div class="header clearfix">
             <div class="invoice-title">
@@ -265,6 +288,7 @@
                         $index++;
                         $imagePath = (string) ($item->product_image ?? '');
                         $imageUrl = null;
+                        $imageBase64 = null;
                         if ($imagePath !== '') {
                             if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
                                 $imageUrl = $imagePath;
@@ -276,12 +300,31 @@
                                 $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
                             }
                         }
+
+                        if ($isPdf && $imagePath !== '' && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
+                            $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
+                            $candidates = [
+                                public_path(ltrim($imagePath, '/')),
+                                public_path('storage/' . $normalized),
+                                storage_path('app/public/' . $normalized),
+                            ];
+                            foreach ($candidates as $candidate) {
+                                if (is_file($candidate)) {
+                                    $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
+                                    $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
+                                    $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
+                                    break;
+                                }
+                            }
+                        }
+
+                        $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
                     @endphp
                     <tr>
                         <td>{{ $index }}</td>
                         <td class="image-cell">
-                            @if($imageUrl)
-                                <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
+                            @if($imageSrc)
+                                <img src="{{ $imageSrc }}" alt="{{ $item->product_name }}">
                             @else
                                 <span class="image-empty">No Image</span>
                             @endif
@@ -311,7 +354,7 @@
                                 @if($item->product->custom_label)
                                     <small><strong>Label:</strong> {{ $item->product->custom_label }}</small><br>
                                 @endif
-                                @if($item->product->long_description)
+                                @if(!$isPdf && $item->product->long_description)
                                     <div style="font-size: 11px; margin-top: 5px; color: #555;">
                                         <strong>Description:</strong><br>
                                         {!! strip_tags($item->product->long_description) !!}

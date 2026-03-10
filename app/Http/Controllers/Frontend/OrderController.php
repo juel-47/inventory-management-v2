@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\GeneralSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
+use App\Support\PiInfoSupport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +43,80 @@ class OrderController extends Controller
         $order->load(['items.product', 'items.variant', 'user']);
 
         return view('frontend.pages.orders.show', compact('order'));
+    }
+
+    /**
+     * View PI invoice (HTML) for authenticated user.
+     */
+    public function piInvoice(Order $order)
+    {
+        abort_if((int) $order->user_id !== (int) Auth::id(), 403);
+
+        $order->load([
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant.color',
+            'items.variant.size',
+            'user',
+        ]);
+
+        $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
+
+        return view('backend.orders.pi_invoice', [
+            'order' => $order,
+            'settings' => $settings,
+            'piInfo' => $piInfo,
+            'piTotals' => $piTotals,
+            'hasSavedPiInfo' => $hasSavedPiInfo,
+            'isFrontend' => true,
+            'backUrl' => route('orders.show', $order->id),
+            'downloadUrl' => route('orders.pi-invoice.download', $order->id),
+        ]);
+    }
+
+    /**
+     * Download PI invoice (PDF) for authenticated user.
+     */
+    public function downloadPiInvoice(Order $order)
+    {
+        abort_if((int) $order->user_id !== (int) Auth::id(), 403);
+
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $order->load([
+            'items.product.category',
+            'items.product.subCategory',
+            'items.product.childCategory',
+            'items.product.brand',
+            'items.product.vendor',
+            'items.product.unit',
+            'items.product.productType',
+            'items.variant.color',
+            'items.variant.size',
+            'user',
+        ]);
+
+        $settings = GeneralSetting::first();
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $piTotals = PiInfoSupport::summarize($piInfo);
+        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
+
+        $pdf = Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif',
+        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
+
+        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
     }
 
     /**

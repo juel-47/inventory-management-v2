@@ -61,7 +61,7 @@ class CheckPermission
         }
 
         $map = [
-            'Manage Categories' => ['CategoryController', 'SubCategoryController', 'ChildCategoryController'],
+            'Manage Categories' => ['CategoryController', 'SubCategoryController', 'ChildCategoryController', 'SliderController'],
             'Manage Products' => ['ProductController', 'BrandController', 'SizeController', 'ColorController', 'ReviewController', 'UnitController'],
             'Manage Brands' => ['BrandController'],
             'Manage Vendors' => ['VendorController'],

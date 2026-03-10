@@ -18,7 +18,7 @@
 
             @can('Manage Categories')
                 <li
-                    class="dropdown {{ setActive(['admin.category.*', 'admin.sub-category.*', 'admin.child-category.*']) }}">
+                    class="dropdown {{ setActive(['admin.category.*', 'admin.sub-category.*', 'admin.child-category.*', 'admin.slider.*']) }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-list"></i>
                         <span>Manage Categories</span></a>
                     <ul class="dropdown-menu">
@@ -28,6 +28,8 @@
                                 href="{{ route('admin.sub-category.index') }}"><i class="fas fa-folder-open"></i> Sub Category </a></li>
                         <li class="{{ setActive(['admin.child-category.*']) }}"><a class="nav-link"
                                 href="{{ route('admin.child-category.index') }}"><i class="fas fa-level-down-alt"></i> Child Category </a></li>
+                        <li class="{{ setActive(['admin.slider.*']) }}"><a class="nav-link"
+                                href="{{ route('admin.slider.index') }}"><i class="fas fa-images"></i> Slider </a></li>
                         <li class="{{ setActive(['admin.product-types.*']) }}"><a class="nav-link"
                                 href="{{ route('admin.product-types.index') }}"><i class="fas fa-layer-group"></i> Occasion Type </a></li>
                     </ul>
@@ -200,7 +202,6 @@
         </ul>
     </aside>
 </div>
-
 
 
 

@@ -3,7 +3,7 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>Category</h1>
+            <h1>Slider</h1>
         </div>
 
         <div class="section-body">
@@ -11,9 +11,9 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h4>All Categories</h4>
+                            <h4>All Sliders</h4>
                             <div class="card-header-action">
-                                <a href="{{ route('admin.category.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Create New</a>
+                                <a href="{{ route('admin.slider.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Create New</a>
                             </div>
                         </div>
                         <div class="table-responsive card-body">
@@ -36,30 +36,10 @@
                 let id = $(this).data('id');
 
                 $.ajax({
-                    url: "{{ route('admin.category.change-status') }}",
+                    url: "{{ route('admin.slider.change-status') }}",
                     method: 'PUT',
                     data: {
                         status: isChecked,
-                        id: id
-                    },
-                    success: function(data){
-                        toastr.success(data.message)
-                    },
-                    error: function(xhr, status, error){
-                        console.log(error);
-                    }
-                })
-            })
-
-            $('body').on('click', '.change-frontend-show', function(){
-                let isChecked = $(this).is(':checked');
-                let id = $(this).data('id');
-
-                $.ajax({
-                    url: "{{ route('admin.category.change-frontend-show') }}",
-                    method: 'PUT',
-                    data: {
-                        frontend_show: isChecked,
                         id: id
                     },
                     success: function(data){

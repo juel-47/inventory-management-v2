@@ -48,6 +48,13 @@
                                             </option>
                                         </select>
                                     </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="frontendShow">Show on Home</label>
+                                        <select id="frontendShow" class="form-control" name="frontend_show">
+                                            <option value="1" {{ $category->frontend_show ? 'selected' : '' }}>On</option>
+                                            <option value="0" {{ !$category->frontend_show ? 'selected' : '' }}>Off</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="text-right">
                                     <button type="submit" class="btn btn-primary px-4">Update</button>

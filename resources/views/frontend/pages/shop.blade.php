@@ -6,9 +6,21 @@
         $isOutletUser = (bool) data_get($roleContext, 'isOutletUser', false);
         $isStandardUser = (bool) data_get($roleContext, 'isStandardUser', false);
         $shopCards = collect($shopCards ?? []);
+        $productTypes = collect($productTypes ?? []);
     @endphp
 
-    <div id="shop-page-root" class="bg-slate-50 min-h-screen" x-data="shopFilter()">
+    <div id="shop-page-root"
+         class="bg-slate-50 min-h-screen"
+         x-data="shopFilter($el)"
+         data-active-cat="{{ request('category', '') }}"
+         data-active-sub="{{ request('subcategory', '') }}"
+         data-min-range="{{ $min_range }}"
+         data-max-range="{{ $max_range }}"
+         data-min-price="{{ request('min_price', $min_range) }}"
+         data-max-price="{{ request('max_price', $max_range) }}"
+         data-sort="{{ request('sort', 'latest') }}"
+         data-product-type="{{ request('product_type', '') }}"
+         data-search="{{ request('search', '') }}">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Sidebar Filters -->
@@ -162,6 +174,19 @@
                                     <option value="price_high_low">Price: High to Low</option>
                                 </select>
                             </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Occasion/Type:</label>
+                                @php $selectedType = (string) request('product_type', ''); @endphp
+                                <select x-model="productType" @change="applyFilters()"
+                                        class="bg-slate-50 border-none rounded-2xl px-6 py-2 content-center text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none pr-10 relative">
+                                    <option value="" {{ $selectedType === '' ? 'selected' : '' }}>All Types</option>
+                                    <option value="new_arrival" {{ $selectedType === 'new_arrival' ? 'selected' : '' }}>New Arrival (Legacy)</option>
+                                    <option value="upcoming" {{ $selectedType === 'upcoming' ? 'selected' : '' }}>Upcoming (Legacy)</option>
+                                    @foreach($productTypes as $type)
+                                        <option value="{{ $type->id }}" {{ $selectedType === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -238,6 +263,11 @@
                         const oldRoot = document.getElementById('shop-page-root');
                         oldRoot.outerHTML = nextRoot.outerHTML;
 
+                        const refreshedRoot = document.getElementById('shop-page-root');
+                        if (refreshedRoot && window.Alpine && typeof window.Alpine.initTree === 'function') {
+                            window.Alpine.initTree(refreshedRoot);
+                        }
+
                         if (pushState) {
                             window.history.pushState({ shopAjax: true }, '', url);
                         }
@@ -252,16 +282,31 @@
                     }
                 }
 
-                window.shopFilter = function () {
+                window.shopFilter = function (rootEl) {
+                    const parseIntOrNull = (value) => {
+                        const parsed = parseInt(value, 10);
+                        return Number.isFinite(parsed) ? parsed : null;
+                    };
+                    const parseFloatOr = (value, fallback) => {
+                        const parsed = parseFloat(value);
+                        return Number.isFinite(parsed) ? parsed : fallback;
+                    };
+                    const root = rootEl || document.getElementById('shop-page-root');
+                    const minRange = parseFloatOr(root?.dataset?.minRange, 0);
+                    const maxRange = parseFloatOr(root?.dataset?.maxRange, 0);
+                    const minPrice = parseFloatOr(root?.dataset?.minPrice, minRange);
+                    const maxPrice = parseFloatOr(root?.dataset?.maxPrice, maxRange);
+
                     return {
-                        activeCat: {{ request('category', 'null') }},
-                        activeSub: {{ request('subcategory', 'null') }},
-                        minRange: {{ $min_range }},
-                        maxRange: {{ $max_range }},
-                        minPrice: {{ request('min_price', $min_range) }},
-                        maxPrice: {{ request('max_price', $max_range) }},
-                        sort: '{{ request('sort', 'latest') }}',
-                        search: '{{ request('search', '') }}',
+                        activeCat: parseIntOrNull(root?.dataset?.activeCat),
+                        activeSub: parseIntOrNull(root?.dataset?.activeSub),
+                        minRange: minRange,
+                        maxRange: maxRange,
+                        minPrice: minPrice,
+                        maxPrice: maxPrice,
+                        sort: (root?.dataset?.sort || 'latest'),
+                        productType: (root?.dataset?.productType || ''),
+                        search: (root?.dataset?.search || ''),
 
                         toggleCategory(id) {
                             if (this.activeCat === id) {
@@ -301,7 +346,8 @@
                             this.updateUrl({
                                 min_price: this.minPrice,
                                 max_price: this.maxPrice,
-                                sort: this.sort
+                                sort: this.sort,
+                                product_type: this.productType
                             });
                         },
 

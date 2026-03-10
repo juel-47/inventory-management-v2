@@ -6,13 +6,13 @@
 
 <div style="margin-top: 28px;">
     @if($piType === 'advanced')
-        <table style="margin-bottom: 18px; border: 1px solid #222; font-size: 13px;">
+        <table cellpadding="6" style="margin-bottom: 18px; border: 1px solid #222; font-size: 13px; width: 100%; border-collapse: collapse; table-layout: fixed;">
             <tbody>
                 <tr>
-                    <td style="border: 1px solid #222; padding: 8px 10px; width: 18%; font-weight: bold;">SHIPMENT QTY :</td>
-                    <td style="border: 1px solid #222; padding: 8px 10px; width: 32%; font-weight: bold;">{{ number_format($piInfo['shipment_qty'] ?? 0) }} PCS</td>
-                    <td style="border: 1px solid #222; padding: 8px 10px; width: 18%; font-weight: bold;">DATE :</td>
-                    <td style="border: 1px solid #222; padding: 8px 10px; font-weight: bold;">
+                    <td style="border: 1px solid #222; padding: 8px 12px; width: 18%; font-weight: bold;">SHIPMENT QTY :</td>
+                    <td style="border: 1px solid #222; padding: 8px 12px; width: 32%; font-weight: bold;">{{ number_format($piInfo['shipment_qty'] ?? 0) }} PCS</td>
+                    <td style="border: 1px solid #222; padding: 8px 12px; width: 18%; font-weight: bold;">DATE :</td>
+                    <td style="border: 1px solid #222; padding: 8px 12px; font-weight: bold;">
                         {{ !empty($piInfo['shipment_date']) ? \Illuminate\Support\Carbon::parse($piInfo['shipment_date'])->format('d-M-Y') : 'N/A' }}
                     </td>
                 </tr>
@@ -64,25 +64,25 @@
                     }
                 }
             @endphp
-            <table style="margin-bottom: 22px; border: 1px solid #222; font-size: 12px;">
+            <table cellpadding="6" style="margin-bottom: 22px; border: 1px solid #222; font-size: 12px; width: 100%; border-collapse: collapse; table-layout: fixed;">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="width: 14%; border: 1px solid #222; text-align: center;">COLOR</th>
-                        <th rowspan="2" style="width: 12%; border: 1px solid #222; text-align: center;">Picture</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center;">CTN QTY</th>
-                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center;">CTN NO.</th>
+                        <th rowspan="2" style="width: 14%; border: 1px solid #222; text-align: center; padding: 6px 4px;">COLOR</th>
+                        <th rowspan="2" style="width: 12%; border: 1px solid #222; text-align: center; padding: 6px 4px;">Picture</th>
+                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN QTY</th>
+                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN NO.</th>
                         @if($variantHeaderCount > 0)
-                            <th colspan="{{ $variantHeaderCount }}" style="text-align: center; border: 1px solid #222;">VARIANT QTY</th>
+                            <th colspan="{{ $variantHeaderCount }}" style="text-align: center; border: 1px solid #222; padding: 6px 4px;">VARIANT QTY</th>
                         @endif
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center;">PCS</th>
-                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center;">TOTAL PCS</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center;">N.W(KG)</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center;">G.W(KG)</th>
+                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">PCS</th>
+                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">TOTAL PCS</th>
+                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">N.W(KG)</th>
+                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">G.W(KG)</th>
                     </tr>
                     @if($variantHeaderCount > 0)
                         <tr>
                             @foreach($activeVariantMap as $header)
-                                <th style="text-align: center; border: 1px solid #222;">{{ $header }}</th>
+                                <th style="text-align: center; border: 1px solid #222; padding: 6px 4px; font-size: 11px;">{{ $header }}</th>
                             @endforeach
                         </tr>
                     @endif

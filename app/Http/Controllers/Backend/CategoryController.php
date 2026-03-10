@@ -39,6 +39,7 @@ class CategoryController extends Controller
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'status' => $request->status,
+            'frontend_show' => $request->boolean('frontend_show'),
         ]);
 
         Toastr::success('Category Created Successfully!');
@@ -64,6 +65,7 @@ class CategoryController extends Controller
         $category->name = $request->name;
         $category->slug = Str::slug($request->name);
         $category->status = $request->status;
+        $category->frontend_show = $request->boolean('frontend_show');
         $category->save();
 
         Toastr::success('Category Updated Successfully!');
@@ -94,5 +96,17 @@ class CategoryController extends Controller
         $category->save();
 
         return response(['status' => 'success', 'message' => 'Status Updated Successfully!']);
+    }
+
+    /**
+     * Change category frontend show status.
+     */
+    public function changeFrontendShow(Request $request)
+    {
+        $category = Category::findOrFail($request->id);
+        $category->frontend_show = $request->frontend_show == 'true' ? 1 : 0;
+        $category->save();
+
+        return response(['status' => 'success', 'message' => 'Frontend Show Updated Successfully!']);
     }
 }

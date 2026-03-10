@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Category;
+namespace App\Http\Requests\Slider;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CategoryCreateRequest extends FormRequest
+class SliderUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +22,13 @@ class CategoryCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'max:255', 'unique:categories,name'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'starting_price' => ['required', 'numeric', 'min:0'],
+            'button_url' => ['nullable', 'string', 'max:255'],
+            'serial' => ['required', 'integer', 'min:1'],
             'status' => ['required', 'boolean'],
-            'frontend_show' => ['nullable', 'boolean'],
-            
+            'banner' => ['nullable', 'image', 'max:2048'],
         ];
     }
 }

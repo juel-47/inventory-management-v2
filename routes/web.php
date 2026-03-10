@@ -25,6 +25,7 @@ use App\Http\Controllers\Backend\RolesController;
 use App\Http\Controllers\Backend\PricingRuleController;
 use App\Http\Controllers\Backend\SettingController;
 use App\Http\Controllers\Backend\SizeController;
+use App\Http\Controllers\Backend\SliderController;
 use App\Http\Controllers\Backend\StockLedgerController;
 use App\Http\Controllers\Backend\UnitController;
 use App\Http\Controllers\Backend\UserController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Frontend\AccountController as FrontendAccountController
 use App\Http\Controllers\Frontend\CartController as FrontendCartController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\OrderController as FrontendCustomerOrderController;
+use App\Http\Controllers\Frontend\ProductRequestController as FrontendProductRequestController;
 use App\Http\Controllers\Frontend\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -91,7 +93,14 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
     Route::controller(FrontendCustomerOrderController::class)->group(function () {
         Route::get('/my-orders', 'index')->name('orders.index');
         Route::get('/my-orders/{order}', 'show')->name('orders.show');
+        Route::get('/my-orders/{order}/pi-invoice', 'piInvoice')->name('orders.pi-invoice');
+        Route::get('/my-orders/{order}/pi-invoice/download', 'downloadPiInvoice')->name('orders.pi-invoice.download');
         Route::post('/my-orders/{order}/reorder', 'reorder')->name('orders.reorder');
+    });
+
+    Route::controller(FrontendProductRequestController::class)->group(function () {
+        Route::get('/my-product-requests/{productRequest}/pi-invoice', 'piInvoice')->name('product-requests.pi-invoice');
+        Route::get('/my-product-requests/{productRequest}/pi-invoice/download', 'downloadPiInvoice')->name('product-requests.pi-invoice.download');
     });
 
     // ── Wishlist ─────────────────────────────────────────────────────────────
@@ -124,7 +133,12 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
     /** category routes */
     Route::put('category/change-status', [CategoryController::class, 'changeStatus'])->name('category.change-status');
+    Route::put('category/change-frontend-show', [CategoryController::class, 'changeFrontendShow'])->name('category.change-frontend-show');
     Route::resource('category', CategoryController::class);
+
+    /** slider routes */
+    Route::put('slider/change-status', [SliderController::class, 'changeStatus'])->name('slider.change-status');
+    Route::resource('slider', SliderController::class);
 
     /** subcategory routes */
     Route::put('subcategory/change-status', [SubCategoryController::class, 'changeStatus'])->name('subcategory.change-status');
@@ -207,6 +221,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('orders', 'index')->name('orders.index');
         Route::post('orders/{order}/pi-info', 'savePiInfo')->name('orders.pi-info.save');
         Route::get('orders/{order}/pi-invoice', 'piInvoice')->name('orders.pi-invoice');
+        Route::get('orders/{order}/pi-invoice/download', 'downloadPiInvoice')->name('orders.pi-invoice.download');
         Route::get('orders/{order}/view-invoice', 'viewInvoice')->name('orders.view-invoice');
         Route::get('orders/{order}/download-invoice', 'downloadInvoice')->name('orders.download-invoice');
         Route::get('orders/{order}', 'show')->name('orders.show');
@@ -245,6 +260,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
     Route::controller(ProductRequestController::class)->group(function () {
         Route::post('product-requests/{id}/pi-info', 'savePiInfo')->name('product-requests.pi-info.save');
         Route::get('product-requests/{id}/pi-invoice', 'piInvoice')->name('product-requests.pi-invoice');
+        Route::get('product-requests/{id}/pi-invoice/download', 'downloadPiInvoice')->name('product-requests.pi-invoice.download');
         Route::get('product-requests/{id}/view-invoice', 'viewInvoice')->name('product-requests.view-invoice');
         Route::get('product-requests/{id}/invoice', 'printPdf')->name('product-requests.download-invoice');
         Route::put('product-requests/update-status/{id}', 'updateStatus')->name('product-requests.update-status');
