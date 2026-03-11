@@ -249,15 +249,10 @@
                 </td>
                 <td style="width: 50%; text-align: right; vertical-align: top;">
                     @if($logoData)
-                        <div style="margin-bottom: 6px;">
+                        <div>
                             <img src="{{ $logoData }}" alt="Logo" style="height: 38px; max-width: 160px; object-fit: contain;">
                         </div>
                     @endif
-                    <div class="company-name">{{ $settings->site_name ?? config('app.name') }}</div>
-                    <div class="company-details">
-                        {{ $settings->contact_email ?? '' }}<br>
-                        {!! nl2br(e($settings->address ?? '')) !!}
-                    </div>
                 </td>
             </tr>
         </table>
@@ -365,9 +360,9 @@
         </table>
 
         <div class="footer">
-            This is a computer generated document and does not require a physical signature.
-            <br>
-            Printed on: {{ now()->format('d M, Y h:i A') }}
+            <div style="font-weight: bold;">{{ $settings->site_name ?? config('app.name') }}</div>
+            <div>{{ $settings->contact_email ?? '' }}</div>
+            <div>{!! nl2br(e($settings->address ?? '')) !!}</div>
         </div>
     </div>
 </body>

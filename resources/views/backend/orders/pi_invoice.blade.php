@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>PI Invoice #{{ $order->order_no }}</title>
@@ -12,28 +13,33 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             width: 100%;
             margin: 0 auto;
             padding: 20px;
         }
+
         @media screen {
             body {
                 background-color: #f0f0f0;
                 padding: 40px 0;
             }
+
             .container {
                 max-width: 900px;
                 background: #fff;
-                box-shadow: 0 0 15px rgba(0,0,0,0.1);
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
                 border-radius: 4px;
                 padding: 40px;
             }
+
             .no-print {
                 margin-bottom: 20px;
                 display: flex;
                 justify-content: flex-end;
             }
+
             .btn {
                 display: inline-block;
                 padding: 8px 16px;
@@ -45,59 +51,96 @@
                 cursor: pointer;
                 border: none;
             }
-            .btn-print { background: #ffc107; color: #000; }
-            .btn-download { background: #3abaf4; color: #fff; }
-            .btn-back { background: #6777ef; color: #fff; }
-            .btn-close { background: #6c757d; color: #fff; }
+
+            .btn-print {
+                background: #ffc107;
+                color: #000;
+            }
+
+            .btn-download {
+                background: #3abaf4;
+                color: #fff;
+            }
+
+            .btn-back {
+                background: #6777ef;
+                color: #fff;
+            }
+
+            .btn-close {
+                background: #6c757d;
+                color: #fff;
+            }
         }
+
         @media print {
-            .no-print { display: none; }
-            body { background: #fff; }
-            .container { width: 100%; padding: 0; box-shadow: none; }
+            .no-print {
+                display: none;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .container {
+                width: 100%;
+                padding: 0;
+                box-shadow: none;
+            }
         }
+
         .header {
             width: 100%;
             margin-bottom: 30px;
             border-bottom: 2px solid #eee;
             padding-bottom: 20px;
         }
+
         .company-info {
             text-align: right;
             float: right;
             width: 55%;
         }
+
         .invoice-title {
             float: left;
             width: 45%;
         }
+
         .invoice-title h1 {
             margin: 0;
             color: #333;
             font-size: 28px;
             text-transform: uppercase;
         }
+
         .clearfix:after {
             content: "";
             display: table;
             clear: both;
         }
+
         .details-box {
             margin-bottom: 30px;
         }
+
         .box-left {
             float: left;
             width: 48%;
         }
+
         .box-right {
             float: right;
             width: 48%;
             text-align: right;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
+
         th {
             background-color: #f8f9fa;
             color: #333;
@@ -108,16 +151,19 @@
             text-transform: uppercase;
             font-size: 12px;
         }
+
         td {
             padding: 12px;
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
+
         .total-row td {
             font-weight: bold;
             background-color: #f8f9fa;
             border-top: 2px solid #ddd;
         }
+
         .badge {
             display: inline-block;
             padding: 4px 8px;
@@ -127,15 +173,36 @@
             text-transform: uppercase;
             color: #fff;
         }
-        .badge-warning { background-color: #ffc107; color: #000; }
-        .badge-info { background-color: #17a2b8; }
-        .badge-primary { background-color: #6777ef; }
-        .badge-success { background-color: #28a745; }
-        .badge-danger { background-color: #dc3545; }
-        .text-right { text-align: right; }
+
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-info {
+            background-color: #17a2b8;
+        }
+
+        .badge-primary {
+            background-color: #6777ef;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
         .image-cell {
             text-align: center;
         }
+
         .image-cell img {
             width: 44px;
             height: 44px;
@@ -143,10 +210,12 @@
             border-radius: 4px;
             border: 1px solid #e5e7eb;
         }
+
         .image-empty {
             font-size: 11px;
             color: #999;
         }
+
         .footer {
             margin-top: 50px;
             text-align: center;
@@ -157,10 +226,11 @@
         }
     </style>
 </head>
+
 <body>
     @php
         $status = strtolower((string) $order->status);
-        $statusClass = match($status) {
+        $statusClass = match ($status) {
             'pending' => 'badge-warning',
             'approved' => 'badge-info',
             'processing' => 'badge-primary',
@@ -184,30 +254,43 @@
         }
     @endphp
 
-    @if($isPdf)
+    @if ($isPdf)
         <style>
-            body { background: #fff !important; padding: 0 !important; }
-            .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 24px !important; }
-            .no-print { display: none !important; }
+            body {
+                background: #fff !important;
+                padding: 0 !important;
+            }
+
+            .container {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 24px !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
         </style>
     @endif
 
     <div class="container">
-        @if(!$isPdf)
+        @if (!$isPdf)
             <div class="no-print">
                 <button onclick="window.print()" class="btn btn-print">Print Now</button>
-                @if($downloadUrl)
+                @if ($downloadUrl)
                     <a href="{{ $downloadUrl }}" class="btn btn-download">Download PDF</a>
                 @endif
-                @if($isFrontend)
-                    @if($backUrl)
+                @if ($isFrontend)
+                    @if ($backUrl)
                         <a href="{{ $backUrl }}" class="btn btn-back">Back</a>
                     @endif
                 @else
                     <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-download">Edit PI Info</a>
                     <a href="{{ route('admin.orders.index') }}" class="btn btn-back">Back to List</a>
                 @endif
-                <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }" class="btn btn-close">Close</button>
+                <button type="button" onclick="window.close(); if(!window.closed){ window.history.back(); }"
+                    class="btn btn-close">Close</button>
             </div>
         @endif
 
@@ -220,16 +303,17 @@
                 </div>
             </div>
             <div class="company-info">
-                @if($logoData)
+                @if ($logoData)
                     <div style="margin-bottom: 6px;">
-                        <img src="{{ $logoData }}" alt="Logo" style="height: 40px; max-width: 160px; object-fit: contain;">
+                        <img src="{{ $logoData }}" alt="Logo"
+                            style="height: 40px; max-width: 160px; object-fit: contain;">
                     </div>
                 @endif
-                <h3>{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
+                {{-- <h3>{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
                 <p>
                     {{ $settings->contact_email ?? '' }}<br>
                     {!! nl2br(e($settings->address ?? '')) !!}
-                </p>
+                </p> --}}
             </div>
         </div>
 
@@ -238,7 +322,7 @@
                 <h4>Customer Details:</h4>
                 <p>
                     <strong>{{ $order->billing_name }}</strong><br>
-                    Outlet/Shop: {{ $order->billing_outlet_name ?: ($order->user->outlet_name ?? 'N/A') }}<br>
+                    Outlet/Shop: {{ $order->billing_outlet_name ?: $order->user->outlet_name ?? 'N/A' }}<br>
                     Phone: {{ $order->billing_phone }}<br>
                     Email: {{ $order->pi_email ?: $order->billing_email }}
                 </p>
@@ -253,9 +337,11 @@
             </div>
         </div>
 
-        @unless($hasSavedPiInfo)
-            <div style="margin-bottom: 18px; background: #fff7ed; color: #9a3412; padding: 14px 16px; border-left: 4px solid #fb923c;">
-                <strong>Draft PI:</strong> manual CTN information has not been saved yet. The packing section below is currently prefilled from the order quantities.
+        @unless ($hasSavedPiInfo)
+            <div
+                style="margin-bottom: 18px; background: #fff7ed; color: #9a3412; padding: 14px 16px; border-left: 4px solid #fb923c;">
+                <strong>Draft PI:</strong> manual CTN information has not been saved yet. The packing section below is
+                currently prefilled from the order quantities.
             </div>
         @endunless
 
@@ -275,18 +361,18 @@
             <tbody>
                 @php
                     $groupedItems = [];
-                    foreach($order->items as $item) {
+                    foreach ($order->items as $item) {
                         $productId = $item->product_id;
                         if (!isset($groupedItems[$productId])) {
                             $groupedItems[$productId] = [
                                 'first_item' => $item,
                                 'total_qty' => 0,
-                                'variants' => []
+                                'variants' => [],
                             ];
                         }
                         $groupedItems[$productId]['total_qty'] += $item->quantity;
                         $variantName = $item->variant_label ?: 'Standard';
-                        
+
                         if (!isset($groupedItems[$productId]['variants'][$variantName])) {
                             $groupedItems[$productId]['variants'][$variantName] = 0;
                         }
@@ -295,7 +381,7 @@
                     $index = 0;
                 @endphp
 
-                @foreach($groupedItems as $productId => $group)
+                @foreach ($groupedItems as $productId => $group)
                     @php
                         $item = $group['first_item'];
                         $index++;
@@ -314,7 +400,12 @@
                             }
                         }
 
-                        if ($isPdf && $imagePath !== '' && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
+                        if (
+                            $isPdf &&
+                            $imagePath !== '' &&
+                            !str_starts_with($imagePath, 'http://') &&
+                            !str_starts_with($imagePath, 'https://')
+                        ) {
                             $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
                             $candidates = [
                                 public_path(ltrim($imagePath, '/')),
@@ -325,7 +416,11 @@
                                 if (is_file($candidate)) {
                                     $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
                                     $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                    $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
+                                    $imageBase64 =
+                                        'data:image/' .
+                                        $mime .
+                                        ';base64,' .
+                                        base64_encode(file_get_contents($candidate));
                                     break;
                                 }
                             }
@@ -336,7 +431,7 @@
                     <tr>
                         <td>{{ $index }}</td>
                         <td class="image-cell">
-                            @if($imageSrc)
+                            @if ($imageSrc)
                                 <img src="{{ $imageSrc }}" alt="{{ $item->product_name }}">
                             @else
                                 <span class="image-empty">No Image</span>
@@ -345,29 +440,30 @@
                         <td>
                             <strong>{{ $item->product_name }}</strong><br>
 
-                            @if($item->product)
-                                @if($item->product->slug)
+                            @if ($item->product)
+                                @if ($item->product->slug)
                                     <small><strong>Slug:</strong> {{ $item->product->slug }}</small><br>
                                 @endif
-                                @if($item->product->brand)
+                                @if ($item->product->brand)
                                     <small><strong>Brand:</strong> {{ $item->product->brand->name }}</small><br>
                                 @endif
-                                @if($item->product->vendor)
-                                    <small><strong>Vendor:</strong> {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
+                                @if ($item->product->vendor)
+                                    <small><strong>Vendor:</strong>
+                                        {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
                                 @endif
-                                @if($item->product->barcode)
+                                @if ($item->product->barcode)
                                     <small><strong>Barcode:</strong> {{ $item->product->barcode }}</small><br>
                                 @endif
-                                @if($item->product->self_number)
+                                @if ($item->product->self_number)
                                     <small><strong>Shelf No:</strong> {{ $item->product->self_number }}</small><br>
                                 @endif
-                                @if($item->product->productType)
+                                @if ($item->product->productType)
                                     <small><strong>Type:</strong> {{ $item->product->productType->name }}</small><br>
                                 @endif
-                                @if($item->product->custom_label)
+                                @if ($item->product->custom_label)
                                     <small><strong>Label:</strong> {{ $item->product->custom_label }}</small><br>
                                 @endif
-                                @if(!$isPdf && $item->product->long_description)
+                                @if (!$isPdf && $item->product->long_description)
                                     <div style="font-size: 11px; margin-top: 5px; color: #555;">
                                         <strong>Description:</strong><br>
                                         {!! strip_tags($item->product->long_description) !!}
@@ -377,34 +473,35 @@
                                 <small>No extra product details.</small>
                             @endif
                         </td>
-                        
+
                         <!-- Product No Column -->
                         <td>
-                            @if($item->product && $item->product->product_number)
+                            @if ($item->product && $item->product->product_number)
                                 <small>{{ $item->product->product_number }}</small>
                             @else
                                 <small>N/A</small>
                             @endif
                         </td>
-                        
+
                         <!-- Category Column -->
                         <td>
-                            @if($item->product)
+                            @if ($item->product)
                                 <small><strong>Main:</strong> {{ $item->product->category->name ?? 'N/A' }}</small><br>
-                                @if($item->product->subCategory)
+                                @if ($item->product->subCategory)
                                     <small><strong>Sub:</strong> {{ $item->product->subCategory->name }}</small><br>
                                 @endif
-                                @if($item->product->childCategory)
-                                    <small><strong>Child:</strong> {{ $item->product->childCategory->name }}</small><br>
+                                @if ($item->product->childCategory)
+                                    <small><strong>Child:</strong>
+                                        {{ $item->product->childCategory->name }}</small><br>
                                 @endif
                             @else
                                 <small>{{ $item->category_name ?: 'General' }}</small>
                             @endif
                         </td>
-                        
+
                         <!-- Unit Column -->
                         <td>
-                            @if($item->product && $item->product->unit)
+                            @if ($item->product && $item->product->unit)
                                 <small>{{ $item->product->unit->name }}</small>
                             @else
                                 <small>N/A</small>
@@ -413,10 +510,12 @@
 
                         <!-- Variants Column -->
                         <td>
-                            @if(count($group['variants']) > 0)
-                                @foreach($group['variants'] as $vName => $vQty)
+                            @if (count($group['variants']) > 0)
+                                @foreach ($group['variants'] as $vName => $vQty)
                                     <div style="margin-bottom: 3px;">
-                                        <span class="badge badge-info" style="color: #0f0f0f; font-size: 11px;">{{ $vName }} &times; {{ $vQty }}</span>
+                                        <span class="badge badge-info"
+                                            style="color: #0f0f0f; font-size: 11px;">{{ $vName }} &times;
+                                            {{ $vQty }}</span>
                                     </div>
                                 @endforeach
                             @else
@@ -436,7 +535,7 @@
             'piTotals' => $piTotals,
         ])
 
-        @if($order->ship_different)
+        @if ($order->ship_different)
             <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-left: 4px solid #6777ef;">
                 <strong>Shipping Address:</strong><br>
                 {{ $order->shipping_name ?: 'N/A' }} |
@@ -450,8 +549,14 @@
         @endif
 
         <div class="footer">
-            <p>Generated by {{ $settings->site_name ?? 'Inventory Management System' }} on {{ now()->format('d M, Y h:i A') }}</p>
+            {{-- <p>Generated by {{ $settings->site_name ?? 'Inventory Management System' }} on {{ now()->format('d M, Y h:i A') }}</p> --}}
+            <h3>{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
+            <p>
+                {{ $settings->contact_email ?? '' }}<br>
+                {!! nl2br(e($settings->address ?? '')) !!}
+            </p>
         </div>
     </div>
 </body>
+
 </html>

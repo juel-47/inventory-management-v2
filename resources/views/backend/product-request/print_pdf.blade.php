@@ -42,15 +42,10 @@
         </div>
         <div style="float: right; width: 55%; text-align: right;">
             @if($logoData)
-                <div style="margin-bottom: 6px;">
+                <div>
                     <img src="{{ $logoData }}" alt="Logo" style="height: 40px; max-width: 160px; object-fit: contain;">
                 </div>
             @endif
-            <div style="font-size: 16px; font-weight: bold;">{{ $settings->site_name ?? 'Inventory Management System' }}</div>
-            <div style="font-size: 11px; color: #666;">
-                {{ $settings->contact_email ?? '' }}<br>
-                {!! nl2br(e($settings->address ?? '')) !!}
-            </div>
         </div>
     </div>
 
@@ -158,7 +153,9 @@
     @endif
 
     <div class="footer">
-        Generated on {{ date('d M, Y h:i A') }} | {{ $settings->site_name ?? 'Inventory Management System' }}
+        <div style="font-weight: bold;">{{ $settings->site_name ?? 'Inventory Management System' }}</div>
+        <div>{{ $settings->contact_email ?? '' }}</div>
+        <div>{!! nl2br(e($settings->address ?? '')) !!}</div>
     </div>
 </body>
 </html>
