@@ -9,7 +9,7 @@
         {{-- Header --}}
         <div class="text-center mb-10">
             <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 border border-slate-100">
-                <img src="{{ asset('uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-12 h-12 object-contain">
+                <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-12 h-12 object-contain">
             </div>
             <h1 class="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
             <p class="text-slate-500 font-medium mt-2">Sign in to your B2B account</p>

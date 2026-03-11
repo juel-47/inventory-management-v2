@@ -1,7 +1,7 @@
 <x-guest-layout>
     <x-slot:heading>
          <div class="text-center">
-            <img src="{{ asset('uploads/logo.png') }}" alt="Inventory System Logo" class="mx-auto h-20 w-auto mb-4">
+            <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="Inventory System Logo" class="mx-auto h-20 w-auto mb-4">
             <h2 class="text-2xl font-bold leading-9 tracking-tight text-gray-900">
                 Inventory Management Systems
             </h2>

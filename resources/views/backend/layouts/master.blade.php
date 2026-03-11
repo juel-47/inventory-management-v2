@@ -9,7 +9,7 @@
 
     <title>@yield('title')</title>
     {{-- <link rel="icon" type="image/png" href="{{ asset($logoSetting?->favicon ?? '') }}"> --}}
-    <link rel="icon" type="image/png" href="{{ asset('uploads/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}">
 
     <!-- General CSS Files -->
     <link rel="stylesheet" href="{{ asset('backend/assets/modules/bootstrap/css/bootstrap.min.css') }}">

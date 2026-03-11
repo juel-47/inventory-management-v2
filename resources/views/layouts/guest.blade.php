@@ -6,7 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Inventory Management System') }}</title>
-        <link rel="icon" type="image/png" href="{{ asset('uploads/logo.png') }}">
+        <link rel="icon" type="image/png" href="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

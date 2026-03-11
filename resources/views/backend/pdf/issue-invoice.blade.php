@@ -220,6 +220,16 @@
     </style>
 </head>
 <body>
+    @php
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $logoFullPath = public_path(ltrim($logoPath, '/'));
+        $logoData = null;
+        if (is_file($logoFullPath)) {
+            $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
+            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
+            $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        }
+    @endphp
     @if(!($is_pdf ?? false))
     <div class="action-bar">
         <a href="{{ route('admin.issues.index') }}" class="btn btn-secondary">Back to List</a>
@@ -238,6 +248,11 @@
                     <div class="badge">Completed</div>
                 </td>
                 <td style="width: 50%; text-align: right; vertical-align: top;">
+                    @if($logoData)
+                        <div style="margin-bottom: 6px;">
+                            <img src="{{ $logoData }}" alt="Logo" style="height: 38px; max-width: 160px; object-fit: contain;">
+                        </div>
+                    @endif
                     <div class="company-name">{{ $settings->site_name ?? config('app.name') }}</div>
                     <div class="company-details">
                         {{ $settings->contact_email ?? '' }}<br>

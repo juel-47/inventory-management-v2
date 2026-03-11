@@ -23,10 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // \Illuminate\Support\Facades\View::share('settings', getSettings());
+        $settings = null;
         try {
             if (Schema::hasTable('general_settings')) {
-                $settings =GeneralSetting::first();
-                view()->share('settings', $settings);
+                $settings = GeneralSetting::first();
 
                 if ($settings) {
                     config([
@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // Keep app booting (especially artisan commands) when DB is temporarily unavailable.
         }
+        view()->share('settings', $settings);
 
         // \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
         //     return $user->hasRole('Admin') ? true : null;

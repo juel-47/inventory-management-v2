@@ -92,6 +92,19 @@
             line-height: 1.7;
         }
 
+        .debug-block {
+            margin-top: 18px;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         .actions {
             display: flex;
             flex-wrap: wrap;
@@ -161,6 +174,15 @@
             <p class="message">
                 {{ $message ?? 'An unexpected error occurred while processing your request. Please try again in a moment.' }}
             </p>
+
+            @if (!empty($debug))
+                <pre class="debug-block">{{ $debug['type'] ?? '' }}
+{{ $debug['message'] ?? '' }}
+
+{{ $debug['file'] ?? '' }}:{{ $debug['line'] ?? '' }}
+
+{{ $debug['trace'] ?? '' }}</pre>
+            @endif
 
             <div class="actions">
                 <a class="btn btn-primary" href="{{ $primaryUrl ?? url('/') }}">

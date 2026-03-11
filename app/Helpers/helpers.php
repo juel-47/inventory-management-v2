@@ -27,6 +27,7 @@ if (!function_exists('getSettings')) {
         if ($settings === null) {
             $settings = \App\Models\GeneralSetting::first() ?? (object)[
                 'site_name' => config('app.name'),
+                'site_logo' => 'uploads/logo.png',
                 'base_currency_name' => 'USD',
                 'base_currency_icon' => '$',
                 'currency_name' => 'USD',

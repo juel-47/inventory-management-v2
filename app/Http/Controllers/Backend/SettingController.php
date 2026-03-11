@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GeneralSetting;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 
 class SettingController extends Controller
@@ -28,7 +29,24 @@ class SettingController extends Controller
             'site_name' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
+            'site_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
         ]);
+
+        $setting = GeneralSetting::first();
+        $logoPath = $setting?->site_logo;
+
+        if ($request->hasFile('site_logo')) {
+            $file = $request->file('site_logo');
+            $directory = public_path('uploads/settings');
+
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            $filename = 'site-logo-' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($directory, $filename);
+            $logoPath = 'uploads/settings/' . $filename;
+        }
 
         GeneralSetting::updateOrCreate(
             ['id' => 1],
@@ -36,6 +54,7 @@ class SettingController extends Controller
                 'site_name' => $request->site_name,
                 'contact_email' => $request->contact_email,
                 'address' => $request->address,
+                'site_logo' => $logoPath,
             ]
         );
 

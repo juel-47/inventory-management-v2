@@ -49,6 +49,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? (int) $exception->getStatusCode()
                 : 500;
 
+            $isLocal = app()->isLocal();
+            $debugPayload = $isLocal ? [
+                'type' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ] : null;
+
             $meta = match ($status) {
                 401 => [
                     'badge' => 'Authentication Required',
@@ -91,11 +100,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 ],
             };
 
+            if ($isLocal && $status >= 500 && $exception->getMessage() !== '') {
+                $meta['message'] = $exception->getMessage();
+            }
+
             $statusText = HttpResponse::$statusTexts[$status] ?? 'Error';
 
             return response()->view('errors.unified', array_merge($meta, [
                 'status' => $status,
                 'title' => $status . ' | ' . $statusText,
+                'debug' => $debugPayload,
             ]), $status);
         });
     })->create();

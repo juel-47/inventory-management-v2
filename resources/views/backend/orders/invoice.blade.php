@@ -189,6 +189,9 @@
                 </div>
             </div>
             <div class="company-info">
+                <div style="margin-bottom: 6px;">
+                    <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="Logo" style="height: 40px; max-width: 160px; object-fit: contain;">
+                </div>
                 <h3>{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
                 <p>
                     {{ $settings->contact_email ?? '' }}<br>

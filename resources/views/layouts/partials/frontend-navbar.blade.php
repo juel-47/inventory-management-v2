@@ -52,7 +52,7 @@
             <div class="flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center gap-3 group">
                     <div class="w-12 h-12 overflow-hidden rounded-xl border border-slate-100 shadow-sm flex items-center justify-center p-1 bg-white group-hover:border-indigo-200 transition-all duration-300">
-                        <img src="{{ asset('uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-full h-full object-contain">
+                        <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-full h-full object-contain">
                     </div>
                     <div class="flex flex-col">
                         <span class="text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>

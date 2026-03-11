@@ -10,6 +10,7 @@ class GeneralSetting extends Model
         'site_name',
         'contact_email',
         'address',
+        'site_logo',
         'currency_name',
         'currency_icon',
         'currency_rate',

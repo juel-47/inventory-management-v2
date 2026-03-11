@@ -23,7 +23,17 @@
     </style>
 </head>
 <body>
-    @php $currency = $settings->currency_icon ?? '$'; @endphp
+    @php
+        $currency = $settings->currency_icon ?? '$';
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $logoFullPath = public_path(ltrim($logoPath, '/'));
+        $logoData = null;
+        if (is_file($logoFullPath)) {
+            $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
+            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
+            $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        }
+    @endphp
 
     <div class="header clearfix">
         <div class="left">
@@ -32,6 +42,11 @@
             <div>Status: {{ strtoupper($order->status) }}</div>
         </div>
         <div class="right">
+            @if($logoData)
+                <div style="margin-bottom: 6px;">
+                    <img src="{{ $logoData }}" alt="Logo" style="height: 40px; max-width: 160px; object-fit: contain;">
+                </div>
+            @endif
             <div style="font-size: 16px; font-weight: bold;">{{ $settings->site_name ?? 'Inventory Management System' }}</div>
             <div style="font-size: 11px; color: #666;">
                 {{ $settings->contact_email ?? '' }}<br>

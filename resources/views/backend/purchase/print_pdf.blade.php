@@ -116,8 +116,23 @@
 </head>
 
 <body>
+    @php
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $logoFullPath = public_path(ltrim($logoPath, '/'));
+        $logoData = null;
+        if (is_file($logoFullPath)) {
+            $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
+            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
+            $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        }
+    @endphp
     <div class="container">
         <div class="header">
+            @if($logoData)
+                <div style="margin-bottom: 8px;">
+                    <img src="{{ $logoData }}" alt="Logo" style="height: 42px; max-width: 170px; object-fit: contain;">
+                </div>
+            @endif
             <h1>{{ $settings->site_name ?? 'Inventory Management System' }}</h1>
             <p>{{ $settings->contact_email ?? '' }} | {{ $settings->address ?? '' }}</p>
             <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">ORDER RECEIVE DETAILS</div>

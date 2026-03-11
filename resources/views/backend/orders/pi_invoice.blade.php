@@ -174,6 +174,14 @@
         $backUrl = $backUrl ?? null;
         $downloadUrl = $downloadUrl ?? null;
         $isPdf = (bool) ($isPdf ?? false);
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $logoFullPath = public_path(ltrim($logoPath, '/'));
+        $logoData = null;
+        if (is_file($logoFullPath)) {
+            $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
+            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
+            $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        }
     @endphp
 
     @if($isPdf)
@@ -212,6 +220,11 @@
                 </div>
             </div>
             <div class="company-info">
+                @if($logoData)
+                    <div style="margin-bottom: 6px;">
+                        <img src="{{ $logoData }}" alt="Logo" style="height: 40px; max-width: 160px; object-fit: contain;">
+                    </div>
+                @endif
                 <h3>{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
                 <p>
                     {{ $settings->contact_email ?? '' }}<br>
