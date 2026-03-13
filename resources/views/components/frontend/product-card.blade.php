@@ -23,11 +23,14 @@
     $resolvedDetailsUrl = is_string($detailsUrl) && $detailsUrl !== ''
         ? $detailsUrl
         : '#';
+
+    $cardClasses = 'group relative flex flex-col rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md';
+    $discountBadgeClasses = 'border-slate-200 bg-slate-100 text-slate-600';
 @endphp
 
 <article x-data="{{ $alpineComponent }}(@js($product), @js($variants))"
-    {{ $attributes->merge(['class' => 'group relative flex flex-col rounded-3xl border border-slate-100 bg-white p-4 transition-all duration-300 hover:shadow-xl']) }}>
-    <div class="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-slate-50">
+    {{ $attributes->merge(['class' => $cardClasses]) }}>
+    <div class="relative mb-4 aspect-square overflow-hidden rounded-lg border border-slate-200 bg-[#f6f4ef]">
         @if ($resolvedDisplayPath !== '')
             <a href="{{ $resolvedDetailsUrl }}"><img src="{{ $resolvedDisplayPath }}" alt="{{ $productName }}"
                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"></a>
@@ -38,12 +41,12 @@
         @endif
 
         <div class="absolute left-3 top-3 flex flex-col gap-1">
-            <span class="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-sm backdrop-blur">
+            <span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                 {{ $resolvedCategoryName }}
             </span>
             @auth
                 <template x-if="hasProductDiscount">
-                    <span class="rounded-lg bg-emerald-600/95 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                    <span class="rounded-md border {{ $discountBadgeClasses }} px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
                         <span x-text="discountBadgeText"></span>
                     </span>
                 </template>
@@ -54,9 +57,9 @@
             @auth
                 <button @click="toggleWishlist(product.id)"
                     :class="isWishlisted(product.id)
-                        ? 'border-rose-300 bg-rose-50 text-rose-500 hover:bg-rose-100'
-                        : 'border-slate-200 bg-white/90 text-slate-400 hover:border-rose-300 hover:text-rose-400'"
-                    class="flex h-10 w-10 items-center justify-center rounded-xl border-2 backdrop-blur transition-all active:scale-95"
+                        ? 'border-rose-300 text-rose-500'
+                        : 'border-slate-200 text-slate-500 hover:border-slate-400'"
+                    class="flex h-10 w-10 items-center justify-center rounded-lg border bg-white transition-colors active:scale-95"
                     :title="isWishlisted(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'">
                     <template x-if="isWishlisted(product.id)">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -72,7 +75,7 @@
                 </button>
             @else
                 <a href="{{ route('login') }}"
-                    class="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-200 bg-white/90 text-slate-400 backdrop-blur transition-all hover:border-indigo-300 hover:text-indigo-600">
+                    class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-900">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -83,8 +86,8 @@
     </div>
 
     <div class="flex flex-1 flex-col px-1">
-        <h3 class="mb-3 line-clamp-2 text-sm font-bold leading-tight text-slate-900">
-            <a href="{{ $resolvedDetailsUrl }}" class="transition-colors hover:text-indigo-600">{{ $productName }}</a>
+        <h3 class="mb-3 line-clamp-2 text-sm font-semibold leading-tight text-slate-900">
+            <a href="{{ $resolvedDetailsUrl }}" class="transition-colors hover:text-slate-900">{{ $productName }}</a>
         </h3>
 
         <template x-if="hasVariants">
@@ -97,9 +100,9 @@
                             :class="!canSelectVariant(index)
                                 ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
                                 : (selectedVariantIndex === String(index)
-                                    ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                                    : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600')"
-                            class="rounded-lg border px-2 py-1 text-[10px] font-bold leading-none transition-colors">
+                                    ? 'border-blue-400 bg-blue-50 text-blue-700'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700')"
+                            class="rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider leading-none transition-colors">
                             <span x-text="variantLabel(v)"></span>
                         </button>
                     </template>
@@ -111,48 +114,52 @@
             @auth
                 <div class="space-y-3">
                     <div class="flex items-end justify-between gap-3">
-                        <div class="flex flex-col">
+                        <div class="min-w-0 flex flex-col">
                             @if ($isOutletUser)
-                                <div class="flex flex-col">
-                                    <span class="mb-1 text-[9px] font-black uppercase leading-none tracking-widest text-indigo-500">Wholesale</span>
-                                    <span class="text-lg font-black leading-none text-slate-900">
-                                        {{ $currencyIcon }}<span x-text="outletDisplayPrice"></span>
-                                    </span>
-                                    <template x-if="showOutletOriginalPrice">
-                                        <span class="mt-1 text-[11px] font-semibold leading-none text-slate-400 line-through">
-                                            {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="flex flex-col">
+                                        <span class="mb-1 whitespace-nowrap text-[10px] font-medium uppercase leading-none tracking-wider text-slate-500">Whole sale Price</span>
+                                        <span class="text-lg font-semibold leading-none text-slate-800">
+                                            {{ $currencyIcon }}<span x-text="outletDisplayPrice"></span>
                                         </span>
-                                    </template>
-                                    <span class="mb-1 mt-1 text-[9px] font-black uppercase leading-none tracking-widest text-indigo-500">Selling Price</span>
-                                    <span class="text-sm font-black leading-none text-slate-900">
-                                        {{ $currencyIcon }}<span x-text="retailDisplayPrice"></span>
-                                    </span>
-                                    <template x-if="showRetailOriginalPrice">
-                                        <span class="mt-1 text-[11px] font-semibold leading-none text-slate-400 line-through">
-                                            {{ $currencyIcon }}<span x-text="retailOriginalDisplayPrice"></span>
+                                        <template x-if="showOutletOriginalPrice">
+                                            <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through">
+                                                {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <div class="flex flex-col items-end text-right">
+                                        <span class="mb-1 whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-500">Selling Price</span>
+                                        <span class="text-base font-semibold leading-none text-slate-800">
+                                            {{ $currencyIcon }}<span x-text="retailDisplayPrice"></span>
                                         </span>
-                                    </template>
+                                        <template x-if="showRetailOriginalPrice">
+                                            <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through text-right">
+                                                {{ $currencyIcon }}<span x-text="retailOriginalDisplayPrice"></span>
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             @elseif ($isStandardUser)
                                 <div class="flex flex-col">
-                                    <span class="mb-1 text-[9px] font-black uppercase leading-none tracking-widest text-indigo-500">Wholesale</span>
-                                    <span class="text-lg font-black leading-none text-slate-900">
+                                    <span class="mb-1 whitespace-nowrap text-[10px] font-medium uppercase leading-none tracking-wider text-slate-500">Wholesale</span>
+                                    <span class="text-lg font-semibold leading-none text-slate-800">
                                         {{ $currencyIcon }}<span x-text="outletDisplayPrice"></span>
                                     </span>
                                     <template x-if="showOutletOriginalPrice">
-                                        <span class="mt-1 text-[11px] font-semibold leading-none text-slate-400 line-through">
+                                        <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through">
                                             {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
                                         </span>
                                     </template>
                                 </div>
                             @else
                                 <div class="flex flex-col">
-                                    <span class="mb-1 text-[9px] font-black uppercase leading-none tracking-widest text-slate-400">Price</span>
-                                    <span class="text-lg font-black leading-none text-slate-900">
+                                    <span class="mb-1 whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-500">Price</span>
+                                    <span class="text-lg font-semibold leading-none text-slate-800">
                                         {{ $currencyIcon }}<span x-text="retailDisplayPrice"></span>
                                     </span>
                                     <template x-if="showRetailOriginalPrice">
-                                        <span class="mt-1 text-[11px] font-semibold leading-none text-slate-400 line-through">
+                                        <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through">
                                             {{ $currencyIcon }}<span x-text="retailOriginalDisplayPrice"></span>
                                         </span>
                                     </template>
@@ -160,27 +167,30 @@
                             @endif
                         </div>
 
-                        <div class="shrink-0 text-right">
-                            <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold"
+                        <div class="max-w-[140px] shrink-0 text-right">
+                            {{-- <span class="inline-flex max-w-full items-center truncate rounded-md border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider"
                                 :class="stockPillClass"
-                                x-text="stockPillText"></span>
-                            <template x-if="(!hasVariants || selectedVariant) && maxAddableQty > 0">
-                                <p class="mt-1 text-[10px] font-semibold text-slate-400" x-text="`Max add: ${maxAddableQty}`"></p>
-                            </template>
+                                x-text="stockPillText"></span> --}}
+                            {{-- <template x-if="(!hasVariants || selectedVariant) && maxAddableQty > 0">
+                                <p class="mt-1 break-words text-[9px] font-semibold leading-tight text-slate-400" x-text="`Max add: ${maxAddableQty}`"></p>
+                            </template> --}}
                             <template x-if="(!hasVariants || selectedVariant) && currentStock > 0 && maxAddableQty === 0">
-                                <p class="mt-1 text-[10px] font-semibold text-amber-600" x-text="`MOQ ${minimumOrderQty}, stock ${currentStock}`"></p>
+                                <p class="mt-1 break-words text-[9px] font-semibold leading-tight text-amber-600" x-text="`MIM ${minimumOrderQty}, stock ${currentStock}`"></p>
                             </template>
                         </div>
                     </div>
 
-                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-                        <div class="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            <span>MOQ: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
-                            <template x-if="!hasVariants || selectedVariant">
-                                <span>In stock: <span class="text-slate-600" x-text="currentStock"></span></span>
-                            </template>
-                            <template x-if="hasVariants && !selectedVariant">
-                                <span class="normal-case tracking-normal text-slate-500">Select variant first</span>
+                        <div class="rounded-md border border-slate-200 bg-white p-3">
+                            <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                                <span>MIM: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
+                                <template x-if="isInCart">
+                                    <span class="text-red-600">In cart: <span class="text-red-600" x-text="inCartQty"></span></span>
+                                </template>
+                                <template x-if="!hasVariants || selectedVariant">
+                                    <span class="ml-auto text-right">In stock: <span class="text-slate-600" x-text="currentStock"></span></span>
+                                </template>
+                                <template x-if="hasVariants && !selectedVariant">
+                                    <span class="w-full text-right normal-case tracking-normal text-slate-500">Select variant first</span>
                             </template>
                         </div>
 
@@ -190,26 +200,28 @@
                                 :min="minimumOrderQty"
                                 :max="maxAddableQty > 0 ? maxAddableQty : minimumOrderQty"
                                 :step="minimumOrderQty"
+                                @input="lastRawQty = $event.target.value"
                                 @change="normalizeQty()"
-                                class="h-10 w-full rounded-lg border border-slate-200 bg-white p-0 text-center text-xs font-black text-slate-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                                class="h-11 w-full rounded-md border border-slate-300 bg-white p-0 text-center text-sm font-semibold text-slate-900 focus:border-slate-900 focus:outline-none">
 
                             <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(cannotAddMessage, 'error')"
                                 :class="canAdd
-                                    ? 'bg-slate-900 text-white shadow-md shadow-slate-200 hover:bg-indigo-600'
+                                    ? 'bg-slate-900 text-white hover:bg-black'
                                     : 'cursor-not-allowed bg-slate-200 text-slate-400'"
-                                class="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all active:scale-95">
+                                class="flex h-11 w-full items-center justify-center gap-1.5 rounded-md text-[12px] font-semibold uppercase tracking-wider transition-colors active:scale-95">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
-                                Add
+                                <span x-show="isInCart && canAdd">Added More</span>
+                                <span x-show="!isInCart || !canAdd">Add</span>
                             </button>
                         </div>
                     </div>
                 </div>
             @else
                 <div class="flex flex-col">
-                    <span class="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Price</span>
-                    <span class="rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-500"><a href="{{route('login')}}">Login</a></span>
+                    <span class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Price</span>
+                    <span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600"><a href="{{route('login')}}">Login</a></span>
                 </div>
             @endauth
         </div>

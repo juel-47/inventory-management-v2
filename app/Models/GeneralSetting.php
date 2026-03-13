@@ -9,6 +9,7 @@ class GeneralSetting extends Model
     protected $fillable = [
         'site_name',
         'contact_email',
+        'phone',
         'address',
         'site_logo',
         'currency_name',

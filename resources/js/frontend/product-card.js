@@ -11,6 +11,8 @@ document.addEventListener('alpine:init', () => {
 
     alpine.data('productCardItem', (product, variants) => ({
         qty: Math.max(1, parseInt(product.minimum_order_qty, 10) || 1),
+        lastRawQty: null,
+        moqToast: null,
         selectedVariantIndex: '',
         product,
         variants,
@@ -36,6 +38,55 @@ document.addEventListener('alpine:init', () => {
             return this.variants.length > 0;
         },
 
+        get cartItems() {
+            return Alpine.store('cart')?.items || [];
+        },
+
+        get inCartQty() {
+            const pid = parseInt(this.product?.id, 10);
+            if (!Number.isFinite(pid)) {
+                return 0;
+            }
+
+            const items = this.cartItems;
+            if (!items.length) {
+                return 0;
+            }
+
+            const selectedVariantId = this.selectedVariant
+                ? parseInt(this.selectedVariant?.id, 10)
+                : null;
+
+            return items.reduce((total, item) => {
+                const itemPid = parseInt(item?.product_id ?? item?.product?.id ?? item?.productId ?? item?.id, 10);
+                if (!Number.isFinite(itemPid) || itemPid !== pid) {
+                    return total;
+                }
+
+                const rawVariant = item?.variant_id;
+                const itemVid = rawVariant === null || rawVariant === undefined || rawVariant === ''
+                    ? null
+                    : parseInt(rawVariant, 10);
+
+                if (this.hasVariants) {
+                    if (Number.isFinite(selectedVariantId)) {
+                        if (itemVid !== selectedVariantId) {
+                            return total;
+                        }
+                    }
+                } else if (itemVid !== null && Number.isFinite(itemVid)) {
+                    return total;
+                }
+
+                const qty = Math.max(0, parseInt(item?.quantity, 10) || 0);
+                return total + qty;
+            }, 0);
+        },
+
+        get isInCart() {
+            return this.inCartQty > 0;
+        },
+
         canSelectVariant(index) {
             const variant = this.variants[index];
             if (!variant) {
@@ -55,6 +106,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.selectedVariantIndex = String(index);
+            this.lastRawQty = null;
             this.normalizeQty();
         },
 
@@ -305,13 +357,31 @@ document.addEventListener('alpine:init', () => {
         },
 
         normalizeQty() {
-            let adjustedQty = this.normalizedQty;
+            const rawSource = this.lastRawQty !== null ? this.lastRawQty : this.qty;
+            const rawQty = Math.max(1, parseInt(rawSource, 10) || 1);
+            const moq = this.minimumOrderQty;
+            let moqAdjusted = rawQty;
+
+            if (rawQty < moq) {
+                moqAdjusted = moq;
+            } else if (rawQty > moq) {
+                moqAdjusted = Math.ceil(rawQty / moq) * moq;
+            }
+
+            let adjustedQty = moqAdjusted;
 
             if (this.inventoryVisible && this.maxAddableQty > 0 && adjustedQty > this.maxAddableQty) {
                 adjustedQty = this.maxAddableQty;
             }
 
             this.qty = adjustedQty;
+            if (moqAdjusted !== rawQty && adjustedQty === moqAdjusted) {
+                this.moqToast = { moq, adjustedQty, rawQty };
+            } else {
+                this.moqToast = null;
+                this.lastRawQty = null;
+            }
+
             return this.qty;
         },
 
@@ -322,8 +392,19 @@ document.addEventListener('alpine:init', () => {
 
                 const bodyEl = document.querySelector('[x-data*="globalApp"]');
                 if (bodyEl?._x_dataStack?.[0]) {
-                    bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
+                    const notifier = bodyEl._x_dataStack[0];
+                    const toast = this.moqToast;
+                    if (toast) {
+                        notifier.notify('Added to cart ✓', 'success');
+                        setTimeout(() => {
+                            notifier.notify(`Minimum order quantity is ${toast.moq}. Your cart has been updated to ${toast.adjustedQty} items.`, 'warning');
+                        }, 250);
+                    } else {
+                        notifier.notify('Added to cart ✓', 'success');
+                    }
                 }
+                this.moqToast = null;
+                this.lastRawQty = null;
             } catch (e) {
                 console.error('Add to cart error:', e);
                 this.notify(e?.message || 'Error adding to cart', 'error');

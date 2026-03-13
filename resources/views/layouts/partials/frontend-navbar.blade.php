@@ -10,7 +10,7 @@
              x-transition:leave="transition ease-in duration-200 transform"
              x-transition:leave-start="translate-x-0 opacity-100"
              x-transition:leave-end="translate-x-full opacity-0"
-             class="pointer-events-auto bg-white border-l-4 rounded-lg shadow-xl p-4 min-w-[300px] flex items-start gap-3"
+             class="pointer-events-auto bg-white border-l-4 rounded-xl shadow-lg px-3.5 py-3 w-auto max-w-[360px] flex items-start gap-3"
              :class="{
                 'border-indigo-600': note.type === 'success',
                 'border-amber-500': note.type === 'warning',
@@ -27,8 +27,8 @@
                     <svg class="h-5 w-5 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.536-10.95a1 1 0 10-1.414-1.414L10 7.757 7.878 5.636a1 1 0 10-1.414 1.414L8.586 9.17l-2.122 2.122a1 1 0 001.414 1.414L10 10.585l2.121 2.121a1 1 0 001.415-1.414L11.414 9.17l2.122-2.121z" clip-rule="evenodd"></path></svg>
                 </template>
             </div>
-            <div class="flex-1">
-                <p class="text-sm font-medium text-slate-800" x-text="note.message"></p>
+            <div class="flex-1 min-w-0">
+                <p class="text-[13px] leading-snug font-medium text-slate-800 break-words" x-text="note.message"></p>
             </div>
             <button @click="hideNotification(note.id)" class="text-slate-400 hover:text-slate-600">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -40,10 +40,20 @@
 {{-- =====================================================
      NAVIGATION BAR
      ===================================================== --}}
-<nav class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50" x-data="navbarSearch(@js($settings->currency_icon ?? 'Tk'))">
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-50" x-data="navbarSearch(@js($settings->currency_icon ?? 'Tk'))">
     @php
         $isAdminAuth = auth()->check() && auth()->user()->hasRole('Admin');
         $isFrontendCustomer = auth()->check() && !$isAdminAuth;
+        $authUser = auth()->user();
+        $userImage = null;
+        if ($authUser && !empty($authUser->image)) {
+            $rawImage = (string) $authUser->image;
+            if (str_starts_with($rawImage, 'http://') || str_starts_with($rawImage, 'https://') || str_starts_with($rawImage, '//') || str_starts_with($rawImage, 'data:')) {
+                $userImage = $rawImage;
+            } else {
+                $userImage = asset(ltrim($rawImage, '/'));
+            }
+        }
     @endphp
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
@@ -51,7 +61,7 @@
             {{-- Logo & Site Name --}}
             <div class="flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                    <div class="w-12 h-12 overflow-hidden rounded-xl border border-slate-100 shadow-sm flex items-center justify-center p-1 bg-white group-hover:border-indigo-200 transition-all duration-300">
+                    <div class="w-12 h-12 overflow-hidden rounded-md border border-slate-100 flex items-center justify-center p-1 bg-white transition-all duration-300">
                         <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-full h-full object-contain">
                     </div>
                     <div class="flex flex-col">
@@ -64,19 +74,19 @@
             {{-- Navigation Links --}}
             <div class="hidden md:flex items-center gap-8">
                 <a href="{{ route('home') }}"
-                   class="text-sm font-semibold transition-colors {{ request()->routeIs('home') ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600' }}">
+                   class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('home') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     Home
                 </a>
                 <a href="{{ route('shop') }}"
-                   class="text-sm font-semibold transition-colors {{ request()->routeIs('shop') ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600' }}">
+                   class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('shop') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     B2B Shop
                 </a>
-                <a href="{{ route('home') }}#about"
-                   class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
+                <a href="{{ route('about') }}"
+                   class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('about') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     About
                 </a>
-                <a href="{{ route('home') }}#contact"
-                   class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
+                <a href="{{ route('contact') }}"
+                   class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('contact') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     Contact Us
                 </a>
             </div>
@@ -87,7 +97,7 @@
                 <button
                     @click="toggleSearch()"
                     :aria-expanded="searchOpen.toString()"
-                    class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300">
+                    class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
 
@@ -95,7 +105,7 @@
                 @if($isFrontendCustomer)
                     {{-- Logged in: link to wishlist page with live count badge --}}
                     <a href="{{ route('wishlist.index') }}"
-                       class="p-2.5 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300 relative"
+                       class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative"
                        title="My Wishlist">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         <span x-show="wishlistCount > 0"
@@ -111,21 +121,21 @@
                     </a> --}}
                 @elseif($isAdminAuth)
                     <a href="{{ route('admin.dashboard') }}"
-                       class="px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all duration-300"
+                       class="px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-slate-900 border border-slate-200 hover:border-slate-400 transition-all duration-300"
                        title="Go to Admin Dashboard">
                         Admin Dashboard
                     </a>
                 @else
                     {{-- Guest: redirect to login --}}
                     <a href="{{ route('login') }}"
-                       class="p-2.5 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300 relative"
+                       class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative"
                        title="Login to use Wishlist">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </a>
                 @endif
 
                 {{-- Cart --}}
-                <button @click="isCartOpen = true" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300 relative group">
+                <button @click="isCartOpen = true" class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative group">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span x-show="cartCount > 0" x-text="cartCount" class="absolute top-1.5 right-1.5 bg-rose-500 text-white text-[10px] font-bold h-5 w-5 rounded-full border-2 border-white flex items-center justify-center"></span>
                 </button>
@@ -136,9 +146,13 @@
                 @if($isFrontendCustomer)
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center gap-2 p-1 pl-2 rounded-full hover:bg-slate-100 transition-all duration-300 group">
-                            <span class="text-sm font-bold text-slate-700 hidden lg:block">{{ Auth::user()->name }}</span>
-                            <div class="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-100">
-                                {{ substr(Auth::user()->name, 0, 1) }}
+                            <span class="text-[12px] font-semibold tracking-[0.05em] text-slate-700 hidden lg:block">{{ Auth::user()->name }}</span>
+                            <div class="w-9 h-9 border border-slate-200 rounded-full overflow-hidden flex items-center justify-center text-slate-700 font-bold bg-white">
+                                @if($userImage)
+                                    <img src="{{ $userImage }}" alt="{{ Auth::user()->name }}" class="h-full w-full object-cover">
+                                @else
+                                    {{ substr(Auth::user()->name, 0, 1) }}
+                                @endif
                             </div>
                         </button>
                         <div x-show="open" @click.away="open = false"
@@ -184,15 +198,15 @@
                 @elseif($isAdminAuth)
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-rose-600 transition-all duration-300 group flex items-center gap-2">
+                        <button type="submit" class="p-2 text-slate-500 hover:text-rose-600 transition-all duration-300 group flex items-center gap-2">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                             <span class="text-sm font-bold hidden sm:block">Logout</span>
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-all duration-300 group flex items-center gap-2">
+                    <a href="{{ route('login') }}" class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 group flex items-center gap-2">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        <span class="text-sm font-bold hidden sm:block">Sign In</span>
+                        <span class="text-[12px] font-semibold uppercase tracking-[0.1em] hidden sm:block">Login</span>
                     </a>
                 @endif
             </div>
@@ -274,12 +288,12 @@
                class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('shop') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
                 B2B Shop
             </a>
-            <a href="{{ route('home') }}#about"
-               class="whitespace-nowrap rounded-full border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:border-indigo-200 hover:text-indigo-600">
+            <a href="{{ route('about') }}"
+               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('about') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
                 About
             </a>
-            <a href="{{ route('home') }}#contact"
-               class="whitespace-nowrap rounded-full border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:border-indigo-200 hover:text-indigo-600">
+            <a href="{{ route('contact') }}"
+               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('contact') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
                 Contact Us
             </a>
         </div>

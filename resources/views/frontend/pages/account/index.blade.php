@@ -68,10 +68,10 @@
                             </div>
                         @endif
                         <div class="min-w-0">
-                            <p class="text-xl font-black text-slate-900 truncate uppercase">{{ $user->name }}</p>
+                            <p class="text-lg font-semibold text-slate-900 truncate tracking-[0.05em]">{{ $user->name }}</p>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="text-[11px] uppercase tracking-widest font-bold text-slate-500 hover:text-rose-600">Logout</button>
+                                <button type="submit" class="text-[11px] tracking-[0.08em] font-semibold text-slate-500 hover:text-rose-600">Logout</button>
                             </form>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
 
                 <div class="bg-white border border-slate-200 rounded-sm overflow-hidden">
                     @php
-                        $menuBase = 'flex items-center px-4 py-3 border-b border-slate-200 text-sm uppercase tracking-[0.12em] font-bold transition-colors';
+                        $menuBase = 'flex items-center px-4 py-3 border-b border-slate-200 text-[12px] tracking-[0.08em] font-semibold transition-colors';
                         $menuActive = 'bg-slate-100 text-slate-900';
                         $menuIdle = 'text-slate-500 hover:bg-slate-50';
                     @endphp
@@ -93,7 +93,7 @@
                     <a href="{{ route('account.index', ['panel' => 'profile']) }}" class="{{ $menuBase }} {{ $currentPanel === 'profile' ? $menuActive : $menuIdle }}">Account Information</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="w-full text-left px-4 py-3 text-sm uppercase tracking-[0.12em] font-bold text-slate-500 hover:bg-slate-50">Log Out</button>
+                        <button type="submit" class="w-full text-left px-4 py-3 text-[12px] tracking-[0.08em] font-semibold text-slate-500 hover:bg-slate-50">Log Out</button>
                     </form>
                 </div>
 

@@ -173,6 +173,7 @@
                                        x-model.number="qty" 
                                        :min="minimumOrderQty"
                                        :step="minimumOrderQty"
+                                       @input="lastRawQty = $event.target.value"
                                        @change="normalizeQty()"
                                        class="w-12 h-10 text-center bg-slate-100 border-none rounded-md text-xs font-black text-slate-900 p-0 focus:ring-1 focus:ring-indigo-200 focus:outline-red-100">
                                 

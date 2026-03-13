@@ -8,6 +8,8 @@
         Alpine.data('wishlistItem', (item) => ({
             qty: Math.max(1, parseInt(item.minimum_order_qty) || 1),
             removing: false,
+            lastRawQty: null,
+            moqToast: null,
             product: item,
             variants: item.variants || [],
             selectedVariantIndex: '',
@@ -63,20 +65,25 @@
             },
 
             normalizeQty() {
-                const inputQty = Math.max(1, parseInt(this.qty, 10) || 1);
+                const rawSource = this.lastRawQty !== null ? this.lastRawQty : this.qty;
+                const rawQty = Math.max(1, parseInt(rawSource, 10) || 1);
                 const moq = this.minimumOrderQty;
+                let moqAdjusted = rawQty;
 
-                if (inputQty < moq) {
-                    this.qty = moq;
-                    return this.qty;
+                if (rawQty < moq) {
+                    moqAdjusted = moq;
+                } else if (rawQty > moq) {
+                    moqAdjusted = Math.ceil(rawQty / moq) * moq;
                 }
 
-                if (inputQty > moq) {
-                    this.qty = Math.ceil(inputQty / moq) * moq;
-                    return this.qty;
+                this.qty = moqAdjusted;
+                if (moqAdjusted !== rawQty) {
+                    this.moqToast = { moq, adjustedQty: moqAdjusted, rawQty };
+                } else {
+                    this.moqToast = null;
+                    this.lastRawQty = null;
                 }
 
-                this.qty = moq;
                 return this.qty;
             },
 
@@ -95,8 +102,20 @@
 
                     const bodyEl = document.querySelector('[x-data*="globalApp"]');
                     if (bodyEl?._x_dataStack?.[0]) {
-                        bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
+                        const notifier = bodyEl._x_dataStack[0];
+                        const toast = this.moqToast;
+                        if (toast) {
+                            notifier.notify('Added to cart ✓', 'success');
+                            setTimeout(() => {
+                                notifier.notify(`Minimum order quantity is ${toast.moq}. Your cart has been updated to ${toast.adjustedQty} items.`, 'warning');
+                            }, 250);
+                        } else {
+                            notifier.notify('Added to cart ✓', 'success');
+                        }
                     }
+                    this.moqToast = null;
+                    this.lastRawQty = null;
+                    this.moqToast = null;
                 } catch (e) {
                     console.error('Add to cart error:', e);
                     this.notify(e?.message || 'Error adding to cart', 'error');

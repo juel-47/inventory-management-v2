@@ -3,88 +3,96 @@
 @section('title', 'Login — ' . config('app.name', 'Inventory B2B'))
 
 @section('content')
-<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center py-12 px-4 bg-slate-50">
-    <div class="max-w-md w-full">
-
-        {{-- Header --}}
-        <div class="text-center mb-10">
-            <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 border border-slate-100">
-                <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-12 h-12 object-contain">
-            </div>
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
-            <p class="text-slate-500 font-medium mt-2">Sign in to your B2B account</p>
+    <section class="bg-[#f1efeb] border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+            <h1 class="text-2xl sm:text-3xl font-semibold uppercase tracking-[0.35em] text-slate-900">My Account</h1>
+            <p class="mt-2 text-xs uppercase tracking-[0.25em] text-slate-500">Home</p>
         </div>
+    </section>
 
-        {{-- Login Card --}}
-        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
-            <div class="p-10">
+    <section class="py-12">
+        <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-xl sm:text-2xl font-semibold text-center uppercase tracking-[0.3em] text-slate-900">Login</h2>
+            <p class="text-center text-sm text-slate-500 mt-3">Thank you for visiting our site!</p>
 
+            <div class="mt-8 border border-dashed border-slate-300 bg-white/80 p-8 sm:p-10">
                 {{-- Error --}}
                 @if(session('error'))
-                    <div class="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl mb-8 flex items-center gap-3">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                        <span class="text-sm font-bold">{{ session('error') }}</span>
+                    <div class="mb-6 border border-rose-200 bg-rose-50 text-rose-600 px-4 py-3 text-sm">
+                        {{ session('error') }}
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('login') }}" class="space-y-5">
                     @csrf
 
-                    {{-- Email --}}
-                    <div class="space-y-2">
-                        <label for="email" class="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
-                        <div class="relative group">
-                            <input type="email" id="email" name="email" required autofocus
-                                   value="{{ old('email') }}"
-                                   class="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all font-bold text-slate-700 placeholder-slate-300"
-                                   placeholder="outlet@merchant.com">
-                            <div class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206"></path></svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label for="email" class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Username or Email *</label>
+                        <input type="email"
+                               id="email"
+                               name="email"
+                               required
+                               autofocus
+                               value="{{ old('email') }}"
+                               class="mt-2 w-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-900"
+                               placeholder="outlet@merchant.com">
                         @error('email')
-                            <p class="text-rose-500 text-[10px] font-bold uppercase tracking-widest pl-1">{{ $message }}</p>
+                            <p class="mt-2 text-[11px] text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Password --}}
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between pl-1">
-                            <label for="password" class="text-xs font-black text-slate-400 uppercase tracking-widest">Password</label>
-                            <a href="{{ route('password.request') }}" class="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-700">Forgot?</a>
+                    <div x-data="{ showPassword: false }">
+                        <div class="flex items-center justify-between">
+                            <label for="password" class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Password *</label>
+                            <a href="{{ route('password.request') }}" class="text-[11px] uppercase tracking-[0.1em] text-slate-600 hover:text-slate-900">Forgotten password?</a>
                         </div>
-                        <div class="relative group">
-                            <input type="password" id="password" name="password" required
-                                   class="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all font-bold text-slate-700 placeholder-slate-300"
+                        <div class="relative mt-2">
+                            <input :type="showPassword ? 'text' : 'password'"
+                                   id="password"
+                                   name="password"
+                                   required
+                                   class="w-full border border-slate-300 bg-white px-4 py-2.5 pr-11 text-sm text-slate-900 outline-none focus:border-slate-900"
                                    placeholder="••••••••">
-                            <div class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            </div>
+                            <button type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition"
+                                    :aria-label="showPassword ? 'Hide password' : 'Show password'">
+                                <svg x-show="!showPassword" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <svg x-show="showPassword" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 3l18 18"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M10.58 10.58a3 3 0 004.24 4.24"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9.88 4.24A9.94 9.94 0 0112 4c4.478 0 8.268 2.943 9.542 7a10.49 10.49 0 01-4.043 5.383"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6.11 6.11C4.23 7.27 2.81 9.02 2.458 12c.58 1.85 1.75 3.44 3.315 4.59"/>
+                                </svg>
+                            </button>
                         </div>
                         @error('password')
-                            <p class="text-rose-500 text-[10px] font-bold uppercase tracking-widest pl-1">{{ $message }}</p>
+                            <p class="mt-2 text-[11px] text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Remember Me --}}
-                    <div class="flex items-center gap-3 px-1">
-                        <input type="checkbox" name="remember" id="remember" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                        <label for="remember" class="text-sm font-bold text-slate-500 cursor-pointer select-none">Stay logged in</label>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="remember" id="remember" class="h-4 w-4 border-slate-300">
+                        <label for="remember" class="text-sm text-slate-600">Remember me</label>
                     </div>
 
-                    {{-- Submit --}}
-                    <button type="submit" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 hover:-translate-y-0.5 shadow-lg shadow-indigo-100 active:translate-y-0 transition-all duration-300">
-                        Sign In
+                    <button type="submit" class="w-full bg-slate-900 text-white py-3 text-[12px] font-semibold uppercase tracking-[0.35em] hover:bg-black transition-colors">
+                        Login
                     </button>
                 </form>
             </div>
 
-            {{-- Admin Portal Link --}}
-            <a href="{{ route('admin.login') }}" class="block p-6 bg-slate-50 border-t border-slate-100 text-center group">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-indigo-500 transition-colors">Administrative Staff Access Portal &rarr;</span>
-            </a>
+            <div class="mt-6 text-center space-y-2">
+                <a href="{{ route('register') }}" class="block text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-slate-600 hover:text-slate-900">
+                    New here? Create an account
+                </a>
+                <a href="{{ route('admin.login') }}" class="block text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-slate-600 hover:text-slate-900">
+                    Administrative Staff Access Portal →
+                </a>
+            </div>
         </div>
-
-    </div>
-</div>
+    </section>
 @endsection

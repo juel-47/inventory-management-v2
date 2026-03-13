@@ -73,12 +73,12 @@
 
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8 py-8">
             @if ($latestCategoryBlocks->isEmpty())
-                <section class="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+                <section class="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
                     No active categories with products found.
                 </section>
             @else
                 @foreach ($latestCategoryBlocks as $block)
-                    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4 flex items-end justify-between gap-2">
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Latest Products</p>
@@ -89,7 +89,7 @@
                                 View All
                             </a>
                         </div>
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-2">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             @foreach ($block['cards'] as $card)
                                 <x-frontend.product-card
                                     :product="$card['product']"
@@ -100,7 +100,7 @@
                                     :is-outlet-user="$isOutletUser"
                                     :is-standard-user="$isStandardUser"
                                     :details-url="$card['details_url']"
-                                    class="rounded-2xl p-3" />
+                                    class="p-3" />
                             @endforeach
                         </div>
                     </section>

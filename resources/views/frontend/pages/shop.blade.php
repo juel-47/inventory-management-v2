@@ -25,27 +25,34 @@
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Sidebar Filters -->
                 <aside class="w-full lg:w-72 shrink-0">
-                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 sticky top-24">
-                        <h2 class="text-xl font-bold text-slate-900 mb-8">Filters</h2>
+                    <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 sticky top-24">
+                        <div class="flex items-center justify-between mb-5">
+                            <h2 class="text-[13px] font-semibold uppercase tracking-[0.12em] text-slate-900">Filters</h2>
+                            <button type="button"
+                                @click="resetFilters()"
+                                class="text-[10px] font-semibold uppercase tracking-[0.12em] bg-red-50 px-3 py-1.5 roudned-md text-red-500 hover:text-red-600 transition-colors">
+                                Clear
+                            </button>
+                        </div>
 
                         <!-- Categories -->
-                        <div class="mb-10">
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Categories</h3>
-                            <div class="space-y-4">
+                        <div class="mb-9">
+                            <h3 class="text-[12px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-4">Categories</h3>
+                            <div class="space-y-3">
                                 @foreach ($categories as $category)
                                     <div class="space-y-2">
                                         <div class="flex items-center justify-between group">
                                             <button @click="toggleCategory({{ $category->id }})"
-                                                class="text-sm font-bold transition-colors text-left"
+                                                class="text-[13px] font-medium uppercase tracking-[0.08em] transition-colors text-left"
                                                 :class="activeCat === {{ $category->id }} ||
                                                     {{ request('category') == $category->id ? 'true' : 'false' }} ?
-                                                    'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'">
+                                                    'text-slate-900' : 'text-slate-600 hover:text-slate-900'">
                                                 {{ $category->name }}
                                             </button>
                                             @if ($category->subCategories->count() > 0)
                                                 <button
                                                     @click="activeCat = (activeCat === {{ $category->id }} ? null : {{ $category->id }})"
-                                                    class="p-1 rounded-lg hover:bg-slate-50 text-slate-400 transition-transform"
+                                                    class="p-1 rounded-md hover:bg-slate-100 text-slate-400 transition-transform"
                                                     :class="{ 'rotate-180': activeCat === {{ $category->id }} }">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
@@ -58,23 +65,23 @@
 
                                         <!-- Subcategories -->
                                         <div x-show="activeCat === {{ $category->id }}" x-collapse>
-                                            <div class="pl-4 space-y-2 border-l-2 border-slate-50 mt-2 ml-1">
+                                            <div class="pl-4 space-y-2 border-l-2 border-slate-100 mt-2 ml-1">
                                                 @foreach ($category->subCategories as $sub)
                                                     <div class="space-y-2">
                                                         <div class="flex items-center justify-between group">
                                                             <button
                                                                 @click="toggleSubCategory({{ $category->id }}, {{ $sub->id }})"
-                                                                class="text-[13px] font-semibold transition-colors text-left"
+                                                                class="text-[12px] font-medium uppercase tracking-[0.07em] transition-colors text-left"
                                                                 :class="activeSub === {{ $sub->id }} ||
                                                                     {{ request('subcategory') == $sub->id ? 'true' : 'false' }} ?
-                                                                    'text-indigo-600' :
-                                                                    'text-slate-500 hover:text-indigo-600'">
+                                                                    'text-slate-900' :
+                                                                    'text-slate-500 hover:text-slate-900'">
                                                                 {{ $sub->name }}
                                                             </button>
                                                             @if ($sub->childCategories->count() > 0)
                                                                 <button
                                                                     @click="activeSub = (activeSub === {{ $sub->id }} ? null : {{ $sub->id }})"
-                                                                    class="p-0.5 rounded-md hover:bg-slate-50 text-slate-300 transition-transform"
+                                                                    class="p-0.5 rounded-md hover:bg-slate-100 text-slate-300 transition-transform"
                                                                     :class="{ 'rotate-180': activeSub === {{ $sub->id }} }">
                                                                     <svg class="w-3 h-3" fill="none"
                                                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -88,14 +95,14 @@
                                                         <!-- Child Categories -->
                                                         <div x-show="activeSub === {{ $sub->id }}" x-collapse>
                                                             <div
-                                                                class="pl-4 space-y-1.5 border-l-2 border-slate-50 mt-1 ml-1">
+                                                                class="pl-4 space-y-1.5 border-l-2 border-slate-100 mt-1 ml-1">
                                                                 @foreach ($sub->childCategories as $child)
                                                                     <button
                                                                         @click="toggleChildCategory({{ $category->id }}, {{ $sub->id }}, {{ $child->id }})"
-                                                                        class="block text-[12px] font-medium transition-colors text-left"
+                                                                        class="block text-[11px] font-medium uppercase tracking-[0.06em] transition-colors text-left"
                                                                         :class="{{ request('childcategory') == $child->id ? 'true' : 'false' }}
-                                                                            ? 'text-indigo-600' :
-                                                                            'text-slate-400 hover:text-indigo-600'">
+                                                                            ? 'text-slate-900' :
+                                                                            'text-slate-400 hover:text-slate-900'">
                                                                         {{ $child->name }}
                                                                     </button>
                                                                 @endforeach
@@ -112,27 +119,27 @@
 
                         <!-- Price Filter Slider -->
                     @auth
-                        <div class="pt-8 border-t border-slate-100">
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Price Range</h3>
+                        <div class="pt-6 border-t border-slate-200">
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.25em] mb-5">Price Range</h3>
                             
                             <div class="relative w-full h-10 mt-4">
                                 <div class="h-1.5 w-full bg-slate-200 rounded-full absolute top-1/2 -translate-y-1/2"></div>
-                                <div class="h-1.5 bg-indigo-600 rounded-full absolute top-1/2 -translate-y-1/2"
-                                     :style="`left: ${((minPrice - minRange) / (maxRange - minRange)) * 100}%; right: ${100 - ((maxPrice - minRange) / (maxRange - minRange)) * 100}%`" class="text-indigo-500"></div>
+                                <div class="h-1.5 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2"
+                                     :style="`left: ${((minPrice - minRange) / (maxRange - minRange)) * 100}%; right: ${100 - ((maxPrice - minRange) / (maxRange - minRange)) * 100}%`" class="text-blue-500"></div>
                                 
                                 <input type="range" 
                                        :min="minRange" :max="maxRange" step="1" 
                                        x-model.number="minPrice" 
                                        @input="if(minPrice > maxPrice) minPrice = maxPrice - 1"
                                        @change="applyFilters()"
-                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
+                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
                                 
                                 <input type="range" 
                                        :min="minRange" :max="maxRange" step="1" 
                                        x-model.number="maxPrice" 
                                        @input="if(maxPrice < minPrice) maxPrice = minPrice + 1"
                                        @change="applyFilters()"
-                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
+                                       class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
                             </div>
 
                             <div class="flex items-center justify-between mt-6 px-1">
@@ -154,10 +161,10 @@
                 <div class="flex-1">
                     <!-- Top Toolbar -->
                     <div
-                        class="bg-white rounded-3xl p-4 mb-8 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4 px-2">
-                            <span class="text-sm font-bold text-slate-400">Showing <span
-                                    class="text-slate-900">{{ $products->count() }}</span> of {{ $products->total() }}
+                        class="bg-white rounded-lg px-4 py-3 mb-8 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex items-center gap-4 px-1">
+                            <span class="text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">Showing <span
+                                    class="text-slate-900 font-semibold">{{ $products->count() }}</span> of <span class="text-slate-900 font-semibold">{{ $products->total() }}</span>
                                 results</span>
                         </div>
 
@@ -165,10 +172,10 @@
                             @auth
                             <div class="flex items-center gap-2">
                                 <label
-                                    class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Sort
+                                    class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.15em] hidden sm:block">Sort
                                     by:</label>
                                 <select x-model="sort" @change="applyFilters()"
-                                    class="bg-slate-50 border-none rounded-2xl px-6 py-2 content-center text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none pr-10 relative">
+                                    class="bg-white border border-slate-200 rounded-md px-3.5 py-2 text-[12px] font-medium text-slate-700 outline-none focus:border-slate-900 cursor-pointer appearance-none pr-9 relative">
                                     <option value="stock_first">In Stock First</option>
                                     <option value="latest">Latest Product</option>
                                     <option value="price_low_high">Price: Low to High</option>
@@ -176,10 +183,10 @@
                                 </select>
                             </div>
                             <div class="flex items-center gap-2">
-                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">Occasion/Type:</label>
+                                <label class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden sm:block">Occasion/Type:</label>
                                 @php $selectedType = (string) request('product_type', ''); @endphp
                                 <select x-model="productType" @change="applyFilters()"
-                                        class="bg-slate-50 border-none rounded-2xl px-6 py-2 content-center text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer appearance-none pr-10 relative">
+                                        class="bg-white border border-slate-200 rounded-md px-3.5 py-2 text-[12px] font-medium text-slate-700 outline-none focus:border-slate-900 cursor-pointer appearance-none pr-9 relative">
                                     <option value="" {{ $selectedType === '' ? 'selected' : '' }}>All Types</option>
                                     <option value="new_arrival" {{ $selectedType === 'new_arrival' ? 'selected' : '' }}>New Arrival (Legacy)</option>
                                     <option value="upcoming" {{ $selectedType === 'upcoming' ? 'selected' : '' }}>Upcoming (Legacy)</option>
@@ -187,14 +194,14 @@
                                         <option value="{{ $type->id }}" {{ $selectedType === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>     
+                            </div>
                             @endauth
                            
                         </div>
                     </div>
 
                     <!-- Products Grid -->
-                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-2">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
                         @forelse($shopCards as $card)
                             <x-frontend.product-card
                                 :product="$card['product']"
@@ -205,24 +212,24 @@
                                 :is-outlet-user="$isOutletUser"
                                 :is-standard-user="$isStandardUser"
                                 :details-url="$card['details_url']"
-                                class="rounded-2xl p-3" />
+                                class="p-3" />
 
                         @empty
                             <div class="col-span-full py-32 text-center">
-                                <div class="w-24 h-24 bg-slate-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
+                                <div class="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                                     <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                     </svg>
                                 </div>
-                                <h3 class="text-xl font-bold text-slate-900 mb-2">No products found</h3>
-                                <p class="text-slate-500">Try adjusting your filters or search terms.</p>
-                                <button @click="resetFilters()" class="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">Clear All Filters</button>
+                                <h3 class="text-lg font-semibold text-slate-900 mb-2">No products found</h3>
+                                <p class="text-sm text-slate-500">Try adjusting your filters or search terms.</p>
+                                <button @click="resetFilters()" class="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-md text-[11px] font-semibold uppercase tracking-[0.3em] hover:bg-black transition-colors">Clear All Filters</button>
                             </div>
                         @endforelse
                     </div>
 
                     <!-- Pagination -->
-                    <div id="shop-pagination" class="mt-24 border-t border-slate-100">
+                    <div id="shop-pagination" class="mt-24 border-t border-slate-200">
                         {{ $products->links('vendor.pagination.tailwind') }}
                     </div>
                 </div>
@@ -234,7 +241,7 @@
                 let loadingShopPage = false;
                 const shopBaseUrl = @json(route('shop'));
 
-                async function loadShopPage(url, pushState = true) {
+                async function loadShopPage(url, pushState = true, scrollToTop = false) {
                     const currentRoot = document.getElementById('shop-page-root');
                     if (!currentRoot || loadingShopPage) {
                         return;
@@ -273,6 +280,17 @@
 
                         if (pushState) {
                             window.history.pushState({ shopAjax: true }, '', url);
+                        }
+
+                        if (scrollToTop) {
+                            requestAnimationFrame(() => {
+                                const root = document.getElementById('shop-page-root');
+                                if (root) {
+                                    root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                } else {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            });
                         }
                     } catch (error) {
                         window.location.href = url;
@@ -384,7 +402,7 @@
                     }
 
                     event.preventDefault();
-                    loadShopPage(paginationLink.href, true);
+                    loadShopPage(paginationLink.href, true, true);
                 });
 
                 window.addEventListener('popstate', function () {

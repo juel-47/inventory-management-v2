@@ -42,6 +42,8 @@ use App\Http\Controllers\Frontend\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
+Route::middleware('auth')->group(function () {
+
 // Sample file download route (public)
 Route::get('/sample/{filename}', function ($filename) {
     $path = 'sample/' . $filename;
@@ -55,6 +57,8 @@ Route::get('/sample/{filename}', function ($filename) {
 Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
     Route::get('/shop', 'shop')->name('shop');
+    Route::get('/about', 'about')->name('about');
+    Route::get('/contact', 'contact')->name('contact');
     Route::get('/product/{slug}', 'productDetails')->name('product.details');
     Route::get('/products/live-search', 'liveSearch')->name('frontend.products.live-search');
 });
@@ -325,13 +329,15 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::post('cart/clear', 'clear')->name('cart.clear');
     });
     /** Accounts & Payments */
-    Route::controller(BackendAccountController::class)->group(function () {
-        Route::get('accounts', 'index')->name('accounts.index');
-        Route::get('accounts/record-payment', 'create')->name('accounts.record-payment');
-        Route::get('accounts/search-order', 'searchOrder')->name('accounts.search-order');
-        Route::get('accounts/due-orders', 'dueOrders')->name('accounts.due-orders');
-        Route::post('accounts/orders/{order}/payment', 'storePayment')->name('accounts.store-payment');
-    });
+Route::controller(BackendAccountController::class)->group(function () {
+    Route::get('accounts', 'index')->name('accounts.index');
+    Route::get('accounts/record-payment', 'create')->name('accounts.record-payment');
+    Route::get('accounts/search-order', 'searchOrder')->name('accounts.search-order');
+    Route::get('accounts/due-orders', 'dueOrders')->name('accounts.due-orders');
+    Route::post('accounts/orders/{order}/payment', 'storePayment')->name('accounts.store-payment');
+});
+
+});
 
 });
 

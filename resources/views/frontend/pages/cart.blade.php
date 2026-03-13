@@ -10,11 +10,11 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.24em] text-indigo-600">B2B Basket</p>
-                    <h1 class="mt-1 text-3xl font-bold text-slate-900">Cart Summary</h1>
+                    <p class="text-[12px] font-semibold uppercase tracking-[0.12em] text-indigo-600">B2B Basket</p>
+                    <h1 class="mt-1 text-2xl font-semibold text-slate-900 tracking-[0.04em]">Cart Summary</h1>
                     <p class="mt-1 text-sm text-slate-500">Check MOQ, adjust quantity, then continue to checkout.</p>
                 </div>
-                <a href="{{ route('shop') }}" class="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700">
+                <a href="{{ route('shop') }}" class="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700">
                     Continue Shopping
                 </a>
             </div>

@@ -34,9 +34,9 @@
         <div class="mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8">
             <section class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-5">
                 <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
-                    <a href="{{ route('home') }}" class="transition hover:text-emerald-700">Home</a>
+                    <a href="{{ route('home') }}" class="transition hover:text-blue-600">Home</a>
                     <span>/</span>
-                    <a href="{{ route('shop') }}" class="transition hover:text-emerald-700">Catalog</a>
+                    <a href="{{ route('shop') }}" class="transition hover:text-blue-600">Catalog</a>
                     <span>/</span>
                     <span class="line-clamp-1 text-slate-700">{{ $product->name }}</span>
                     <span class="ml-auto hidden text-[10px] uppercase tracking-[0.16em] text-slate-400 sm:inline">{{ $siteName }}</span>
@@ -64,7 +64,7 @@
                                 {{ $productCategoryName !== '' ? $productCategoryName : 'Category not set' }}
                             </span>
                             @if ($detailVariantData->isNotEmpty())
-                                <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
+                                <span class="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
                                     {{ $detailVariantData->count() }} Variants
                                 </span>
                             @endif
@@ -107,7 +107,7 @@
 
                     <div class="space-y-4 lg:col-span-7">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">B2B Product Profile</p>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600">B2B Product Profile</p>
                             <h1 class="mt-1.5 text-2xl font-bold leading-tight text-slate-900 sm:text-[30px]">{{ $product->name }}</h1>
                             @if ($summaryText)
                                 <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ $summaryText }}</p>
@@ -130,37 +130,37 @@
                         </div>
 
                         @auth
-                            <div class="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-4 text-white">
+                            <div class="rounded-xl border border-slate-200 bg-white p-4 text-slate-900">
                                 @if ($isOutletUser)
                                     <div class="grid gap-3 sm:grid-cols-2">
-                                        <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
-                                            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Wholesale Price</p>
-                                            <p class="mt-1 text-2xl font-bold">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
+                                        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Wholesale Price</p>
+                                            <p class="mt-1 text-2xl font-semibold text-slate-800">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
                                             <template x-if="showOutletOriginalPrice">
-                                                <p class="mt-1 text-xs font-semibold text-slate-200/80 line-through">
+                                                <p class="mt-1 text-xs font-semibold text-slate-400 line-through">
                                                     {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
                                                 </p>
                                             </template>
                                         </div>
-                                        <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
-                                            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">Selling Price</p>
-                                            <p class="mt-1 text-xl font-bold">{{ $currencyIcon }}<span x-text="retailDisplayPrice"></span></p>
+                                        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Selling Price</p>
+                                            <p class="mt-1 text-xl font-semibold text-slate-800">{{ $currencyIcon }}<span x-text="retailDisplayPrice"></span></p>
                                         </div>
                                     </div>
                                 @elseif ($isStandardUser)
-                                    <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Wholesale Price</p>
-                                        <p class="mt-1 text-2xl font-bold">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Wholesale Price</p>
+                                        <p class="mt-1 text-2xl font-semibold text-slate-800">{{ $currencyIcon }}<span x-text="outletDisplayPrice"></span></p>
                                         <template x-if="showOutletOriginalPrice">
-                                            <p class="mt-1 text-xs font-semibold text-slate-200/80 line-through">
+                                            <p class="mt-1 text-xs font-semibold text-slate-400 line-through">
                                                 {{ $currencyIcon }}<span x-text="outletOriginalDisplayPrice"></span>
                                             </p>
                                         </template>
                                     </div>
                                 @else
-                                    <div class="rounded-lg border border-white/15 bg-white/10 px-3 py-2.5">
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">Price</p>
-                                        <p class="mt-1 text-2xl font-bold">{{ $currencyIcon }}<span x-text="retailDisplayPrice"></span></p>
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Price</p>
+                                        <p class="mt-1 text-2xl font-semibold text-slate-800">{{ $currencyIcon }}<span x-text="retailDisplayPrice"></span></p>
                                     </div>
                                 @endif
                             </div>
@@ -191,8 +191,8 @@
                                             :class="!canSelectVariant(index)
                                                 ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
                                                 : (selectedVariantIndex === String(index)
-                                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700')"
+                                                    ? 'border-blue-400 bg-blue-50 text-blue-700'
+                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700')"
                                             class="rounded-md border px-2.5 py-1 text-[11px] font-bold leading-none transition-colors">
                                             <span x-text="variantLabel(v)"></span>
                                         </button>
@@ -214,7 +214,7 @@
                                 <div class="grid gap-2.5 sm:grid-cols-[160px_1fr_auto]">
                                     <div class="flex h-10 items-center rounded-md border border-slate-200 bg-white">
                                         <button type="button"
-                                            @click="qty = Math.max(minimumOrderQty, (parseInt(qty) || minimumOrderQty) - minimumOrderQty); normalizeQty()"
+                                            @click="lastRawQty = null; qty = Math.max(minimumOrderQty, (parseInt(qty) || minimumOrderQty) - minimumOrderQty); normalizeQty()"
                                             class="h-full w-9 text-slate-500 transition hover:text-slate-800">
                                             -
                                         </button>
@@ -223,10 +223,11 @@
                                             :min="minimumOrderQty"
                                             :max="inventoryVisible && maxAddableQty > 0 ? maxAddableQty : minimumOrderQty"
                                             :step="minimumOrderQty"
+                                            @input="lastRawQty = $event.target.value"
                                             @change="normalizeQty()"
                                             class="h-full w-full border-x border-slate-200 bg-transparent p-0 text-center text-sm font-bold text-slate-900 focus:outline-none">
                                         <button type="button"
-                                            @click="qty = (parseInt(qty) || minimumOrderQty) + minimumOrderQty; normalizeQty()"
+                                            @click="lastRawQty = null; qty = (parseInt(qty) || minimumOrderQty) + minimumOrderQty; normalizeQty()"
                                             class="h-full w-9 text-slate-500 transition hover:text-slate-800">
                                             +
                                         </button>
@@ -235,7 +236,7 @@
                                     <button @click="canAdd ? addToCart() : notify(cannotAddMessage, 'error')"
                                         :disabled="adding"
                                         :class="canAdd
-                                            ? 'bg-slate-900 text-white hover:bg-emerald-700'
+                                            ? 'bg-slate-900 text-white hover:bg-black'
                                             : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
                                         class="h-10 rounded-md px-4 text-[11px] font-bold uppercase tracking-[0.14em] transition">
                                         <span x-show="!adding">Add To Cart</span>
@@ -348,7 +349,7 @@
                                     <textarea x-model.trim="form.comment"
                                         maxlength="500"
                                         rows="4"
-                                        class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:bg-white"
+                                        class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
                                         placeholder="Write a short review about product quality, packaging, or value."></textarea>
                                 </label>
 
@@ -363,7 +364,7 @@
                                     <button type="button"
                                         @click="submitReview()"
                                         :disabled="submitting || deleting || form.rating < 1"
-                                        class="inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                        class="inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
                                         x-text="submitting ? 'Saving...' : (userReview ? 'Update Review' : 'Submit Review')"></button>
 
                                     <button type="button"
@@ -401,7 +402,7 @@
                                 <button type="button"
                                     @click="fetchReviews()"
                                     :disabled="loadingReviews"
-                                    class="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                    class="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 transition hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                                     Refresh
                                 </button>
                             </div>
@@ -453,14 +454,14 @@
             </section>
 
             @if ($relatedCards->count() > 0)
-                <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+                <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
                     <div class="flex items-end justify-between gap-3">
                         <div>
                             <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Same Category</p>
                             <h2 class="text-lg font-bold text-slate-900">Related Products</h2>
                         </div>
                         <a href="{{ route('shop', ['category' => $product->category_id]) }}"
-                            class="hidden text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700 transition hover:text-emerald-600 md:inline-flex">
+                            class="hidden text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 transition hover:text-slate-900 md:inline-flex">
                             View All
                         </a>
                     </div>
@@ -476,7 +477,7 @@
                                 :is-outlet-user="$isOutletUser"
                                 :is-standard-user="$isStandardUser"
                                 :details-url="$card['details_url']"
-                                class="rounded-xl border-slate-200 p-2.5" />
+                                class="p-2.5" />
                         @endforeach
                     </div>
                 </section>
@@ -700,6 +701,8 @@
                 variants,
                 selectedVariantIndex: '',
                 adding: false,
+                lastRawQty: null,
+                moqToast: null,
                 wishlistBusy: false,
                 isInWishlist: !!initiallyWishlisted,
 
@@ -739,6 +742,7 @@
                     }
 
                     this.selectedVariantIndex = String(index);
+                    this.lastRawQty = null;
                     this.normalizeQty();
                 },
 
@@ -893,13 +897,31 @@
                 },
 
                 normalizeQty() {
-                    let adjustedQty = this.normalizedQty;
+                    const rawSource = this.lastRawQty !== null ? this.lastRawQty : this.qty;
+                    const rawQty = Math.max(1, parseInt(rawSource, 10) || 1);
+                    const moq = this.minimumOrderQty;
+                    let moqAdjusted = rawQty;
+
+                    if (rawQty < moq) {
+                        moqAdjusted = moq;
+                    } else if (rawQty > moq) {
+                        moqAdjusted = Math.ceil(rawQty / moq) * moq;
+                    }
+
+                    let adjustedQty = moqAdjusted;
 
                     if (this.inventoryVisible && this.maxAddableQty > 0 && adjustedQty > this.maxAddableQty) {
                         adjustedQty = this.maxAddableQty;
                     }
 
                     this.qty = adjustedQty;
+                    if (moqAdjusted !== rawQty && adjustedQty === moqAdjusted) {
+                        this.moqToast = { moq, adjustedQty, rawQty };
+                    } else {
+                        this.moqToast = null;
+                        this.lastRawQty = null;
+                    }
+
                     return this.qty;
                 },
 
@@ -988,8 +1010,19 @@
 
                         const bodyEl = document.querySelector('[x-data*="globalApp"]');
                         if (bodyEl?._x_dataStack?.[0]) {
-                            bodyEl._x_dataStack[0].notify('Added to cart ✓', 'success');
+                            const notifier = bodyEl._x_dataStack[0];
+                            const toast = this.moqToast;
+                            if (toast) {
+                                notifier.notify('Added to cart ✓', 'success');
+                                setTimeout(() => {
+                                    notifier.notify(`Minimum order quantity is ${toast.moq}. Your cart has been updated to ${toast.adjustedQty} items.`, 'warning');
+                                }, 250);
+                            } else {
+                                notifier.notify('Added to cart ✓', 'success');
+                            }
                         }
+                        this.moqToast = null;
+                        this.lastRawQty = null;
                     } catch (e) {
                         console.error('Add to cart error:', e);
                         this.notify(e?.message || 'Error adding to cart', 'error');

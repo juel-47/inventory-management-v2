@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\GeneralSetting;
 use App\Models\ProductType;
 use App\Models\Slider;
 use App\Services\CheckoutDiscountResolver;
@@ -27,9 +28,9 @@ class HomeController extends Controller
 
         $sliders = Schema::hasTable('sliders')
             ? Slider::query()
-                ->where('status', 1)
-                ->orderBy('serial')
-                ->get()
+            ->where('status', 1)
+            ->orderBy('serial')
+            ->get()
             : collect();
         $latestCategories = Category::query()
             ->where('status', 1)
@@ -70,7 +71,7 @@ class HomeController extends Controller
         $latestCategoryBlocks = $latestCategories
             ->map(function (Category $category) use ($roleContext): array {
                 $cards = $category->products
-                    ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
+                    ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
                     ->values();
 
                 return [
@@ -106,7 +107,7 @@ class HomeController extends Controller
                 },
             ])
             ->where('status', 1)
-            ->whereHas('category', function($q) {
+            ->whereHas('category', function ($q) {
                 $q->where('status', 1);
             });
 
@@ -185,14 +186,14 @@ class HomeController extends Controller
 
         $products = $query->paginate(24)->withQueryString();
         $shopCards = collect($products->items())
-            ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
+            ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
             ->values();
-        
-        $categories = Category::with(['subCategories' => function($q) {
-                $q->where('status', 1);
-            }, 'subCategories.childCategories' => function($q) {
-                $q->where('status', 1);
-            }])
+
+        $categories = Category::with(['subCategories' => function ($q) {
+            $q->where('status', 1);
+        }, 'subCategories.childCategories' => function ($q) {
+            $q->where('status', 1);
+        }])
             ->where('status', 1)
             ->get();
 
@@ -203,10 +204,14 @@ class HomeController extends Controller
 
         // Get absolute price range for slider
         $min_range = Product::where('status', 1)
-            ->whereHas('category', function($q) { $q->where('status', 1); })
+            ->whereHas('category', function ($q) {
+                $q->where('status', 1);
+            })
             ->min('price') ?? 0;
         $max_range = Product::where('status', 1)
-            ->whereHas('category', function($q) { $q->where('status', 1); })
+            ->whereHas('category', function ($q) {
+                $q->where('status', 1);
+            })
             ->max('price') ?? 1000;
 
         return view('frontend.pages.shop', [
@@ -220,6 +225,23 @@ class HomeController extends Controller
             'outletId' => $outletId,
             'roleContext' => $roleContext,
         ]);
+    }
+
+    /**
+     * Display the frontend about page.
+     */
+    public function about()
+    {
+        return view('frontend.pages.about');
+    }
+
+    /**
+     * Display the frontend contact page.
+     */
+    public function contact()
+    {
+        $settings = GeneralSetting::first();
+        return view('frontend.pages.contact', compact('settings'));
     }
 
     /**
@@ -359,11 +381,11 @@ class HomeController extends Controller
         ];
 
         $detailVariantData = $product->variants
-            ->map(fn ($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
+            ->map(fn($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
             ->values();
 
         $relatedCards = $relatedProducts
-            ->map(fn (Product $relatedProduct) => $this->transformProductForCard($relatedProduct, $roleContext))
+            ->map(fn(Product $relatedProduct) => $this->transformProductForCard($relatedProduct, $roleContext))
             ->values();
 
         return view('frontend.pages.products.show', [
@@ -409,7 +431,7 @@ class HomeController extends Controller
         }
 
         $roleNames = $user->roles->pluck('name')
-            ->map(fn ($name) => strtolower((string) $name))
+            ->map(fn($name) => strtolower((string) $name))
             ->filter()
             ->values()
             ->all();
@@ -473,7 +495,7 @@ class HomeController extends Controller
         ];
 
         $variantPayload = $product->variants
-            ->map(fn ($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
+            ->map(fn($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
             ->values();
 
         return [

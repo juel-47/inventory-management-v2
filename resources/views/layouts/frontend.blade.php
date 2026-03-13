@@ -11,38 +11,15 @@
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     {{-- Assets (Vite) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <style>
-        body { font-family: 'Outfit', sans-serif; }
-        [x-cloak] { display: none !important; }
-
-        /* Global frontend cursor behavior for interactive controls */
-        a[href],
-        button,
-        [role="button"],
-        summary,
-        label[for],
-        input[type="button"],
-        input[type="submit"],
-        input[type="reset"] {
-            cursor: pointer;
-        }
-
-        button:disabled,
-        [role="button"][aria-disabled="true"],
-        input:disabled {
-            cursor: not-allowed;
-        }
-    </style>
-
     @yield('head')
 </head>
 
-<body x-data="globalApp" class="bg-slate-50 text-slate-900 min-h-screen flex flex-col" x-cloak>
+<body x-data="globalApp" class="frontend-classic bg-slate-50 text-slate-900 min-h-screen flex flex-col" x-cloak>
 
     {{-- ── Notifications ─────────────────────────────── --}}
     @include('layouts.partials.frontend-navbar')
