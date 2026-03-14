@@ -159,10 +159,10 @@
                                                     @csrf
                                                     <button type="submit" class="text-slate-700 hover:text-indigo-600">Reorder</button>
                                                 </form>
-                                                @if($user->hasRole('Outlet User') || $user->hasRole('User'))
+                                                {{-- @if($user->hasRole('Outlet User') || $user->hasRole('User'))
                                                     <span class="text-slate-300 mx-1">|</span>
                                                     <a href="{{ route('account.index', ['panel' => 'custom-requests']) }}" class="text-slate-700 hover:text-indigo-600">Request Product</a>
-                                                @endif
+                                                @endif --}}
                                                 @if($hasPi)
                                                     <span class="text-slate-300 mx-1">|</span>
                                                     <a href="{{ route('orders.pi-invoice', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI</a>
@@ -289,7 +289,7 @@
                                 @csrf
                                 <div class="md:col-span-1">
                                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Product Name (Optional)</label>
-                                    <input type="text" name="product_name" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" value="{{ old('product_name') }}">
+                                    <input type="text" name="product_name" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" placeholder="Product name if you know it" value="{{ old('product_name') }}">
                                 </div>
                                 <div class="md:col-span-1">
                                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Quantity Needed</label>
@@ -302,7 +302,7 @@
                                 <div class="md:col-span-1">
                                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Example Image (Optional)</label>
                                     <input type="file" name="example_image[]" id="custom_request_images" multiple accept="image/*"
-                                           class="w-full text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700">
+                                           class="w-full text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700 border-1 border-slate-300">
                                     <div id="custom_request_preview" class="mt-3 flex flex-wrap gap-2"></div>
                                 </div>
                                 <div class="md:col-span-2">
@@ -326,6 +326,7 @@
                                             <th class="py-3 px-4 font-black">Qty</th>
                                             <th class="py-3 px-4 font-black">Status</th>
                                             <th class="py-3 px-4 font-black">Date</th>
+                                            <th class="py-3 pl-4 font-black text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -343,15 +344,28 @@
                                                     </span>
                                                 </td>
                                                 <td class="py-3 px-4 text-sm text-slate-700">{{ $request->created_at?->format('d M Y') }}</td>
+                                                <td class="py-3 pl-4 text-right text-[11px] uppercase tracking-[0.12em] font-black">
+                                                    <a href="{{ route('account.custom-product-requests.show', $request->id) }}" class="text-slate-700 hover:text-indigo-600">View</a>
+                                                    <span class="text-slate-300 mx-1">|</span>
+                                                    <form method="POST" action="{{ route('account.custom-product-requests.reorder', $request->id) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="text-slate-700 hover:text-indigo-600">Reorder</button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5" class="py-6 text-center text-sm text-slate-500">No custom requests yet.</td>
+                                                <td colspan="6" class="py-6 text-center text-sm text-slate-500">No custom requests yet.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
+                            @if(method_exists($customProductRequests, 'links'))
+                                <div class="mt-4">
+                                    {{ $customProductRequests->links('vendor.pagination.tailwind') }}
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @elseif($currentPanel === 'saved-forms')
@@ -441,11 +455,19 @@
                                 @csrf
                                 <div>
                                     <label for="profile_image" class="block text-xs font-black uppercase tracking-[0.12em] text-slate-500 mb-1">Profile Image</label>
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex items-start gap-3">
                                         @if(!empty($user->image))
                                             <img src="{{ asset($user->image) }}" alt="{{ $user->name }}" class="w-12 h-12 rounded-sm object-cover border border-slate-200">
                                         @endif
-                                        <input id="profile_image" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-700 file:mr-3 file:px-3 file:py-1.5 file:border-0 file:bg-slate-200 file:text-slate-700 file:rounded-sm">
+                                        <div class="flex-1">
+                                            <input id="profile_image" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-700 file:mr-3 file:px-3 file:py-1.5 file:border-0 file:bg-slate-200 file:text-slate-700 file:rounded-sm">
+                                            <div id="profile_image_preview" class="mt-3 hidden">
+                                                <div class="relative inline-block">
+                                                    <img id="profile_image_preview_img" src="" alt="Selected profile image preview" class="h-24 w-24 rounded-full object-cover border border-slate-200">
+                                                    <button type="button" id="profile_image_clear" class="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-rose-600 text-white text-xs font-bold leading-none shadow hover:bg-rose-700" aria-label="Remove selected image">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     @error('image', 'profileUpdate')
                                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
@@ -568,33 +590,6 @@
 </section>
 @endsection
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const input = document.getElementById('custom_request_images');
-        const preview = document.getElementById('custom_request_preview');
-        if (!input || !preview) return;
-
-        input.addEventListener('change', function () {
-            preview.innerHTML = '';
-            const files = Array.from(input.files || []);
-            files.forEach((file) => {
-                if (!file.type.startsWith('image/')) return;
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.alt = 'Preview';
-                    img.className = 'h-12 w-12 rounded-full object-cover border border-slate-200';
-                    preview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-    });
-</script>
-@endpush
-
 @section('scripts')
 @php
     $accountToasts = [];
@@ -623,6 +618,81 @@
     <script src="{{ asset('backend/assets/modules/select2/dist/js/select2.full.min.js') }}"></script>
 @endif
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('custom_request_images');
+        const preview = document.getElementById('custom_request_preview');
+        if (input && preview) {
+            const renderCustomRequestPreviews = () => {
+                preview.innerHTML = '';
+                const files = Array.from(input.files || []);
+                files.forEach((file, index) => {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'relative inline-block';
+
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Preview';
+                        img.className = 'h-16 w-16 rounded-full object-cover border border-slate-200';
+
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.textContent = '×';
+                        btn.setAttribute('aria-label', 'Remove selected image');
+                        btn.className = 'absolute -top-2 -right-2 h-6 w-6 rounded-full bg-rose-600 text-white text-xs font-bold leading-none shadow hover:bg-rose-700';
+                        btn.addEventListener('click', () => {
+                            const dt = new DataTransfer();
+                            const currentFiles = Array.from(input.files || []);
+                            currentFiles.forEach((f, i) => {
+                                if (i !== index) dt.items.add(f);
+                            });
+                            input.files = dt.files;
+                            renderCustomRequestPreviews();
+                        });
+
+                        wrapper.appendChild(img);
+                        wrapper.appendChild(btn);
+                        preview.appendChild(wrapper);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            input.addEventListener('change', renderCustomRequestPreviews);
+        }
+
+        const profileInput = document.getElementById('profile_image');
+        const profilePreview = document.getElementById('profile_image_preview');
+        const profilePreviewImg = document.getElementById('profile_image_preview_img');
+        const profileClear = document.getElementById('profile_image_clear');
+        if (profileInput && profilePreview && profilePreviewImg && profileClear) {
+            const clearProfilePreview = () => {
+                profileInput.value = '';
+                profilePreviewImg.src = '';
+                profilePreview.classList.add('hidden');
+            };
+
+            profileInput.addEventListener('change', function () {
+                const file = profileInput.files?.[0];
+                if (!file || !file.type?.startsWith('image/')) {
+                    clearProfilePreview();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    profilePreviewImg.src = e.target.result;
+                    profilePreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            profileClear.addEventListener('click', clearProfilePreview);
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         const accountToasts = @json($accountToasts);
         if (!Array.isArray(accountToasts) || !accountToasts.length) return;

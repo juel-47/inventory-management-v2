@@ -68,12 +68,15 @@
             @canany(['Manage Order Place', 'Manage Order Receive'])
             @can('Manage Order Place')
              <li class="menu-header">Order Place</li>
-             <li class="dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.product-requests.*']) }}">
+            <li class="dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-book"></i>
                     <span>Manage Order Place</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}"><i class="fas fa-calendar-check"></i> Order Place</a></li>
                     <li class="{{ setActive(['admin.orders.*']) }}"><a class="nav-link" href="{{ route('admin.orders.index') }}"><i class="fas fa-shopping-bag"></i> Frontend Orders</a></li>
+                    @canany(['Manage Custom Product Requests', 'View Custom Product Requests'])
+                    <li class="{{ setActive(['admin.custom-product-requests.*']) }}"><a class="nav-link" href="{{ route('admin.custom-product-requests.index') }}"><i class="fas fa-list-alt"></i> Custom Requests</a></li>
+                    @endcanany
                     @if(Auth::user()->hasRole('Admin'))
                     <li class="{{ setActive(['admin.product-requests.index']) }}"><a class="nav-link" href="{{ route('admin.product-requests.index') }}"><i class="fas fa-clipboard-list"></i> All Requests</a></li>
                     <li class="{{ setActive(['admin.product-requests.create']) }}"><a class="nav-link" href="{{ route('admin.product-requests.create') }}"><i class="fas fa-plus"></i> Create Request</a></li>
@@ -202,6 +205,5 @@
         </ul>
     </aside>
 </div>
-
 
 

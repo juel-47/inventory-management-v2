@@ -36,11 +36,14 @@
             <!-- Bookings & Purchases -->
             @canany(['Manage Order Place', 'Manage Order Receive'])
             @can('Manage Order Place')
-            <li class="nav-item dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*']) }}">
+            <li class="nav-item dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.custom-product-requests.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-book"></i><span>Order Place</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}">All Order Place</a></li>
                     <li class="{{ setActive(['admin.orders.*']) }}"><a class="nav-link" href="{{ route('admin.orders.index') }}">Frontend Orders</a></li>
+                    @canany(['Manage Custom Product Requests', 'View Custom Product Requests'])
+                    <li class="{{ setActive(['admin.custom-product-requests.*']) }}"><a class="nav-link" href="{{ route('admin.custom-product-requests.index') }}">Custom Requests</a></li>
+                    @endcanany
                 </ul>
             </li>
             @endcan

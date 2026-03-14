@@ -83,6 +83,8 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
         Route::post('/my-account/saved-forms/{savedRequest}/checkout', 'checkoutSavedForm')->name('account.saved-forms.checkout');
         Route::delete('/my-account/saved-forms/{savedRequest}', 'deleteSavedForm')->name('account.saved-forms.delete');
         Route::post('/my-account/custom-product-requests', 'storeCustomProductRequest')->name('account.custom-product-requests.store');
+        Route::get('/my-account/custom-product-requests/{customProductRequest}', 'showCustomProductRequest')->name('account.custom-product-requests.show');
+        Route::post('/my-account/custom-product-requests/{customProductRequest}/reorder', 'reorderCustomProductRequest')->name('account.custom-product-requests.reorder');
     });
 
     Route::controller(FrontendCartController::class)->group(function () {

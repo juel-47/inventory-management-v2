@@ -72,7 +72,7 @@ class CheckPermission
             'Manage Product Requests' => [],
             'Manage Reports' => ['ReportController'],
             'Manage Notification' => ['NotificationController'],
-            'account' => ['AccountController'],
+            'Accountants' => ['AccountController'],
         ];
 
         foreach ($map as $permission => $controllers) {

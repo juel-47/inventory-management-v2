@@ -86,14 +86,31 @@
                         @if($customProductRequest->expected_price)
                         <div class="mb-3">
                             <div class="detail-label">Expected Price (per unit)</div>
-                            <div class="detail-value">${{ number_format($customProductRequest->expected_price, 2) }}</div>
+                            <div class="detail-value">{{$settings->currency_icon}}{{ number_format($customProductRequest->expected_price, 2) }}</div>
                         </div>
                         @endif
 
-                        @if($customProductRequest->example_image)
+                        @php
+                            $exampleImages = $customProductRequest->example_image ?? [];
+                            if (is_string($exampleImages)) {
+                                $exampleImages = [$exampleImages];
+                            }
+                        @endphp
+                        @if(!empty($exampleImages))
                         <div class="mb-3">
                             <div class="detail-label">Example Photo</div>
-                            <img src="{{ asset($customProductRequest->example_image) }}" alt="Product Image" style="max-width: 300px; border-radius: 8px; border: 2px solid #dee2e6;">
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($exampleImages as $image)
+                                    @php
+                                        $imagePath = is_array($image)
+                                            ? ($image['path'] ?? $image['url'] ?? ($image[0] ?? null))
+                                            : $image;
+                                    @endphp
+                                    @if(!empty($imagePath))
+                                        <img src="{{ asset($imagePath) }}" alt="Product Image" style="max-width: 180px; border-radius: 8px; border: 2px solid #dee2e6;">
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
                         @endif
                     </div>

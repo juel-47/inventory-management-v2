@@ -61,7 +61,7 @@
             </section>
 
             <section class="bg-white border border-slate-100 rounded-2xl p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">Billing Info</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">Shipping & Billing Info</h2>
                 <div class="text-sm text-slate-600 space-y-1">
                     <p><span class="font-semibold text-slate-900">Name:</span> {{ $order->billing_name }}</p>
                     <p><span class="font-semibold text-slate-900">Email:</span> {{ $order->billing_email }}</p>

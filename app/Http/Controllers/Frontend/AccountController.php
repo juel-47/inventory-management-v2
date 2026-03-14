@@ -46,7 +46,8 @@ class AccountController extends Controller
         $customProductRequests = CustomProductRequest::query()
             ->where('user_id', $user->id)
             ->orderByDesc('id')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
         $mapOrderFormProduct = function ($product) use ($isOutletRole) {
@@ -262,6 +263,48 @@ class AccountController extends Controller
                 ->route('account.index', ['panel' => 'custom-requests'])
                 ->with('error', 'Something went wrong. Please try again.');
         }
+    }
+
+    public function reorderCustomProductRequest(CustomProductRequest $customProductRequest)
+    {
+        $user = Auth::user();
+        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        abort_if((int) $customProductRequest->user_id !== (int) $user->id, 403);
+
+        $newRequest = new CustomProductRequest();
+        $newRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
+        $newRequest->user_id = $user->id;
+        $newRequest->product_name = $customProductRequest->product_name;
+        $newRequest->product_description = $customProductRequest->product_description;
+        $newRequest->example_image = $customProductRequest->getRawOriginal('example_image');
+        $newRequest->quantity_needed = (int) $customProductRequest->quantity_needed;
+        $newRequest->expected_price = $customProductRequest->expected_price;
+        $newRequest->status = 'pending';
+        $newRequest->admin_note = null;
+        $newRequest->save();
+
+        return redirect()
+            ->route('account.index', ['panel' => 'custom-requests'])
+            ->with('success', 'Request placed again successfully.');
+    }
+
+    public function showCustomProductRequest(CustomProductRequest $customProductRequest)
+    {
+        $user = Auth::user();
+        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        abort_if((int) $customProductRequest->user_id !== (int) $user->id, 403);
+
+        $customProductRequest->load('user');
+
+        return view('frontend.pages.account.custom-request-show', [
+            'customProductRequest' => $customProductRequest,
+        ]);
     }
 
     public function addOrderFormToCart(Request $request)
