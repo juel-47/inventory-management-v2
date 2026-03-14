@@ -149,6 +149,16 @@
                     <div class="card">
                         <div class="card-header border-bottom">
                             <h4><i class="fas fa-history mr-2"></i>Payment History</h4>
+                            @if($order->payments->count() > 0)
+                                <div class="card-header-action">
+                                    <a href="{{ route('admin.accounts.orders.payments.pdf', $order->id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-file-pdf mr-1"></i> Download All
+                                    </a>
+                                    <a href="{{ route('admin.accounts.orders.payments.view', $order->id) }}" class="btn btn-sm btn-outline-primary ml-2" target="_blank">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -158,6 +168,8 @@
                                             <th>Date</th>
                                             <th>Method</th>
                                             <th>Transaction ID</th>
+                                            <th>Receipts</th>
+                                            <th>PDF</th>
                                             <th class="text-right">Amount</th>
                                         </tr>
                                     </thead>
@@ -167,19 +179,43 @@
                                                 <td>{{ $payment->created_at->format('d M, Y h:i A') }}</td>
                                                 <td><span class="badge badge-info">{{ strtoupper($payment->payment_method) }}</span></td>
                                                 <td>{{ $payment->transaction_id ?? 'N/A' }}</td>
-                                                <td class="text-right font-weight-bold">{{ number_format($payment->amount, 2) }}</td>
+                                                <td>
+                                                    @if($payment->receipts->count() > 0)
+                                                        @foreach($payment->receipts as $receipt)
+                                                            <div class="mb-1">
+                                                                <a href="{{ route('admin.accounts.receipts.download', $receipt->id) }}" class="btn btn-sm btn-outline-primary">
+                                                                    <i class="fas fa-download mr-1"></i> 
+                                                                </a>
+                                                                <a href="{{ route('admin.accounts.receipts.destroy', $receipt->id) }}" class="btn btn-sm btn-outline-danger delete-item">
+                                                                    <i class="fas fa-trash mr-1"></i>
+                                                                </a>
+                                                            </div>
+                                                        @endforeach
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <a href="{{ route('admin.accounts.payments.single.pdf', $payment->id) }}" class="btn btn-sm btn-warning">
+                                                        <i class="fas fa-file-pdf mr-1"></i>
+                                                    </a>
+                                                     <a href="{{ route('admin.accounts.payments.single.view', $payment->id) }}" class="btn btn-sm btn-outline-primary ml-2" target="_blank">
+                                        <i class="fas fa-eye mr-1"></i>
+                                    </a>
+                                                </td>
+                                                <td class="text-right font-weight-bold">{{$settings->currency_icon}}{{ number_format($payment->amount, 2) }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center py-3 text-muted">No payments recorded yet.</td>
+                                                <td colspan="6" class="text-center py-3 text-muted">No payments recorded yet.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                     @if($order->payments->count() > 0)
                                         <tfoot class="bg-light">
                                             <tr>
-                                                <td colspan="3" class="text-right font-weight-bold">Total Paid</td>
-                                                <td class="text-right font-weight-bold text-success">{{ number_format($order->paid_amount, 2) }}</td>
+                                                <td colspan="5" class="text-right font-weight-bold">Total Paid</td>
+                                                <td class="text-right font-weight-bold text-success">{{$settings->currency_icon}}{{ number_format($order->paid_amount, 2) }}</td>
                                             </tr>
                                         </tfoot>
                                     @endif

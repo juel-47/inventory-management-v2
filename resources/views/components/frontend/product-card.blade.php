@@ -180,11 +180,15 @@
                         </div>
                     </div>
 
+                    
                         <div class="rounded-md border border-slate-200 bg-white p-3">
-                            <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                            {{-- <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                                 <span>MIM: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
                                 <template x-if="isInCart">
-                                    <span class="text-red-600">In cart: <span class="text-red-600" x-text="inCartQty"></span></span>
+                                    <span class="text-red-600">Total in cart: <span class="text-red-600" x-text="inCartQty"></span></span>
+                                </template>
+                                <template x-if="hasVariants && selectedVariant">
+                                    <span class="text-red-600">This variant in cart: <span class="text-red-600" x-text="variantInCartQty"></span></span>
                                 </template>
                                 <template x-if="!hasVariants || selectedVariant">
                                     <span class="ml-auto text-right">In stock: <span class="text-slate-600" x-text="currentStock"></span></span>
@@ -192,8 +196,91 @@
                                 <template x-if="hasVariants && !selectedVariant">
                                     <span class="w-full text-right normal-case tracking-normal text-slate-500">Select variant first</span>
                             </template>
-                        </div>
+                        </div> --}}
+   {{-- working code  --}}
+{{-- <div class="rounded-md border border-slate-200 bg-white p-3 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+    <!-- Line 1: MIM + Total in cart -->
+    <div class="flex items-center justify-between gap-3 mb-1.5">
+        <div class="flex items-center gap-3">
+            <span>MIM: <span class="text-slate-700" x-text="minimumOrderQty"></span></span>
+            
+            <template x-if="isInCart">
+                <span class="text-red-600">
+                    Total in cart: <span class="text-red-600" x-text="inCartQty"></span>
+                </span>
+            </template>
+        </div>
 
+        <!-- Small spacer / alignment helper -->
+        <div class="flex-1 min-w-[1px]"></div>
+    </div>
+
+    <!-- Line 2: This variant in cart + In stock -->
+    <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <template x-if="hasVariants && selectedVariant && variantInCartQty > 0">
+                <span class="text-red-600">
+                     in cart: <span class="text-red-600" x-text="variantInCartQty"></span>
+                </span>
+            </template>
+
+            <template x-if="hasVariants && selectedVariant && variantInCartQty === 0">
+                <span class="text-slate-500">in cart: 0</span>
+            </template>
+        </div>
+
+        <div class="text-right">
+            <template x-if="!hasVariants || selectedVariant">
+                <span>
+                    In stock: <span class="text-slate-700" x-text="currentStock"></span>
+                </span>
+            </template>
+
+            <template x-if="hasVariants && !selectedVariant">
+                <span class="text-slate-400 normal-case tracking-normal">
+                    Select variant first
+                </span>
+            </template>
+        </div>
+    </div>
+</div> --}}
+
+{{-- new code --}}
+<div class="rounded-md border border-slate-200 bg-white p-3 text-[9.5px] font-semibold uppercase tracking-wide text-slate-600 mb-1">
+
+    <!-- লাইন ১: MIM + TOTAL IN CART (যদি থাকে) -->
+    <div class="flex justify-between items-center mb-1">
+        <span>MIM: <span class="text-slate-800" x-text="minimumOrderQty"></span></span>
+
+        {{-- <template x-if="inCartQty >= 0">
+            <span class="text-red-600">TOTAL IN CART: <span x-text="inCartQty ?? 0"></span></span>
+        </template> --}}
+        <span :class="inCartQty > 0 ? 'text-red-600' : 'text-slate-400'">
+        TOTAL IN CART: <span x-text="inCartQty ?? 0"></span>
+    </span>
+    </div>
+
+    <!-- লাইন ২: THIS VARIANT + IN STOCK -->
+    <div class="flex justify-between items-center">
+
+        <!-- বাম দিক: variant specific qty — selected থাকলে সবসময় দেখাবে (0 হলেও) -->
+        <template x-if="hasVariants">
+            <span x-show="selectedVariant" class="text-red-600">
+                 IN CART: <span x-text="variantInCartQty ?? 0"></span>
+            </span>
+
+            <span x-show="!selectedVariant" class="text-slate-400 normal-case">
+                Select variant first
+            </span>
+        </template>
+
+        <!-- ডান দিক: stock -->
+        <span x-show="!hasVariants || selectedVariant">
+            IN STOCK: <span class="text-slate-800 font-bold" x-text="currentStock"></span>
+        </span>
+    </div>
+
+</div>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="number"
                                 x-model.number="qty"

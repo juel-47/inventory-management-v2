@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\CustomProductRequest;
 use App\Models\SavedPurchaseForm;
 use App\Models\SavedPurchaseFormItem;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -40,6 +42,11 @@ class AccountController extends Controller
             ->orderByDesc('id')
             ->take(8)
             ->get(['id', 'order_no', 'created_at']);
+
+        $customProductRequests = CustomProductRequest::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->get();
 
         $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
         $mapOrderFormProduct = function ($product) use ($isOutletRole) {
@@ -196,11 +203,65 @@ class AccountController extends Controller
             'panel',
             'orders',
             'recentOrders',
+            'customProductRequests',
             'productsForOrderForm',
             'reorderSeedRows',
             'savedPurchaseForms',
             'selectedSavedRequestId'
         ));
+    }
+
+    public function storeCustomProductRequest(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $validated = $request->validate([
+            'product_description' => 'required|string|min:10',
+            'product_name' => 'nullable|string|max:255',
+            'example_image' => 'nullable|array',
+            'example_image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'quantity_needed' => 'required|integer|min:1',
+            'expected_price' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $customRequest = new CustomProductRequest();
+            $customRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
+            $customRequest->user_id = $user->id;
+            $customRequest->product_name = $validated['product_name'] ?? null;
+            $customRequest->product_description = $validated['product_description'];
+            $customRequest->quantity_needed = (int) $validated['quantity_needed'];
+            $customRequest->expected_price = $validated['expected_price'] ?? null;
+            $customRequest->status = 'pending';
+
+            if ($request->hasFile('example_image')) {
+                $paths = [];
+                foreach ($request->file('example_image') as $image) {
+                    if (!$image || !$image->isValid()) {
+                        continue;
+                    }
+                    $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('uploads/custom_product_requests'), $imageName);
+                    $paths[] = 'uploads/custom_product_requests/' . $imageName;
+                }
+                if (!empty($paths)) {
+                    $customRequest->example_image = json_encode($paths);
+                }
+            }
+
+            $customRequest->save();
+            return redirect()
+                ->route('account.index', ['panel' => 'custom-requests'])
+                ->with('success', 'Custom product request submitted successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to create custom product request', ['error' => $e->getMessage()]);
+            return redirect()
+                ->route('account.index', ['panel' => 'custom-requests'])
+                ->with('error', 'Something went wrong. Please try again.');
+        }
     }
 
     public function addOrderFormToCart(Request $request)

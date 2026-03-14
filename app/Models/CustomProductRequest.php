@@ -26,6 +26,24 @@ class CustomProductRequest extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function getExampleImageAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        return [$value];
+    }
+
     /**
      * Get the status badge class for display
      */

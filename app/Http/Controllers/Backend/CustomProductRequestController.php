@@ -74,7 +74,8 @@ class CustomProductRequestController extends Controller implements HasMiddleware
         $request->validate([
             'product_description' => 'required|string|min:10',
             'product_name' => 'nullable|string|max:255',
-            'example_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'example_image' => 'nullable|array',
+            'example_image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'quantity_needed' => 'required|integer|min:1',
             'expected_price' => 'nullable|numeric|min:0',
         ]);
@@ -99,10 +100,18 @@ class CustomProductRequestController extends Controller implements HasMiddleware
 
             // Handle image upload
             if ($request->hasFile('example_image')) {
-                $image = $request->file('example_image');
-                $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('uploads/custom_product_requests'), $imageName);
-                $customRequest->example_image = 'uploads/custom_product_requests/' . $imageName;
+                $paths = [];
+                foreach ($request->file('example_image') as $image) {
+                    if (!$image || !$image->isValid()) {
+                        continue;
+                    }
+                    $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('uploads/custom_product_requests'), $imageName);
+                    $paths[] = 'uploads/custom_product_requests/' . $imageName;
+                }
+                if (!empty($paths)) {
+                    $customRequest->example_image = json_encode($paths);
+                }
             }
 
             $customRequest->save();

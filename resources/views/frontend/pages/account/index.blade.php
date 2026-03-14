@@ -88,6 +88,9 @@
                     {{-- <a href="{{ route('account.index', ['panel' => 'downloads']) }}" class="{{ $menuBase }} {{ $currentPanel === 'downloads' ? $menuActive : $menuIdle }}">Downloads</a> --}}
                     {{-- <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="{{ $menuBase }} {{ $currentPanel === 'addresses' ? $menuActive : $menuIdle }}">Addresses</a> --}}
                     <a href="{{ route('account.index', ['panel' => 'order-form']) }}" class="{{ $menuBase }} {{ $currentPanel === 'order-form' ? $menuActive : $menuIdle }}">Order Form</a>
+                    @if($user->hasRole('Outlet User') || $user->hasRole('User'))
+                        <a href="{{ route('account.index', ['panel' => 'custom-requests']) }}" class="{{ $menuBase }} {{ $currentPanel === 'custom-requests' ? $menuActive : $menuIdle }}">Custom Product Request</a>
+                    @endif
                     <a href="{{ route('account.index', ['panel' => 'saved-forms']) }}" class="{{ $menuBase }} {{ $currentPanel === 'saved-forms' ? $menuActive : $menuIdle }}">Saved Forms</a>
                     {{-- <a href="{{ route('wishlist.index') }}" class="{{ $menuBase }} {{ $menuIdle }}">Shopping List</a> --}}
                     <a href="{{ route('account.index', ['panel' => 'profile']) }}" class="{{ $menuBase }} {{ $currentPanel === 'profile' ? $menuActive : $menuIdle }}">Account Information</a>
@@ -156,6 +159,10 @@
                                                     @csrf
                                                     <button type="submit" class="text-slate-700 hover:text-indigo-600">Reorder</button>
                                                 </form>
+                                                @if($user->hasRole('Outlet User') || $user->hasRole('User'))
+                                                    <span class="text-slate-300 mx-1">|</span>
+                                                    <a href="{{ route('account.index', ['panel' => 'custom-requests']) }}" class="text-slate-700 hover:text-indigo-600">Request Product</a>
+                                                @endif
                                                 @if($hasPi)
                                                     <span class="text-slate-300 mx-1">|</span>
                                                     <a href="{{ route('orders.pi-invoice', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI</a>
@@ -270,6 +277,80 @@
                                         <p class="text-2xl font-light text-slate-900">Total: <span class="font-black" x-text="formatMoney(grandTotal)"></span></p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                @elseif($currentPanel === 'custom-requests')
+                    <div class="space-y-6">
+                        <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6">
+                            <h2 class="text-3xl font-light text-slate-900 mb-2 uppercase tracking-wide">Custom Product Request</h2>
+                            <p class="text-sm text-slate-500 mb-6">Tell us what product you need. We will review and contact you.</p>
+                            <form method="POST" action="{{ route('account.custom-product-requests.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @csrf
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Product Name (Optional)</label>
+                                    <input type="text" name="product_name" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" value="{{ old('product_name') }}">
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Quantity Needed</label>
+                                    <input type="number" name="quantity_needed" min="1" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" value="{{ old('quantity_needed', 1) }}" required>
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Expected Price (Optional)</label>
+                                    <input type="number" name="expected_price" min="0" step="0.01" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" value="{{ old('expected_price') }}">
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Example Image (Optional)</label>
+                                    <input type="file" name="example_image[]" id="custom_request_images" multiple accept="image/*"
+                                           class="w-full text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700">
+                                    <div id="custom_request_preview" class="mt-3 flex flex-wrap gap-2"></div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Product Description</label>
+                                    <textarea name="product_description" rows="4" class="w-full border border-slate-300 rounded-sm px-3 py-2 text-sm" required>{{ old('product_description') }}</textarea>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <button type="submit" class="px-6 py-2 bg-slate-900 text-white text-xs font-semibold uppercase tracking-wider">Submit Request</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6">
+                            <h3 class="text-xl font-semibold text-slate-800 mb-4">My Requests</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full min-w-[780px]">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-[0.12em] text-slate-600">
+                                            <th class="py-3 pr-4 font-black">Request No</th>
+                                            <th class="py-3 px-4 font-black">Product</th>
+                                            <th class="py-3 px-4 font-black">Qty</th>
+                                            <th class="py-3 px-4 font-black">Status</th>
+                                            <th class="py-3 px-4 font-black">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($customProductRequests as $request)
+                                            <tr class="border-b border-slate-100">
+                                                <td class="py-3 pr-4 text-sm font-semibold text-slate-800">{{ $request->request_no }}</td>
+                                                <td class="py-3 px-4 text-sm text-slate-700">{{ $request->product_name ?: 'Custom Product' }}</td>
+                                                <td class="py-3 px-4 text-sm text-slate-700">{{ $request->quantity_needed }}</td>
+                                                <td class="py-3 px-4 text-sm">
+                                                    <span class="px-2 py-1 text-xs font-bold rounded-sm
+                                                        {{ $request->status === 'approved' ? 'bg-emerald-100 text-emerald-700' : '' }}
+                                                        {{ $request->status === 'rejected' ? 'bg-rose-100 text-rose-700' : '' }}
+                                                        {{ $request->status === 'pending' ? 'bg-amber-100 text-amber-700' : '' }}">
+                                                        {{ ucfirst($request->status) }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-4 text-sm text-slate-700">{{ $request->created_at?->format('d M Y') }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="py-6 text-center text-sm text-slate-500">No custom requests yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -486,6 +567,33 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('custom_request_images');
+        const preview = document.getElementById('custom_request_preview');
+        if (!input || !preview) return;
+
+        input.addEventListener('change', function () {
+            preview.innerHTML = '';
+            const files = Array.from(input.files || []);
+            files.forEach((file) => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Preview';
+                    img.className = 'h-12 w-12 rounded-full object-cover border border-slate-200';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    });
+</script>
+@endpush
 
 @section('scripts')
 @php

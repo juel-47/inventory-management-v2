@@ -58,7 +58,7 @@
                 </section>
 
                 <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <h2 class="text-lg font-bold text-slate-900 mb-4">Info</h2>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4">Shipping & Billing Info</h2>
 
                     <form id="checkout-form" action="{{ route('checkout.place-order') }}" method="POST">
                         @csrf

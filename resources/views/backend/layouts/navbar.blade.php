@@ -246,7 +246,7 @@
                  <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-file-invoice-dollar"></i><span>Accounts</span></a>
                  <ul class="dropdown-menu">
                      <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}">Transaction History</a></li>
-                     <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}">Record Payment</a></li>
+                     <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}">Recive Payment</a></li>
                      <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}">Due Orders</a></li>
                  </ul>
              </li>

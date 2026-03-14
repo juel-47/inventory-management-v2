@@ -53,9 +53,32 @@ document.addEventListener('alpine:init', () => {
                 return 0;
             }
 
-            const selectedVariantId = this.selectedVariant
-                ? parseInt(this.selectedVariant?.id, 10)
-                : null;
+            return items.reduce((total, item) => {
+                const itemPid = parseInt(item?.product_id ?? item?.product?.id ?? item?.productId ?? item?.id, 10);
+                if (!Number.isFinite(itemPid) || itemPid !== pid) {
+                    return total;
+                }
+
+                const qty = Math.max(0, parseInt(item?.quantity, 10) || 0);
+                return total + qty;
+            }, 0);
+        },
+
+        get variantInCartQty() {
+            if (!this.hasVariants || !this.selectedVariant) {
+                return 0;
+            }
+
+            const pid = parseInt(this.product?.id, 10);
+            const selectedVariantId = parseInt(this.selectedVariant?.id, 10);
+            if (!Number.isFinite(pid) || !Number.isFinite(selectedVariantId)) {
+                return 0;
+            }
+
+            const items = this.cartItems;
+            if (!items.length) {
+                return 0;
+            }
 
             return items.reduce((total, item) => {
                 const itemPid = parseInt(item?.product_id ?? item?.product?.id ?? item?.productId ?? item?.id, 10);
@@ -68,13 +91,7 @@ document.addEventListener('alpine:init', () => {
                     ? null
                     : parseInt(rawVariant, 10);
 
-                if (this.hasVariants) {
-                    if (Number.isFinite(selectedVariantId)) {
-                        if (itemVid !== selectedVariantId) {
-                            return total;
-                        }
-                    }
-                } else if (itemVid !== null && Number.isFinite(itemVid)) {
+                if (itemVid !== selectedVariantId) {
                     return total;
                 }
 

@@ -345,16 +345,35 @@
             </div>
         @endunless
 
+        @php
+            $itemsForColumns = $order->items ?? collect();
+            $showImageCol = $itemsForColumns->contains(fn ($row) => !empty($row->product_image));
+            $showProductNoCol = $itemsForColumns->contains(fn ($row) => !empty(optional($row->product)->product_number));
+            $showCategoryCol = $itemsForColumns->contains(fn ($row) => !empty(optional(optional($row->product)->category)->name) || !empty($row->category_name));
+            $showUnitCol = $itemsForColumns->contains(fn ($row) => !empty(optional(optional($row->product)->unit)->name));
+            $showVariantsCol = $itemsForColumns->contains(fn ($row) => !empty($row->variant_label));
+        @endphp
+
         <table>
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
-                    <th style="width: 15%;">Image</th>
+                    @if ($showImageCol)
+                        <th style="width: 15%;">Image</th>
+                    @endif
                     <th style="width: 20%;">Product Information</th>
-                    <th style="width: 10%;">Product No</th>
-                    <th style="width: 15%;">Category</th>
-                    <th style="width: 10%;">Unit</th>
-                    <th style="width: 15%;">Variants Ordered</th>
+                    @if ($showProductNoCol)
+                        <th style="width: 10%;">Product No</th>
+                    @endif
+                    @if ($showCategoryCol)
+                        <th style="width: 15%;">Category</th>
+                    @endif
+                    @if ($showUnitCol)
+                        <th style="width: 10%;">Unit</th>
+                    @endif
+                    @if ($showVariantsCol)
+                        <th style="width: 15%;">Variants Ordered</th>
+                    @endif
                     <th style="width: 10%;" class="text-right">Total Qty</th>
                 </tr>
             </thead>
@@ -430,13 +449,15 @@
                     @endphp
                     <tr>
                         <td>{{ $index }}</td>
-                        <td class="image-cell">
-                            @if ($imageSrc)
-                                <img src="{{ $imageSrc }}" alt="{{ $item->product_name }}">
-                            @else
-                                <span class="image-empty">No Image</span>
-                            @endif
-                        </td>
+                        @if ($showImageCol)
+                            <td class="image-cell">
+                                @if ($imageSrc)
+                                    <img src="{{ $imageSrc }}" alt="{{ $item->product_name }}">
+                                @else
+                                    <span class="image-empty">No Image</span>
+                                @endif
+                            </td>
+                        @endif
                         <td>
                             <strong>{{ $item->product_name }}</strong><br>
 
@@ -475,53 +496,61 @@
                         </td>
 
                         <!-- Product No Column -->
-                        <td>
-                            @if ($item->product && $item->product->product_number)
-                                <small>{{ $item->product->product_number }}</small>
-                            @else
-                                <small>N/A</small>
-                            @endif
-                        </td>
+                        @if ($showProductNoCol)
+                            <td>
+                                @if ($item->product && $item->product->product_number)
+                                    <small>{{ $item->product->product_number }}</small>
+                                @else
+                                    <small>N/A</small>
+                                @endif
+                            </td>
+                        @endif
 
                         <!-- Category Column -->
-                        <td>
-                            @if ($item->product)
-                                <small><strong>Main:</strong> {{ $item->product->category->name ?? 'N/A' }}</small><br>
-                                @if ($item->product->subCategory)
-                                    <small><strong>Sub:</strong> {{ $item->product->subCategory->name }}</small><br>
+                        @if ($showCategoryCol)
+                            <td>
+                                @if ($item->product)
+                                    <small><strong>Main:</strong> {{ $item->product->category->name ?? 'N/A' }}</small><br>
+                                    @if ($item->product->subCategory)
+                                        <small><strong>Sub:</strong> {{ $item->product->subCategory->name }}</small><br>
+                                    @endif
+                                    @if ($item->product->childCategory)
+                                        <small><strong>Child:</strong>
+                                            {{ $item->product->childCategory->name }}</small><br>
+                                    @endif
+                                @else
+                                    <small>{{ $item->category_name ?: 'General' }}</small>
                                 @endif
-                                @if ($item->product->childCategory)
-                                    <small><strong>Child:</strong>
-                                        {{ $item->product->childCategory->name }}</small><br>
-                                @endif
-                            @else
-                                <small>{{ $item->category_name ?: 'General' }}</small>
-                            @endif
-                        </td>
+                            </td>
+                        @endif
 
                         <!-- Unit Column -->
-                        <td>
-                            @if ($item->product && $item->product->unit)
-                                <small>{{ $item->product->unit->name }}</small>
-                            @else
-                                <small>N/A</small>
-                            @endif
-                        </td>
+                        @if ($showUnitCol)
+                            <td>
+                                @if ($item->product && $item->product->unit)
+                                    <small>{{ $item->product->unit->name }}</small>
+                                @else
+                                    <small>N/A</small>
+                                @endif
+                            </td>
+                        @endif
 
                         <!-- Variants Column -->
-                        <td>
-                            @if (count($group['variants']) > 0)
-                                @foreach ($group['variants'] as $vName => $vQty)
-                                    <div style="margin-bottom: 3px;">
-                                        <span class="badge badge-info"
-                                            style="color: #0f0f0f; font-size: 11px;">{{ $vName }} &times;
-                                            {{ $vQty }}</span>
-                                    </div>
-                                @endforeach
-                            @else
-                                <small>Standard</small>
-                            @endif
-                        </td>
+                        @if ($showVariantsCol)
+                            <td>
+                                @if (count($group['variants']) > 0)
+                                    @foreach ($group['variants'] as $vName => $vQty)
+                                        <div style="margin-bottom: 3px;">
+                                            <span class="badge badge-info"
+                                                style="color: #0f0f0f; font-size: 11px;">{{ $vName }} &times;
+                                                {{ $vQty }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <small>Standard</small>
+                                @endif
+                            </td>
+                        @endif
 
                         <td class="text-right"><strong>{{ $group['total_qty'] }}</strong></td>
                     </tr>

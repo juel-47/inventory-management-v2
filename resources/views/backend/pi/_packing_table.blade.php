@@ -2,6 +2,26 @@
     $piType = $piInfo['pi_type'] ?? 'simple';
     $rows = $piInfo['rows'] ?? [];
     $blocks = $piInfo['blocks'] ?? [];
+    $rowsCollection = collect($rows);
+    $showSimpleOrderedQty = $rowsCollection->contains(fn ($row) => isset($row['ordered_qty']) && $row['ordered_qty'] !== null && $row['ordered_qty'] !== '');
+    $showSimpleCtnNo = $rowsCollection->contains(fn ($row) => !empty($row['ctn_no']));
+    $showSimpleCtnSize = $rowsCollection->contains(fn ($row) => !empty($row['ctn_size']));
+    $showSimplePcsPerCtn = $rowsCollection->contains(fn ($row) => isset($row['pcs_per_ctn']) && $row['pcs_per_ctn'] !== null && $row['pcs_per_ctn'] !== '');
+    $showSimpleCtnQty = $rowsCollection->contains(fn ($row) => isset($row['ctn_qty']) && $row['ctn_qty'] !== null && $row['ctn_qty'] !== '');
+    $showSimpleTotalPcs = $rowsCollection->contains(fn ($row) => isset($row['total_pcs']) && $row['total_pcs'] !== null && $row['total_pcs'] !== '');
+    $showSimpleNw = $rowsCollection->contains(fn ($row) => isset($row['nw_kg']) && $row['nw_kg'] !== null && $row['nw_kg'] !== '');
+    $showSimpleGw = $rowsCollection->contains(fn ($row) => isset($row['gw_kg']) && $row['gw_kg'] !== null && $row['gw_kg'] !== '');
+    $showSimpleNote = $rowsCollection->contains(fn ($row) => !empty($row['note']));
+    $visibleSimpleColumns = 1
+        + ($showSimpleOrderedQty ? 1 : 0)
+        + ($showSimpleCtnNo ? 1 : 0)
+        + ($showSimpleCtnSize ? 1 : 0)
+        + ($showSimplePcsPerCtn ? 1 : 0)
+        + ($showSimpleCtnQty ? 1 : 0)
+        + ($showSimpleTotalPcs ? 1 : 0)
+        + ($showSimpleNw ? 1 : 0)
+        + ($showSimpleGw ? 1 : 0)
+        + ($showSimpleNote ? 1 : 0);
 @endphp
 
 <div style="margin-top: 28px;">
@@ -40,6 +60,20 @@
                 })->values()->all();
                 $activeVariantMap = array_map(fn ($index) => $variantHeaders[$index], $activeVariantIndexes);
                 $variantHeaderCount = count($activeVariantMap);
+                $showCtnQty = $rowsToShow->contains(fn ($row) => $row['ctn_qty'] !== null && $row['ctn_qty'] !== '');
+                $showCtnNo = $rowsToShow->contains(fn ($row) => !empty($row['ctn_no']));
+                $showPcs = $rowsToShow->contains(fn ($row) => \App\Support\PiInfoSupport::rowPcs($row) > 0);
+                $showTotalPcs = $rowsToShow->contains(fn ($row) => $row['total_pcs'] !== null && $row['total_pcs'] !== '');
+                $showNw = $rowsToShow->contains(fn ($row) => $row['nw_kg'] !== null && $row['nw_kg'] !== '');
+                $showGw = $rowsToShow->contains(fn ($row) => $row['gw_kg'] !== null && $row['gw_kg'] !== '');
+                $visibleColumns = 2
+                    + ($showCtnQty ? 1 : 0)
+                    + ($showCtnNo ? 1 : 0)
+                    + $variantHeaderCount
+                    + ($showPcs ? 1 : 0)
+                    + ($showTotalPcs ? 1 : 0)
+                    + ($showNw ? 1 : 0)
+                    + ($showGw ? 1 : 0);
                 $imagePath = (string) ($block['image'] ?? '');
                 $imageBase64 = null;
                 if ($imagePath !== '') {
@@ -69,15 +103,27 @@
                     <tr>
                         <th rowspan="2" style="width: 14%; border: 1px solid #222; text-align: center; padding: 6px 4px;">COLOR</th>
                         <th rowspan="2" style="width: 12%; border: 1px solid #222; text-align: center; padding: 6px 4px;">Picture</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN QTY</th>
-                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN NO.</th>
+                        @if($showCtnQty)
+                            <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN QTY</th>
+                        @endif
+                        @if($showCtnNo)
+                            <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN NO.</th>
+                        @endif
                         @if($variantHeaderCount > 0)
                             <th colspan="{{ $variantHeaderCount }}" style="text-align: center; border: 1px solid #222; padding: 6px 4px;">VARIANT QTY</th>
                         @endif
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">PCS</th>
-                        <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">TOTAL PCS</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">N.W(KG)</th>
-                        <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">G.W(KG)</th>
+                        @if($showPcs)
+                            <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">PCS</th>
+                        @endif
+                        @if($showTotalPcs)
+                            <th rowspan="2" style="width: 10%; border: 1px solid #222; text-align: center; padding: 6px 4px;">TOTAL PCS</th>
+                        @endif
+                        @if($showNw)
+                            <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">N.W(KG)</th>
+                        @endif
+                        @if($showGw)
+                            <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">G.W(KG)</th>
+                        @endif
                     </tr>
                     @if($variantHeaderCount > 0)
                         <tr>
@@ -105,34 +151,58 @@
                                     @endif
                                 </td>
                             @endif
-                            <td style="border: 1px solid #222; text-align: center;">{{ $row['ctn_qty'] !== null ? number_format((int) $row['ctn_qty']) : '-' }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ $row['ctn_no'] ?: '-' }}</td>
+                            @if($showCtnQty)
+                                <td style="border: 1px solid #222; text-align: center;">{{ $row['ctn_qty'] !== null ? number_format((int) $row['ctn_qty']) : '-' }}</td>
+                            @endif
+                            @if($showCtnNo)
+                                <td style="border: 1px solid #222; text-align: center;">{{ $row['ctn_no'] ?: '-' }}</td>
+                            @endif
                             @foreach($activeVariantIndexes as $variantIndex)
                                 <td style="text-align: center; border: 1px solid #222;">{{ isset($row['variants'][$variantIndex]) && $row['variants'][$variantIndex] !== null ? number_format((int) $row['variants'][$variantIndex]) : '' }}</td>
                             @endforeach
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format(\App\Support\PiInfoSupport::rowPcs($row)) }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ $row['total_pcs'] !== null ? number_format((int) $row['total_pcs']) : number_format(\App\Support\PiInfoSupport::rowPcs($row)) }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ $row['nw_kg'] !== null ? number_format((float) $row['nw_kg'], 2) : '-' }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ $row['gw_kg'] !== null ? number_format((float) $row['gw_kg'], 2) : '-' }}</td>
+                            @if($showPcs)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format(\App\Support\PiInfoSupport::rowPcs($row)) }}</td>
+                            @endif
+                            @if($showTotalPcs)
+                                <td style="border: 1px solid #222; text-align: center;">{{ $row['total_pcs'] !== null ? number_format((int) $row['total_pcs']) : number_format(\App\Support\PiInfoSupport::rowPcs($row)) }}</td>
+                            @endif
+                            @if($showNw)
+                                <td style="border: 1px solid #222; text-align: center;">{{ $row['nw_kg'] !== null ? number_format((float) $row['nw_kg'], 2) : '-' }}</td>
+                            @endif
+                            @if($showGw)
+                                <td style="border: 1px solid #222; text-align: center;">{{ $row['gw_kg'] !== null ? number_format((float) $row['gw_kg'], 2) : '-' }}</td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ 8 + $variantHeaderCount }}" style="text-align: center; color: #777; border: 1px solid #222;">No matrix rows saved yet.</td>
+                            <td colspan="{{ $visibleColumns }}" style="text-align: center; color: #777; border: 1px solid #222;">No matrix rows saved yet.</td>
                         </tr>
                     @endforelse
                     @if($rowsToShow->isNotEmpty())
                         <tr style="background: #f3f4f6; font-weight: bold;">
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockCtn) }} CTN</td>
-                            <td style="border: 1px solid #222; text-align: center;">TOTAL</td>
+                            @if($showCtnQty)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockCtn) }} CTN</td>
+                            @endif
+                            @if($showCtnNo)
+                                <td style="border: 1px solid #222; text-align: center;">TOTAL</td>
+                            @endif
                             @foreach($activeVariantIndexes as $variantIndex)
                                 <td style="text-align: center; border: 1px solid #222;">
                                     {{ number_format($rowsToShow->sum(fn ($row) => max(0, (int) ($row['variants'][$variantIndex] ?? 0)))) }}
                                 </td>
                             @endforeach
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format($rowsToShow->sum(fn ($row) => \App\Support\PiInfoSupport::rowPcs($row))) }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockTotalPcs) }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockNw, 2) }}</td>
-                            <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockGw, 2) }}</td>
+                            @if($showPcs)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format($rowsToShow->sum(fn ($row) => \App\Support\PiInfoSupport::rowPcs($row))) }}</td>
+                            @endif
+                            @if($showTotalPcs)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockTotalPcs) }}</td>
+                            @endif
+                            @if($showNw)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockNw, 2) }}</td>
+                            @endif
+                            @if($showGw)
+                                <td style="border: 1px solid #222; text-align: center;">{{ number_format($blockGw, 2) }}</td>
+                            @endif
                         </tr>
                     @endif
                 </tbody>
@@ -190,34 +260,70 @@
             <thead>
                 <tr>
                     <th style="width: 8%;">#</th>
-                    <th style="width: 10%;" class="text-right">Ord. Qty</th>
-                    <th style="width: 12%;">CTN No</th>
-                    <th style="width: 17%;">CTN Size</th>
-                    <th style="width: 10%;" class="text-right">PCS/CTN</th>
-                    <th style="width: 10%;" class="text-right">CTN Qty</th>
-                    <th style="width: 10%;" class="text-right">Total PCS</th>
-                    <th style="width: 8%;" class="text-right">N.W</th>
-                    <th style="width: 8%;" class="text-right">G.W</th>
-                    <th style="width: 17%;">Remarks</th>
+                    @if($showSimpleOrderedQty)
+                        <th style="width: 10%;" class="text-right">Ord. Qty</th>
+                    @endif
+                    @if($showSimpleCtnNo)
+                        <th style="width: 12%;">CTN No</th>
+                    @endif
+                    @if($showSimpleCtnSize)
+                        <th style="width: 17%;">CTN Size</th>
+                    @endif
+                    @if($showSimplePcsPerCtn)
+                        <th style="width: 10%;" class="text-right">PCS/CTN</th>
+                    @endif
+                    @if($showSimpleCtnQty)
+                        <th style="width: 10%;" class="text-right">CTN Qty</th>
+                    @endif
+                    @if($showSimpleTotalPcs)
+                        <th style="width: 10%;" class="text-right">Total PCS</th>
+                    @endif
+                    @if($showSimpleNw)
+                        <th style="width: 8%;" class="text-right">N.W</th>
+                    @endif
+                    @if($showSimpleGw)
+                        <th style="width: 8%;" class="text-right">G.W</th>
+                    @endif
+                    @if($showSimpleNote)
+                        <th style="width: 17%;">Remarks</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
                 @forelse($rows as $index => $row)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td class="text-right">{{ isset($row['ordered_qty']) ? number_format((int) $row['ordered_qty']) : '-' }}</td>
-                        <td>{{ $row['ctn_no'] ?: '-' }}</td>
-                        <td>{{ $row['ctn_size'] ?: '-' }}</td>
-                        <td class="text-right">{{ isset($row['pcs_per_ctn']) ? number_format((int) $row['pcs_per_ctn']) : '-' }}</td>
-                        <td class="text-right">{{ isset($row['ctn_qty']) ? number_format((int) $row['ctn_qty']) : '-' }}</td>
-                        <td class="text-right">{{ isset($row['total_pcs']) ? number_format((int) $row['total_pcs']) : '-' }}</td>
-                        <td class="text-right">{{ isset($row['nw_kg']) ? number_format((float) $row['nw_kg'], 2) : '-' }}</td>
-                        <td class="text-right">{{ isset($row['gw_kg']) ? number_format((float) $row['gw_kg'], 2) : '-' }}</td>
-                        <td>{{ $row['note'] ?: '-' }}</td>
+                        @if($showSimpleOrderedQty)
+                            <td class="text-right">{{ isset($row['ordered_qty']) ? number_format((int) $row['ordered_qty']) : '-' }}</td>
+                        @endif
+                        @if($showSimpleCtnNo)
+                            <td>{{ $row['ctn_no'] ?: '-' }}</td>
+                        @endif
+                        @if($showSimpleCtnSize)
+                            <td>{{ $row['ctn_size'] ?: '-' }}</td>
+                        @endif
+                        @if($showSimplePcsPerCtn)
+                            <td class="text-right">{{ isset($row['pcs_per_ctn']) ? number_format((int) $row['pcs_per_ctn']) : '-' }}</td>
+                        @endif
+                        @if($showSimpleCtnQty)
+                            <td class="text-right">{{ isset($row['ctn_qty']) ? number_format((int) $row['ctn_qty']) : '-' }}</td>
+                        @endif
+                        @if($showSimpleTotalPcs)
+                            <td class="text-right">{{ isset($row['total_pcs']) ? number_format((int) $row['total_pcs']) : '-' }}</td>
+                        @endif
+                        @if($showSimpleNw)
+                            <td class="text-right">{{ isset($row['nw_kg']) ? number_format((float) $row['nw_kg'], 2) : '-' }}</td>
+                        @endif
+                        @if($showSimpleGw)
+                            <td class="text-right">{{ isset($row['gw_kg']) ? number_format((float) $row['gw_kg'], 2) : '-' }}</td>
+                        @endif
+                        @if($showSimpleNote)
+                            <td>{{ $row['note'] ?: '-' }}</td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" style="text-align: center; color: #777;">No PI packing rows saved yet.</td>
+                        <td colspan="{{ $visibleSimpleColumns }}" style="text-align: center; color: #777;">No PI packing rows saved yet.</td>
                     </tr>
                 @endforelse
             </tbody>

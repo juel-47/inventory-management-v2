@@ -31,6 +31,12 @@
                                     <option value="cheque">Cheque</option>
                                 </select>
                             </div>
+                            <button type="button" id="btn-export-pdf" class="btn btn-primary btn-sm mr-2">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </button>
+                            {{-- <button type="button" id="btn-view-pdf" class="btn btn-outline-secondary btn-sm mr-2">
+                                <i class="fas fa-eye"></i> View
+                            </button> --}}
                             <button type="button" id="btn-reset" class="btn btn-danger btn-sm" title="Reset Filters"><i class="fas fa-undo"></i></button>
                         </form>
                     </div>
@@ -57,6 +63,38 @@
                 e.preventDefault();
                 $('#filter-form')[0].reset();
                 table.draw();
+            });
+
+            $('#btn-export-pdf').on('click', function() {
+                const params = new URLSearchParams();
+                const startDate = $('#start_date').val();
+                const endDate = $('#end_date').val();
+                const method = $('#method').val();
+                const search = table.search();
+
+                if (startDate) params.set('start_date', startDate);
+                if (endDate) params.set('end_date', endDate);
+                if (method) params.set('method', method);
+                if (search) params.set('search', search);
+
+                const url = "{{ route('admin.accounts.payments.pdf') }}" + (params.toString() ? `?${params}` : '');
+                window.location.href = url;
+            });
+
+            $('#btn-view-pdf').on('click', function() {
+                const params = new URLSearchParams();
+                const startDate = $('#start_date').val();
+                const endDate = $('#end_date').val();
+                const method = $('#method').val();
+                const search = table.search();
+
+                if (startDate) params.set('start_date', startDate);
+                if (endDate) params.set('end_date', endDate);
+                if (method) params.set('method', method);
+                if (search) params.set('search', search);
+
+                const url = "{{ route('admin.accounts.payments.pdf.view') }}" + (params.toString() ? `?${params}` : '');
+                window.open(url, '_blank');
             });
             
             // Bind to DataTable query

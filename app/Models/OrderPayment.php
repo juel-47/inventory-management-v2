@@ -22,4 +22,9 @@ class OrderPayment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(OrderPaymentReceipt::class, 'order_payment_id');
+    }
 }

@@ -30,7 +30,7 @@ class FrontendOrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.vendor', 'user', 'payments']);
+        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.vendor', 'user', 'payments.receipts']);
         $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);

@@ -118,8 +118,9 @@
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    @if($request->example_image)
-                                                        <img src="{{ asset($request->example_image) }}" width="80px" alt="Product" class="request-image">
+                                                    @php $exampleImages = $request->example_image ?? []; @endphp
+                                                    @if(!empty($exampleImages))
+                                                        <img src="{{ asset($exampleImages[0]) }}" width="80px" alt="Product" class="request-image">
                                                     @else
                                                         <div class="request-image d-flex align-items-center justify-content-center bg-light">
                                                             <i class="fas fa-image text-muted"></i>

@@ -82,6 +82,7 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
         Route::post('/my-account/order-form/save', 'saveOrderForm')->name('account.order-form.save');
         Route::post('/my-account/saved-forms/{savedRequest}/checkout', 'checkoutSavedForm')->name('account.saved-forms.checkout');
         Route::delete('/my-account/saved-forms/{savedRequest}', 'deleteSavedForm')->name('account.saved-forms.delete');
+        Route::post('/my-account/custom-product-requests', 'storeCustomProductRequest')->name('account.custom-product-requests.store');
     });
 
     Route::controller(FrontendCartController::class)->group(function () {
@@ -334,7 +335,15 @@ Route::controller(BackendAccountController::class)->group(function () {
     Route::get('accounts/record-payment', 'create')->name('accounts.record-payment');
     Route::get('accounts/search-order', 'searchOrder')->name('accounts.search-order');
     Route::get('accounts/due-orders', 'dueOrders')->name('accounts.due-orders');
+    Route::get('accounts/payments/pdf', 'paymentHistoryPdf')->name('accounts.payments.pdf');
+    Route::get('accounts/payments/pdf/view', 'paymentHistoryPdfView')->name('accounts.payments.pdf.view');
+    Route::get('accounts/payments/{payment}/pdf', 'paymentSinglePdf')->name('accounts.payments.single.pdf');
+    Route::get('accounts/payments/{payment}/view', 'paymentSingleView')->name('accounts.payments.single.view');
+    Route::get('accounts/orders/{order}/payments/pdf', 'paymentOrderPdf')->name('accounts.orders.payments.pdf');
+    Route::get('accounts/orders/{order}/payments/view', 'paymentOrderView')->name('accounts.orders.payments.view');
     Route::post('accounts/orders/{order}/payment', 'storePayment')->name('accounts.store-payment');
+    Route::get('accounts/payments/receipts/{receipt}/download', 'downloadReceipt')->name('accounts.receipts.download');
+    Route::delete('accounts/payments/receipts/{receipt}', 'destroyReceipt')->name('accounts.receipts.destroy');
 });
 
 });

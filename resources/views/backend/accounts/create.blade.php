@@ -57,7 +57,7 @@
                             </div>
 
                             <div id="payment_form_wrapper">
-                                <form id="payment_form" method="POST">
+                                <form id="payment_form" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="source" value="central_entry">
                                     <div class="row">
@@ -86,6 +86,11 @@
                                     <div class="form-group">
                                         <label class="font-weight-bold">Note</label>
                                         <textarea name="note" class="form-control" rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="font-weight-bold">Bank Receipt(s)</label>
+                                        <input type="file" name="receipts[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf">
+                                        <small class="text-muted">You can upload multiple files (JPG/PNG/WEBP/PDF).</small>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-lg btn-block shadow-sm">
                                         <i class="fas fa-check-circle mr-1"></i> Confirm Payment
