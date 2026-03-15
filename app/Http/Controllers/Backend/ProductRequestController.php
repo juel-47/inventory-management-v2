@@ -449,6 +449,37 @@ class ProductRequestController extends Controller implements HasMiddleware
     }
 
     /**
+     * Download customer invoice for request as PDF.
+     */
+    public function downloadCustomerInvoice($id)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $productRequest = ProductRequest::with(['user', 'order.items.product', 'order.items.variant.color', 'order.items.variant.size'])->findOrFail($id);
+        
+        if (!$productRequest->order) {
+            toastr()->error('No linked order found for this request. Please contact admin.');
+            return redirect()->back();
+        }
+
+        $order = $productRequest->order;
+        $settings = \App\Models\GeneralSetting::first();
+
+        // Optimize logo for PDF
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
+
+        // Optimize product images for PDF (smaller for customer invoice)
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
+        return $pdf->download('customer-invoice-' . $order->order_no . '.pdf');
+    }
+
+    /**
      * Save manual PI/CTN information for a request.
      */
     public function savePiInfo(Request $request, $id)

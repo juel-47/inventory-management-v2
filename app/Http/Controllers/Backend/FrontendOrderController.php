@@ -210,6 +210,30 @@ class FrontendOrderController extends Controller
     }
 
     /**
+     * Download customer invoice as PDF.
+     */
+    public function downloadCustomerInvoice(Order $order)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
+        $settings = GeneralSetting::first();
+
+        // Optimize logo for PDF
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
+
+        // Optimize product images for PDF (smaller for customer invoice)
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+        }
+
+        $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
+        return $pdf->download('customer-invoice-' . $order->order_no . '.pdf');
+    }
+
+    /**
      * Update status for an order.
      */
     public function updateStatus(Request $request, Order $order)

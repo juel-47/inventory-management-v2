@@ -234,6 +234,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('orders/{order}/pi-invoice/download', 'downloadPiInvoice')->name('orders.pi-invoice.download');
         Route::get('orders/{order}/view-invoice', 'viewInvoice')->name('orders.view-invoice');
         Route::get('orders/{order}/download-invoice', 'downloadInvoice')->name('orders.download-invoice');
+        Route::get('orders/{order}/download-customer-invoice', 'downloadCustomerInvoice')->name('orders.download-customer-invoice');
         Route::get('orders/{order}', 'show')->name('orders.show');
         Route::put('orders/{order}/status', 'updateStatus')->name('orders.update-status');
         Route::delete('orders/{order}', 'destroy')->name('orders.destroy');
@@ -273,6 +274,7 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('product-requests/{id}/pi-invoice/download', 'downloadPiInvoice')->name('product-requests.pi-invoice.download');
         Route::get('product-requests/{id}/view-invoice', 'viewInvoice')->name('product-requests.view-invoice');
         Route::get('product-requests/{id}/invoice', 'printPdf')->name('product-requests.download-invoice');
+        Route::get('product-requests/{id}/download-customer-invoice', 'downloadCustomerInvoice')->name('product-requests.download-customer-invoice');
         Route::put('product-requests/update-status/{id}', 'updateStatus')->name('product-requests.update-status');
     });
     Route::resource('product-requests', ProductRequestController::class);
