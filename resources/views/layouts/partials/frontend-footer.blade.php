@@ -3,7 +3,7 @@
     $footerSiteName = optional($settings)->site_name ?? config('app.name', 'Inventory Management System');
     $footerPhone = optional($settings)->phone ?? '+4553713518';
     $footerEmail = optional($settings)->contact_email ?? 'contact@yourcompany.com';
-    $footerAddress = optional($settings)->address ?? '123 Business Street, Suite 100, New York, NY 10001';
+    $footerAddress = optional($settings)->address ?? '';
     $footerPhoneHref = $footerPhone ? 'tel:' . preg_replace('/[^0-9+]/', '', $footerPhone) : null;
     $footerEmailHref = $footerEmail ? 'mailto:' . $footerEmail : null;
 @endphp
@@ -40,8 +40,8 @@
             <div>
                 <p class="text-sm font-semibold text-slate-900">Policies</p>
                 <ul class="mt-4 space-y-3 text-sm text-slate-600">
-                    <li><a href="#" class="hover:text-slate-900 transition-colors">Terms &amp; Conditions</a></li>
-                    <li><a href="#" class="hover:text-slate-900 transition-colors">B2B Privacy Policy</a></li>
+                    <li><a href="{{ route('terms.conditions') }}" class="hover:text-slate-900 transition-colors">Terms &amp; Conditions</a></li>
+                    <li><a href="{{ route('b2b.policy') }}" class="hover:text-slate-900 transition-colors">B2B Policy</a></li>
                     {{-- <li><a href="#" class="text-rose-600 hover:text-rose-700 transition-colors">Cookie Policy</a></li> --}}
                     {{-- <li><a href="#" class="hover:text-slate-900 transition-colors">Compliance Report</a></li> --}}
                 </ul>
@@ -51,7 +51,7 @@
                 <p class="text-sm font-semibold text-slate-900">Company</p>
                 <ul class="mt-4 space-y-3 text-sm text-slate-600">
                     <li><a href="{{ route('about') }}" class="hover:text-slate-900 transition-colors">About Us</a></li>
-                    <li><a href="{{ route('shop') }}" class="hover:text-slate-900 transition-colors">Showroom</a></li>
+                    {{-- <li><a href="{{ route('shop') }}" class="hover:text-slate-900 transition-colors">Showroom</a></li> --}}
                     <li><a href="{{ route('contact') }}" class="hover:text-slate-900 transition-colors">Contact Info</a></li>
                     {{-- <li><a href="{{ route('home') }}" class="hover:text-slate-900 transition-colors">Blog</a></li> --}}
                     <li><a href="{{ route('shop') }}" class="hover:text-slate-900 transition-colors">Sales Inventory</a></li>
@@ -63,15 +63,15 @@
                 <p class="text-sm font-semibold text-slate-900">Opening Hours</p>
                 <div class="mt-4 space-y-3 text-sm text-slate-600">
                     <div class="flex items-center justify-between gap-4">
-                        <span>Mon - Thu</span>
-                        <span class="font-semibold text-slate-900">08:30 - 17:00</span>
+                        <span>Mon - Fri</span>
+                        <span class="font-semibold text-slate-900">09:00 - 18:00</span>
                     </div>
-                    <div class="flex items-center justify-between gap-4">
+                    {{-- <div class="flex items-center justify-between gap-4">
                         <span>Friday</span>
                         <span class="font-semibold text-slate-900">08:30 - 15:30</span>
-                    </div>
+                    </div> --}}
                     <div class="flex items-center justify-between gap-4">
-                        <span>Weekend</span>
+                        <span>Sat - Sun</span>
                         <span class="font-semibold text-slate-900">Closed</span>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
 
         <div class="mt-10 border-t border-slate-200 pt-6">
             <p class="text-xs text-slate-500 text-center sm:text-right">
-                &copy; {{ date('Y') }} {{ $footerSiteName }}. All rights reserved.
+                &copy; {{ date('Y') }} {{ $footerSiteName }} - Copenhagen Tourist Point . All rights reserved.
             </p>
         </div>
     </div>

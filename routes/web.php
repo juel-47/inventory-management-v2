@@ -58,7 +58,10 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
     Route::get('/shop', 'shop')->name('shop');
     Route::get('/about', 'about')->name('about');
+    Route::get('/b2b-policy', 'b2bPolicy')->name('b2b.policy');
+    Route::get('/terms-conditions', 'termsConditions')->name('terms.conditions');
     Route::get('/contact', 'contact')->name('contact');
+    Route::post('/contact', 'submitContact')->name('contact.submit');
     Route::get('/product/{slug}', 'productDetails')->name('product.details');
     Route::get('/products/live-search', 'liveSearch')->name('frontend.products.live-search');
 });

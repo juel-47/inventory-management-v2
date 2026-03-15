@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ContactMessageMail;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\GeneralSetting;
@@ -12,6 +13,8 @@ use App\Services\CheckoutDiscountResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -233,6 +236,83 @@ class HomeController extends Controller
     public function about()
     {
         return view('frontend.pages.about');
+    }
+
+    /**
+     * Display the frontend B2B policy page.
+     */
+    public function b2bPolicy()
+    {
+        return view('frontend.pages.b2b-policy');
+    }
+
+    /**
+     * Display the frontend terms & conditions page.
+     */
+    public function termsConditions()
+    {
+        return view('frontend.pages.terms-conditions');
+    }
+
+    /**
+     * Handle contact form submissions.
+     */
+    public function submitContact(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'subject' => ['required', 'string', 'max:150'],
+            'message' => ['required', 'string', 'max:3000'],
+        ]);
+
+        $settings = GeneralSetting::first();
+        $adminEmail = $settings?->contact_email ?? config('mail.from.address');
+        $mailSent = false;
+
+        if ($adminEmail) {
+            try {
+                $payload = [
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'] ?? null,
+                    'subject' => $validated['subject'],
+                    'message' => $validated['message'],
+                    'ip_address' => $request->ip(),
+                    'user_agent' => (string) $request->userAgent(),
+                ];
+
+                Mail::to($adminEmail)->send(new ContactMessageMail($payload, $settings));
+                $mailSent = true;
+            } catch (\Throwable $e) {
+                Log::warning('Contact message email failed.', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if (!$adminEmail || !$mailSent) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry, we could not send your message right now. Please try again later.',
+                ], 500);
+            }
+
+            return back()->with('contact_error', 'Sorry, we could not send your message right now. Please try again later.');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Thanks! Your message has been sent. Our team will reply soon.',
+            ]);
+        }
+
+        return back()->with('contact_success', 'Thanks! Your message has been sent. Our team will reply soon.');
     }
 
     /**

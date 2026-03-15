@@ -118,7 +118,20 @@
                         Have a question? Fill out the form below and we'll get back to you.
                     </p>
 
-                    <form action="#" method="POST" class="mt-8 space-y-6">
+                    <div id="contact-alerts" class="space-y-3"></div>
+
+                    @if (session('contact_success'))
+                        <div class="alert-auto-hide rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                            {{ session('contact_success') }}
+                        </div>
+                    @endif
+                    @if (session('contact_error'))
+                        <div class="alert-auto-hide rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                            {{ session('contact_error') }}
+                        </div>
+                    @endif
+
+                    <form id="contact-form" action="{{ route('contact.submit') }}" method="POST" class="mt-8 space-y-6">
                         @csrf
                         <div class="grid gap-6 sm:grid-cols-2">
                             <!-- First Name -->
@@ -126,7 +139,10 @@
                                 <label for="first_name" class="block text-sm font-medium text-slate-700">First Name</label>
                                 <input type="text" name="first_name" id="first_name" 
                                     class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                    placeholder="John" required>
+                                    placeholder="John" value="{{ old('first_name') }}" required>
+                                <p class="mt-1 text-xs text-rose-600" data-error-for="first_name">
+                                    @error('first_name'){{ $message }}@enderror
+                                </p>
                             </div>
 
                             <!-- Last Name -->
@@ -134,7 +150,10 @@
                                 <label for="last_name" class="block text-sm font-medium text-slate-700">Last Name</label>
                                 <input type="text" name="last_name" id="last_name" 
                                     class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                    placeholder="Doe" required>
+                                    placeholder="Doe" value="{{ old('last_name') }}" required>
+                                <p class="mt-1 text-xs text-rose-600" data-error-for="last_name">
+                                    @error('last_name'){{ $message }}@enderror
+                                </p>
                             </div>
                         </div>
 
@@ -143,7 +162,10 @@
                             <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
                             <input type="email" name="email" id="email" 
                                 class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                placeholder="john@example.com" required>
+                                placeholder="john@example.com" value="{{ old('email') }}" required>
+                            <p class="mt-1 text-xs text-rose-600" data-error-for="email">
+                                @error('email'){{ $message }}@enderror
+                            </p>
                         </div>
 
                         <!-- Phone -->
@@ -151,7 +173,10 @@
                             <label for="phone" class="block text-sm font-medium text-slate-700">Phone Number</label>
                             <input type="tel" name="phone" id="phone" 
                                 class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                placeholder="+1 (555) 000-0000">
+                                placeholder="+1 (555) 000-0000" value="{{ old('phone') }}">
+                            <p class="mt-1 text-xs text-rose-600" data-error-for="phone">
+                                @error('phone'){{ $message }}@enderror
+                            </p>
                         </div>
 
                         <!-- Subject -->
@@ -159,7 +184,10 @@
                             <label for="subject" class="block text-sm font-medium text-slate-700">Subject</label>
                             <input type="text" name="subject" id="subject" 
                                 class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                placeholder="How can we help you?" required>
+                                placeholder="How can we help you?" value="{{ old('subject') }}" required>
+                            <p class="mt-1 text-xs text-rose-600" data-error-for="subject">
+                                @error('subject'){{ $message }}@enderror
+                            </p>
                         </div>
 
                         <!-- Message -->
@@ -167,11 +195,14 @@
                             <label for="message" class="block text-sm font-medium text-slate-700">Message</label>
                             <textarea name="message" id="message" rows="5" 
                                 class="mt-2 block w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                                placeholder="Write your message here..." required></textarea>
+                                placeholder="Write your message here..." required>{{ old('message') }}</textarea>
+                            <p class="mt-1 text-xs text-rose-600" data-error-for="message">
+                                @error('message'){{ $message }}@enderror
+                            </p>
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" 
+                        <button type="submit" id="contact-submit"
                             class="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                             Send Message
                         </button>
@@ -180,7 +211,7 @@
             </section>
 
             <!-- Map Section -->
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-2">
+            {{-- <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-2">
                 <div class="aspect-video w-full overflow-hidden rounded-xl bg-slate-100">
                     <iframe 
                         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.183967123456!2d-73.985654!3d40.748817!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDDCsDQ0JzUwLjciTiA3M8KwNTknMTIuNiJX!5e0!3m2!1sen!2sus!4v1234567890"
@@ -192,7 +223,104 @@
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
                 </div>
-            </section>
+            </section> --}}
         </div>
     </div>
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const alerts = document.querySelectorAll('.alert-auto-hide');
+            if (!alerts.length) return;
+
+            setTimeout(() => {
+                alerts.forEach((alert) => {
+                    alert.style.transition = 'opacity 0.3s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 350);
+                });
+            }, 5000);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('contact-form');
+            const submitBtn = document.getElementById('contact-submit');
+            const alertsContainer = document.getElementById('contact-alerts');
+
+            if (!form) return;
+
+            const clearErrors = () => {
+                document.querySelectorAll('[data-error-for]').forEach((el) => {
+                    el.textContent = '';
+                });
+            };
+
+            const showAlert = (type, message) => {
+                if (!alertsContainer) return;
+                const color = type === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-rose-200 bg-rose-50 text-rose-700';
+                const wrapper = document.createElement('div');
+                wrapper.className = `alert-auto-hide rounded-lg border px-4 py-3 text-sm ${color}`;
+                wrapper.textContent = message;
+                alertsContainer.appendChild(wrapper);
+
+                setTimeout(() => {
+                    wrapper.style.transition = 'opacity 0.3s ease';
+                    wrapper.style.opacity = '0';
+                    setTimeout(() => wrapper.remove(), 350);
+                }, 5000);
+            };
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                clearErrors();
+
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new FormData(form)
+                    });
+
+                    if (response.status === 422) {
+                        const data = await response.json();
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach((field) => {
+                                const target = document.querySelector(`[data-error-for="${field}"]`);
+                                if (target) {
+                                    target.textContent = data.errors[field][0] ?? '';
+                                }
+                            });
+                        }
+                        showAlert('error', 'Please fix the highlighted fields and try again.');
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        showAlert('error', data.message || 'Sorry, we could not send your message right now.');
+                        return;
+                    }
+
+                    form.reset();
+                    showAlert('success', data.message || 'Thanks! Your message has been sent. Our team will reply soon.');
+                } catch (err) {
+                    showAlert('error', 'Network error. Please try again.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            });
+        });
+    </script>
 @endsection

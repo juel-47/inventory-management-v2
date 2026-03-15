@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\DataTables\CustomProductRequestDataTable;
 use App\Models\CustomProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,19 +25,9 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(CustomProductRequestDataTable $dataTable)
     {
-        $query = CustomProductRequest::with(['user'])->orderBy('id', 'desc');
-        
-        // Only Admin role can see all requests. Others only see their own.
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        if (!$user->hasRole('Admin')) {
-            $query->where('user_id', Auth::id());
-        }
-
-        $customProductRequests = $query->get();
-        return view('backend.custom-product-request.index', compact('customProductRequests'));
+        return $dataTable->render('backend.custom-product-request.index');
     }
 
     /**
