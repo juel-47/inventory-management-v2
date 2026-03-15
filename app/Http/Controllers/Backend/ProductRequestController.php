@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use App\Support\PdfImageHelper;
 
 
 class ProductRequestController extends Controller implements HasMiddleware
@@ -426,6 +427,17 @@ class ProductRequestController extends Controller implements HasMiddleware
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
+
+        // Optimize logo
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
+
+        // Optimize product images
+        foreach ($productRequest->items as $item) {
+            if ($item->product && $item->product->thumb_image) {
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+            }
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
             'isHtml5ParserEnabled' => true,

@@ -8,6 +8,7 @@ use App\Models\InventoryStock;
 use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\PdfImageHelper;
 
 class InventoryReportController extends Controller
 {
@@ -133,6 +134,8 @@ public function index(Request $request)
 
 public function exportPdf(Request $request)
 {
+    ini_set('memory_limit', '512M');
+    set_time_limit(300);
     // 🔹 Step 1 — Build grouped subquery (Same logic as index)
     $groupedQuery = InventoryStock::query()
         ->select(
@@ -181,65 +184,7 @@ public function exportPdf(Request $request)
     // 🔹 Step 4 — Image Optimization (Compress for PDF)
     foreach ($stocks as $stock) {
         if ($stock->product && $stock->product->thumb_image) {
-            $imagePath = public_path('storage/' . $stock->product->thumb_image);
-            
-            if (file_exists($imagePath)) {
-                try {
-                    // Get image info and type
-                    list($width, $height, $type) = getimagesize($imagePath);
-                    $src = null;
-
-                    // Load based on type
-                    switch($type) {
-                        case IMAGETYPE_JPEG: $src = imagecreatefromjpeg($imagePath); break;
-                        case IMAGETYPE_PNG:  $src = imagecreatefrompng($imagePath); break;
-                        case IMAGETYPE_GIF:  $src = imagecreatefromgif($imagePath); break;
-                        case 18: // IMAGETYPE_WEBP
-                            if (function_exists('imagecreatefromwebp')) {
-                                $src = imagecreatefromwebp($imagePath);
-                            }
-                            break;
-                    }
-
-                    if ($src) {
-                        // Create thumbnail (50x50)
-                        $thumbW = 50;
-                        $thumbH = 50;
-                        
-                        // Maintain aspect ratio for thumbnail
-                        $ratio = $width / $height;
-                        if ($thumbW / $thumbH > $ratio) {
-                            $thumbW = $thumbH * $ratio;
-                        } else {
-                            $thumbH = $thumbW / $ratio;
-                        }
-
-                        $dst = imagecreatetruecolor($thumbW, $thumbH);
-                        
-                        // Preserve transparency for PNG/GIF/WEBP
-                        if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF || $type == 18) {
-                            imagealphablending($dst, false);
-                            imagesavealpha($dst, true);
-                        }
-
-                        imagecopyresampled($dst, $src, 0, 0, 0, 0, $thumbW, $thumbH, $width, $height);
-
-                        // Capture to variable
-                        ob_start();
-                        imagejpeg($dst, null, 70); // Compress quality 70
-                        $imageData = ob_get_clean();
-
-                        // Base64 encode
-                        $stock->optimized_image = 'data:image/jpeg;base64,' . base64_encode($imageData);
-
-                        // Free memory
-                        imagedestroy($src);
-                        imagedestroy($dst);
-                    }
-                } catch (\Exception $e) {
-                    // Fail silently, template handles missing images
-                }
-            }
+            $stock->optimized_image = PdfImageHelper::optimize($stock->product->thumb_image, 50, 50);
         }
     }
 

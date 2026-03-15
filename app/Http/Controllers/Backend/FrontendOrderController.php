@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Support\PdfImageHelper;
 
 class FrontendOrderController extends Controller
 {
@@ -149,9 +150,16 @@ class FrontendOrderController extends Controller
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
+            'isRemoteEnabled' => true, // Enabled for potential remote images, but helper handles them too
             'defaultFont' => 'sans-serif',
-        ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+        ]);
+
+        // Optimize product images for PDF
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+        }
+
+        $pdf->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
         return $pdf->download('order-' . $order->order_no . '.pdf');
     }
@@ -183,9 +191,20 @@ class FrontendOrderController extends Controller
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
+            'isRemoteEnabled' => true,
             'defaultFont' => 'sans-serif',
-        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
+        ]);
+
+        // Optimize logo for PDF
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
+
+        // Optimize product images for PDF
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+        }
+
+        $pdf->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
 
         return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
     }

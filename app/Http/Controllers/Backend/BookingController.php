@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\BookingNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\PdfImageHelper;
 
 class BookingController extends Controller
 {
@@ -168,12 +169,26 @@ class BookingController extends Controller
 
     public function downloadPdf(string $id)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $targetBooking = Booking::findOrFail($id);
         $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)
             ->with(['product.variants.color', 'product.variants.size', 'vendor', 'unit'])
             ->get();
         
         $settings = \App\Models\GeneralSetting::first();
+
+        // Optimize logo
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+
+        // Optimize product images
+        foreach ($orderGroup as $item) {
+            if ($item->product && $item->product->thumb_image) {
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+            }
+        }
 
         $pdf = Pdf::loadView('backend.booking.print_pdf', compact('orderGroup', 'targetBooking', 'settings'));
         return $pdf->download('Booking_'.$targetBooking->booking_no.'.pdf');

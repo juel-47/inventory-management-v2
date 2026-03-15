@@ -25,13 +25,16 @@
 <body>
     @php
         $currency = $settings->currency_icon ?? '$';
-        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $logoFullPath = public_path(ltrim($logoPath, '/'));
-        $logoData = null;
-        if (is_file($logoFullPath)) {
-            $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
-            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
-            $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        // Logo is already optimized if passed from controller, but fallback to direct base64 if needed
+        $logoData = $settings->optimized_logo ?? null;
+        if (!$logoData) {
+            $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+            $logoFullPath = public_path(ltrim($logoPath, '/'));
+            if (is_file($logoFullPath)) {
+                $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
+                $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
+                $logoData = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+            }
         }
     @endphp
 

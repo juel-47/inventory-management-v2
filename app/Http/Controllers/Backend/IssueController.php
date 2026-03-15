@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\PdfImageHelper;
 
 class IssueController extends Controller
 {
@@ -274,6 +275,17 @@ class IssueController extends Controller
          $issue->load(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest']);
          $settings = GeneralSetting::first();
          
+         // Optimize logo
+         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
+
+         // Optimize product images
+         foreach ($issue->items as $item) {
+             if ($item->product && $item->product->thumb_image) {
+                 $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+             }
+         }
+
          $pdf = Pdf::loadView('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => true]));
          $fileName = 'issue_invoice_' . $issue->issue_no . '.pdf';
          $path = 'invoices/' . $fileName;
@@ -287,6 +299,17 @@ class IssueController extends Controller
     {
         $issue = Issue::with(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest'])->findOrFail($id);
         $settings = GeneralSetting::first();
+
+        // Optimize logo
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
+
+        // Optimize product images
+        foreach ($issue->items as $item) {
+            if ($item->product && $item->product->thumb_image) {
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+            }
+        }
         
         // Return HTML view for preview
         return view('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => false]));

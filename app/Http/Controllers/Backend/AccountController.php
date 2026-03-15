@@ -12,6 +12,7 @@ use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
+use App\Support\PdfImageHelper;
 
 class AccountController extends Controller
 {
@@ -36,6 +37,9 @@ class AccountController extends Controller
      */
     public function paymentHistoryPdf(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $method = $request->input('method');
@@ -183,6 +187,9 @@ class AccountController extends Controller
      */
     public function paymentSinglePdf(OrderPayment $payment)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $payment->load(['order', 'receipts']);
         $settings = GeneralSetting::first();
         $logoData = $this->resolveLogoData($settings);
@@ -224,6 +231,9 @@ class AccountController extends Controller
      */
     public function paymentOrderPdf(Order $order)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $order->load(['payments', 'user']);
         $payments = $order->payments->sortByDesc('id')->values();
 
@@ -298,14 +308,7 @@ class AccountController extends Controller
     private function resolveLogoData(?GeneralSetting $settings): ?string
     {
         $logoPath = $settings?->site_logo ?: 'uploads/logo.png';
-        $logoFullPath = public_path(ltrim($logoPath, '/'));
-        if (!is_file($logoFullPath)) {
-            return null;
-        }
-
-        $ext = strtolower(pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png');
-        $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'png';
-        return 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($logoFullPath));
+        return PdfImageHelper::optimize($logoPath, 160, 40);
     }
 
     /**
