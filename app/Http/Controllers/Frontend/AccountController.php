@@ -29,13 +29,39 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         $panel = (string) $request->query('panel', 'dashboard');
-        $orders = Order::query()
+        $ordersQuery = Order::query()
             ->withCount('items')
             ->withSum('items as total_units', 'quantity')
             ->where('user_id', $user->id)
-            ->orderByDesc('id')
-            ->paginate(10)
-            ->withQueryString();
+            ->orderByDesc('id');
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->query('search'));
+            $normalized = ltrim($search, '#');
+            $normalized = trim($normalized);
+
+            $ordersQuery->where(function ($query) use ($search, $normalized) {
+                $query->where('order_no', 'like', '%' . $search . '%')
+                    ->orWhere('status', 'like', '%' . $search . '%');
+
+                if ($normalized !== '' && $normalized !== $search) {
+                    $query->orWhere('order_no', 'like', '%' . $normalized . '%');
+                }
+            });
+        }
+
+        $orders = $ordersQuery->paginate(10)->withQueryString();
+
+        if ($request->expectsJson()) {
+            $settings = view()->shared('settings');
+            $currency = $settings->currency_icon ?? '$';
+
+            return response()->json([
+                'tbody' => view('frontend.pages.account.partials.orders_rows', compact('orders', 'currency'))->render(),
+                'summary' => view('frontend.pages.account.partials.orders_summary', compact('orders'))->render(),
+                'pagination' => view('frontend.pages.account.partials.orders_pagination', compact('orders'))->render(),
+            ]);
+        }
 
         $recentOrders = Order::query()
             ->where('user_id', $user->id)

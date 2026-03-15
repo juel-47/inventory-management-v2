@@ -474,6 +474,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             'advanced_blocks.*.color_headers_csv' => 'nullable|string|max:500',
             'advanced_blocks.*.size_headers_csv' => 'nullable|string|max:500',
             'advanced_blocks.*.rows' => 'nullable|array',
+            'advanced_blocks.*.ctn_size' => 'nullable|string|max:100',
             'advanced_blocks.*.rows.*.ctn_qty' => 'nullable|integer|min:0',
             'advanced_blocks.*.rows.*.ctn_no' => 'nullable|string|max:100',
             'advanced_blocks.*.rows.*.variants' => 'nullable|array',

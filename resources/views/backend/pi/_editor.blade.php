@@ -112,38 +112,39 @@
 
                     <div class="p-4">
                         <div class="row">
-                            <div class="col-lg-2 col-md-6 mb-3">
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">Ord. Qty</label>
                                 <input type="number" min="0" name="pi_rows[0][ordered_qty]" class="form-control" value="{{ old('pi_rows.0.ordered_qty', $row['ordered_qty'] ?? ($piInfo['order_qty_total'] ?? '')) }}" placeholder="Order qty">
                             </div>
-                            <div class="col-lg-2 col-md-6 mb-3">
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">CTN No</label>
                                 <input type="text" name="pi_rows[0][ctn_no]" class="form-control" value="{{ old('pi_rows.0.ctn_no', $row['ctn_no'] ?? '') }}" placeholder="e.g. 1-3">
                             </div>
-                            <div class="col-lg-3 col-md-6 mb-3">
-                                <label class="small text-muted text-uppercase font-weight-bold">CTN Size</label>
-                                <input type="text" name="pi_rows[0][ctn_size]" class="form-control" value="{{ old('pi_rows.0.ctn_size', $row['ctn_size'] ?? '') }}" placeholder="e.g. 20x30x10 cm">
-                            </div>
-                            <div class="col-lg-2 col-md-6 mb-3">
-                                <label class="small text-muted text-uppercase font-weight-bold">PCS / CTN</label>
-                                <input type="number" min="0" name="pi_rows[0][pcs_per_ctn]" class="form-control" value="{{ old('pi_rows.0.pcs_per_ctn', $row['pcs_per_ctn'] ?? '') }}" placeholder="PCS per CTN">
-                            </div>
-                            <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">CTN Qty</label>
                                 <input type="number" min="0" name="pi_rows[0][ctn_qty]" class="form-control text-center" value="{{ old('pi_rows.0.ctn_qty', $row['ctn_qty'] ?? '') }}" placeholder="0">
                             </div>
-                        </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <label class="small text-muted text-uppercase font-weight-bold">CTN Size</label>
+                                <input type="text" name="pi_rows[0][ctn_size]" class="form-control" value="{{ old('pi_rows.0.ctn_size', $row['ctn_size'] ?? '') }}" placeholder="e.g. 20x30x10 cm">
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <label class="small text-muted text-uppercase font-weight-bold">PCS / CTN</label>
+                                <input type="number" min="0" name="pi_rows[0][pcs_per_ctn]" class="form-control" value="{{ old('pi_rows.0.pcs_per_ctn', $row['pcs_per_ctn'] ?? '') }}" placeholder="PCS per CTN">
+                            </div>
+                            
+                        {{-- </div>
 
-                        <div class="row">
-                            <div class="col-lg-2 col-md-6 mb-3">
+                        <div class="row"> --}}
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">Total PCS</label>
                                 <input type="number" min="0" name="pi_rows[0][total_pcs]" class="form-control" value="{{ old('pi_rows.0.total_pcs', $row['total_pcs'] ?? '') }}" placeholder="Total pcs">
                             </div>
-                            <div class="col-lg-2 col-md-6 mb-3">
+                            <div class="col-lg-3 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">N.W (KG)</label>
                                 <input type="number" min="0" step="0.01" name="pi_rows[0][nw_kg]" class="form-control" value="{{ old('pi_rows.0.nw_kg', $row['nw_kg'] ?? '') }}" placeholder="Net weight">
                             </div>
-                            <div class="col-lg-2 col-md-6 mb-3">
+                            <div class="col-lg-3 col-md-6 mb-3">
                                 <label class="small text-muted text-uppercase font-weight-bold">G.W (KG)</label>
                                 <input type="number" min="0" step="0.01" name="pi_rows[0][gw_kg]" class="form-control" value="{{ old('pi_rows.0.gw_kg', $row['gw_kg'] ?? '') }}" placeholder="Gross weight">
                             </div>
@@ -211,15 +212,19 @@
                             <input type="hidden" name="advanced_blocks[{{ $blockIndex }}][image]" value="{{ $block['image'] ?? '' }}">
 
                             <div class="row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="small text-muted text-uppercase font-weight-bold">Block Title</label>
                                     <input type="text" name="advanced_blocks[{{ $blockIndex }}][title]" class="form-control" value="{{ old("advanced_blocks.$blockIndex.title", $block['title'] ?? '') }}">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-6">
                                     <label class="small text-muted text-uppercase font-weight-bold">Color / Group</label>
                                     <input type="text" name="advanced_blocks[{{ $blockIndex }}][color_label]" class="form-control" value="{{ old("advanced_blocks.$blockIndex.color_label", $block['color_label'] ?? '') }}">
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-6 py-2">
+                                    <label class="small text-muted text-uppercase font-weight-bold">CTN Measurement</label>
+                                    <input type="text" name="advanced_blocks[{{ $blockIndex }}][ctn_size]" class="form-control" value="{{ old("advanced_blocks.$blockIndex.ctn_size", $block['ctn_size'] ?? '') }}" placeholder="Optional">
+                                </div>
+                                <div class="col-md-6 py-2">
                                     <label class="small text-muted text-uppercase font-weight-bold">Variant Headers</label>
                                     <input type="text" name="advanced_blocks[{{ $blockIndex }}][variant_headers_csv]" class="form-control" value="{{ old("advanced_blocks.$blockIndex.variant_headers_csv", $block['variant_headers_csv'] ?? '') }}" placeholder="e.g. Black L, Black XL, Blue L">
                                     <small class="text-muted">This follows the order variant labels. For color-only items, use values like `Black, Blue`.</small>
@@ -238,7 +243,7 @@
                                             <th class="text-center" style="min-width: 112px;">CTN Qty</th>
                                             <th class="text-center" style="min-width: 132px;">CTN No.</th>
                                             @foreach($variantHeaders as $variantIndex => $header)
-                                                <th class="text-center" style="min-width: 128px;">{{ $header }}</th>
+                                            <th class="text-center" style="min-width: 128px;">{{ $header }}</th>
                                             @endforeach
                                             <th class="text-center" style="min-width: 112px;">PCS</th>
                                             <th class="text-center" style="min-width: 132px;">Total PCS</th>

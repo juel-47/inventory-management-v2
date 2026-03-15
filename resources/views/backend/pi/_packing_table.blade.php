@@ -74,6 +74,13 @@
                     + ($showTotalPcs ? 1 : 0)
                     + ($showNw ? 1 : 0)
                     + ($showGw ? 1 : 0);
+                $blockCtnSize = trim((string) ($block['ctn_size'] ?? ''));
+                if ($blockCtnSize === '') {
+                    $blockCtnSize = collect($block['rows'] ?? [])
+                        ->map(fn ($row) => trim((string) ($row['ctn_size'] ?? '')))
+                        ->filter()
+                        ->first() ?? '';
+                }
                 $imagePath = (string) ($block['image'] ?? '');
                 $imageBase64 = null;
                 if ($imagePath !== '') {
@@ -141,6 +148,11 @@
                                     <div>{{ $block['color_label'] ?: 'N/A' }}</div>
                                     @if(!empty($block['title']))
                                         <div style="font-size: 10px; color: #444; margin-top: 6px;">{{ $block['title'] }}</div>
+                                    @endif
+                                    @if($blockCtnSize !== '')
+                                        <div style="font-size: 10px; color: #444; margin-top: 6px;">
+                                            <strong>CTN MEASUREMENT:</strong> {{ $blockCtnSize }}
+                                        </div>
                                     @endif
                                 </td>
                                 <td rowspan="{{ $rowsToShow->count() + 1 }}" style="text-align: center; vertical-align: middle; border: 1px solid #222;">

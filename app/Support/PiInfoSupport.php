@@ -142,6 +142,7 @@ class PiInfoSupport
             if (!$storedBlock && !empty($derivedBlock['product_id'])) {
                 $storedBlock = $normalizedStoredBlocks->first(fn ($block) => (int) ($block['product_id'] ?? 0) === (int) $derivedBlock['product_id']);
             }
+            $ctnSize = self::nullableString($storedBlock['ctn_size'] ?? null);
             $colorHeaders = $storedBlock['color_headers'] ?? [];
             $colorHeaders = array_values(array_filter($colorHeaders, fn ($header) => trim((string) $header) !== ''));
             if (empty($colorHeaders)) {
@@ -180,6 +181,7 @@ class PiInfoSupport
                 'product_id' => $derivedBlock['product_id'],
                 'title' => self::pickPreferredText($storedBlock['title'] ?? null, $derivedBlock['title'] ?? null),
                 'color_label' => self::pickPreferredText($storedBlock['color_label'] ?? null, $derivedBlock['color_label'] ?? null, ['N/A']),
+                'ctn_size' => $ctnSize,
                 'image' => self::pickPreferredText($storedBlock['image'] ?? null, $derivedBlock['image'] ?? null),
                 'variant_headers' => $variantHeaders,
                 'variant_headers_csv' => implode(', ', $variantHeaders),
@@ -406,11 +408,20 @@ class PiInfoSupport
             ->values()
             ->all();
 
+        $blockCtnSize = self::nullableString($block['ctn_size'] ?? null);
+        if ($blockCtnSize === null) {
+            $blockCtnSize = collect($block['rows'] ?? [])
+                ->map(fn ($row) => self::nullableString($row['ctn_size'] ?? null))
+                ->filter()
+                ->first();
+        }
+
         return [
             'block_key' => self::nullableString($block['block_key'] ?? null),
             'product_id' => self::nullableInt($block['product_id'] ?? null),
             'title' => self::nullableString($block['title'] ?? null),
             'color_label' => self::nullableString($block['color_label'] ?? null),
+            'ctn_size' => $blockCtnSize,
             'image' => self::nullableString($block['image'] ?? null),
             'variant_headers' => $variantHeaders,
             'color_headers' => $colorHeaders,
@@ -465,6 +476,7 @@ class PiInfoSupport
     {
         return self::nullableString($block['title'] ?? null) !== null
             || self::nullableString($block['color_label'] ?? null) !== null
+            || self::nullableString($block['ctn_size'] ?? null) !== null
             || !empty($block['variant_headers'] ?? [])
             || !empty($block['color_headers'] ?? [])
             || !empty($block['size_headers'] ?? [])

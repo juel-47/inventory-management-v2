@@ -118,7 +118,20 @@
             <div class="lg:col-span-8 xl:col-span-9">
                 @if($currentPanel === 'orders')
                     <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6">
-                        <h2 class="text-4xl font-light text-slate-900 mb-4 uppercase tracking-wide">Orders</h2>
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+                            <div>
+                                <h2 class="text-4xl font-light text-slate-900 uppercase tracking-wide">Orders</h2>
+                                <p class="text-xs text-slate-500 mt-1">Search by order no or status.</p>
+                            </div>
+                            <form id="orders-search-form" method="GET" action="{{ route('account.index') }}" class="flex items-center gap-2">
+                                <input type="hidden" name="panel" value="orders">
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search orders..."
+                                    class="w-full md:w-64 rounded-sm border border-slate-300 px-3 py-2 text-xs uppercase tracking-[0.12em] font-bold text-slate-700 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none">
+                                <button type="button" id="orders-search-reset" class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-black uppercase tracking-[0.12em] hover:bg-slate-100">
+                                    Reset
+                                </button>
+                            </form>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[780px]">
                                 <thead>
@@ -130,79 +143,20 @@
                                         <th class="py-3 pl-4 font-black">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    @forelse($orders as $order)
-                                        <tr class="border-b border-slate-100">
-                                            <td class="py-3 pr-4 text-sm font-semibold text-slate-800">#{{ $order->order_no }}</td>
-                                            <td class="py-3 px-4 text-sm text-slate-700">{{ $order->created_at?->format('F j, Y') }}</td>
-                                            <td class="py-3 px-4">
-                                                @php $status = strtolower($order->status); @endphp
-                                                <span class="text-xs font-black px-2 py-1 rounded
-                                                    {{ $status === 'completed' ? 'bg-emerald-100 text-emerald-700' : '' }}
-                                                    {{ $status === 'approved' ? 'bg-sky-100 text-sky-700' : '' }}
-                                                    {{ $status === 'cancelled' ? 'bg-rose-100 text-rose-700' : '' }}
-                                                    {{ $status === 'pending' ? 'bg-amber-100 text-amber-700' : '' }}">
-                                                    {{ ucfirst($order->status) }}
-                                                </span>
-                                            </td>
-                                            <td class="py-3 px-4 text-sm text-slate-800">
-                                                <span class="font-semibold">{{ $currency }}{{ number_format($order->total_amount, 2) }}</span>
-                                                <span class="text-slate-500"> for {{ (int) ($order->total_units ?? 0) }} units</span>
-                                            </td>
-                                            <td class="py-3 pl-4 text-[11px] uppercase tracking-[0.12em] font-black">
-                                                @php
-                                                    $hasPi = \App\Support\PiInfoSupport::hasContent($order->pi_info);
-                                                @endphp
-                                                <a href="{{ route('orders.show', $order->id) }}" class="text-slate-700 hover:text-indigo-600">View</a>
-                                                <span class="text-slate-300 mx-1">|</span>
-                                                <form method="POST" action="{{ route('orders.reorder', $order->id) }}" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-slate-700 hover:text-indigo-600">Reorder</button>
-                                                </form>
-                                                {{-- @if($user->hasRole('Outlet User') || $user->hasRole('User'))
-                                                    <span class="text-slate-300 mx-1">|</span>
-                                                    <a href="{{ route('account.index', ['panel' => 'custom-requests']) }}" class="text-slate-700 hover:text-indigo-600">Request Product</a>
-                                                @endif --}}
-                                                @if($hasPi)
-                                                    <span class="text-slate-300 mx-1">|</span>
-                                                    <a href="{{ route('orders.pi-invoice', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI</a>
-                                                    <span class="text-slate-300 mx-1">|</span>
-                                                    <a href="{{ route('orders.pi-invoice.download', $order->id) }}" class="text-slate-700 hover:text-indigo-600">PI PDF</a>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="py-8 text-center text-sm text-slate-500">No orders found.</td>
-                                        </tr>
-                                    @endforelse
+                                <tbody id="orders-tbody">
+                                    @include('frontend.pages.account.partials.orders_rows', ['orders' => $orders, 'currency' => $currency])
                                 </tbody>
                             </table>
                         </div>
 
-                        @if($orders->hasPages())
-                            @php
-                                $start = max(1, $orders->currentPage() - 1);
-                                $end = min($orders->lastPage(), $orders->currentPage() + 1);
-                            @endphp
-                            <div class="mt-6 flex items-center justify-end gap-2">
-                                @if(!$orders->onFirstPage())
-                                    <a href="{{ $orders->previousPageUrl() }}" class="px-3 py-2 border border-slate-300 rounded-sm text-xs font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-100">Prev</a>
-                                @endif
-
-                                @foreach(range($start, $end) as $pageNo)
-                                    @if($pageNo === $orders->currentPage())
-                                        <span class="px-3 py-2 border border-slate-900 bg-slate-900 rounded-sm text-xs font-black uppercase tracking-[0.12em] text-white">{{ $pageNo }}</span>
-                                    @else
-                                        <a href="{{ $orders->url($pageNo) }}" class="px-3 py-2 border border-slate-300 rounded-sm text-xs font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-100">{{ $pageNo }}</a>
-                                    @endif
-                                @endforeach
-
-                                @if($orders->hasMorePages())
-                                    <a href="{{ $orders->nextPageUrl() }}" class="px-5 py-2 border border-rose-700 bg-rose-700 rounded-sm text-xs font-black uppercase tracking-[0.14em] text-white hover:bg-rose-800">Next</a>
-                                @endif
+                        <div class="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div id="orders-summary" class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+                                @include('frontend.pages.account.partials.orders_summary', ['orders' => $orders])
                             </div>
-                        @endif
+                            <div id="orders-pagination">
+                                @include('frontend.pages.account.partials.orders_pagination', ['orders' => $orders])
+                            </div>
+                        </div>
                     </div>
                 @elseif($currentPanel === 'order-form')
                     <div class="space-y-6">
@@ -705,6 +659,78 @@
             setTimeout(() => {
                 globalApp.notify(toast.message, toast.type || 'success');
             }, 150 * (idx + 1));
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('orders-search-form');
+        const resetBtn = document.getElementById('orders-search-reset');
+        const tbody = document.getElementById('orders-tbody');
+        const summary = document.getElementById('orders-summary');
+        const pagination = document.getElementById('orders-pagination');
+
+        if (!form || !tbody || !summary || !pagination) return;
+
+        const fetchOrders = async (url) => {
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!res.ok) {
+                    return;
+                }
+
+                const data = await res.json();
+                tbody.innerHTML = data.tbody || '';
+                summary.innerHTML = data.summary || '';
+                pagination.innerHTML = data.pagination || '';
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        const buildUrl = () => {
+            const params = new URLSearchParams(new FormData(form));
+            return form.action + '?' + params.toString();
+        };
+
+        let searchTimer = null;
+        const triggerSearch = () => {
+            if (searchTimer) clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                fetchOrders(buildUrl());
+            }, 300);
+        };
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            fetchOrders(buildUrl());
+        });
+
+        const searchInput = form.querySelector('input[name="search"]');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                triggerSearch();
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                if (searchInput) searchInput.value = '';
+                const url = form.action + '?panel=orders';
+                fetchOrders(url);
+            });
+        }
+
+        pagination.addEventListener('click', function (e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+            e.preventDefault();
+            fetchOrders(link.href);
         });
     });
 
