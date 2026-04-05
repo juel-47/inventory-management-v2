@@ -118,14 +118,9 @@
                                 <div class="mb-3">
                                     <div class="info-label">Example Photos</div>
                                     <div class="d-flex flex-wrap" style="gap: 12px;">
-                                        @foreach($exampleImages as $image)
-                                            @php
-                                                $imagePath = is_array($image)
-                                                    ? ($image['path'] ?? $image['url'] ?? ($image[0] ?? null))
-                                                    : $image;
-                                            @endphp
-                                            @if(!empty($imagePath))
-                                                <img src="{{ asset($imagePath) }}" alt="Product Image" class="request-image">
+                                        @foreach($exampleImages as $index => $image)
+                                            @if($customProductRequest->resolveExampleImagePath($index))
+                                                <img src="{{ route('admin.custom-product-requests.images.show', [$customProductRequest->id, $index]) }}" alt="Product Image" class="request-image">
                                             @endif
                                         @endforeach
                                     </div>

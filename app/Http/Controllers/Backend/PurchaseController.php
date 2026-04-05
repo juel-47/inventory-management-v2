@@ -13,10 +13,10 @@ use App\Models\PurchaseDetail;
 use App\Models\StockLedger;
 use App\Models\Vendor;
 use App\Models\PricingRule;
+use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Brian2694\Toastr\Facades\Toastr;
 use App\Support\PdfImageHelper;
 
@@ -124,10 +124,7 @@ class PurchaseController extends Controller
             if ($request->hasFile('invoice_attachment')) {
                 $file = $request->file('invoice_attachment');
                 $filename = 'invoice_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('attachments/purchases', $filename, 'public');
-                
-                // Ensure visibility is public (helps on some environments)
-                Storage::disk('public')->setVisibility($path, 'public');
+                $path = StoredFileSupport::storePrivateFile($file, 'attachments/purchases', $filename);
                 
                 $purchase->invoice_attachment = $path;
                 $storedInvoiceAttachment = [
@@ -471,8 +468,7 @@ class PurchaseController extends Controller
         try {
             foreach ($request->file('invoice_attachments', []) as $file) {
                 $filename = 'invoice_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('attachments/purchases/' . $purchase->id, $filename, 'public');
-                Storage::disk('public')->setVisibility($path, 'public');
+                $path = StoredFileSupport::storePrivateFile($file, 'attachments/purchases/' . $purchase->id, $filename);
                 $storedPaths[] = $path;
 
                 $purchase->attachments()->create([
@@ -495,9 +491,7 @@ class PurchaseController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             foreach ($storedPaths as $filePath) {
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
-                }
+                StoredFileSupport::delete($filePath);
             }
             Toastr::error('Upload failed: ' . $e->getMessage());
         }
@@ -518,9 +512,7 @@ class PurchaseController extends Controller
             $filePath = $attachment->file_path;
             $legacyMatchesThis = $purchase->invoice_attachment === $filePath;
 
-            if ($filePath && Storage::disk('public')->exists($filePath)) {
-                Storage::disk('public')->delete($filePath);
-            }
+            StoredFileSupport::delete($filePath);
 
             $attachment->delete();
 
@@ -541,6 +533,35 @@ class PurchaseController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    public function downloadAttachment(string $id, string $attachmentId)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $attachment = PurchaseAttachment::where('purchase_id', $purchase->id)->findOrFail($attachmentId);
+        $downloadName = $attachment->original_name ?: basename($attachment->file_path);
+        $response = StoredFileSupport::download($attachment->file_path, $downloadName);
+
+        if (!$response) {
+            Toastr::error('Attachment file not found.');
+            return redirect()->back();
+        }
+
+        return $response;
+    }
+
+    public function downloadLegacyAttachment(string $id)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $downloadName = $purchase->invoice_attachment ? basename($purchase->invoice_attachment) : null;
+        $response = StoredFileSupport::download($purchase->invoice_attachment, $downloadName);
+
+        if (!$response) {
+            Toastr::error('Attachment file not found.');
+            return redirect()->back();
+        }
+
+        return $response;
     }
 
     /**
@@ -586,9 +607,7 @@ class PurchaseController extends Controller
             }
             $attachmentPaths = array_values(array_unique($attachmentPaths));
             foreach ($attachmentPaths as $filePath) {
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
-                }
+                StoredFileSupport::delete($filePath);
             }
 
             $purchase->delete();

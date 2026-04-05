@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\CustomProductRequest;
 use App\Models\SavedPurchaseForm;
 use App\Models\SavedPurchaseFormItem;
+use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -271,8 +272,11 @@ class AccountController extends Controller
                         continue;
                     }
                     $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-                    $image->move(public_path('uploads/custom_product_requests'), $imageName);
-                    $paths[] = 'uploads/custom_product_requests/' . $imageName;
+                    $paths[] = StoredFileSupport::storePrivateFile(
+                        $image,
+                        'custom-product-requests/' . $user->id,
+                        $imageName
+                    );
                 }
                 if (!empty($paths)) {
                     $customRequest->example_image = json_encode($paths);
@@ -331,6 +335,23 @@ class AccountController extends Controller
         return view('frontend.pages.account.custom-request-show', [
             'customProductRequest' => $customProductRequest,
         ]);
+    }
+
+    public function showCustomProductRequestImage(CustomProductRequest $customProductRequest, int $index)
+    {
+        $user = Auth::user();
+        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        abort_if((int) $customProductRequest->user_id !== (int) $user->id, 403);
+
+        $imagePath = $customProductRequest->resolveExampleImagePath($index);
+        $response = StoredFileSupport::inline($imagePath);
+
+        abort_if(!$response, 404);
+
+        return $response;
     }
 
     public function addOrderFormToCart(Request $request)

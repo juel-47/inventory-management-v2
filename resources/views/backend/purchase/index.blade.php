@@ -84,8 +84,13 @@
                                                             </button>
                                                             <div class="dropdown-menu dropdown-menu-right p-1" style="min-width: 260px;">
                                                                 @foreach($attachmentList as $index => $attachment)
+                                                                    @php
+                                                                        $downloadUrl = !empty($attachment->id)
+                                                                            ? route('admin.purchases.download-attachment', [$purchase->id, $attachment->id])
+                                                                            : route('admin.purchases.download-legacy-attachment', $purchase->id);
+                                                                    @endphp
                                                                     <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1">
-                                                                        <a href="{{ asset('storage/' . $attachment->file_path) }}"
+                                                                        <a href="{{ $downloadUrl }}"
                                                                            class="text-dark text-truncate pr-2"
                                                                            style="max-width: 190px;"
                                                                            title="{{ $attachment->original_name ?? ('Attachment ' . ($index + 1)) }}"

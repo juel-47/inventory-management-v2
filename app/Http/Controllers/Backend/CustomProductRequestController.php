@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\DataTables\CustomProductRequestDataTable;
 use App\Models\CustomProductRequest;
+use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -97,8 +98,11 @@ class CustomProductRequestController extends Controller implements HasMiddleware
                         continue;
                     }
                     $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-                    $image->move(public_path('uploads/custom_product_requests'), $imageName);
-                    $paths[] = 'uploads/custom_product_requests/' . $imageName;
+                    $paths[] = StoredFileSupport::storePrivateFile(
+                        $image,
+                        'custom-product-requests/' . $customRequest->user_id,
+                        $imageName
+                    );
                 }
                 if (!empty($paths)) {
                     $customRequest->example_image = json_encode($paths);
@@ -134,6 +138,23 @@ class CustomProductRequestController extends Controller implements HasMiddleware
         }
 
         return view('backend.custom-product-request.show', compact('customProductRequest'));
+    }
+
+    public function showImage(CustomProductRequest $customProductRequest, int $index)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user->hasRole('Admin') && (int) $customProductRequest->user_id !== (int) Auth::id()) {
+            abort(403, 'Unauthorized access to this custom product request.');
+        }
+
+        $imagePath = $customProductRequest->resolveExampleImagePath($index);
+        $response = StoredFileSupport::inline($imagePath);
+
+        abort_if(!$response, 404);
+
+        return $response;
     }
 
     /**
@@ -186,9 +207,8 @@ class CustomProductRequestController extends Controller implements HasMiddleware
              return response(['status' => 'error', 'message' => 'Unauthorized or request already processed']);
         }
 
-        // Delete associated image if exists
-        if ($customRequest->example_image && file_exists(public_path($customRequest->example_image))) {
-            unlink(public_path($customRequest->example_image));
+        foreach ($customRequest->exampleImagePaths() as $imagePath) {
+            StoredFileSupport::delete($imagePath);
         }
 
         $customRequest->delete();

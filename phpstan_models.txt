@@ -1,0 +1,5 @@
+C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Models\CustomProductRequest.php:71:Access to an undefined property App\Models\CustomProductRequest::$status.
+C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Models\CustomProductRequest.php:88:Access to an undefined property App\Models\CustomProductRequest::$status.
+C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Models\Product.php:93:Access to an undefined property App\Models\Product::$purchaseDetails.
+C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Models\Product.php:108:Access to an undefined property App\Models\Product::$inventoryStocks.
+C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Models\ProductVariant.php:52:Access to an undefined property App\Models\ProductVariant::$inventoryStocks.

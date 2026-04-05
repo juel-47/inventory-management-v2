@@ -9,8 +9,8 @@ use App\Models\OrderPaymentReceipt;
 use App\Models\GeneralSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
+use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use App\Support\PdfImageHelper;
 
@@ -388,7 +388,8 @@ class AccountController extends Controller
                     continue;
                 }
 
-                $storedPath = $file->store("order-payments/{$payment->id}", 'public');
+                $filename = 'receipt_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $storedPath = StoredFileSupport::storePrivateFile($file, "order-payments/{$payment->id}", $filename);
                 OrderPaymentReceipt::create([
                     'order_payment_id' => $payment->id,
                     'file_path' => $storedPath,
@@ -422,20 +423,20 @@ class AccountController extends Controller
 
     public function downloadReceipt(OrderPaymentReceipt $receipt)
     {
-        if (!Storage::disk('public')->exists($receipt->file_path)) {
+        $downloadName = $receipt->original_name ?: basename($receipt->file_path);
+        $response = StoredFileSupport::download($receipt->file_path, $downloadName);
+
+        if (!$response) {
             Toastr::error('Receipt file not found.');
             return redirect()->back();
         }
 
-        $downloadName = $receipt->original_name ?: basename($receipt->file_path);
-        return Storage::disk('public')->download($receipt->file_path, $downloadName);
+        return $response;
     }
 
     public function destroyReceipt(OrderPaymentReceipt $receipt)
     {
-        if ($receipt->file_path && Storage::disk('public')->exists($receipt->file_path)) {
-            Storage::disk('public')->delete($receipt->file_path);
-        }
+        StoredFileSupport::delete($receipt->file_path);
 
         $receipt->delete();
         $message = 'Receipt deleted successfully.';

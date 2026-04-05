@@ -44,6 +44,25 @@ class CustomProductRequest extends Model
         return [$value];
     }
 
+    public function exampleImagePaths(): array
+    {
+        return array_values(array_filter(array_map(
+            fn ($image) => $this->normalizeExampleImagePath($image),
+            $this->example_image ?? []
+        )));
+    }
+
+    public function resolveExampleImagePath(int $index): ?string
+    {
+        $images = $this->example_image ?? [];
+
+        if (!array_key_exists($index, $images)) {
+            return null;
+        }
+
+        return $this->normalizeExampleImagePath($images[$index]);
+    }
+
     /**
      * Get the status badge class for display
      */
@@ -67,5 +86,20 @@ class CustomProductRequest extends Model
     public function getStatusLabelAttribute()
     {
         return ucfirst($this->status);
+    }
+
+    private function normalizeExampleImagePath($image): ?string
+    {
+        if (is_array($image)) {
+            $image = $image['path'] ?? $image['url'] ?? ($image[0] ?? null);
+        }
+
+        if (!is_string($image)) {
+            return null;
+        }
+
+        $image = trim($image);
+
+        return $image !== '' ? $image : null;
     }
 }

@@ -87,6 +87,9 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
         Route::delete('/my-account/saved-forms/{savedRequest}', 'deleteSavedForm')->name('account.saved-forms.delete');
         Route::post('/my-account/custom-product-requests', 'storeCustomProductRequest')->name('account.custom-product-requests.store');
         Route::get('/my-account/custom-product-requests/{customProductRequest}', 'showCustomProductRequest')->name('account.custom-product-requests.show');
+        Route::get('/my-account/custom-product-requests/{customProductRequest}/images/{index}', 'showCustomProductRequestImage')
+            ->whereNumber('index')
+            ->name('account.custom-product-requests.images.show');
         Route::post('/my-account/custom-product-requests/{customProductRequest}/reorder', 'reorderCustomProductRequest')->name('account.custom-product-requests.reorder');
     });
 
@@ -221,6 +224,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('purchases/get-booking-details', 'getBookingDetails')->name('purchases.get-booking-details');
         Route::get('purchases/{id}/invoice', 'viewInvoice')->name('purchases.view-invoice');
         Route::get('purchases/{id}/download-pdf', 'downloadPdf')->name('purchases.download-pdf');
+        Route::get('purchases/{id}/attachment/download', 'downloadLegacyAttachment')->name('purchases.download-legacy-attachment');
+        Route::get('purchases/{id}/attachments/{attachmentId}/download', 'downloadAttachment')->name('purchases.download-attachment');
         Route::post('purchases/{id}/attachments', 'uploadAttachments')->name('purchases.upload-attachments');
         Route::delete('purchases/{id}/attachments/{attachmentId}', 'deleteAttachment')->name('purchases.delete-attachment');
     });
@@ -281,6 +286,9 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
 
     /** Custom Product Request Routes */
     Route::controller(CustomProductRequestController::class)->group(function () {
+        Route::get('custom-product-requests/{customProductRequest}/images/{index}', 'showImage')
+            ->whereNumber('index')
+            ->name('custom-product-requests.images.show');
         Route::put('custom-product-requests/update-status/{id}', 'updateStatus')->name('custom-product-requests.update-status');
     });
     Route::resource('custom-product-requests', CustomProductRequestController::class);

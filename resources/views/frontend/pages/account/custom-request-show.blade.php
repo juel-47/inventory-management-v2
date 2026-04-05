@@ -47,8 +47,10 @@
                 <section class="bg-white border border-slate-100 rounded-2xl p-6">
                     <h2 class="text-lg font-bold text-slate-900 mb-4">Example Images</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        @foreach($customProductRequest->example_image as $image)
-                            <img src="{{ asset($image) }}" alt="Example image" class="w-full aspect-square rounded-lg border border-slate-100 object-cover">
+                        @foreach($customProductRequest->example_image as $index => $image)
+                            @if($customProductRequest->resolveExampleImagePath($index))
+                                <img src="{{ route('account.custom-product-requests.images.show', [$customProductRequest->id, $index]) }}" alt="Example image" class="w-full aspect-square rounded-lg border border-slate-100 object-cover">
+                            @endif
                         @endforeach
                     </div>
                 </section>
