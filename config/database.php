@@ -2,6 +2,25 @@
 
 use Illuminate\Support\Str;
 
+$mysqlDumpPath = env('MYSQLDUMP_PATH', '');
+
+if ($mysqlDumpPath === '' && PHP_OS_FAMILY === 'Windows') {
+    $candidateDirs = [
+        'C:\\xampp\\mysql\\bin',
+        'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin',
+        'C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin',
+        'C:\\Program Files\\MariaDB 10.6\\bin',
+        'C:\\Program Files\\MariaDB 10.5\\bin',
+    ];
+
+    foreach ($candidateDirs as $dir) {
+        if (is_file($dir . DIRECTORY_SEPARATOR . 'mysqldump.exe')) {
+            $mysqlDumpPath = $dir;
+            break;
+        }
+    }
+}
+
 return [
 
     /*
@@ -57,6 +76,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            'dump' => [
+                'dump_binary_path' => $mysqlDumpPath,
+            ],
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -77,6 +99,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            'dump' => [
+                'dump_binary_path' => $mysqlDumpPath,
+            ],
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
