@@ -6,7 +6,7 @@
                 Admin Verification
             </h2>
             <p class="mt-2 text-sm text-gray-800">
-                We sent a 6-digit code to your email address. Enter it to continue.
+                We sent a verification code to your email address. Enter it to continue.
             </p>
         </div>
     </x-slot:heading>
@@ -21,13 +21,12 @@
                 <input id="code"
                        name="code"
                        type="text"
-                       inputmode="numeric"
                        autocomplete="one-time-code"
                        required
-                       maxlength="6"
+                       maxlength="8"
                        value="{{ old('code') }}"
                        placeholder=" "
-                       class="peer block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-transparent focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all duration-300 ease-in-out hover:ring-indigo-400 bg-white/50 backdrop-blur-sm focus:outline-none tracking-[0.3em] text-center">
+                       class="peer block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-transparent focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all duration-300 ease-in-out hover:ring-indigo-400 bg-white/50 backdrop-blur-sm focus:outline-none tracking-[0.25em] text-center">
                 <label for="code"
                        class="absolute left-3 top-0 z-10 -translate-y-1/2 px-1 text-xs font-medium text-gray-500 transition-all duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-indigo-600 bg-white peer-focus:bg-white rounded-sm">
                     Verification code

@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Mail;
 
 class TwoFactorService
 {
-    private const CODE_LENGTH = 6;
+    private const CODE_LENGTH = 8;
+    private const CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%*';
     private const EXPIRES_MINUTES = 10;
 
     public function send(User $user): void
@@ -30,9 +31,14 @@ class TwoFactorService
 
     private function generateCode(): string
     {
-        $min = (int) (10 ** (self::CODE_LENGTH - 1));
-        $max = (int) ((10 ** self::CODE_LENGTH) - 1);
+        $charset = self::CODE_CHARSET;
+        $maxIndex = strlen($charset) - 1;
+        $code = '';
 
-        return (string) random_int($min, $max);
+        for ($i = 0; $i < self::CODE_LENGTH; $i++) {
+            $code .= $charset[random_int(0, $maxIndex)];
+        }
+
+        return $code;
     }
 }

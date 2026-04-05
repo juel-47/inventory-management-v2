@@ -32,7 +32,7 @@ class TwoFactorController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'code' => ['required', 'digits:6'],
+            'code' => ['required', 'string', 'size:8', 'regex:/^[A-Za-z0-9@#$%*]{8}$/'],
         ]);
 
         $this->ensureIsNotRateLimited($request);
@@ -60,13 +60,19 @@ class TwoFactorController extends Controller
         $remember = (bool) $request->session()->get('two_factor_remember', false);
         Auth::loginUsingId($userId, $remember);
 
+        $intended = $request->session()->get('two_factor_intended');
+        if (! is_string($intended) || ! str_contains($intended, '/admin')) {
+            $intended = route('admin.dashboard');
+        }
+
         $request->session()->forget([
             'two_factor_user_id',
             'two_factor_remember',
+            'two_factor_intended',
         ]);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'));
+        return redirect()->to($intended);
     }
 
     public function resend(Request $request, TwoFactorService $twoFactorService): RedirectResponse

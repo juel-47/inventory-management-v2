@@ -35,9 +35,15 @@ class AuthenticatedSessionController extends Controller
             return redirect('/')->with('error', 'Only admins can login via this portal.');
         }
 
+        $intended = $request->session()->get('url.intended');
+        if (! is_string($intended) || ! str_contains($intended, '/admin')) {
+            $intended = route('admin.dashboard');
+        }
+
         $twoFactorService->send($user);
         $request->session()->put('two_factor_user_id', $user->id);
         $request->session()->put('two_factor_remember', $request->boolean('remember'));
+        $request->session()->put('two_factor_intended', $intended);
 
         Auth::logout();
 
