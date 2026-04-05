@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,12 @@ Route::middleware('guest')->group(function () {
     Route::get('admin/login', [AuthenticatedSessionController::class, 'create'])
         ->name('admin.login');
     Route::post('admin/login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('admin/two-factor', [TwoFactorController::class, 'create'])
+        ->name('admin.two-factor.challenge');
+    Route::post('admin/two-factor', [TwoFactorController::class, 'store'])
+        ->name('admin.two-factor.verify');
+    Route::post('admin/two-factor/resend', [TwoFactorController::class, 'resend'])
+        ->name('admin.two-factor.resend');
 
     // Frontend (Outlet User / User) Login Routes
     Route::get('login', [\App\Http\Controllers\Frontend\AuthController::class, 'create'])

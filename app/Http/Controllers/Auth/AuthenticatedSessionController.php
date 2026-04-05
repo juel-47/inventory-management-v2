@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\TwoFactorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, TwoFactorService $twoFactorService): RedirectResponse
     {
         $request->authenticate();
 
@@ -34,14 +35,19 @@ class AuthenticatedSessionController extends Controller
             return redirect('/')->with('error', 'Only admins can login via this portal.');
         }
 
-        $request->session()->regenerate();
+        $twoFactorService->send($user);
+        $request->session()->put('two_factor_user_id', $user->id);
+        $request->session()->put('two_factor_remember', $request->boolean('remember'));
 
-        $intended = $request->session()->get('url.intended');
-        if (is_string($intended) && str_contains($intended, '/admin')) {
-            return redirect()->to($intended);
-        }
+        Auth::logout();
 
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.two-factor.challenge');
+
+        //without 2FA
+        
+        // $request->session()->regenerate();
+        // return redirect()->route('admin.dashboard');
+
     }
 
     /**
