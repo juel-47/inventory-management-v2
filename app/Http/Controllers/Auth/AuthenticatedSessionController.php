@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Throwable;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -30,7 +31,7 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Check if user is Admin
-        if (!$user->hasRole('Admin')) {
+        if (! $user->hasRole('Admin')) {
             Auth::logout();
             return redirect('/')->with('error', 'Only admins can login via this portal.');
         }
@@ -40,20 +41,50 @@ class AuthenticatedSessionController extends Controller
             $intended = route('admin.dashboard');
         }
 
-        $twoFactorService->send($user);
+        // If mail isn't configured, allow direct admin access (no 2FA).
+        if (! $this->isMailConfigured()) {
+            $request->session()->regenerate();
+            return redirect()->to($intended);
+        }
+
+        // Logout BEFORE OTP send so a mail failure can't leave a logged-in session.
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        try {
+            $twoFactorService->send($user);
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors([
+                'email' => 'Unable to send verification code. Please try again.',
+            ]);
+        }
+
         $request->session()->put('two_factor_user_id', $user->id);
         $request->session()->put('two_factor_remember', $request->boolean('remember'));
         $request->session()->put('two_factor_intended', $intended);
 
-        Auth::logout();
-
         return redirect()->route('admin.two-factor.challenge');
+    }
 
-        //without 2FA
-        
-        // $request->session()->regenerate();
-        // return redirect()->route('admin.dashboard');
+    private function isMailConfigured(): bool
+    {
+        $driver = config('mail.default');
+        if (! $driver) {
+            return false;
+        }
 
+        if ($driver !== 'smtp') {
+            return true;
+        }
+
+        $host = config('mail.mailers.smtp.host');
+        $port = config('mail.mailers.smtp.port');
+        $username = config('mail.mailers.smtp.username');
+
+        return ! empty($host) && ! empty($port) && ! empty($username);
     }
 
     /**
