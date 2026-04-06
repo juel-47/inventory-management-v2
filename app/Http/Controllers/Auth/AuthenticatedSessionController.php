@@ -48,25 +48,28 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Logout BEFORE OTP send so a mail failure can't leave a logged-in session.
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Auth::logout();
+        // $request->session()->invalidate();
+        // $request->session()->regenerateToken();
 
-        try {
-            $twoFactorService->send($user);
-        } catch (Throwable $e) {
-            report($e);
+        // try {
+        //     $twoFactorService->send($user);
+        // } catch (Throwable $e) {
+        //     report($e);
 
-            return back()->withErrors([
-                'email' => 'Unable to send verification code. Please try again.',
-            ]);
-        }
+        //     return back()->withErrors([
+        //         'email' => 'Unable to send verification code. Please try again.',
+        //     ]);
+        // }
 
-        $request->session()->put('two_factor_user_id', $user->id);
-        $request->session()->put('two_factor_remember', $request->boolean('remember'));
-        $request->session()->put('two_factor_intended', $intended);
+        // $request->session()->put('two_factor_user_id', $user->id);
+        // $request->session()->put('two_factor_remember', $request->boolean('remember'));
+        // $request->session()->put('two_factor_intended', $intended);
 
-        return redirect()->route('admin.two-factor.challenge');
+        // return redirect()->route('admin.two-factor.challenge');
+
+        $request->session()->regenerate();
+        return redirect()->route('admin.dashboard');
     }
 
     private function isMailConfigured(): bool
