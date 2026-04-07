@@ -87,6 +87,9 @@
                     <a href="{{ route('account.index', ['panel' => 'orders']) }}" class="{{ $menuBase }} {{ $currentPanel === 'orders' ? $menuActive : $menuIdle }}">Orders</a>
                     {{-- <a href="{{ route('account.index', ['panel' => 'downloads']) }}" class="{{ $menuBase }} {{ $currentPanel === 'downloads' ? $menuActive : $menuIdle }}">Downloads</a> --}}
                     {{-- <a href="{{ route('account.index', ['panel' => 'addresses']) }}" class="{{ $menuBase }} {{ $currentPanel === 'addresses' ? $menuActive : $menuIdle }}">Addresses</a> --}}
+                    @if(($user->hasRole('Outlet User') || $user->hasRole('User')) && $hasProductRequests)
+                        <a href="{{ route('account.index', ['panel' => 'product-requests']) }}" class="{{ $menuBase }} {{ $currentPanel === 'product-requests' ? $menuActive : $menuIdle }}">Product Requests</a>
+                    @endif
                     <a href="{{ route('account.index', ['panel' => 'order-form']) }}" class="{{ $menuBase }} {{ $currentPanel === 'order-form' ? $menuActive : $menuIdle }}">Order Form</a>
                     @if($user->hasRole('Outlet User') || $user->hasRole('User'))
                         <a href="{{ route('account.index', ['panel' => 'custom-requests']) }}" class="{{ $menuBase }} {{ $currentPanel === 'custom-requests' ? $menuActive : $menuIdle }}">Custom Product Request</a>
@@ -157,6 +160,59 @@
                                 @include('frontend.pages.account.partials.orders_pagination', ['orders' => $orders])
                             </div>
                         </div>
+                    </div>
+                @elseif($currentPanel === 'product-requests')
+                    <div class="bg-white border border-slate-200 rounded-sm p-4 md:p-6">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+                            <div>
+                                <h2 class="text-3xl font-light text-slate-900 uppercase tracking-wide">Product Requests</h2>
+                                <p class="text-xs text-slate-500 mt-1">Your previous product requests.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[780px]">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-[0.12em] text-slate-600">
+                                        <th class="py-3 pr-4 font-black">Request No</th>
+                                        <th class="py-3 px-4 font-black">Qty</th>
+                                        <th class="py-3 px-4 font-black">Total</th>
+                                        <th class="py-3 px-4 font-black">Status</th>
+                                        <th class="py-3 px-4 font-black">Date</th>
+                                        <th class="py-3 pl-4 font-black text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($productRequests as $pRequest)
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-3 pr-4 text-sm font-semibold text-slate-800">{{ $pRequest->request_no }}</td>
+                                            <td class="py-3 px-4 text-sm text-slate-700">{{ (int) $pRequest->total_qty }}</td>
+                                            <td class="py-3 px-4 text-sm text-slate-700">{{ $currency }}{{ number_format((float) $pRequest->total_amount, 2) }}</td>
+                                            <td class="py-3 px-4 text-sm">
+                                                <span class="px-2 py-1 text-xs font-bold rounded-sm
+                                                    {{ $pRequest->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : '' }}
+                                                    {{ $pRequest->status === 'cancelled' ? 'bg-rose-100 text-rose-700' : '' }}
+                                                    {{ $pRequest->status === 'pending' ? 'bg-amber-100 text-amber-700' : '' }}">
+                                                    {{ ucfirst($pRequest->status) }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4 text-sm text-slate-700">{{ $pRequest->created_at?->format('d M Y') }}</td>
+                                            <td class="py-3 pl-4 text-right text-[11px] uppercase tracking-[0.12em] font-black">
+                                                <a href="{{ route('product-requests.show', $pRequest->id) }}" class="text-slate-700 hover:text-indigo-600">View</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="py-6 text-center text-sm text-slate-500">No product requests yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        @if(method_exists($productRequests, 'links'))
+                            <div class="mt-4">
+                                {{ $productRequests->links('vendor.pagination.tailwind') }}
+                            </div>
+                        @endif
                     </div>
                 @elseif($currentPanel === 'order-form')
                     <div class="space-y-6">
@@ -329,7 +385,7 @@
                                 <h2 class="text-3xl font-light text-slate-900 uppercase tracking-wide">Saved Purchase Forms</h2>
                                 <p class="text-sm text-slate-500">Load a saved form, then add to cart to checkout.</p>
                             </div>
-                            <p class="text-xs uppercase tracking-[0.12em] font-black text-slate-400">Latest {{ (int) ($savedPurchaseForms->count() ?? 0) }} forms</p>
+                            <p class="text-xs uppercase tracking-[0.12em] font-black text-slate-400">Latest {{ method_exists($savedPurchaseForms, 'total') ? (int) $savedPurchaseForms->total() : (int) ($savedPurchaseForms->count() ?? 0) }} forms</p>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -398,6 +454,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if(method_exists($savedPurchaseForms, 'links'))
+                            <div class="mt-4">
+                                {{ $savedPurchaseForms->links('vendor.pagination.tailwind') }}
+                            </div>
+                        @endif
                     </div>
                 @elseif($currentPanel === 'profile')
                     <div class="space-y-5">

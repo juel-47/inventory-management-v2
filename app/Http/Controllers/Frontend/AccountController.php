@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\CustomProductRequest;
+use App\Models\ProductRequest;
 use App\Models\SavedPurchaseForm;
 use App\Models\SavedPurchaseFormItem;
 use App\Support\StoredFileSupport;
@@ -75,6 +76,14 @@ class AccountController extends Controller
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
+
+        $productRequests = ProductRequest::query()
+            ->where('user_id', $user->id)
+            ->withCount('items')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+        $hasProductRequests = $productRequests->total() > 0;
 
         $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
         $mapOrderFormProduct = function ($product) use ($isOutletRole) {
@@ -146,8 +155,8 @@ class AccountController extends Controller
             ->where('user_id', $user->id)
             ->withCount('items')
             ->orderByDesc('id')
-            ->take(20)
-            ->get(['id', 'request_no', 'status', 'total_qty', 'total_amount', 'created_at']);
+            ->paginate(10)
+            ->withQueryString();
 
         if (in_array($panel, ['order-form', 'saved-forms'], true) && $selectedSavedRequestId > 0) {
             $savedRequest = SavedPurchaseForm::query()
@@ -232,6 +241,8 @@ class AccountController extends Controller
             'orders',
             'recentOrders',
             'customProductRequests',
+            'productRequests',
+            'hasProductRequests',
             'productsForOrderForm',
             'reorderSeedRows',
             'savedPurchaseForms',

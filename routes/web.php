@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:Outlet User|User'])->group(function () {
     });
 
     Route::controller(FrontendProductRequestController::class)->group(function () {
+        Route::get('/my-product-requests/{productRequest}', 'show')->name('product-requests.show');
         Route::get('/my-product-requests/{productRequest}/pi-invoice', 'piInvoice')->name('product-requests.pi-invoice');
         Route::get('/my-product-requests/{productRequest}/pi-invoice/download', 'downloadPiInvoice')->name('product-requests.pi-invoice.download');
     });

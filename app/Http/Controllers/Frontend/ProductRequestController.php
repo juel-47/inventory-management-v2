@@ -11,6 +11,24 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductRequestController extends Controller
 {
+    public function show(ProductRequest $productRequest)
+    {
+        abort_if((int) $productRequest->user_id !== (int) Auth::id(), 403);
+
+        $productRequest->load([
+            'user',
+            'order',
+            'items.product.category',
+            'items.product.unit',
+            'items.variant.color',
+            'items.variant.size',
+        ]);
+
+        return view('frontend.pages.account.product-request-show', [
+            'productRequest' => $productRequest,
+        ]);
+    }
+
     public function piInvoice(ProductRequest $productRequest)
     {
         abort_if((int) $productRequest->user_id !== (int) Auth::id(), 403);
