@@ -65,6 +65,7 @@ class DiscountController extends Controller
         });
 
         Toastr::success('Discount Rule Created Successfully!');
+
         return redirect()->route('admin.discounts.index');
     }
 
@@ -82,6 +83,7 @@ class DiscountController extends Controller
     public function edit(string $id)
     {
         $discount = Discount::findOrFail($id);
+
         return view('backend.discount.edit', compact('discount'));
     }
 
@@ -93,7 +95,7 @@ class DiscountController extends Controller
         $discount = Discount::findOrFail($id);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:discounts,name,' . $discount->id,
+            'name' => 'required|string|max:255|unique:discounts,name,'.$discount->id,
             'type' => 'required|in:flat,percent',
             'value' => 'required|numeric|min:0',
             'is_default' => 'nullable|boolean',
@@ -125,6 +127,7 @@ class DiscountController extends Controller
         });
 
         Toastr::success('Discount Rule Updated Successfully!');
+
         return redirect()->route('admin.discounts.index');
     }
 

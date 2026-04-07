@@ -3,29 +3,29 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Color;
 use App\Models\GeneralSetting;
+use App\Models\InventoryStock;
 use App\Models\Issue;
 use App\Models\IssueItem;
-use App\Models\InventoryStock;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\ProductVariant;
-use App\Models\Color;
 use App\Models\Size;
 use App\Models\StockLedger;
 use App\Models\User;
+use App\Support\PdfImageHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Support\PdfImageHelper;
 
 class IssueController extends Controller
 {
     private function resolveVariantColorName(?ProductVariant $variant): ?string
     {
-        if (!$variant) {
+        if (! $variant) {
             return null;
         }
 
@@ -34,7 +34,7 @@ class IssueController extends Controller
             return $relationColor->name;
         }
 
-        if (!empty($variant->color_id)) {
+        if (! empty($variant->color_id)) {
             $name = Color::query()->whereKey($variant->color_id)->value('name');
             if ($name) {
                 return $name;
@@ -46,7 +46,7 @@ class IssueController extends Controller
 
     private function resolveVariantSizeName(?ProductVariant $variant): ?string
     {
-        if (!$variant) {
+        if (! $variant) {
             return null;
         }
 
@@ -55,7 +55,7 @@ class IssueController extends Controller
             return $relationSize->name;
         }
 
-        if (!empty($variant->size_id)) {
+        if (! empty($variant->size_id)) {
             $name = Size::query()->whereKey($variant->size_id)->value('name');
             if ($name) {
                 return $name;
@@ -68,17 +68,18 @@ class IssueController extends Controller
     public function index()
     {
         $issues = Issue::with('outlet')->latest()->get();
+
         return view('backend.issue.index', compact('issues'));
     }
 
     public function create(Request $request)
     {
         $products = Product::where('status', 1)
-        ->with(['variants.color', 'variants.size', 'variants.inventoryStocks', 'inventoryStocks'])
-        ->get();
-        //when no need to check status: 
+            ->with(['variants.color', 'variants.size', 'variants.inventoryStocks', 'inventoryStocks'])
+            ->get();
+        // when no need to check status:
         //  $products = Product::with(['variants.color', 'variants.size', 'variants.inventoryStocks', 'inventoryStocks'])->get();
-            
+
         // Fetch requests that are approved
         $productRequests = ProductRequest::with('user')
             ->where('status', 'approved')
@@ -93,7 +94,7 @@ class IssueController extends Controller
         $requestId = $request->query('request_id');
         $orderId = $request->query('order_id');
         $outletUsers = User::role(['Outlet User', 'User'])->get();
-            
+
         return view('backend.issue.create', compact('products', 'productRequests', 'frontendOrders', 'requestId', 'orderId', 'outletUsers'));
     }
 
@@ -133,13 +134,13 @@ class IssueController extends Controller
         }
 
         $productRequest = ProductRequest::with(['items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($request->request_id);
-        
-        $items = $productRequest->items->map(function($item) {
+
+        $items = $productRequest->items->map(function ($item) {
             // Get current warehouse stock for validation in UI
             $stock = InventoryStock::where([
                 'product_id' => $item->product_id,
                 'variant_id' => $item->variant_id,
-                'outlet_id' => 1
+                'outlet_id' => 1,
             ])->first();
 
             return [
@@ -180,19 +181,19 @@ class IssueController extends Controller
             $sourceNote = null;
             if ($request->filled('product_request_id')) {
                 $requestRef = ProductRequest::find($request->product_request_id);
-                $sourceNote = $requestRef ? ('Source Request: ' . $requestRef->request_no) : null;
+                $sourceNote = $requestRef ? ('Source Request: '.$requestRef->request_no) : null;
             } elseif ($request->filled('order_id')) {
                 $orderRef = Order::find($request->order_id);
-                $sourceNote = $orderRef ? ('Source Order: ' . $orderRef->order_no) : null;
+                $sourceNote = $orderRef ? ('Source Order: '.$orderRef->order_no) : null;
             }
 
             $note = trim((string) $request->note);
             if ($sourceNote) {
-                $note = $note !== '' ? ($note . ' | ' . $sourceNote) : $sourceNote;
+                $note = $note !== '' ? ($note.' | '.$sourceNote) : $sourceNote;
             }
 
             $issue = Issue::create([
-                'issue_no' => 'ISS-' . strtoupper(uniqid()),
+                'issue_no' => 'ISS-'.strtoupper(uniqid()),
                 'product_request_id' => $request->product_request_id,
                 'outlet_id' => $request->outlet_id,
                 'status' => 'confirmed',
@@ -206,14 +207,14 @@ class IssueController extends Controller
                 if ($productRequest) {
                     $productRequest->update([
                         'status' => 'completed',
-                        'admin_note' => $productRequest->admin_note . "\nStock Issued: " . $issue->issue_no
+                        'admin_note' => $productRequest->admin_note."\nStock Issued: ".$issue->issue_no,
                     ]);
                 }
             }
 
             if ($request->order_id) {
                 $order = Order::find($request->order_id);
-                if ($order && !in_array(strtolower((string) $order->status), ['cancelled', 'rejected'], true)) {
+                if ($order && ! in_array(strtolower((string) $order->status), ['cancelled', 'rejected'], true)) {
                     $order->update(['status' => 'completed']);
                 }
             }
@@ -232,13 +233,23 @@ class IssueController extends Controller
                     [
                         'product_id' => $item['product_id'],
                         'variant_id' => $item['variant_id'] ?: null,
-                        'outlet_id' => 1
+                        'outlet_id' => 1,
                     ]
                 );
+
+                // Prevent negative stock
+                if ($stock->quantity < $item['quantity']) {
+                    DB::rollBack();
+
+                    return back()->withErrors([
+                        'items' => "Insufficient stock for product ID {$item['product_id']}. Available: {$stock->quantity}, Requested: {$item['quantity']}",
+                    ]);
+                }
+
                 $stock->decrement('quantity', $item['quantity']);
 
                 // 3. (REMOVED) Update Product/Variant Master Qty - Relying on InventoryStock instead
-                
+
                 // 4. Create Stock Ledger Entry
                 StockLedger::create([
                     'product_id' => $item['product_id'],
@@ -249,10 +260,10 @@ class IssueController extends Controller
                     'in_qty' => 0,
                     'out_qty' => $item['quantity'],
                     'balance_qty' => $stock->quantity, // Post-decrement balance
-                    'date' => now()
+                    'date' => now(),
                 ]);
             }
-            
+
             // Generate PDF Invoice - DEFERRED: User wants to generate only on download
             // try {
             //     $this->generateInvoice($issue);
@@ -267,32 +278,33 @@ class IssueController extends Controller
     public function show($id)
     {
         $issue = Issue::with(['items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
+
         return view('backend.issue.show', compact('issue'));
     }
 
     public function generateInvoice(Issue $issue)
     {
-         $issue->load(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest']);
-         $settings = GeneralSetting::first();
-         
-         // Optimize logo
-         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
+        $issue->load(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest']);
+        $settings = GeneralSetting::first();
 
-         // Optimize product images
-         foreach ($issue->items as $item) {
-             if ($item->product && $item->product->thumb_image) {
-                 $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
-             }
-         }
+        // Optimize logo
+        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
 
-         $pdf = Pdf::loadView('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => true]));
-         $fileName = 'issue_invoice_' . $issue->issue_no . '.pdf';
-         $path = 'invoices/' . $fileName;
-         
-         Storage::disk('public')->put($path, $pdf->output());
-         
-         $issue->update(['invoice_path' => $path]);
+        // Optimize product images
+        foreach ($issue->items as $item) {
+            if ($item->product && $item->product->thumb_image) {
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+            }
+        }
+
+        $pdf = Pdf::loadView('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => true]));
+        $fileName = 'issue_invoice_'.$issue->issue_no.'.pdf';
+        $path = 'invoices/'.$fileName;
+
+        Storage::disk('public')->put($path, $pdf->output());
+
+        $issue->update(['invoice_path' => $path]);
     }
 
     public function viewInvoice($id)
@@ -310,7 +322,7 @@ class IssueController extends Controller
                 $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
             }
         }
-        
+
         // Return HTML view for preview
         return view('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => false]));
     }
@@ -323,16 +335,16 @@ class IssueController extends Controller
 
         $issue = Issue::with(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest'])->findOrFail($id);
         $settings = GeneralSetting::first();
-        
+
         // Configure DomPDF wrapper for better performance
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
-            'defaultFont' => 'sans-serif'
+            'defaultFont' => 'sans-serif',
         ])->loadView('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => true]));
 
-        $fileName = 'issue_invoice_' . $issue->issue_no . '.pdf';
-        
+        $fileName = 'issue_invoice_'.$issue->issue_no.'.pdf';
+
         return $pdf->download($fileName);
     }
 }

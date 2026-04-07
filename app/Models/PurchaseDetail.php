@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseDetail extends Model
 {
-    use \Illuminate\Database\Eloquent\Factories\HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'purchase_id',
@@ -15,11 +16,11 @@ class PurchaseDetail extends Model
         'qty',
         'unit_cost',
         'total',
-        'variant_info'
+        'variant_info',
     ];
 
     protected $casts = [
-        'variant_info' => 'array'
+        'variant_info' => 'array',
     ];
 
     public function purchase()
@@ -31,9 +32,9 @@ class PurchaseDetail extends Model
     {
         return $this->belongsTo(Product::class);
     }
-    
+
     public function variant()
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 }

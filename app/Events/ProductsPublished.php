@@ -10,7 +10,7 @@ class ProductsPublished
     use Dispatchable, SerializesModels;
 
     /**
-     * @param array<int, int|string> $productIds
+     * @param  array<int, int|string>  $productIds
      */
     public function __construct(
         public array $productIds,

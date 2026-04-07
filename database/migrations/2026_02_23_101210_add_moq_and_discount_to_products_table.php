@@ -38,9 +38,9 @@ return new class extends Migration
                 $dropColumns[] = 'discount';
             }
 
-            if (!empty($dropColumns)) {
+            if (! empty($dropColumns)) {
                 $table->dropColumn($dropColumns);
             }
-        });    
+        });
     }
 };

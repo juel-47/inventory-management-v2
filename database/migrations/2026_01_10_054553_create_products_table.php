@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug');
             $table->string('thumb_image')->nullable();
-            
+
             // Foreign Keys
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('brand_id')->nullable()->constrained('brands')->onDelete('set null');
@@ -31,9 +31,9 @@ return new class extends Migration
 
             $table->double('purchase_price')->default(0);
             $table->double('price')->default(0); // Sale Price
-            
+
             $table->string('barcode')->nullable();
-            
+
             $table->boolean('status')->default(1);
             $table->timestamps();
         });

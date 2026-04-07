@@ -7,8 +7,8 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class AuthController extends Controller
 {
@@ -30,7 +30,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Only allow Outlet User or User to login on frontend
-        if (!$user->hasRole('Outlet User') && !$user->hasRole('User')) {
+        if (! $user->hasRole('Outlet User') && ! $user->hasRole('User')) {
             Auth::logout();
             throw ValidationException::withMessages([
                 'email' => 'This portal is only for Customers and Outlet Users.',

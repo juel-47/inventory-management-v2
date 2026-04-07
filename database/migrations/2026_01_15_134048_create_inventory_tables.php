@@ -40,7 +40,7 @@ return new class extends Migration
         Schema::create('issues', function (Blueprint $table) {
             $table->id();
             $table->string('issue_no')->unique();
-            $table->foreignId('outlet_id')->nullable(); 
+            $table->foreignId('outlet_id')->nullable();
             $table->enum('status', ['pending', 'confirmed'])->default('pending');
             $table->decimal('total_qty', 10, 2)->default(0);
             $table->text('note')->nullable();

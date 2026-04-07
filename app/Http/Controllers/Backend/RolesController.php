@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
 use App\DataTables\RolesDataTable;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesController extends Controller
 {
@@ -24,6 +25,7 @@ class RolesController extends Controller
     public function create()
     {
         $permissions = Permission::all();
+
         return view('backend.authorization.role.create', compact('permissions'));
     }
 
@@ -35,7 +37,7 @@ class RolesController extends Controller
         $request->validate([
             'name' => ['required', 'max:255', 'unique:roles,name'],
             'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['exists:permissions,id']
+            'permissions.*' => ['exists:permissions,id'],
         ]);
 
         $role = Role::create(['name' => $request->name]);
@@ -44,7 +46,7 @@ class RolesController extends Controller
             $permissions = Permission::whereIn('id', $request->permissions)->get();
             $role->syncPermissions($permissions);
         }
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('admin.role.index')->with('success', 'Role Created Successfully!');
     }
@@ -57,6 +59,7 @@ class RolesController extends Controller
         $role = Role::findOrFail($id);
         $permissions = Permission::all();
         $roleHasPermissions = $role->permissions;
+
         return view('backend.authorization.role.edit', compact('role', 'permissions', 'roleHasPermissions'));
     }
 
@@ -66,9 +69,9 @@ class RolesController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => ['required', 'max:255', 'unique:roles,name,' . $id],
+            'name' => ['required', 'max:255', 'unique:roles,name,'.$id],
             'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['exists:permissions,id']
+            'permissions.*' => ['exists:permissions,id'],
         ]);
 
         $role = Role::findOrFail($id);
@@ -80,7 +83,7 @@ class RolesController extends Controller
         } else {
             $role->syncPermissions([]);
         }
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('admin.role.index')->with('success', 'Role Updated Successfully!');
     }
@@ -97,7 +100,7 @@ class RolesController extends Controller
         }
 
         $role->delete();
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }

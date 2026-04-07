@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Backend;
 
 use App\DataTables\ProductTypeDataTable;
@@ -40,6 +41,7 @@ class ProductTypeController extends Controller
         ]);
 
         Toastr::success('Product Type Created Successfully!');
+
         return redirect()->route('admin.product-types.index');
     }
 
@@ -49,6 +51,7 @@ class ProductTypeController extends Controller
     public function edit(string $id)
     {
         $productType = ProductType::findOrFail($id);
+
         return view('backend.product-types.edit', compact('productType'));
     }
 
@@ -64,6 +67,7 @@ class ProductTypeController extends Controller
         $productType->save();
 
         Toastr::success('Product Type Updated Successfully!');
+
         return redirect()->route('admin.product-types.index');
     }
 
@@ -73,13 +77,14 @@ class ProductTypeController extends Controller
     public function destroy(string $id)
     {
         $productType = ProductType::findOrFail($id);
-        
+
         // Optional: Check if products are assigned to this type
         if ($productType->products()->count() > 0) {
             return response(['status' => 'error', 'message' => 'This type has products assigned. Please reassign them first!']);
         }
-        
+
         $productType->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 

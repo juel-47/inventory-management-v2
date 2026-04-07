@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChildCategory\ChildCategoryCreateRequest;
 use App\Http\Requests\ChildCategory\ChildCategoryUpdateRequest;
 use App\Models\Category;
-use App\Models\SubCategory;
 use App\Models\ChildCategory;
+use App\Models\SubCategory;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -29,6 +29,7 @@ class ChildCategoryController extends Controller
     public function create()
     {
         $categories = Category::select(['name', 'status', 'id'])->get();
+
         return view('backend.child-category.create', compact('categories'));
     }
 
@@ -41,6 +42,7 @@ class ChildCategoryController extends Controller
             ->where('status', 1)
             ->select(['id', 'name'])
             ->get();
+
         return $subCategories;
     }
 
@@ -53,6 +55,7 @@ class ChildCategoryController extends Controller
             ->where('status', 1)
             ->select(['id', 'name'])
             ->get();
+
         return $childCategories;
     }
 
@@ -69,6 +72,7 @@ class ChildCategoryController extends Controller
             'status' => $request->status,
         ]);
         Toastr::success('Child Category Created Successfully!');
+
         return redirect()->route('admin.child-category.index');
     }
 
@@ -80,6 +84,7 @@ class ChildCategoryController extends Controller
         $childCategory = ChildCategory::findOrFail($id);
         $categories = Category::select(['name', 'status', 'id'])->get();
         $subCategories = SubCategory::where('category_id', $childCategory->category_id)->get();
+
         return view('backend.child-category.edit', compact('childCategory', 'categories', 'subCategories'));
     }
 
@@ -98,6 +103,7 @@ class ChildCategoryController extends Controller
         ]);
 
         Toastr::success('Child Category Updated Successfully!');
+
         return redirect()->route('admin.child-category.index');
     }
 

@@ -25,4 +25,5 @@ class GeneralSetting extends Model
         'mail_encryption',
         'mail_from_address',
         'mail_from_name',
-    ];}
+    ];
+}

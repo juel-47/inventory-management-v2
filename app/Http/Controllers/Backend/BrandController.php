@@ -39,6 +39,7 @@ class BrandController extends Controller
         $validated['slug'] = Str::slug($request->name);
         $brand = Brand::create($validated);
         Toastr::success('Brand created successfully');
+
         return redirect()->route('admin.brand.index');
     }
 
@@ -56,6 +57,7 @@ class BrandController extends Controller
     public function edit(string $id)
     {
         $brand = Brand::findOrFail($id);
+
         return view('backend.brand.edit', compact('brand'));
     }
 
@@ -68,6 +70,7 @@ class BrandController extends Controller
         $validated = $request->validated();
         $brand->update($validated);
         Toastr::success('Brand updated successfully');
+
         return redirect()->route('admin.brand.index');
     }
 
@@ -78,6 +81,7 @@ class BrandController extends Controller
     {
         $brand = Brand::findOrFail($id);
         $brand->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
@@ -86,6 +90,7 @@ class BrandController extends Controller
         $brand = Brand::findOrFail($request->id);
         $brand->status = $request->status == 'true' ? 1 : 0;
         $brand->save();
+
         return response(['message' => 'Status has been Updated!']);
     }
 }

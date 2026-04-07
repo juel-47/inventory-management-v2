@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Models\Review;
 use App\Models\Product;
+use App\Models\Review;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\QueryException;
 
 class ReviewController extends Controller
 {
@@ -29,9 +29,10 @@ class ReviewController extends Controller
      */
     public function index()
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return redirect()->route('admin.dashboard')->with('error', 'Reviews table not found. Please run migration.');
         }
+
         return view('backend.reviews.index');
     }
 
@@ -40,7 +41,7 @@ class ReviewController extends Controller
      */
     public function store(Request $request)
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return response()->json(['status' => 'error', 'message' => 'Reviews system not initialized. Please run migration.'], 503);
         }
 
@@ -64,6 +65,7 @@ class ReviewController extends Controller
                     'rating' => $validated['rating'],
                     'comment' => $validated['comment'] ?? null,
                 ]);
+
                 return response()->json(['status' => 'success', 'message' => 'Review updated successfully', 'data' => $existingReview], 200);
             }
 
@@ -86,17 +88,17 @@ class ReviewController extends Controller
      */
     public function getProductReviews($productId)
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Reviews system not initialized.',
-                'reviews' => []
+                'reviews' => [],
             ], 503);
         }
 
         try {
             $product = Product::findOrFail($productId);
-            
+
             $reviews = Review::forProduct($productId)
                 ->with('user')
                 ->get()
@@ -131,18 +133,18 @@ class ReviewController extends Controller
      */
     public function getUserProductReview($productId)
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return response()->json(['status' => 'success', 'review' => null], 200);
         }
 
         try {
             $userId = Auth::id();
-            
+
             $review = Review::where('product_id', $productId)
                 ->where('user_id', $userId)
                 ->first();
 
-            if (!$review) {
+            if (! $review) {
                 return response()->json(['status' => 'success', 'review' => null], 200);
             }
 
@@ -164,7 +166,7 @@ class ReviewController extends Controller
      */
     public function destroy($reviewId)
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return response()->json(['status' => 'error', 'message' => 'Reviews system not initialized.'], 503);
         }
 
@@ -177,6 +179,7 @@ class ReviewController extends Controller
             }
 
             $review->delete();
+
             return response()->json(['status' => 'success', 'message' => 'Review deleted successfully']);
         } catch (QueryException $e) {
             return response()->json(['status' => 'error', 'message' => 'Database error.'], 503);
@@ -188,7 +191,7 @@ class ReviewController extends Controller
      */
     public function bestRatedProducts()
     {
-        if (!$this->reviewsTableExists()) {
+        if (! $this->reviewsTableExists()) {
             return response()->json(['status' => 'success', 'products' => []], 200);
         }
 
@@ -201,7 +204,7 @@ class ReviewController extends Controller
                 ->map(function ($product) {
                     $averageRating = $product->reviews->avg('rating') ?? 0;
                     $reviewCount = $product->reviews->count();
-                    
+
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
@@ -211,7 +214,7 @@ class ReviewController extends Controller
                         'total_reviews' => $reviewCount,
                     ];
                 })
-                ->filter(fn($p) => $p['total_reviews'] > 0) // Only products with reviews
+                ->filter(fn ($p) => $p['total_reviews'] > 0) // Only products with reviews
                 ->sortByDesc('average_rating')
                 ->values()
                 ->take(20); // Top 20

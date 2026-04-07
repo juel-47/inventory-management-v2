@@ -34,16 +34,17 @@ class ColorController extends Controller
         $request->validate([
             'name' => 'required|unique:colors,name|max:255',
             'hex_code' => 'nullable|string|max:7',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         Color::create([
             'name' => $request->name,
             'hex_code' => $request->hex_code,
-            'status' => $request->status
+            'status' => $request->status,
         ]);
 
         Toastr::success('Color Created Successfully!');
+
         return redirect()->route('admin.colors.index');
     }
 
@@ -61,6 +62,7 @@ class ColorController extends Controller
     public function edit(string $id)
     {
         $color = Color::findOrFail($id);
+
         return view('backend.color.edit', compact('color'));
     }
 
@@ -70,19 +72,20 @@ class ColorController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required|max:255|unique:colors,name,' . $id,
+            'name' => 'required|max:255|unique:colors,name,'.$id,
             'hex_code' => 'nullable|string|max:7',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         $color = Color::findOrFail($id);
         $color->update([
             'name' => $request->name,
             'hex_code' => $request->hex_code,
-            'status' => $request->status
+            'status' => $request->status,
         ]);
 
         Toastr::success('Color Updated Successfully!');
+
         return redirect()->route('admin.colors.index');
     }
 
@@ -93,6 +96,7 @@ class ColorController extends Controller
     {
         $color = Color::findOrFail($id);
         $color->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
@@ -101,6 +105,7 @@ class ColorController extends Controller
         $color = Color::findOrFail($request->id);
         $color->status = $request->status == 'true' ? 1 : 0;
         $color->save();
+
         return response(['status' => 'success', 'message' => 'Status Updated Successfully!']);
     }
 }

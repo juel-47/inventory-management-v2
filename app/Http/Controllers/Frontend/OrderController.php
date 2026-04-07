@@ -116,7 +116,7 @@ class OrderController extends Controller
             'defaultFont' => 'sans-serif',
         ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
 
-        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
+        return $pdf->download('pi-invoice-'.$order->order_no.'.pdf');
     }
 
     /**
@@ -174,16 +174,18 @@ class OrderController extends Controller
 
         foreach ($order->items as $oldItem) {
             $product = $products->get((int) $oldItem->product_id);
-            if (!$product) {
-                $missingLines[] = $oldItem->product_name ?: ('Item #' . $oldItem->id);
+            if (! $product) {
+                $missingLines[] = $oldItem->product_name ?: ('Item #'.$oldItem->id);
+
                 continue;
             }
 
             $variant = null;
-            if (!empty($oldItem->variant_id)) {
+            if (! empty($oldItem->variant_id)) {
                 $variant = $variants->get((int) $oldItem->variant_id);
-                if (!$variant || (int) $variant->product_id !== (int) $product->id) {
-                    $missingLines[] = ($oldItem->product_name ?: $product->name) . ' (variant unavailable)';
+                if (! $variant || (int) $variant->product_id !== (int) $product->id) {
+                    $missingLines[] = ($oldItem->product_name ?: $product->name).' (variant unavailable)';
+
                     continue;
                 }
             }
@@ -205,7 +207,7 @@ class OrderController extends Controller
             }
 
             if ($lineTax['source'] !== 'none') {
-                $appliedTaxSignatures[] = ($lineTax['source'] . ':' . ($lineTax['type'] ?? 'none') . ':' . (string) $lineTax['value']);
+                $appliedTaxSignatures[] = ($lineTax['source'].':'.($lineTax['type'] ?? 'none').':'.(string) $lineTax['value']);
             }
 
             $preparedLines[] = [
@@ -222,14 +224,14 @@ class OrderController extends Controller
             ];
         }
 
-        if (!empty($missingLines)) {
+        if (! empty($missingLines)) {
             $preview = implode(', ', array_slice($missingLines, 0, 3));
             $moreCount = max(0, count($missingLines) - 3);
-            $suffix = $moreCount > 0 ? (' and ' . $moreCount . ' more') : '';
+            $suffix = $moreCount > 0 ? (' and '.$moreCount.' more') : '';
 
             return redirect()
                 ->route('orders.show', $order->id)
-                ->with('error', 'Reorder failed. Unavailable item(s): ' . $preview . $suffix . '.');
+                ->with('error', 'Reorder failed. Unavailable item(s): '.$preview.$suffix.'.');
         }
 
         if (empty($preparedLines)) {
@@ -238,7 +240,7 @@ class OrderController extends Controller
                 ->with('error', 'Reorder failed: no valid items found.');
         }
 
-        if ($hasDefaultFlatTax && !empty($preparedLines)) {
+        if ($hasDefaultFlatTax && ! empty($preparedLines)) {
             $taxAmount += $defaultFlatTaxValue;
         }
 
@@ -302,12 +304,12 @@ class OrderController extends Controller
 
             return redirect()
                 ->route('orders.show', $order->id)
-                ->with('error', 'Reorder failed: ' . $e->getMessage());
+                ->with('error', 'Reorder failed: '.$e->getMessage());
         }
 
         return redirect()
             ->route('orders.show', $newOrder->id)
-            ->with('success', 'Reorder placed successfully. Reference: ' . $newOrder->order_no);
+            ->with('success', 'Reorder placed successfully. Reference: '.$newOrder->order_no);
     }
 
     private function resolveCurrentUnitPrice(Product $product, ?ProductVariant $variant, $user): float
@@ -323,8 +325,9 @@ class OrderController extends Controller
 
     private function resolveVariantLabel(?ProductVariant $variant, OrderItem $oldItem): ?string
     {
-        if (!$variant) {
+        if (! $variant) {
             $fallback = trim((string) ($oldItem->variant_label ?? ''));
+
             return $fallback !== '' ? $fallback : null;
         }
 
@@ -355,13 +358,13 @@ class OrderController extends Controller
 
             if ($type === 'percent') {
                 $vatRate = (float) $value;
-                $taxLabel = 'VAT (' . rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.') . '%)';
+                $taxLabel = 'VAT ('.rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.').'%)';
             } elseif ($type === 'flat') {
                 $taxLabel = $source === 'product' ? 'Product VAT (Flat)' : 'VAT (Flat)';
             }
         } elseif ($defaultTax && $defaultTax->type === 'percent') {
             $vatRate = (float) $defaultTax->value;
-            $taxLabel = 'VAT (' . rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.') . '%)';
+            $taxLabel = 'VAT ('.rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.').'%)';
         } elseif ($defaultTax && $defaultTax->type === 'flat') {
             $taxLabel = 'VAT (Flat)';
         }
@@ -378,7 +381,7 @@ class OrderController extends Controller
         $prefix = $isOutletUser ? 'DS' : 'ORD';
 
         do {
-            $orderNo = $prefix . '-' . strtoupper(Str::random(10));
+            $orderNo = $prefix.'-'.strtoupper(Str::random(10));
         } while (Order::query()->where('order_no', $orderNo)->exists());
 
         return $orderNo;

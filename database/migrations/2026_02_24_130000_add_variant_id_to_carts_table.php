@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('carts', 'variant_id')) {
+        if (! Schema::hasColumn('carts', 'variant_id')) {
             Schema::table('carts', function (Blueprint $table) {
                 $table->foreignId('variant_id')
                     ->nullable()
@@ -25,7 +25,7 @@ return new class extends Migration
         // Drop old unique index (user_id, product_id, cart_type) so variants can exist separately.
         try {
             DB::statement('ALTER TABLE carts DROP INDEX carts_user_id_product_id_cart_type_unique');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore if index does not exist in this environment.
         }
 
@@ -34,7 +34,7 @@ return new class extends Migration
             Schema::table('carts', function (Blueprint $table) {
                 $table->unique(['user_id', 'product_id', 'cart_type', 'variant_id'], 'carts_user_product_type_variant_unique');
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore if already exists.
         }
     }
@@ -48,7 +48,7 @@ return new class extends Migration
             Schema::table('carts', function (Blueprint $table) {
                 $table->dropUnique('carts_user_product_type_variant_unique');
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore if index does not exist.
         }
 
@@ -56,7 +56,7 @@ return new class extends Migration
             Schema::table('carts', function (Blueprint $table) {
                 $table->unique(['user_id', 'product_id', 'cart_type']);
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore if already exists.
         }
 
@@ -68,4 +68,3 @@ return new class extends Migration
         }
     }
 };
-

@@ -14,30 +14,34 @@ class UsersDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param mixed $query Results from query() method.
+     * @param  mixed  $query  Results from query() method.
      */
     public function dataTable($query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $edit = '<a href="' . route('admin.users.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
-                if ($query->id !== 1 && !$query->hasRole('Admin')) {
-                    $delete = '<a href="' . route('admin.users.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
-                    return $edit . $delete;
+                $edit = '<a href="'.route('admin.users.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                if ($query->id !== 1 && ! $query->hasRole('Admin')) {
+                    $delete = '<a href="'.route('admin.users.destroy', $query->id).'" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
+
+                    return $edit.$delete;
                 }
+
                 return $edit;
             })
             ->addColumn('image', function ($query) {
-                $url = $query->image ? asset($query->image) : 'https://ui-avatars.com/api/?name=' . urlencode($query->name);
-                return '<img width="50px" height="50px" class="rounded-circle" src="' . $url . '" alt="">';
+                $url = $query->image ? asset($query->image) : 'https://ui-avatars.com/api/?name='.urlencode($query->name);
+
+                return '<img width="50px" height="50px" class="rounded-circle" src="'.$url.'" alt="">';
             })
             ->addColumn('role', function ($query) {
                 return $query->userRole?->name ?? 'No Role';
             })
             ->addColumn('status', function ($query) {
                 $checked = $query->status ? 'checked' : '';
+
                 return '<label class="custom-switch mt-2">
-                            <input type="checkbox" name="custom-switch-checkbox" data-id="' . $query->id . '" class="custom-switch-input change-status" ' . $checked . '>
+                            <input type="checkbox" name="custom-switch-checkbox" data-id="'.$query->id.'" class="custom-switch-input change-status" '.$checked.'>
                             <span class="custom-switch-indicator"></span>
                         </label>';
             })
@@ -62,7 +66,7 @@ class UsersDataTable extends DataTable
             ->setTableId('users-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            //->dom('Bfrtip')
+            // ->dom('Bfrtip')
             ->orderBy(0)
             ->selectStyleSingle()
             ->buttons([
@@ -100,6 +104,6 @@ class UsersDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Users_' . date('YmdHis');
+        return 'Users_'.date('YmdHis');
     }
 }

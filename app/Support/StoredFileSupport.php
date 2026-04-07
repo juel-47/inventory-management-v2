@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class StoredFileSupport
 {
     public const PRIVATE_DISK = 'local';
+
     public const LEGACY_PUBLIC_DISK = 'public';
 
     public static function storePrivateFile(UploadedFile $file, string $directory, string $filename): string
@@ -25,10 +26,10 @@ class StoredFileSupport
     {
         $disk = self::detectDisk($path);
 
-        if (!$disk || !$path) {
+        if (! $disk || ! $path) {
             $absolutePath = self::legacyPublicPath($path);
 
-            if (!$absolutePath || !is_file($absolutePath)) {
+            if (! $absolutePath || ! is_file($absolutePath)) {
                 return false;
             }
 
@@ -42,7 +43,7 @@ class StoredFileSupport
     {
         $absolutePath = self::absolutePath($path);
 
-        if (!$absolutePath || !$path) {
+        if (! $absolutePath || ! $path) {
             return null;
         }
 
@@ -53,7 +54,7 @@ class StoredFileSupport
     {
         $absolutePath = self::absolutePath($path);
 
-        if (!$absolutePath) {
+        if (! $absolutePath) {
             return null;
         }
 
@@ -64,7 +65,7 @@ class StoredFileSupport
     {
         $disk = self::detectDisk($path);
 
-        if (!$disk || !$path) {
+        if (! $disk || ! $path) {
             return self::legacyPublicPath($path);
         }
 
@@ -73,7 +74,7 @@ class StoredFileSupport
 
     public static function detectDisk(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
@@ -88,7 +89,7 @@ class StoredFileSupport
 
     private static function legacyPublicPath(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 

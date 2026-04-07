@@ -30,12 +30,20 @@ class Booking extends Model
         'barcode',
         'custom_fields',
         'status',
-        'shipping_method'
+        'shipping_method',
     ];
 
     protected $casts = [
         'variant_info' => 'array',
-        'custom_fields' => 'array'
+        'custom_fields' => 'array',
+        'qty' => 'integer',
+        'min_inventory_qty' => 'integer',
+        'min_sale_qty' => 'integer',
+        'unit_price' => 'decimal:2',
+        'extra_cost' => 'decimal:2',
+        'total_cost' => 'decimal:2',
+        'sale_price' => 'decimal:2',
+        'min_purchase_price' => 'decimal:2',
     ];
 
     public function vendor()
@@ -67,6 +75,7 @@ class Booking extends Model
     {
         return $this->belongsTo(ChildCategory::class);
     }
+
     public function items()
     {
         return $this->hasMany(BookingItem::class);

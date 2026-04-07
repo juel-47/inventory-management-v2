@@ -18,7 +18,7 @@ class ProductRequest extends Model
         'total_amount',
         'order_id',
         'note',
-        'admin_note'
+        'admin_note',
     ];
 
     protected $casts = [
@@ -36,7 +36,6 @@ class ProductRequest extends Model
     }
 
     public function items()
-
     {
         return $this->hasMany(ProductRequestItem::class);
     }

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Process\Process;
 use ZipArchive;
 
 class SystemBackup extends Command
@@ -30,9 +31,9 @@ class SystemBackup extends Command
         $this->info('Starting System Backup...');
 
         $date = now()->format('Y-m-d_H-i-s');
-        $backupPath = storage_path('app/backups/' . $date);
+        $backupPath = storage_path('app/backups/'.$date);
 
-        if (!File::exists($backupPath)) {
+        if (! File::exists($backupPath)) {
             File::makeDirectory($backupPath, 0755, true);
         }
 
@@ -53,13 +54,13 @@ class SystemBackup extends Command
 
         // Allow either full binary path or a directory path.
         $lower = strtolower($dumpBinary);
-        if (!str_ends_with($lower, 'mysqldump') && !str_ends_with($lower, 'mysqldump.exe')) {
-            $dumpBinary = rtrim($dumpBinary, '\\/') . DIRECTORY_SEPARATOR . 'mysqldump';
+        if (! str_ends_with($lower, 'mysqldump') && ! str_ends_with($lower, 'mysqldump.exe')) {
+            $dumpBinary = rtrim($dumpBinary, '\\/').DIRECTORY_SEPARATOR.'mysqldump';
         }
 
         // Wrap binary in quotes if it contains spaces (especially for Windows)
-        $binary = (str_contains($dumpBinary, ' ') && !str_starts_with($dumpBinary, '"'))
-            ? '"' . $dumpBinary . '"'
+        $binary = (str_contains($dumpBinary, ' ') && ! str_starts_with($dumpBinary, '"'))
+            ? '"'.$dumpBinary.'"'
             : $dumpBinary;
 
         $command = sprintf(
@@ -72,7 +73,7 @@ class SystemBackup extends Command
             escapeshellarg($sqlFile)
         );
 
-        $process = \Symfony\Component\Process\Process::fromShellCommandline($command);
+        $process = Process::fromShellCommandline($command);
         $process->setTimeout(600);
         $process->run();
 
@@ -80,26 +81,26 @@ class SystemBackup extends Command
             $this->info('Database backed up successfully.');
         } else {
             $this->error('Database backup failed.');
-            $this->line('Error: ' . $process->getErrorOutput());
+            $this->line('Error: '.$process->getErrorOutput());
             $this->info('FIX: Set MYSQLDUMP_PATH in your .env file to the full path of mysqldump binary.');
         }
 
         // 2. Image Backup (Zipping uploads folder)
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->error('PHP ZipArchive extension is not installed. Skipping image backup.');
         } else {
             $zipFile = "{$backupPath}/images_backup.zip";
-            $zip = new ZipArchive();
+            $zip = new ZipArchive;
 
             if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 $uploadsPath = public_path('uploads');
                 if (File::exists($uploadsPath)) {
                     $files = File::allFiles($uploadsPath);
                     foreach ($files as $file) {
-                        $zip->addFile($file->getRealPath(), 'uploads/' . $file->getRelativePathname());
+                        $zip->addFile($file->getRealPath(), 'uploads/'.$file->getRelativePathname());
                     }
                     $zip->close();
-                    $this->info('Images backed up to: ' . $zipFile);
+                    $this->info('Images backed up to: '.$zipFile);
                 } else {
                     $this->warn('Uploads folder not found. Skipping image backup.');
                 }
@@ -124,7 +125,7 @@ class SystemBackup extends Command
             foreach ($folders as $folder) {
                 if (File::lastModified($folder) < now()->subDays(7)->getTimestamp()) {
                     File::deleteDirectory($folder);
-                    $this->info('Deleted old backup: ' . basename($folder));
+                    $this->info('Deleted old backup: '.basename($folder));
                 }
             }
         }

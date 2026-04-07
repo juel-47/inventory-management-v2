@@ -78,6 +78,7 @@ class PiInfoSupport
             $carry['total_pcs'] += max(0, (int) ($row['total_pcs'] ?? $rowPcs));
             $carry['nw_kg'] += max(0, (float) ($row['nw_kg'] ?? 0));
             $carry['gw_kg'] += max(0, (float) ($row['gw_kg'] ?? 0));
+
             return $carry;
         }, [
             'ordered_qty' => $isAdvanced ? max(0, (int) ($piInfo['order_qty_total'] ?? 0)) : 0,
@@ -90,11 +91,11 @@ class PiInfoSupport
 
     public static function hasContent(?array $stored): bool
     {
-        if (!is_array($stored)) {
+        if (! is_array($stored)) {
             return false;
         }
 
-        if (!empty($stored['packing_note']) || !empty($stored['shipment_qty']) || !empty($stored['shipment_date'])) {
+        if (! empty($stored['packing_note']) || ! empty($stored['shipment_qty']) || ! empty($stored['shipment_date'])) {
             return true;
         }
 
@@ -131,7 +132,7 @@ class PiInfoSupport
             ->values();
 
         $storedMap = $normalizedStoredBlocks
-            ->filter(fn ($block) => !empty($block['block_key']))
+            ->filter(fn ($block) => ! empty($block['block_key']))
             ->mapWithKeys(fn ($block) => [$block['block_key'] => $block])
             ->all();
 
@@ -139,7 +140,7 @@ class PiInfoSupport
 
         return $derivedBlocks->map(function (array $derivedBlock) use ($storedMap, $normalizedStoredBlocks) {
             $storedBlock = $storedMap[$derivedBlock['block_key']] ?? null;
-            if (!$storedBlock && !empty($derivedBlock['product_id'])) {
+            if (! $storedBlock && ! empty($derivedBlock['product_id'])) {
                 $storedBlock = $normalizedStoredBlocks->first(fn ($block) => (int) ($block['product_id'] ?? 0) === (int) $derivedBlock['product_id']);
             }
             $ctnSize = self::nullableString($storedBlock['ctn_size'] ?? null);
@@ -158,12 +159,13 @@ class PiInfoSupport
             if (empty($variantHeaders)) {
                 $variantHeaders = $derivedBlock['variant_headers'];
             }
-            if (!empty($derivedBlock['size_headers'])) {
+            if (! empty($derivedBlock['size_headers'])) {
                 $derivedSizeLookup = array_map(fn ($header) => strtolower(trim((string) $header)), $derivedBlock['size_headers']);
                 $colorLookup = array_map(fn ($header) => strtolower(trim((string) $header)), $colorHeaders);
                 $hasSuspiciousOverlap = collect($headers)->contains(function ($header) use ($derivedSizeLookup, $colorLookup) {
                     $normalized = strtolower(trim((string) $header));
-                    return in_array($normalized, $colorLookup, true) && !in_array($normalized, $derivedSizeLookup, true);
+
+                    return in_array($normalized, $colorLookup, true) && ! in_array($normalized, $derivedSizeLookup, true);
                 });
 
                 if ($hasSuspiciousOverlap) {
@@ -201,11 +203,12 @@ class PiInfoSupport
         return $items->groupBy(function ($item) use (&$fallbackIndex) {
             $productId = (int) ($item->product_id ?? 0);
             if ($productId > 0) {
-                return 'product_' . $productId;
+                return 'product_'.$productId;
             }
 
             $fallbackIndex++;
-            return 'line_' . $fallbackIndex;
+
+            return 'line_'.$fallbackIndex;
         })->map(function (Collection $group, string $blockKey) {
             $first = $group->first();
             $colors = $group->map(fn ($item) => self::resolveItemColor($item))
@@ -247,7 +250,8 @@ class PiInfoSupport
             return $colorName;
         }
 
-        [$color, ] = self::extractVariantParts((string) ($item->variant_label ?? ''), null, null);
+        [$color] = self::extractVariantParts((string) ($item->variant_label ?? ''), null, null);
+
         return $color;
     }
 
@@ -264,6 +268,7 @@ class PiInfoSupport
 
         $knownColor = self::resolveItemColor($item);
         [, $size] = self::extractVariantParts((string) ($item->variant_label ?? ''), $knownColor, null);
+
         return $size;
     }
 
@@ -273,7 +278,7 @@ class PiInfoSupport
         $size = self::resolveItemSize($item);
 
         if ($color !== null && $size !== null) {
-            return trim($color . ' ' . $size);
+            return trim($color.' '.$size);
         }
 
         if ($color !== null) {
@@ -306,6 +311,7 @@ class PiInfoSupport
 
             $color = $color ?? self::nullableString($candidateColor);
             $size = $size ?? self::nullableString($candidateSize);
+
             return [$color, $size];
         }
 
@@ -317,6 +323,7 @@ class PiInfoSupport
             if (self::looksLikeSizeToken($lastToken)) {
                 $color = $color ?? self::nullableString(implode(' ', array_slice($tokens, 0, -1)));
                 $size = $size ?? self::nullableString($lastToken);
+
                 return [$color, $size];
             }
         }
@@ -344,7 +351,7 @@ class PiInfoSupport
         $fallback = self::nullableString($fallback);
         $normalizedPlaceholders = array_map(fn ($value) => strtolower(trim((string) $value)), $placeholders);
 
-        if ($primary !== null && !in_array(strtolower($primary), $normalizedPlaceholders, true)) {
+        if ($primary !== null && ! in_array(strtolower($primary), $normalizedPlaceholders, true)) {
             return $primary;
         }
 
@@ -370,7 +377,7 @@ class PiInfoSupport
     private static function normalizeAdvancedBlock(array $block): array
     {
         $variantHeaders = $block['variant_headers'] ?? null;
-        if (!is_array($variantHeaders) || empty($variantHeaders)) {
+        if (! is_array($variantHeaders) || empty($variantHeaders)) {
             $variantHeaders = preg_split('/\s*,\s*/', (string) ($block['variant_headers_csv'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
 
@@ -380,7 +387,7 @@ class PiInfoSupport
         )));
 
         $colorHeaders = $block['color_headers'] ?? null;
-        if (!is_array($colorHeaders) || empty($colorHeaders)) {
+        if (! is_array($colorHeaders) || empty($colorHeaders)) {
             $colorHeaders = preg_split('/\s*,\s*/', (string) ($block['color_headers_csv'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
 
@@ -390,7 +397,7 @@ class PiInfoSupport
         )));
 
         $headers = $block['size_headers'] ?? null;
-        if (!is_array($headers) || empty($headers)) {
+        if (! is_array($headers) || empty($headers)) {
             $headers = preg_split('/\s*,\s*/', (string) ($block['size_headers_csv'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
 
@@ -477,9 +484,9 @@ class PiInfoSupport
         return self::nullableString($block['title'] ?? null) !== null
             || self::nullableString($block['color_label'] ?? null) !== null
             || self::nullableString($block['ctn_size'] ?? null) !== null
-            || !empty($block['variant_headers'] ?? [])
-            || !empty($block['color_headers'] ?? [])
-            || !empty($block['size_headers'] ?? [])
+            || ! empty($block['variant_headers'] ?? [])
+            || ! empty($block['color_headers'] ?? [])
+            || ! empty($block['size_headers'] ?? [])
             || collect($block['rows'] ?? [])->contains(fn ($row) => self::advancedRowHasAnyValue((array) $row));
     }
 
@@ -542,6 +549,7 @@ class PiInfoSupport
     private static function nullableString(mixed $value): ?string
     {
         $value = trim((string) $value);
+
         return $value === '' ? null : $value;
     }
 

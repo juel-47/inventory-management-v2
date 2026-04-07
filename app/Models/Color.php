@@ -12,7 +12,11 @@ class Color extends Model
     protected $fillable = [
         'name',
         'hex_code',
-        'status'
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     public function variants()

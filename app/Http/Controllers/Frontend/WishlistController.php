@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\GeneralSetting;
 use App\Models\Product;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
@@ -19,15 +20,17 @@ class WishlistController extends Controller
             ->with(['product.category', 'product.variants.color', 'product.variants.size'])
             ->get()
             ->map(function ($item) {
-                if (!$item->product) return null;
+                if (! $item->product) {
+                    return null;
+                }
 
-                $product   = $item->product;
+                $product = $item->product;
                 $imagePath = $product->thumb_image;
-                $imageUrl  = (strpos($imagePath, 'http') === 0)
+                $imageUrl = (strpos($imagePath, 'http') === 0)
                     ? $imagePath
                     : (file_exists(public_path($imagePath))
                         ? asset($imagePath)
-                        : asset('storage/' . $imagePath));
+                        : asset('storage/'.$imagePath));
 
                 // Format variants
                 $variants = $product->variants ? $product->variants->map(function ($v) use ($product) {
@@ -40,37 +43,37 @@ class WishlistController extends Controller
                         $label = trim(implode(' ', array_filter([$colorName, $sizeName])));
                     }
                     if ($label === '') {
-                        $label = 'Variant #' . $v->id;
+                        $label = 'Variant #'.$v->id;
                     }
 
                     return [
-                        'id'              => $v->id,
-                        'product_id'      => $v->product_id,
-                        'name'            => $label,
-                        'color'           => $colorName,
-                        'size'            => $sizeName,
-                        'stock'           => (int)$v->inventory_stock,
-                        'price'           => (float) ($v->price ?: $product->price ?: 0),
-                        'outlet_price'    => (float) ($v->outlet_price ?: $v->price ?: $product->outlet_price ?: $product->price ?: 0),
+                        'id' => $v->id,
+                        'product_id' => $v->product_id,
+                        'name' => $label,
+                        'color' => $colorName,
+                        'size' => $sizeName,
+                        'stock' => (int) $v->inventory_stock,
+                        'price' => (float) ($v->price ?: $product->price ?: 0),
+                        'outlet_price' => (float) ($v->outlet_price ?: $v->price ?: $product->outlet_price ?: $product->price ?: 0),
                     ];
                 })->toArray() : [];
 
                 return [
-                    'id'         => $product->id,
-                    'name'       => $product->name,
-                    'slug'       => $product->slug,
-                    'price'      => $product->price,
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->price,
                     'outlet_price' => $product->outlet_price,
                     'minimum_order_qty' => (int) ($product->minimum_order_qty ?? 1),
-                    'image'      => $imageUrl,
-                    'category'   => $product->category->name ?? 'General',
-                    'variants'   => $variants,
+                    'image' => $imageUrl,
+                    'category' => $product->category->name ?? 'General',
+                    'variants' => $variants,
                 ];
             })
             ->filter()
             ->values();
 
-        $settings = \App\Models\GeneralSetting::first() ?? (object)['currency_icon' => '$'];
+        $settings = GeneralSetting::first() ?? (object) ['currency_icon' => '$'];
 
         return view('frontend.pages.wishlist', compact('wishlistItems', 'settings'));
     }
@@ -87,29 +90,29 @@ class WishlistController extends Controller
         $productId = $validated['product_id'];
 
         $existing = Wishlist::where('user_id', Auth::id())
-                            ->where('product_id', $productId)
-                            ->first();
+            ->where('product_id', $productId)
+            ->first();
 
         if ($existing) {
             $existing->delete();
             $wishlisted = false;
-            $message    = 'Removed from wishlist';
+            $message = 'Removed from wishlist';
         } else {
             Wishlist::create([
-                'user_id'    => Auth::id(),
+                'user_id' => Auth::id(),
                 'product_id' => $productId,
             ]);
             $wishlisted = true;
-            $message    = 'Added to wishlist';
+            $message = 'Added to wishlist';
         }
 
         $count = Wishlist::where('user_id', Auth::id())->count();
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'wishlisted' => $wishlisted,
-            'count'      => $count,
-            'message'    => $message,
+            'count' => $count,
+            'message' => $message,
         ]);
     }
 
@@ -118,11 +121,11 @@ class WishlistController extends Controller
      */
     public function getIds()
     {
-        $ids   = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
+        $ids = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
         $count = count($ids);
 
         return response()->json([
-            'ids'   => $ids,
+            'ids' => $ids,
             'count' => $count,
         ]);
     }
@@ -133,13 +136,13 @@ class WishlistController extends Controller
     public function clearAll()
     {
         Wishlist::where('user_id', Auth::id())->delete();
-        
+
         $count = Wishlist::where('user_id', Auth::id())->count();
 
         return response()->json([
             'success' => true,
             'message' => 'Wishlist cleared',
-            'count'   => $count,
+            'count' => $count,
         ]);
     }
 }

@@ -8,8 +8,6 @@ use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class BrandDataTable extends DataTable
@@ -17,28 +15,30 @@ class BrandDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Brand> $query Results from query() method.
+     * @param  QueryBuilder<Brand>  $query  Results from query() method.
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $editBtn = "<a href='" . route('admin.brand.edit', $query->id) . "'class='btn btn-primary'><i class='far fa-edit'></i></a>";
-                $deleteBtn = "<a href='" . route('admin.brand.destroy', $query->id) . "'class='btn btn-danger ml-2 delete-item'><i class='fas fa-trash'></i></i></a>";
-                return $editBtn . $deleteBtn;
+                $editBtn = "<a href='".route('admin.brand.edit', $query->id)."'class='btn btn-primary'><i class='far fa-edit'></i></a>";
+                $deleteBtn = "<a href='".route('admin.brand.destroy', $query->id)."'class='btn btn-danger ml-2 delete-item'><i class='fas fa-trash'></i></i></a>";
+
+                return $editBtn.$deleteBtn;
             })
             ->addColumn('status', function ($query) {
                 if ($query->status == 1) {
                     $activeButton = '<label class="custom-switch mt-2">
-                    <input type="checkbox" checked name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="' . $query->id . '" >
+                    <input type="checkbox" checked name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="'.$query->id.'" >
                     <span class="custom-switch-indicator"></span>
                   </label>';
                 } else {
                     $activeButton = '<label class="custom-switch mt-2">
-                    <input type="checkbox" name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="' . $query->id . '" >
+                    <input type="checkbox" name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="'.$query->id.'" >
                     <span class="custom-switch-indicator"></span>
                   </label>';
                 }
+
                 return $activeButton;
             })
             ->rawColumns(['logo', 'action', 'Is Featured', 'status'])
@@ -98,6 +98,6 @@ class BrandDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Brand_' . date('YmdHis');
+        return 'Brand_'.date('YmdHis');
     }
 }

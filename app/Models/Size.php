@@ -11,7 +11,11 @@ class Size extends Model
 
     protected $fillable = [
         'name',
-        'status'
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     public function variants()

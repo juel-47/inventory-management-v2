@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('name')->nullable(); // e.g. "Red - L"
             $table->string('color')->nullable();
             $table->string('size')->nullable();
-            
+
             $table->integer('qty')->default(0);
             $table->string('barcode')->nullable();
-            
+
             $table->boolean('status')->default(1);
             $table->timestamps();
         });

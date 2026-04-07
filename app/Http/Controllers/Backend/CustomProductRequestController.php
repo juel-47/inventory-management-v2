@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
 use App\DataTables\CustomProductRequestDataTable;
+use App\Http\Controllers\Controller;
 use App\Models\CustomProductRequest;
+use App\Models\User;
 use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Brian2694\Toastr\Facades\Toastr;
-use Illuminate\Support\Str;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CustomProductRequestController extends Controller implements HasMiddleware
 {
@@ -36,17 +36,17 @@ class CustomProductRequestController extends Controller implements HasMiddleware
      */
     public function create(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        
+
         // Any user with Create permission can create requests
-        if (!$user->can('Create Custom Product Requests')) {
-             abort(403, 'You do not have permission to create custom product requests.');
+        if (! $user->can('Create Custom Product Requests')) {
+            abort(403, 'You do not have permission to create custom product requests.');
         }
 
         $users = [];
         if ($user->can('Manage Custom Product Requests')) {
-            $users = \App\Models\User::where('status', 1)->orderBy('name', 'asc')->get();
+            $users = User::where('status', 1)->orderBy('name', 'asc')->get();
         }
 
         return view('backend.custom-product-request.create', compact('users'));
@@ -57,9 +57,9 @@ class CustomProductRequestController extends Controller implements HasMiddleware
      */
     public function store(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Create Custom Product Requests') && !$user->can('Manage Custom Product Requests')) {
+        if (! $user->can('Create Custom Product Requests') && ! $user->can('Manage Custom Product Requests')) {
             abort(403);
         }
 
@@ -74,9 +74,9 @@ class CustomProductRequestController extends Controller implements HasMiddleware
 
         DB::beginTransaction();
         try {
-            $customRequest = new CustomProductRequest();
-            $customRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
-            
+            $customRequest = new CustomProductRequest;
+            $customRequest->request_no = 'CPR-'.strtoupper(Str::random(10));
+
             // Assign user_id: use input if admin provided it, otherwise use Auth::id()
             if ($user->can('Manage Custom Product Requests') && $request->has('user_id')) {
                 $customRequest->user_id = $request->user_id;
@@ -94,17 +94,17 @@ class CustomProductRequestController extends Controller implements HasMiddleware
             if ($request->hasFile('example_image')) {
                 $paths = [];
                 foreach ($request->file('example_image') as $image) {
-                    if (!$image || !$image->isValid()) {
+                    if (! $image->isValid()) {
                         continue;
                     }
-                    $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                    $imageName = time().'_'.Str::random(10).'.'.$image->getClientOriginalExtension();
                     $paths[] = StoredFileSupport::storePrivateFile(
                         $image,
-                        'custom-product-requests/' . $customRequest->user_id,
+                        'custom-product-requests/'.$customRequest->user_id,
                         $imageName
                     );
                 }
-                if (!empty($paths)) {
+                if (! empty($paths)) {
                     $customRequest->example_image = json_encode($paths);
                 }
             }
@@ -113,11 +113,13 @@ class CustomProductRequestController extends Controller implements HasMiddleware
 
             DB::commit();
             toastr()->success('Custom Product Request submitted successfully!');
+
             return redirect()->route('admin.custom-product-requests.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            toastr()->error('Something went wrong: ' . $e->getMessage());
+            toastr()->error('Something went wrong: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -128,12 +130,12 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     public function show(string $id)
     {
         $customProductRequest = CustomProductRequest::with(['user'])->findOrFail($id);
-        
+
         /** \App\Models\User $user */
         $user = Auth::user();
-        
+
         // Only Admin role can view any request. Others can only view their own.
-        if (!$user->hasRole('Admin') && $customProductRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && $customProductRequest->user_id != Auth::id()) {
             abort(403, 'Unauthorized access to this custom product request.');
         }
 
@@ -142,17 +144,17 @@ class CustomProductRequestController extends Controller implements HasMiddleware
 
     public function showImage(CustomProductRequest $customProductRequest, int $index)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
-        if (!$user->hasRole('Admin') && (int) $customProductRequest->user_id !== (int) Auth::id()) {
+        if (! $user->hasRole('Admin') && (int) $customProductRequest->user_id !== (int) Auth::id()) {
             abort(403, 'Unauthorized access to this custom product request.');
         }
 
         $imagePath = $customProductRequest->resolveExampleImagePath($index);
         $response = StoredFileSupport::inline($imagePath);
 
-        abort_if(!$response, 404);
+        abort_if(! $response, 404);
 
         return $response;
     }
@@ -163,32 +165,34 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     public function updateStatus(Request $request, $id)
     {
         $customRequest = CustomProductRequest::findOrFail($id);
-        
+
         // Only Admin/Manager can update status
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Custom Product Requests')) {
+        if (! $user->can('Manage Custom Product Requests')) {
             abort(403);
         }
 
         $request->validate([
             'status' => 'required|in:pending,approved,rejected',
-            'admin_note' => 'nullable|string'
+            'admin_note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
             $customRequest->update([
                 'status' => $request->status,
-                'admin_note' => $request->admin_note
+                'admin_note' => $request->admin_note,
             ]);
-            
+
             DB::commit();
             toastr()->success('Custom Product Request updated successfully!');
+
             return redirect()->back();
         } catch (\Exception $e) {
             DB::rollBack();
-            toastr()->error('Something went wrong: ' . $e->getMessage());
+            toastr()->error('Something went wrong: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -199,12 +203,12 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     public function destroy(string $id)
     {
         $customRequest = CustomProductRequest::findOrFail($id);
-        
+
         // Authorization: Manager can delete anything, User can only delete own pending requests
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Custom Product Requests') && ($customRequest->user_id != Auth::id() || $customRequest->status !== 'pending')) {
-             return response(['status' => 'error', 'message' => 'Unauthorized or request already processed']);
+        if (! $user->can('Manage Custom Product Requests') && ($customRequest->user_id != Auth::id() || $customRequest->status !== 'pending')) {
+            return response(['status' => 'error', 'message' => 'Unauthorized or request already processed']);
         }
 
         foreach ($customRequest->exampleImagePaths() as $imagePath) {
@@ -212,6 +216,7 @@ class CustomProductRequestController extends Controller implements HasMiddleware
         }
 
         $customRequest->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 }

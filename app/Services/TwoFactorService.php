@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Mail;
 class TwoFactorService
 {
     private const CODE_LENGTH = 8;
+
     private const CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%*';
+
     private const EXPIRES_MINUTES = 10;
 
     public function send(User $user): void

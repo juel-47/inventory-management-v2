@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
 use App\DataTables\PermissionsDataTable;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionController extends Controller
 {
@@ -28,11 +29,11 @@ class PermissionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'max:255']
+            'name' => ['required', 'max:255'],
         ]);
 
         Permission::findOrCreate($request->name);
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('admin.permission.index')->with('success', 'Permission Created Successfully!');
     }
@@ -43,6 +44,7 @@ class PermissionController extends Controller
     public function edit(string $id)
     {
         $permission = Permission::findOrFail($id);
+
         return view('backend.authorization.permission.edit', compact('permission'));
     }
 
@@ -52,12 +54,12 @@ class PermissionController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => ['required', 'max:255', 'unique:permissions,name,' . $id]
+            'name' => ['required', 'max:255', 'unique:permissions,name,'.$id],
         ]);
 
         $permission = Permission::findOrFail($id);
         $permission->update(['name' => $request->name]);
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('admin.permission.index')->with('success', 'Permission Updated Successfully!');
     }
@@ -69,7 +71,7 @@ class PermissionController extends Controller
     {
         $permission = Permission::findOrFail($id);
         $permission->delete();
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }

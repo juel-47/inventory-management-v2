@@ -54,6 +54,7 @@ class SliderController extends Controller
         ]);
 
         Toastr::success('Slider Created Successfully!');
+
         return redirect()->route('admin.slider.index');
     }
 
@@ -63,6 +64,7 @@ class SliderController extends Controller
     public function edit(string $id)
     {
         $slider = Slider::findOrFail($id);
+
         return view('backend.slider.edit', compact('slider'));
     }
 
@@ -88,6 +90,7 @@ class SliderController extends Controller
         $slider->save();
 
         Toastr::success('Slider Updated Successfully!');
+
         return redirect()->route('admin.slider.index');
     }
 
@@ -99,6 +102,7 @@ class SliderController extends Controller
         $slider = Slider::findOrFail($id);
         $this->delete_image($slider->banner);
         $slider->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 

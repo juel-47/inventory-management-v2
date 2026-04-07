@@ -3,8 +3,8 @@
 namespace App\DataTables;
 
 use App\Models\Order;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
@@ -16,20 +16,21 @@ class OrderDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Order> $query Results from query() method.
+     * @param  QueryBuilder<Order>  $query  Results from query() method.
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('customer', function ($query) {
-                return '<strong>' . e($query->billing_name) . '</strong><br><small>' . e($query->billing_phone) . '</small>';
+                return '<strong>'.e($query->billing_name).'</strong><br><small>'.e($query->billing_phone).'</small>';
             })
             ->addColumn('outlet_shop', function ($query) {
                 $name = $query->billing_outlet_name ?: ($query->user->outlet_name ?? null);
+
                 return e($name ?: 'N/A');
             })
             ->addColumn('items_count', function ($query) {
-                return '<span class="badge badge-info">' . (int) $query->items_count . ' Items</span>';
+                return '<span class="badge badge-info">'.(int) $query->items_count.' Items</span>';
             })
             ->addColumn('total_amount_label', function ($query) {
                 return number_format((float) $query->total_amount, 2);
@@ -57,26 +58,26 @@ class OrderDataTable extends DataTable
                     $class = 'badge-danger';
                 }
 
-                return '<span class="badge ' . $class . '">' . e(ucfirst($status)) . '</span>';
+                return '<span class="badge '.$class.'">'.e(ucfirst($status)).'</span>';
             })
             ->addColumn('action', function ($query) {
-                $view = "<a href='" . route('admin.orders.show', $query->id) . "' class='btn btn-primary btn-sm mr-1' title='Control Panel'><i class='fas fa-eye'></i></a>";
-                $pi_invoice = "<a href='" . route('admin.orders.pi-invoice', $query->id) . "' target='_blank' class='btn btn-success btn-sm mr-1' title='PI Invoice'>PI</a>";
-                $invoice = "<a href='" . route('admin.orders.view-invoice', $query->id) . "' target='_blank' class='btn btn-warning btn-sm mr-1' title='View Invoice'><i class='fas fa-file-invoice'></i></a>";
-                $download = "<a href='" . route('admin.orders.download-invoice', $query->id) . "' class='btn btn-info btn-sm mr-1' title='Download PDF'><i class='fas fa-download'></i></a>";
-                $delete = "<a href='" . route('admin.orders.destroy', $query->id) . "' class='btn btn-danger btn-sm delete-item' title='Delete'><i class='fas fa-trash'></i></a>";
+                $view = "<a href='".route('admin.orders.show', $query->id)."' class='btn btn-primary btn-sm mr-1' title='Control Panel'><i class='fas fa-eye'></i></a>";
+                $pi_invoice = "<a href='".route('admin.orders.pi-invoice', $query->id)."' target='_blank' class='btn btn-success btn-sm mr-1' title='PI Invoice'>PI</a>";
+                $invoice = "<a href='".route('admin.orders.view-invoice', $query->id)."' target='_blank' class='btn btn-warning btn-sm mr-1' title='View Invoice'><i class='fas fa-file-invoice'></i></a>";
+                $download = "<a href='".route('admin.orders.download-invoice', $query->id)."' class='btn btn-info btn-sm mr-1' title='Download PDF'><i class='fas fa-download'></i></a>";
+                $delete = "<a href='".route('admin.orders.destroy', $query->id)."' class='btn btn-danger btn-sm delete-item' title='Delete'><i class='fas fa-trash'></i></a>";
                 $issue = '';
                 $canCreateIssue = Auth::check() && Auth::user()->hasRole('Admin');
                 if ($canCreateIssue && strtolower((string) $query->status) === 'approved') {
-                    $issue = "<a href='" . route('admin.issues.create', ['order_id' => $query->id]) . "' class='btn btn-success btn-sm' title='Create Stock Issue'><i class='fas fa-box-open'></i></a>";
+                    $issue = "<a href='".route('admin.issues.create', ['order_id' => $query->id])."' class='btn btn-success btn-sm' title='Create Stock Issue'><i class='fas fa-box-open'></i></a>";
                 }
 
                 $pay = '';
-                if (Auth::user()->hasRole('Admin') && (float)$query->due_amount > 0) {
-                    $pay = "<a href='" . route('admin.accounts.record-payment', ['order_no' => $query->order_no]) . "' class='btn btn-dark btn-sm mr-1' title='Record Payment'><i class='fas fa-money-bill-wave'></i></a>";
+                if (Auth::user()->hasRole('Admin') && (float) $query->due_amount > 0) {
+                    $pay = "<a href='".route('admin.accounts.record-payment', ['order_no' => $query->order_no])."' class='btn btn-dark btn-sm mr-1' title='Record Payment'><i class='fas fa-money-bill-wave'></i></a>";
                 }
 
-                return $pay . $pi_invoice . $invoice . $download . $view . $issue . ' ' . $delete;
+                return $pay.$pi_invoice.$invoice.$download.$view.$issue.' '.$delete;
             })
             ->rawColumns(['customer', 'items_count', 'status_badge', 'action'])
             ->setRowId('id');
@@ -109,7 +110,7 @@ class OrderDataTable extends DataTable
             ->setTableId('order-table')
             ->columns($this->getColumns())
             ->ajax([
-                'data' => 'function(d) { d.status = $("#filter_status").val(); }'
+                'data' => 'function(d) { d.status = $("#filter_status").val(); }',
             ])
             ->orderBy(0)
             ->selectStyleSingle()
@@ -149,6 +150,6 @@ class OrderDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Orders_' . date('YmdHis');
+        return 'Orders_'.date('YmdHis');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -13,7 +14,7 @@ class NewProductsAnnouncementMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param array<int, array<string, mixed>> $products
+     * @param  array<int, array<string, mixed>>  $products
      */
     public function __construct(
         public string $recipientName,
@@ -54,7 +55,7 @@ class NewProductsAnnouncementMail extends Mailable
     }
 
     /**
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {
@@ -63,24 +64,24 @@ class NewProductsAnnouncementMail extends Mailable
 
     private function resolvedSubject(): string
     {
-        if (!empty($this->customSubject)) {
+        if (! empty($this->customSubject)) {
             return $this->customSubject;
         }
 
         $subject = $this->source === 'imported'
-            ? 'New Products Imported (' . $this->totalProducts . ')'
+            ? 'New Products Imported ('.$this->totalProducts.')'
             : ($this->source === 'manual'
-                ? ($this->totalProducts === 1 ? 'Product Announcement' : 'Product Announcements (' . $this->totalProducts . ')')
+                ? ($this->totalProducts === 1 ? 'Product Announcement' : 'Product Announcements ('.$this->totalProducts.')')
                 : ($this->totalProducts === 1
                     ? 'New Product Added'
-                    : 'New Products Added (' . $this->totalProducts . ')'));
+                    : 'New Products Added ('.$this->totalProducts.')'));
 
-        return $subject . ' | ' . config('app.name');
+        return $subject.' | '.config('app.name');
     }
 
     private function resolvedMessage(): string
     {
-        if (!empty($this->customMessage)) {
+        if (! empty($this->customMessage)) {
             return $this->customMessage;
         }
 

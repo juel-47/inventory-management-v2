@@ -42,6 +42,20 @@ class Product extends Model
         'vat_value',
     ];
 
+    protected $casts = [
+        'status' => 'boolean',
+        'qty' => 'integer',
+        'minimum_order_qty' => 'integer',
+        'purchase_price' => 'decimal:2',
+        'price' => 'decimal:2',
+        'outlet_price' => 'decimal:2',
+        'raw_material_cost' => 'decimal:2',
+        'transport_cost' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'vat_value' => 'decimal:2',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -100,7 +114,7 @@ class Product extends Model
 
     public function stockLedgers()
     {
-        return $this->hasMany(StockLedger::class, 'variant_id');
+        return $this->hasMany(StockLedger::class, 'product_id');
     }
 
     public function getInventoryStockAttribute()

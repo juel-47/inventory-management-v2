@@ -8,8 +8,6 @@ use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class ColorDataTable extends DataTable
@@ -17,34 +15,37 @@ class ColorDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Color> $query Results from query() method.
+     * @param  QueryBuilder<Color>  $query  Results from query() method.
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $editBtn = "<a href='" . route('admin.colors.edit', $query->id) . "' class='btn btn-primary'><i class='far fa-edit'></i></a>";
-                $deleteBtn = "<a href='" . route('admin.colors.destroy', $query->id) . "' class='btn btn-danger ml-2 delete-item'><i class='fas fa-trash'></i></a>";
-                return $editBtn . $deleteBtn;
+                $editBtn = "<a href='".route('admin.colors.edit', $query->id)."' class='btn btn-primary'><i class='far fa-edit'></i></a>";
+                $deleteBtn = "<a href='".route('admin.colors.destroy', $query->id)."' class='btn btn-danger ml-2 delete-item'><i class='fas fa-trash'></i></a>";
+
+                return $editBtn.$deleteBtn;
             })
             ->addColumn('hex_preview', function ($query) {
                 if ($query->hex_code) {
-                    return '<div style="width: 30px; height: 30px; background-color: ' . $query->hex_code . '; border: 1px solid #ddd; border-radius: 4px;"></div>';
+                    return '<div style="width: 30px; height: 30px; background-color: '.$query->hex_code.'; border: 1px solid #ddd; border-radius: 4px;"></div>';
                 }
+
                 return '-';
             })
             ->addColumn('status', function ($query) {
                 if ($query->status == 1) {
                     $activeButton = '<label class="custom-switch mt-2">
-                    <input type="checkbox" checked name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="' . $query->id . '" >
+                    <input type="checkbox" checked name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="'.$query->id.'" >
                     <span class="custom-switch-indicator"></span>
                   </label>';
                 } else {
                     $activeButton = '<label class="custom-switch mt-2">
-                    <input type="checkbox" name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="' . $query->id . '" >
+                    <input type="checkbox" name="custom-switch-checkbox" class="custom-switch-input change-status" data-id="'.$query->id.'" >
                     <span class="custom-switch-indicator"></span>
                   </label>';
                 }
+
                 return $activeButton;
             })
             ->rawColumns(['hex_preview', 'action', 'status'])
@@ -107,6 +108,6 @@ class ColorDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Color_' . date('YmdHis');
+        return 'Color_'.date('YmdHis');
     }
 }

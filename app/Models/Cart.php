@@ -8,6 +8,10 @@ class Cart extends Model
 {
     protected $fillable = ['user_id', 'product_id', 'variant_id', 'cart_type', 'vendor_id', 'quantity'];
 
+    protected $casts = [
+        'quantity' => 'integer',
+    ];
+
     /**
      * Get the user that owns the cart item
      */

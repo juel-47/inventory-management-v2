@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Product;
-use App\Models\ProductVariant;
 
 class InventoryStock extends Model
 {
@@ -12,7 +10,11 @@ class InventoryStock extends Model
         'product_id',
         'variant_id',
         'outlet_id',
-        'quantity'
+        'quantity',
+    ];
+
+    protected $casts = [
+        'quantity' => 'decimal:2',
     ];
 
     public function product()

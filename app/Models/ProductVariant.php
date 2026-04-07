@@ -19,7 +19,7 @@ class ProductVariant extends Model
         'qty',
         'status',
         'price',
-        'outlet_price'
+        'outlet_price',
     ];
 
     public function product()

@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Imports\ProductsImport;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ImportProductsCommand extends Command
 {
@@ -18,8 +18,9 @@ class ImportProductsCommand extends Command
         $filePath = $this->argument('file');
         $chunkSize = $this->option('chunk');
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             $this->error("File not found: {$filePath}");
+
             return 1;
         }
 
@@ -27,14 +28,16 @@ class ImportProductsCommand extends Command
         $this->info("Chunk size: {$chunkSize}");
 
         try {
-            Excel::import(new ProductsImport(), $filePath);
-            
+            Excel::import(new ProductsImport, $filePath);
+
             $this->info('Products imported successfully!');
+
             return 0;
-            
+
         } catch (\Exception $e) {
-            $this->error('Import failed: ' . $e->getMessage());
-            Log::error('Import Command Error: ' . $e->getMessage());
+            $this->error('Import failed: '.$e->getMessage());
+            Log::error('Import Command Error: '.$e->getMessage());
+
             return 1;
         }
     }

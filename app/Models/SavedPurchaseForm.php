@@ -28,4 +28,3 @@ class SavedPurchaseForm extends Model
         return $this->hasMany(SavedPurchaseFormItem::class);
     }
 }
-

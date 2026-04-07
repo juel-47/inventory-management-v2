@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\DataTables\UnitDataTable;
+use App\Http\Controllers\Controller;
 use App\Models\Unit;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class UnitController extends Controller
@@ -34,16 +34,17 @@ class UnitController extends Controller
     {
         $request->validate([
             'name' => 'required|max:200|unique:units,name',
-            'status' => 'required'
+            'status' => 'required',
         ]);
 
-        $unit = new Unit();
+        $unit = new Unit;
         $unit->name = $request->name;
         $unit->slug = Str::slug($request->name);
         $unit->status = $request->status;
         $unit->save();
 
         Toastr::success('Unit Created Successfully!');
+
         return redirect()->route('admin.units.index');
     }
 
@@ -61,6 +62,7 @@ class UnitController extends Controller
     public function edit(string $id)
     {
         $unit = Unit::findOrFail($id);
+
         return view('backend.unit.edit', compact('unit'));
     }
 
@@ -71,7 +73,7 @@ class UnitController extends Controller
     {
         $request->validate([
             'name' => 'required|max:200|unique:units,name,'.$id,
-            'status' => 'required'
+            'status' => 'required',
         ]);
 
         $unit = Unit::findOrFail($id);
@@ -81,6 +83,7 @@ class UnitController extends Controller
         $unit->save();
 
         Toastr::success('Unit Updated Successfully!');
+
         return redirect()->route('admin.units.index');
     }
 

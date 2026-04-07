@@ -6,23 +6,24 @@ use App\DataTables\BookingDataTable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\BookingStoreRequest;
 use App\Http\Requests\Booking\BookingUpdateRequest;
+use App\Mail\BookingNotification;
 use App\Models\Booking;
 use App\Models\Cart;
-use App\Models\Product;
-use App\Models\Vendor;
-use App\Models\Unit;
 use App\Models\Category;
-use App\Models\SubCategory;
 use App\Models\ChildCategory;
+use App\Models\GeneralSetting;
+use App\Models\Product;
+use App\Models\SubCategory;
+use App\Models\Unit;
+use App\Models\Vendor;
+use App\Support\PdfImageHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
-use App\Mail\BookingNotification;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Support\PdfImageHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -42,14 +43,15 @@ class BookingController extends Controller
         $vendors = Vendor::where('status', 1)->latest()->get();
         $units = Unit::where('status', 1)->get();
         $categories = Category::where('status', 1)->get();
-        
+
         $selectedIds = [];
         if ($request->has('ids')) {
             $selectedIds = explode(',', $request->ids);
         }
 
         // Pass products with details for JS population
-        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->latest()->get(); 
+        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->latest()->get();
+
         return view('backend.booking.create', compact('vendors', 'products', 'units', 'categories', 'selectedIds'));
     }
 
@@ -59,6 +61,7 @@ class BookingController extends Controller
     public function getSubCategories(Request $request)
     {
         $subCategories = SubCategory::where('category_id', $request->id)->where('status', 1)->get();
+
         return response()->json($subCategories);
     }
 
@@ -68,6 +71,7 @@ class BookingController extends Controller
     public function getChildCategories(Request $request)
     {
         $childCategories = ChildCategory::where('sub_category_id', $request->id)->where('status', 1)->get();
+
         return response()->json($childCategories);
     }
 
@@ -76,74 +80,86 @@ class BookingController extends Controller
      */
     public function store(BookingStoreRequest $request)
     {
-        $booking_no = 'DS-' . strtoupper(Str::random(10));
+        $booking_no = 'DS-'.strtoupper(Str::random(10));
         $bookings_saved = [];
 
-        foreach ($request->items as $item) {
-            $booking = new Booking();
-            $booking->booking_no = $booking_no;
-            $booking->vendor_id = $request->vendor_id;
-            $booking->product_id = $item['product_id'];
-            
-            // Fetch product to get category/unit defaults
-            $product = Product::find($item['product_id']);
-            if (!$product) continue;
+        DB::beginTransaction();
+        try {
+            foreach ($request->items as $item) {
+                $booking = new Booking;
+                $booking->booking_no = $booking_no;
+                $booking->vendor_id = $request->vendor_id;
+                $booking->product_id = $item['product_id'];
 
-            $booking->category_id = $product->category_id;
-            $booking->sub_category_id = $product->sub_category_id;
-            $booking->child_category_id = $product->child_category_id;
-            $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
-            
-            $booking->qty = $item['qty'];
-            
-            // Handle Variant Info
-            if (isset($item['variant_quantities']) && is_array($item['variant_quantities']) && count(array_filter($item['variant_quantities'])) > 0) {
-                $variantSum = 0;
-                $variantsData = [];
-                foreach ($item['variant_quantities'] as $variant => $qty) {
-                    if ($qty > 0) {
-                        $variantSum += $qty;
-                        $variantsData[$variant] = $qty;
+                // Fetch product to get category/unit defaults
+                $product = Product::find($item['product_id']);
+                if (! $product) {
+                    continue;
+                }
+
+                $booking->category_id = $product->category_id;
+                $booking->sub_category_id = $product->sub_category_id;
+                $booking->child_category_id = $product->child_category_id;
+                $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
+
+                $booking->qty = $item['qty'];
+
+                // Handle Variant Info
+                if (isset($item['variant_quantities']) && is_array($item['variant_quantities']) && count(array_filter($item['variant_quantities'])) > 0) {
+                    $variantSum = 0;
+                    $variantsData = [];
+                    foreach ($item['variant_quantities'] as $variant => $qty) {
+                        if ($qty > 0) {
+                            $variantSum += $qty;
+                            $variantsData[$variant] = $qty;
+                        }
                     }
+                    $booking->variant_info = $variantsData;
+                    if ($booking->qty < $variantSum) {
+                        $booking->qty = $variantSum;
+                    }
+                } else {
+                    $booking->variant_info = $item['variant_info'] ?? null;
                 }
-                $booking->variant_info = $variantsData;
-                if ($booking->qty < $variantSum) {
-                    $booking->qty = $variantSum;
-                }
-            } else {
-                $booking->variant_info = $item['variant_info'] ?? null;
+
+                $booking->description = $request->description;
+                $booking->custom_fields = $request->custom_fields;
+                $booking->shipping_method = $request->shipping_method;
+                $booking->status = $request->status ?? 'pending';
+
+                $booking->unit_price = 0;
+                $booking->extra_cost = 0;
+                $booking->total_cost = 0;
+                $booking->sale_price = 0;
+
+                $booking->save();
+                $bookings_saved[] = $booking;
             }
 
-            $booking->description = $request->description;
-            $booking->custom_fields = $request->custom_fields;
-            $booking->shipping_method = $request->shipping_method;
-            $booking->status = $request->status ?? 'pending';
-            
-            $booking->unit_price = 0;
-            $booking->extra_cost = 0;
-            $booking->total_cost = 0;
-            $booking->sale_price = 0;
-            
-            $booking->save();
-            $bookings_saved[] = $booking;
-        }
+            if (count($bookings_saved) > 0) {
+                // Clear the booking cart after successful booking
+                Cart::where('user_id', Auth::id())
+                    ->where('cart_type', 'booking')
+                    ->delete();
 
-        if (count($bookings_saved) > 0) {
-            // Clear the booking cart after successful booking
-            Cart::where('user_id', Auth::id())
-                 ->where('cart_type', 'booking')
-                 ->delete();
-            
-            $vendor = Vendor::find($request->vendor_id);
-            if ($vendor && $vendor->email) {
-                dispatch(function () use ($bookings_saved, $vendor) {
-                    Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
-                })->afterResponse();
+                $vendor = Vendor::find($request->vendor_id);
+                if ($vendor && $vendor->email) {
+                    dispatch(function () use ($bookings_saved, $vendor) {
+                        Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
+                    })->afterResponse();
+                }
             }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->withErrors(['error' => 'Failed to save booking: '.$e->getMessage()]);
         }
 
         Toastr::success('Order(s) Placed Successfully!');
         session()->flash('clear_booking_basket', true);
+
         return redirect()->route('admin.bookings.index');
     }
 
@@ -161,8 +177,8 @@ class BookingController extends Controller
         $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)
             ->with(['product.variants.color', 'product.variants.size', 'vendor', 'unit'])
             ->get();
-        
-        $settings = \App\Models\GeneralSetting::first();
+
+        $settings = GeneralSetting::first();
 
         return view('backend.booking.invoice', compact('orderGroup', 'targetBooking', 'settings'));
     }
@@ -176,8 +192,8 @@ class BookingController extends Controller
         $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)
             ->with(['product.variants.color', 'product.variants.size', 'vendor', 'unit'])
             ->get();
-        
-        $settings = \App\Models\GeneralSetting::first();
+
+        $settings = GeneralSetting::first();
 
         // Optimize logo
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
@@ -191,6 +207,7 @@ class BookingController extends Controller
         }
 
         $pdf = Pdf::loadView('backend.booking.print_pdf', compact('orderGroup', 'targetBooking', 'settings'));
+
         return $pdf->download('Booking_'.$targetBooking->booking_no.'.pdf');
     }
 
@@ -202,11 +219,11 @@ class BookingController extends Controller
         $targetBooking = Booking::findOrFail($id);
         // Fetch all bookings with the same booking_no
         $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)->with(['product.variants.color', 'product.variants.size'])->get();
-        
+
         $vendors = Vendor::where('status', 1)->latest()->get();
         $units = Unit::where('status', 1)->get();
         $categories = Category::where('status', 1)->get();
-        
+
         // Match create fields: products for selection
         $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->latest()->get();
 
@@ -228,17 +245,20 @@ class BookingController extends Controller
 
             // Re-insert new/updated items
             foreach ($request->items as $item) {
-                $booking = new Booking();
+                $booking = new Booking;
                 $booking->booking_no = $bookingNo;
                 $booking->vendor_id = $request->vendor_id;
                 $booking->product_id = $item['product_id'];
-                
+
                 // Categorization
                 $product = Product::find($item['product_id']);
+                if (! $product) {
+                    continue;
+                }
                 $booking->category_id = $product->category_id;
                 $booking->sub_category_id = $product->sub_category_id;
                 $booking->child_category_id = $product->child_category_id;
-                
+
                 $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
                 $booking->qty = $item['qty'];
 
@@ -262,22 +282,24 @@ class BookingController extends Controller
                 $booking->custom_fields = $request->custom_fields;
                 $booking->shipping_method = $request->shipping_method;
                 $booking->status = $request->status ?? 'pending';
-                
+
                 $booking->unit_price = 0;
                 $booking->extra_cost = 0;
                 $booking->total_cost = 0;
                 $booking->sale_price = 0;
-                
+
                 $booking->save();
             }
 
             DB::commit();
             Toastr::success('Order Updated Successfully!');
+
             return redirect()->route('admin.bookings.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Toastr::error('Something went wrong: ' . $e->getMessage());
+            Toastr::error('Something went wrong: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -290,6 +312,7 @@ class BookingController extends Controller
         try {
             $booking = Booking::findOrFail($id);
             Booking::where('booking_no', $booking->booking_no)->delete();
+
             return response(['status' => 'success', 'message' => 'Order Deleted Successfully!']);
         } catch (\Exception $e) {
             return response(['status' => 'error', 'message' => $e->getMessage()]);
@@ -300,10 +323,10 @@ class BookingController extends Controller
     {
         // Find one item to get the booking_no
         $booking = Booking::findOrFail($request->id);
-        
+
         // Update status for all items in this booking group
         Booking::where('booking_no', $booking->booking_no)->update(['status' => $request->status]);
-        
+
         return response(['status' => 'success', 'message' => 'Status Updated Successfully!']);
     }
 }

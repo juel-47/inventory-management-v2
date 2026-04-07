@@ -20,4 +20,3 @@ class Tax extends Model
         'status' => 'boolean',
     ];
 }
-

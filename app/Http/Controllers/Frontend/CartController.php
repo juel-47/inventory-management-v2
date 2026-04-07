@@ -14,8 +14,8 @@ use App\Models\Wishlist;
 use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
@@ -89,7 +89,7 @@ class CartController extends Controller
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'variant_id' => 'nullable|exists:product_variants,id',
-            'quantity'   => 'nullable|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
         $productId = $validated['product_id'];
@@ -114,7 +114,7 @@ class CartController extends Controller
         }
 
         $minimumOrderQty = max(1, (int) ($product->minimum_order_qty ?? 1));
-        $quantity  = max(1, (int) ($validated['quantity'] ?? 1));
+        $quantity = max(1, (int) ($validated['quantity'] ?? 1));
 
         if ($quantity < $minimumOrderQty) {
             $quantity = $minimumOrderQty;
@@ -123,14 +123,14 @@ class CartController extends Controller
         }
 
         $cartItem = Cart::where('user_id', Auth::id())
-                        ->where('product_id', $productId)
-                        ->where('cart_type', 'frontend')
-                        ->when(
-                            $variantId !== null,
-                            fn ($q) => $q->where('variant_id', $variantId),
-                            fn ($q) => $q->whereNull('variant_id')
-                        )
-                        ->first();
+            ->where('product_id', $productId)
+            ->where('cart_type', 'frontend')
+            ->when(
+                $variantId !== null,
+                fn ($q) => $q->where('variant_id', $variantId),
+                fn ($q) => $q->whereNull('variant_id')
+            )
+            ->first();
 
         $availableStock = $this->resolveAvailableStock($product, $variant);
         $currentCartQty = (int) ($cartItem->quantity ?? 0);
@@ -147,7 +147,7 @@ class CartController extends Controller
         if ($requestedCartQty > $availableStock) {
             return response()->json([
                 'success' => false,
-                'message' => 'Requested quantity exceeds available stock. Available stock: ' . $availableStock . '.',
+                'message' => 'Requested quantity exceeds available stock. Available stock: '.$availableStock.'.',
                 'available_stock' => $availableStock,
                 'requested_quantity' => $requestedCartQty,
             ], 422);
@@ -159,19 +159,19 @@ class CartController extends Controller
             $action = 'updated';
         } else {
             Cart::create([
-                'user_id'    => Auth::id(),
+                'user_id' => Auth::id(),
                 'product_id' => $productId,
                 'variant_id' => $variantId,
-                'cart_type'  => 'frontend',
-                'vendor_id'  => $product->vendor_id ?? null,
-                'quantity'   => $quantity,
+                'cart_type' => 'frontend',
+                'vendor_id' => $product->vendor_id ?? null,
+                'quantity' => $quantity,
             ]);
             $action = 'added';
         }
 
         $count = Cart::where('user_id', Auth::id())
-                     ->where('cart_type', 'frontend')
-                     ->sum('quantity');
+            ->where('cart_type', 'frontend')
+            ->sum('quantity');
 
         $removedFromWishlist = Wishlist::where('user_id', Auth::id())
             ->where('product_id', $productId)
@@ -180,14 +180,14 @@ class CartController extends Controller
         $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
 
         return response()->json([
-            'success'               => true,
-            'action'                => $action,
-            'count'                 => (int) $count,
-            'variant_id'            => $variantId,
+            'success' => true,
+            'action' => $action,
+            'count' => (int) $count,
+            'variant_id' => $variantId,
             'removed_from_wishlist' => $removedFromWishlist,
-            'wishlist_count'        => (int) $wishlistCount,
-            'applied_quantity'      => (int) $quantity,
-            'minimum_order_qty'     => (int) $minimumOrderQty,
+            'wishlist_count' => (int) $wishlistCount,
+            'applied_quantity' => (int) $quantity,
+            'minimum_order_qty' => (int) $minimumOrderQty,
         ]);
     }
 
@@ -197,7 +197,7 @@ class CartController extends Controller
     public function remove(Request $request)
     {
         $validated = $request->validate([
-            'cart_id'    => 'nullable|integer|exists:carts,id',
+            'cart_id' => 'nullable|integer|exists:carts,id',
             'product_id' => 'nullable|exists:products,id',
             'variant_id' => 'nullable|exists:product_variants,id',
         ]);
@@ -205,9 +205,9 @@ class CartController extends Controller
         $query = Cart::where('user_id', Auth::id())
             ->where('cart_type', 'frontend');
 
-        if (!empty($validated['cart_id'])) {
+        if (! empty($validated['cart_id'])) {
             $query->where('id', (int) $validated['cart_id']);
-        } elseif (!empty($validated['product_id'])) {
+        } elseif (! empty($validated['product_id'])) {
             $variantId = isset($validated['variant_id']) ? (int) $validated['variant_id'] : null;
             $query->where('product_id', (int) $validated['product_id'])
                 ->when(
@@ -225,12 +225,12 @@ class CartController extends Controller
         $query->delete();
 
         $count = Cart::where('user_id', Auth::id())
-                     ->where('cart_type', 'frontend')
-                     ->sum('quantity');
+            ->where('cart_type', 'frontend')
+            ->sum('quantity');
 
         return response()->json([
             'success' => true,
-            'count'   => (int) $count,
+            'count' => (int) $count,
         ]);
     }
 
@@ -240,18 +240,18 @@ class CartController extends Controller
     public function updateQuantity(Request $request)
     {
         $validated = $request->validate([
-            'cart_id'    => 'nullable|integer|exists:carts,id',
+            'cart_id' => 'nullable|integer|exists:carts,id',
             'product_id' => 'nullable|exists:products,id',
             'variant_id' => 'nullable|exists:product_variants,id',
-            'quantity'   => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
         ]);
 
         $query = Cart::where('user_id', Auth::id())
             ->where('cart_type', 'frontend');
 
-        if (!empty($validated['cart_id'])) {
+        if (! empty($validated['cart_id'])) {
             $query->where('id', (int) $validated['cart_id']);
-        } elseif (!empty($validated['product_id'])) {
+        } elseif (! empty($validated['product_id'])) {
             $variantId = isset($validated['variant_id']) ? (int) $validated['variant_id'] : null;
             $query->where('product_id', (int) $validated['product_id'])
                 ->when(
@@ -271,7 +271,7 @@ class CartController extends Controller
         if ($cartItem) {
             $cartItem->loadMissing(['product.inventoryStocks', 'variant.inventoryStocks']);
 
-            if (!$cartItem->product) {
+            if (! $cartItem->product) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found for this cart item.',
@@ -313,7 +313,7 @@ class CartController extends Controller
             if ($requestedQty > $availableStock) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Requested quantity exceeds available stock. Available stock: ' . $availableStock . '.',
+                    'message' => 'Requested quantity exceeds available stock. Available stock: '.$availableStock.'.',
                     'available_stock' => $availableStock,
                     'requested_quantity' => $requestedQty,
                 ], 422);
@@ -382,7 +382,7 @@ class CartController extends Controller
         $checkoutItems = $this->getUserCartItems();
         $summary = $this->calculateCheckoutSummary($checkoutItems);
 
-        $shippingName = trim((($validated['shipping_first_name'] ?? '') . ' ' . ($validated['shipping_last_name'] ?? '')));
+        $shippingName = trim((($validated['shipping_first_name'] ?? '').' '.($validated['shipping_last_name'] ?? '')));
         $shippingName = $shippingName !== '' ? $shippingName : null;
 
         // DB billing_* columns are non-nullable. If ship_different is enabled, reuse shipping info as billing source.
@@ -406,9 +406,10 @@ class CartController extends Controller
                 $requestedQty = (int) $line['requested_qty'];
                 if ($available < $requestedQty) {
                     DB::rollBack();
+
                     return redirect()
                         ->route('checkout.index')
-                        ->with('error', 'Insufficient stock for ' . $line['name'] . '. Available: ' . $available . ', requested: ' . $requestedQty . '.')
+                        ->with('error', 'Insufficient stock for '.$line['name'].'. Available: '.$available.', requested: '.$requestedQty.'.')
                         ->withInput();
                 }
             }
@@ -484,20 +485,21 @@ class CartController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return redirect()
                 ->route('checkout.index')
-                ->with('error', 'Order placement failed: ' . $e->getMessage())
+                ->with('error', 'Order placement failed: '.$e->getMessage())
                 ->withInput();
         }
 
         return redirect()
             ->route('orders.show', $order->id)
-            ->with('success', 'Order placed successfully. Reference: ' . $order->order_no);
+            ->with('success', 'Order placed successfully. Reference: '.$order->order_no);
     }
 
     private function resolveVariantLabel(?ProductVariant $variant): ?string
     {
-        if (!$variant) {
+        if (! $variant) {
             return null;
         }
 
@@ -569,7 +571,7 @@ class CartController extends Controller
                 $this->addAppliedRate($defaultDiscountRates, $lineDiscount['type'] ?? null, $lineDiscount['value'] ?? 0);
             }
             if (($lineDiscount['source'] ?? 'none') !== 'none') {
-                $appliedDiscountSignatures[] = ($lineDiscount['source'] . ':' . ($lineDiscount['type'] ?? 'none') . ':' . (string) $lineDiscount['value']);
+                $appliedDiscountSignatures[] = ($lineDiscount['source'].':'.($lineDiscount['type'] ?? 'none').':'.(string) $lineDiscount['value']);
             }
 
             $lineTax = $taxResolver->resolveForLine($product, $lineSubtotal);
@@ -591,7 +593,7 @@ class CartController extends Controller
             }
 
             if ($lineTax['source'] !== 'none') {
-                $appliedTaxSignatures[] = ($lineTax['source'] . ':' . ($lineTax['type'] ?? 'none') . ':' . (string) $lineTax['value']);
+                $appliedTaxSignatures[] = ($lineTax['source'].':'.($lineTax['type'] ?? 'none').':'.(string) $lineTax['value']);
             }
         }
 
@@ -620,13 +622,13 @@ class CartController extends Controller
             [$source, $type, $value] = explode(':', $uniqueSignatures[0]);
             if ($type === 'percent') {
                 $vatRate = (float) $value;
-                $taxLabel = 'VAT (' . rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.') . '%)';
+                $taxLabel = 'VAT ('.rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.').'%)';
             } elseif ($type === 'flat') {
                 $taxLabel = $source === 'product' ? 'Product VAT (Flat)' : 'VAT (Flat)';
             }
         } elseif ($defaultTax && $defaultTax->type === 'percent') {
             $vatRate = (float) $defaultTax->value;
-            $taxLabel = 'VAT (' . rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.') . '%)';
+            $taxLabel = 'VAT ('.rtrim(rtrim(number_format($vatRate, 2, '.', ''), '0'), '.').'%)';
         } elseif ($defaultTax && $defaultTax->type === 'flat') {
             $taxLabel = 'VAT (Flat)';
         }
@@ -663,12 +665,12 @@ class CartController extends Controller
 
     private function addAppliedRate(array &$bucket, ?string $type, $value): void
     {
-        if (!$type) {
+        if (! $type) {
             return;
         }
 
         $normalizedType = strtolower((string) $type);
-        if (!in_array($normalizedType, ['percent', 'flat'], true)) {
+        if (! in_array($normalizedType, ['percent', 'flat'], true)) {
             return;
         }
 
@@ -681,7 +683,7 @@ class CartController extends Controller
             $normalizedValue = 100.0;
         }
 
-        $key = $normalizedType . ':' . number_format($normalizedValue, 4, '.', '');
+        $key = $normalizedType.':'.number_format($normalizedValue, 4, '.', '');
         $bucket[$key] = [
             'type' => $normalizedType,
             'value' => $normalizedValue,
@@ -705,16 +707,16 @@ class CartController extends Controller
 
             $formattedValue = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
             if ($type === 'percent') {
-                $labels[] = $formattedValue . '%';
+                $labels[] = $formattedValue.'%';
             } elseif ($type === 'flat') {
-                $labels[] = 'Flat ' . $formattedValue;
+                $labels[] = 'Flat '.$formattedValue;
             }
         }
 
         $labels = array_values(array_unique($labels));
         sort($labels, SORT_NATURAL);
 
-        return !empty($labels) ? implode(', ', $labels) : null;
+        return ! empty($labels) ? implode(', ', $labels) : null;
     }
 
     private function buildCombinedRateLabel(array $rates): ?string
@@ -744,14 +746,14 @@ class CartController extends Controller
         $parts = [];
 
         if ($percentTotal > 0) {
-            $parts[] = rtrim(rtrim(number_format($percentTotal, 2, '.', ''), '0'), '.') . '%';
+            $parts[] = rtrim(rtrim(number_format($percentTotal, 2, '.', ''), '0'), '.').'%';
         }
 
         if ($flatTotal > 0) {
-            $parts[] = 'Flat ' . rtrim(rtrim(number_format($flatTotal, 2, '.', ''), '0'), '.');
+            $parts[] = 'Flat '.rtrim(rtrim(number_format($flatTotal, 2, '.', ''), '0'), '.');
         }
 
-        return !empty($parts) ? implode(' + ', $parts) : null;
+        return ! empty($parts) ? implode(' + ', $parts) : null;
     }
 
     private function getUserCartItems()
@@ -759,64 +761,64 @@ class CartController extends Controller
         $discountResolver = app(CheckoutDiscountResolver::class);
 
         return Cart::where('user_id', Auth::id())
-                    ->where('cart_type', 'frontend')
-                    ->with(['product.category', 'product.inventoryStocks', 'variant.inventoryStocks'])
-                    ->get()
-                    ->map(function ($item) use ($discountResolver) {
-                        if (!$item->product) {
-                            return null;
-                        }
+            ->where('cart_type', 'frontend')
+            ->with(['product.category', 'product.inventoryStocks', 'variant.inventoryStocks'])
+            ->get()
+            ->map(function ($item) use ($discountResolver) {
+                if (! $item->product) {
+                    return null;
+                }
 
-                        if ((int) ($item->product->status ?? 0) !== 1) {
-                            return null;
-                        }
+                if ((int) ($item->product->status ?? 0) !== 1) {
+                    return null;
+                }
 
-                        $product = $item->product;
-                        $imagePath = (string) ($product->thumb_image ?? '');
-                        $imageUrl = (strpos($imagePath, 'http') === 0)
-                            ? $imagePath
-                            : ($imagePath !== '' && file_exists(public_path($imagePath))
-                                ? asset($imagePath)
-                                : asset('storage/' . $imagePath));
+                $product = $item->product;
+                $imagePath = (string) ($product->thumb_image ?? '');
+                $imageUrl = (strpos($imagePath, 'http') === 0)
+                    ? $imagePath
+                    : ($imagePath !== '' && file_exists(public_path($imagePath))
+                        ? asset($imagePath)
+                        : asset('storage/'.$imagePath));
 
-                        $variant = $item->variant;
-                        $price = (float) $this->resolveCartItemUnitPrice($product, $variant);
-                        $variantLabel = $this->resolveVariantLabel($variant);
-                        $availableStock = $this->resolveAvailableStock($product, $variant);
-                        $quantity = (int) ($item->quantity ?? 1);
-                        $lineSubtotal = round($price * $quantity, 2);
+                $variant = $item->variant;
+                $price = (float) $this->resolveCartItemUnitPrice($product, $variant);
+                $variantLabel = $this->resolveVariantLabel($variant);
+                $availableStock = $this->resolveAvailableStock($product, $variant);
+                $quantity = (int) ($item->quantity ?? 1);
+                $lineSubtotal = round($price * $quantity, 2);
 
-                        $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $quantity);
-                        $lineDiscountAmount = round((float) ($lineDiscount['amount'] ?? 0), 2);
-                        $discountPerUnit = $quantity > 0 ? ($lineDiscountAmount / $quantity) : 0.0;
-                        $displayPrice = round(max(0, $price - $discountPerUnit), 2);
-                        $lineTotalAfterDiscount = round(max(0, $lineSubtotal - $lineDiscountAmount), 2);
+                $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $quantity);
+                $lineDiscountAmount = round((float) ($lineDiscount['amount'] ?? 0), 2);
+                $discountPerUnit = $quantity > 0 ? ($lineDiscountAmount / $quantity) : 0.0;
+                $displayPrice = round(max(0, $price - $discountPerUnit), 2);
+                $lineTotalAfterDiscount = round(max(0, $lineSubtotal - $lineDiscountAmount), 2);
 
-                        return [
-                            'id' => $item->id,
-                            'product_id' => $product->id,
-                            'variant_id' => $variant?->id,
-                            'name' => $product->name,
-                            'price' => (float) $price,
-                            'original_price' => (float) $price,
-                            'display_price' => (float) $displayPrice,
-                            'has_discount' => $lineDiscountAmount > 0,
-                            'discount_source' => (string) ($lineDiscount['source'] ?? 'none'),
-                            'discount_type' => (string) ($lineDiscount['type'] ?? ''),
-                            'discount_value' => (float) ($lineDiscount['value'] ?? 0),
-                            'line_discount' => (float) $lineDiscountAmount,
-                            'line_total' => (float) $lineSubtotal,
-                            'line_total_after_discount' => (float) $lineTotalAfterDiscount,
-                            'image' => $imageUrl,
-                            'category' => $product->category->name ?? 'General',
-                            'variant_label' => $variantLabel,
-                            'quantity' => $quantity,
-                            'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
-                            'available_stock' => (int) $availableStock,
-                        ];
-                    })
-                    ->filter()
-                    ->values();
+                return [
+                    'id' => $item->id,
+                    'product_id' => $product->id,
+                    'variant_id' => $variant?->id,
+                    'name' => $product->name,
+                    'price' => (float) $price,
+                    'original_price' => (float) $price,
+                    'display_price' => (float) $displayPrice,
+                    'has_discount' => $lineDiscountAmount > 0,
+                    'discount_source' => (string) ($lineDiscount['source'] ?? 'none'),
+                    'discount_type' => (string) ($lineDiscount['type'] ?? ''),
+                    'discount_value' => (float) ($lineDiscount['value'] ?? 0),
+                    'line_discount' => (float) $lineDiscountAmount,
+                    'line_total' => (float) $lineSubtotal,
+                    'line_total_after_discount' => (float) $lineTotalAfterDiscount,
+                    'image' => $imageUrl,
+                    'category' => $product->category->name ?? 'General',
+                    'variant_label' => $variantLabel,
+                    'quantity' => $quantity,
+                    'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
+                    'available_stock' => (int) $availableStock,
+                ];
+            })
+            ->filter()
+            ->values();
     }
 
     private function resolveAvailableStock(Product $product, ?ProductVariant $variant): int
@@ -837,16 +839,17 @@ class CartController extends Controller
             $productId = (int) $item->product_id;
             $variantId = $item->variant_id ? (int) $item->variant_id : null;
             $key = $this->buildStockKey($productId, $variantId);
-            if (!isset($requestedLines[$key])) {
+            if (! isset($requestedLines[$key])) {
                 $requestedLines[$key] = [
                     'product_id' => $productId,
                     'variant_id' => $variantId,
                     'requested_qty' => 0,
-                    'name' => (string) ($item->product?->name ?? ('Product #' . $productId)),
+                    'name' => (string) ($item->product?->name ?? ('Product #'.$productId)),
                 ];
             }
             $requestedLines[$key]['requested_qty'] += max(1, (int) $item->quantity);
         }
+
         return $requestedLines;
     }
 
@@ -881,7 +884,7 @@ class CartController extends Controller
         $user = Auth::user();
         $userOutletId = $user?->outlet_id ?? null;
 
-        if (!empty($userOutletId)) {
+        if (! empty($userOutletId)) {
             return (int) $userOutletId;
         }
 
@@ -890,7 +893,7 @@ class CartController extends Controller
 
     private function findInventoryStockRowInCollection($stocks, int $outletId): ?InventoryStock
     {
-        if (!$stocks) {
+        if (! $stocks) {
             return null;
         }
 
@@ -924,7 +927,7 @@ class CartController extends Controller
 
     private function buildStockKey(int $productId, ?int $variantId): string
     {
-        return $productId . '|' . ($variantId ?? 0);
+        return $productId.'|'.($variantId ?? 0);
     }
 
     private function generateUniqueOrderNoForUser($user): string
@@ -933,7 +936,7 @@ class CartController extends Controller
         $prefix = $isOutletUser ? 'DS' : 'ORD';
 
         do {
-            $orderNo = $prefix . '-' . strtoupper(Str::random(10));
+            $orderNo = $prefix.'-'.strtoupper(Str::random(10));
         } while (Order::query()->where('order_no', $orderNo)->exists());
 
         return $orderNo;

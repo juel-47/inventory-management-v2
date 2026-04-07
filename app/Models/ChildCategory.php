@@ -8,6 +8,10 @@ class ChildCategory extends Model
 {
     protected $fillable = ['category_id', 'sub_category_id', 'name', 'slug', 'status'];
 
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class);

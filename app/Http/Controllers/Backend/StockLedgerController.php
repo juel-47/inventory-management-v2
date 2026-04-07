@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockLedger;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class StockLedgerController extends Controller
 {
@@ -46,43 +48,45 @@ class StockLedgerController extends Controller
                 $data->whereDate('created_at', '<=', $request->date('date_to')->toDateString());
             }
 
-            return \Yajra\DataTables\Facades\DataTables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('date', function($row){
-                    return \Carbon\Carbon::parse($row->created_at)->format('Y-m-d h:i A');
+                ->addColumn('date', function ($row) {
+                    return Carbon::parse($row->created_at)->format('Y-m-d h:i A');
                 })
-                ->addColumn('image', function($row){
+                ->addColumn('image', function ($row) {
                     $url = $row->product && $row->product->thumb_image ? asset('storage/'.$row->product->thumb_image) : asset('uploads/default.jpg');
+
                     return '<img src="'.$url.'" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">';
                 })
-                ->addColumn('product_name', function($row){
+                ->addColumn('product_name', function ($row) {
                     return $row->product->name ?? 'Deleted';
                 })
-                ->filterColumn('product_name', function($query, $keyword) {
-                    $query->whereHas('product', function($q) use ($keyword) {
+                ->filterColumn('product_name', function ($query, $keyword) {
+                    $query->whereHas('product', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-                ->addColumn('variant_name', function($row){
+                ->addColumn('variant_name', function ($row) {
                     return $row->variant ? $row->variant->name : '-';
                 })
-                ->filterColumn('variant_name', function($query, $keyword) {
-                    $query->whereHas('variant', function($q) use ($keyword) {
+                ->filterColumn('variant_name', function ($query, $keyword) {
+                    $query->whereHas('variant', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-                ->addColumn('reference', function($row){
-                    return $row->reference_type . ' #' . $row->reference_id;
+                ->addColumn('reference', function ($row) {
+                    return $row->reference_type.' #'.$row->reference_id;
                 })
-                ->filterColumn('reference', function($query, $keyword) {
+                ->filterColumn('reference', function ($query, $keyword) {
                     $query->where('reference_id', 'like', "%{$keyword}%")
-                          ->orWhere('reference_type', 'like', "%{$keyword}%");
+                        ->orWhere('reference_type', 'like', "%{$keyword}%");
                 })
-                ->addColumn('type', function($row){
-                    if($row->in_qty > 0)
+                ->addColumn('type', function ($row) {
+                    if ($row->in_qty > 0) {
                         return '<div class="badge badge-success">IN</div>';
-                    else
+                    } else {
                         return '<div class="badge badge-danger">OUT</div>';
+                    }
                 })
                 ->rawColumns(['image', 'type'])
                 ->make(true);
@@ -103,7 +107,7 @@ class StockLedgerController extends Controller
                 (string) $product->id => $product->variants->map(function ($variant) {
                     return [
                         'id' => $variant->id,
-                        'label' => $variant->name ?: trim(collect([$variant->color, $variant->size])->filter()->implode(' ')) ?: 'Variant #' . $variant->id,
+                        'label' => $variant->name ?: trim(collect([$variant->color, $variant->size])->filter()->implode(' ')) ?: 'Variant #'.$variant->id,
                     ];
                 })->values()->all(),
             ];

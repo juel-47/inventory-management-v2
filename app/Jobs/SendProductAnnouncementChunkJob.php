@@ -15,17 +15,19 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
+class SendProductAnnouncementChunkJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 300;
+
     public int $uniqueFor = 3600;
 
     /**
-     * @param array<int, int> $productIds
-     * @param array<int, int> $recipientIds
+     * @param  array<int, int>  $productIds
+     * @param  array<int, int>  $recipientIds
      */
     public function __construct(
         public array $productIds,
@@ -57,8 +59,9 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
     public function uniqueId(): string
     {
         $campaignToken = $this->campaignId ?: 'auto';
-        return 'send-product-announcement:' . $this->source . ':' .
-            $campaignToken . ':' . sha1(json_encode($this->productIds)) . ':' . sha1(json_encode($this->recipientIds));
+
+        return 'send-product-announcement:'.$this->source.':'.
+            $campaignToken.':'.sha1(json_encode($this->productIds)).':'.sha1(json_encode($this->recipientIds));
     }
 
     public function handle(): void
@@ -91,7 +94,7 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
                     (string) ($product->vat_type ?? ''),
                     $product->vat_value
                 ),
-                'url' => !empty($product->slug) ? url('/product/' . $product->slug) : null,
+                'url' => ! empty($product->slug) ? url('/product/'.$product->slug) : null,
             ];
         })->values();
 
@@ -123,7 +126,7 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
             $mailLockKey = $this->recipientAnnouncementLockKey($normalizedEmail);
 
             // Hard dedupe: do not send the same product batch to the same email repeatedly.
-            if (!Cache::add($mailLockKey, 1, now()->addDay())) {
+            if (! Cache::add($mailLockKey, 1, now()->addDay())) {
                 continue;
             }
 
@@ -154,8 +157,9 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
     private function recipientAnnouncementLockKey(string $normalizedEmail): string
     {
         $campaignToken = $this->campaignId ?: 'auto';
-        return 'product-announcement:recipient:' . $this->source . ':' .
-            $campaignToken . ':' . sha1(json_encode($this->productIds)) . ':' . sha1($normalizedEmail);
+
+        return 'product-announcement:recipient:'.$this->source.':'.
+            $campaignToken.':'.sha1(json_encode($this->productIds)).':'.sha1($normalizedEmail);
     }
 
     private function formatRateLabel(string $type, mixed $rawValue): ?string
@@ -163,12 +167,13 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
         $normalizedType = strtolower(trim($type));
         $value = max(0, (float) $rawValue);
 
-        if ($value <= 0 || !in_array($normalizedType, ['flat', 'percent'], true)) {
+        if ($value <= 0 || ! in_array($normalizedType, ['flat', 'percent'], true)) {
             return null;
         }
 
         $formatted = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
-        return $normalizedType === 'percent' ? $formatted . '%' : 'Flat ' . $formatted;
+
+        return $normalizedType === 'percent' ? $formatted.'%' : 'Flat '.$formatted;
     }
 
     private function normalizeNullableText(?string $value, int $maxLength): ?string

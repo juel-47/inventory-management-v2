@@ -4,8 +4,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-
-//setup corn live server
+// setup corn live server
 // * * * * * cd /home/USERNAME/your-project && /usr/local/bin/php artisan queue:work database --queue=mail-notifications,default --stop-when-empty --tries=3 --max-time=50 --sleep=1 --timeout=120 >> /dev/null 2>&1
 
 // * * * * * cd /home/USERNAME/your-project && /usr/local/bin/php artisan queue:work database --queue=mail-notifications,default --stop-when-empty --tries=3 --max-time=50 --sleep=1 --timeout=120 >> /dev/null 2>&1

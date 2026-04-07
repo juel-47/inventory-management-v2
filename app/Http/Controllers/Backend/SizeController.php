@@ -33,15 +33,16 @@ class SizeController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:sizes,name|max:255',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         Size::create([
             'name' => $request->name,
-            'status' => $request->status
+            'status' => $request->status,
         ]);
 
         Toastr::success('Size Created Successfully!');
+
         return redirect()->route('admin.sizes.index');
     }
 
@@ -59,6 +60,7 @@ class SizeController extends Controller
     public function edit(string $id)
     {
         $size = Size::findOrFail($id);
+
         return view('backend.size.edit', compact('size'));
     }
 
@@ -68,17 +70,18 @@ class SizeController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required|max:255|unique:sizes,name,' . $id,
-            'status' => 'required|boolean'
+            'name' => 'required|max:255|unique:sizes,name,'.$id,
+            'status' => 'required|boolean',
         ]);
 
         $size = Size::findOrFail($id);
         $size->update([
             'name' => $request->name,
-            'status' => $request->status
+            'status' => $request->status,
         ]);
 
         Toastr::success('Size Updated Successfully!');
+
         return redirect()->route('admin.sizes.index');
     }
 
@@ -89,6 +92,7 @@ class SizeController extends Controller
     {
         $size = Size::findOrFail($id);
         $size->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
@@ -97,6 +101,7 @@ class SizeController extends Controller
         $size = Size::findOrFail($request->id);
         $size->status = $request->status == 'true' ? 1 : 0;
         $size->save();
+
         return response(['status' => 'success', 'message' => 'Status Updated Successfully!']);
     }
 }

@@ -17,9 +17,9 @@ class CartController extends Controller
     {
         $cartType = $request->get('cart_type', 'booking'); // booking or request
         $count = Cart::where('user_id', Auth::id())
-                    ->where('cart_type', $cartType)
-                    ->count();
-        
+            ->where('cart_type', $cartType)
+            ->count();
+
         return response()->json(['count' => $count, 'cart_type' => $cartType]);
     }
 
@@ -30,27 +30,27 @@ class CartController extends Controller
     {
         $cartType = $request->get('cart_type', 'booking');
         $items = Cart::where('user_id', Auth::id())
-                    ->where('cart_type', $cartType)
-                    ->with(['product.category', 'vendor'])
-                    ->get();
-        
+            ->where('cart_type', $cartType)
+            ->with(['product.category', 'vendor'])
+            ->get();
+
         // Normalize image paths for frontend
-        $items->each(function($item) {
+        $items->each(function ($item) {
             if ($item->product) {
                 $imagePath = $item->product->thumb_image;
-                $item->product->thumb_image = (strpos($imagePath, 'http') === 0) 
-                    ? $imagePath 
-                    : (file_exists(public_path($imagePath)) 
-                        ? asset($imagePath) 
-                        : asset('storage/' . $imagePath));
+                $item->product->thumb_image = (strpos($imagePath, 'http') === 0)
+                    ? $imagePath
+                    : (file_exists(public_path($imagePath))
+                        ? asset($imagePath)
+                        : asset('storage/'.$imagePath));
             }
         });
-        
+
         return response()->json([
             'items' => $items,
             'count' => $items->count(),
             'product_ids' => $items->pluck('product_id')->toArray(),
-            'vendor_id' => $items->first()->vendor_id ?? null
+            'vendor_id' => $items->first()?->vendor_id,
         ]);
     }
 
@@ -61,7 +61,7 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'cart_type' => 'required|in:booking,request'
+            'cart_type' => 'required|in:booking,request',
         ]);
 
         $cartType = $validated['cart_type'];
@@ -74,46 +74,46 @@ class CartController extends Controller
 
         // Check if product already in cart
         $cartItem = Cart::where('user_id', Auth::id())
-                       ->where('product_id', $productId)
-                       ->where('cart_type', $cartType)
-                       ->first();
+            ->where('product_id', $productId)
+            ->where('cart_type', $cartType)
+            ->first();
 
         if ($cartItem) {
             // Product already in cart, remove it
             $cartItem->delete();
-            
+
             $count = Cart::where('user_id', Auth::id())
-                        ->where('cart_type', $cartType)
-                        ->count();
+                ->where('cart_type', $cartType)
+                ->count();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Removed from ' . ucfirst($cartType) . ' basket',
+                'message' => 'Removed from '.ucfirst($cartType).' basket',
                 'count' => $count,
-                'action' => 'removed'
+                'action' => 'removed',
             ]);
         } else {
             // Check for vendor conflict if cart has items and force_clear is not set
             $existingCartItems = Cart::where('user_id', Auth::id())
-                                    ->where('cart_type', $cartType)
-                                    ->get();
+                ->where('cart_type', $cartType)
+                ->get();
 
-            if ($existingCartItems->count() > 0 && !$forceClear) {
+            if ($existingCartItems->count() > 0 && ! $forceClear) {
                 $existingVendorId = $existingCartItems->first()->vendor_id;
-                
+
                 // If vendor is different, return warning
                 if ($existingVendorId != $productVendorId) {
                     $existingVendor = $existingCartItems->first()->vendor;
                     $newVendor = $product->vendor;
-                    
+
                     return response()->json([
                         'success' => false,
                         'vendor_conflict' => true,
-                        'message' => 'This will replace products from "' . ($existingVendor->shop_name ?? 'Unknown Vendor') . '" with products from "' . ($newVendor->shop_name ?? 'No Vendor') . '". Continue?',
+                        'message' => 'This will replace products from "'.($existingVendor->shop_name ?? 'Unknown Vendor').'" with products from "'.($newVendor->shop_name ?? 'No Vendor').'". Continue?',
                         'existing_vendor_id' => $existingVendorId,
                         'new_vendor_id' => $productVendorId,
                         'existing_vendor_name' => $existingVendor->shop_name ?? 'Unknown Vendor',
-                        'new_vendor_name' => $newVendor->shop_name ?? 'No Vendor'
+                        'new_vendor_name' => $newVendor->shop_name ?? 'No Vendor',
                     ]);
                 }
             }
@@ -121,8 +121,8 @@ class CartController extends Controller
             // Clear existing cart items only if force_clear is true (vendor conflict confirmation)
             if ($forceClear && $existingCartItems->count() > 0) {
                 Cart::where('user_id', Auth::id())
-                   ->where('cart_type', $cartType)
-                   ->delete();
+                    ->where('cart_type', $cartType)
+                    ->delete();
             }
 
             // Add new item to cart with vendor_id
@@ -130,19 +130,19 @@ class CartController extends Controller
                 'user_id' => Auth::id(),
                 'product_id' => $productId,
                 'cart_type' => $cartType,
-                'vendor_id' => $productVendorId
+                'vendor_id' => $productVendorId,
             ]);
-            
+
             $count = Cart::where('user_id', Auth::id())
-                        ->where('cart_type', $cartType)
-                        ->count();
+                ->where('cart_type', $cartType)
+                ->count();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Added to ' . ucfirst($cartType) . ' basket',
+                'message' => 'Added to '.ucfirst($cartType).' basket',
                 'count' => $count,
                 'action' => 'added',
-                'vendor_id' => $productVendorId
+                'vendor_id' => $productVendorId,
             ]);
         }
     }
@@ -154,22 +154,22 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'cart_type' => 'required|in:booking,request'
+            'cart_type' => 'required|in:booking,request',
         ]);
 
         Cart::where('user_id', Auth::id())
-           ->where('product_id', $validated['product_id'])
-           ->where('cart_type', $validated['cart_type'])
-           ->delete();
+            ->where('product_id', $validated['product_id'])
+            ->where('cart_type', $validated['cart_type'])
+            ->delete();
 
         $count = Cart::where('user_id', Auth::id())
-                    ->where('cart_type', $validated['cart_type'])
-                    ->count();
+            ->where('cart_type', $validated['cart_type'])
+            ->count();
 
         return response()->json([
             'success' => true,
-            'message' => 'Removed from ' . ucfirst($validated['cart_type']) . ' basket',
-            'count' => $count
+            'message' => 'Removed from '.ucfirst($validated['cart_type']).' basket',
+            'count' => $count,
         ]);
     }
 
@@ -179,15 +179,15 @@ class CartController extends Controller
     public function clear(Request $request)
     {
         $cartType = $request->get('cart_type', 'booking');
-        
+
         Cart::where('user_id', Auth::id())
-           ->where('cart_type', $cartType)
-           ->delete();
+            ->where('cart_type', $cartType)
+            ->delete();
 
         return response()->json([
             'success' => true,
-            'message' => ucfirst($cartType) . ' basket cleared',
-            'count' => 0
+            'message' => ucfirst($cartType).' basket cleared',
+            'count' => 0,
         ]);
     }
 
@@ -197,15 +197,15 @@ class CartController extends Controller
     public function getProductIds(Request $request)
     {
         $cartType = $request->get('cart_type', 'booking');
-        
+
         $items = Cart::where('user_id', Auth::id())
-                  ->where('cart_type', $cartType)
-                  ->get();
+            ->where('cart_type', $cartType)
+            ->get();
 
         return response()->json([
             'ids' => $items->pluck('product_id')->toArray(),
             'count' => $items->count(),
-            'vendor_id' => $items->first()->vendor_id ?? null
+            'vendor_id' => $items->first()?->vendor_id,
         ]);
     }
 
@@ -215,14 +215,14 @@ class CartController extends Controller
     public function getVendor(Request $request)
     {
         $cartType = $request->get('cart_type', 'booking');
-        
+
         $cartItem = Cart::where('user_id', Auth::id())
-                       ->where('cart_type', $cartType)
-                       ->first();
+            ->where('cart_type', $cartType)
+            ->first();
 
         return response()->json([
             'vendor_id' => $cartItem ? $cartItem->vendor_id : null,
-            'vendor_name' => $cartItem && $cartItem->vendor ? $cartItem->vendor->shop_name : null
+            'vendor_name' => $cartItem && $cartItem->vendor ? $cartItem->vendor->shop_name : null,
         ]);
     }
 }

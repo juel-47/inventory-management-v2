@@ -14,30 +14,33 @@ class CategoryDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param mixed $query Results from query() method.
+     * @param  mixed  $query  Results from query() method.
      */
     public function dataTable($query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $edit = '<a href="' . route('admin.category.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
-                $delete = '<a href="' . route('admin.category.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
-                return $edit . $delete;
+                $edit = '<a href="'.route('admin.category.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                $delete = '<a href="'.route('admin.category.destroy', $query->id).'" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
+
+                return $edit.$delete;
             })
             ->addColumn('image', function ($query) {
-                return $query->image ? '<img src="' . asset($query->image) . '" width="100px" class="img-thumbnail">' : '<img src="' . asset('uploads/default.png') . '" width="100px" class="img-thumbnail">';
+                return $query->image ? '<img src="'.asset($query->image).'" width="100px" class="img-thumbnail">' : '<img src="'.asset('uploads/default.png').'" width="100px" class="img-thumbnail">';
             })
             ->addColumn('status', function ($query) {
                 $checked = $query->status ? 'checked' : '';
+
                 return '<label class="custom-switch mt-2">
-                            <input type="checkbox" name="custom-switch-checkbox" data-id="' . $query->id . '" class="custom-switch-input change-status" ' . $checked . '>
+                            <input type="checkbox" name="custom-switch-checkbox" data-id="'.$query->id.'" class="custom-switch-input change-status" '.$checked.'>
                             <span class="custom-switch-indicator"></span>
                         </label>';
             })
             ->addColumn('frontend_show', function ($query) {
                 $checked = $query->frontend_show ? 'checked' : '';
+
                 return '<label class="custom-switch mt-2">
-                            <input type="checkbox" name="custom-switch-checkbox" data-id="' . $query->id . '" class="custom-switch-input change-frontend-show" ' . $checked . '>
+                            <input type="checkbox" name="custom-switch-checkbox" data-id="'.$query->id.'" class="custom-switch-input change-frontend-show" '.$checked.'>
                             <span class="custom-switch-indicator"></span>
                         </label>';
             })
@@ -97,6 +100,6 @@ class CategoryDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Category_' . date('YmdHis');
+        return 'Category_'.date('YmdHis');
     }
 }

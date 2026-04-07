@@ -4,23 +4,27 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\ProductRequestDataTable;
 use App\Http\Controllers\Controller;
+use App\Mail\ProductRequestPiInvoiceReadyMail;
+use App\Models\GeneralSetting;
 use App\Models\InventoryStock;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductRequest;
 use App\Models\ProductRequestItem;
-use App\Support\PiInfoSupport;
+use App\Models\ProductVariant;
 use App\Models\User;
-use App\Mail\ProductRequestPiInvoiceReadyMail;
+use App\Support\PdfImageHelper;
+use App\Support\PiInfoSupport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use App\Support\PdfImageHelper;
-
 
 class ProductRequestController extends Controller implements HasMiddleware
 {
@@ -30,6 +34,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             // No strict global middleware here because methods have internal checks
         ];
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -38,23 +43,22 @@ class ProductRequestController extends Controller implements HasMiddleware
         return $dataTable->render('backend.product-request.index');
     }
 
-
     /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request)
     {
         // Only admin can create requests for outlet/users from backend
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin')) {
-             abort(403, 'Only admin can create product requests for outlets/users.');
+        if (! $user->hasRole('Admin')) {
+            abort(403, 'Only admin can create product requests for outlets/users.');
         }
 
         $products = Product::where('status', 1)
             ->with(['variants.inventoryStocks', 'inventoryStocks'])
             ->get();
-        
+
         $selectedIds = [];
         if ($request->has('ids')) {
             $selectedIds = explode(',', $request->ids);
@@ -70,9 +74,9 @@ class ProductRequestController extends Controller implements HasMiddleware
      */
     public function store(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin')) {
+        if (! $user->hasRole('Admin')) {
             abort(403);
         }
 
@@ -90,16 +94,18 @@ class ProductRequestController extends Controller implements HasMiddleware
             ->whereKey((int) $request->input('user_id'))
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             Toastr::error('Please select a valid active Outlet/User.');
+
             return redirect()->back()->withInput();
         }
 
         $billingAddress = $this->resolveOrderBillingAddress($targetUser);
         $missingProfileFields = $this->missingOrderProfileFields($targetUser);
-        if (!empty($missingProfileFields)) {
-            $message = 'Selected user profile is incomplete. Missing: ' . implode(', ', $missingProfileFields) . '.';
+        if (! empty($missingProfileFields)) {
+            $message = 'Selected user profile is incomplete. Missing: '.implode(', ', $missingProfileFields).'.';
             Toastr::error($message);
+
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['user_id' => $message]);
@@ -107,16 +113,16 @@ class ProductRequestController extends Controller implements HasMiddleware
 
         DB::beginTransaction();
         try {
-            $productRequest = new ProductRequest();
+            $productRequest = new ProductRequest;
 
             $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ-' : 'REQ-';
-            $productRequest->request_no = $prefix . strtoupper(Str::random(10));
+            $productRequest->request_no = $prefix.strtoupper(Str::random(10));
             $productRequest->user_id = (int) $targetUser->id;
             $productRequest->status = 'approved';
             $productRequest->admin_note = 'Created by admin. Stock will be deducted only after Issue is created.';
             $productRequest->required_days = $request->required_days;
             $productRequest->note = $request->note;
-            $productRequest->total_qty = 0; 
+            $productRequest->total_qty = 0;
             $productRequest->save();
 
             $totalQty = 0;
@@ -124,16 +130,16 @@ class ProductRequestController extends Controller implements HasMiddleware
 
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 // Price Hierarchy:
                 // 1. Check variant outlet_price
                 // 2. Check variant price
                 // 3. Fallback to product outlet_price
                 // 4. Fallback to product price
                 $unitPrice = 0;
-                
-                if (!empty($item['variant_id'])) {
-                    $variant = \App\Models\ProductVariant::find($item['variant_id']);
+
+                if (! empty($item['variant_id'])) {
+                    $variant = ProductVariant::find($item['variant_id']);
                     if ($variant) {
                         if ($variant->outlet_price > 0) {
                             $unitPrice = $variant->outlet_price;
@@ -142,14 +148,14 @@ class ProductRequestController extends Controller implements HasMiddleware
                         }
                     }
                 }
-                
+
                 // Fallback to product-level prices if variant price not set
                 if ($unitPrice <= 0) {
                     $unitPrice = $product->outlet_price > 0 ? $product->outlet_price : $product->price;
                 }
 
                 $subtotal = $item['qty'] * $unitPrice;
-                
+
                 $totalQty += $item['qty'];
                 $totalAmount += $subtotal;
 
@@ -170,8 +176,8 @@ class ProductRequestController extends Controller implements HasMiddleware
             // Create Order record for Due Amount tracking
             // Use same number as request for clarity
             $orderNo = $productRequest->request_no;
-            
-            $order = \App\Models\Order::create([
+
+            $order = Order::create([
                 'order_no' => $orderNo,
                 'user_id' => $targetUser->id,
                 'status' => 'pending',
@@ -188,15 +194,14 @@ class ProductRequestController extends Controller implements HasMiddleware
                 'placed_at' => now(),
             ]);
 
-
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
                 $unitPrice = 0;
                 $variantLabel = null;
-                if (!empty($item['variant_id'])) {
-                    $variant = \App\Models\ProductVariant::with(['color', 'size'])->find($item['variant_id']);
+                if (! empty($item['variant_id'])) {
+                    $variant = ProductVariant::with(['color', 'size'])->find($item['variant_id']);
                     if ($variant) {
-                        $variantLabel = trim(($variant->color->name ?? '') . ' ' . ($variant->size->name ?? ''));
+                        $variantLabel = trim(($variant->color->name ?? '').' '.($variant->size->name ?? ''));
                         $unitPrice = ($variant->outlet_price > 0) ? $variant->outlet_price : $variant->price;
                     }
                 }
@@ -204,7 +209,7 @@ class ProductRequestController extends Controller implements HasMiddleware
                     $unitPrice = ($product->outlet_price > 0) ? $product->outlet_price : $product->price;
                 }
 
-                \App\Models\OrderItem::create([
+                OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'variant_id' => $item['variant_id'] ?? null,
@@ -226,14 +231,15 @@ class ProductRequestController extends Controller implements HasMiddleware
 
             DB::commit();
 
-            toastr()->success('Product Request and Order created successfully! Stock can be managed via Issue creation.');
+            Toastr::success('Product Request and Order created successfully! Stock can be managed via Issue creation.');
             session()->flash('clear_request_basket', true);
-            return redirect()->route('admin.product-requests.index');
 
+            return redirect()->route('admin.product-requests.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            toastr()->error('Something went wrong: ' . $e->getMessage());
+            Toastr::error('Something went wrong: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -283,19 +289,18 @@ class ProductRequestController extends Controller implements HasMiddleware
     {
         $productRequest = ProductRequest::with(['user', 'order.payments', 'items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
 
-        
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && ! $user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403, 'Unauthorized access to this product request.');
         }
 
-        foreach($productRequest->items as $item) {
-             $stock = InventoryStock::where('product_id', $item->product_id)
+        foreach ($productRequest->items as $item) {
+            $stock = InventoryStock::where('product_id', $item->product_id)
                 ->where('variant_id', $item->variant_id)
                 ->where('outlet_id', 1)
                 ->first();
-             $item->current_stock = $stock ? $stock->quantity : 0;
+            $item->current_stock = $stock ? $stock->quantity : 0;
         }
 
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
@@ -311,14 +316,14 @@ class ProductRequestController extends Controller implements HasMiddleware
     public function viewInvoice($id)
     {
         $productRequest = ProductRequest::with(['user', 'order', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
-        
-        /** @var \App\Models\User $user */
+
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && ! $user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
-        $settings = \App\Models\GeneralSetting::first();
+        $settings = GeneralSetting::first();
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
@@ -345,13 +350,13 @@ class ProductRequestController extends Controller implements HasMiddleware
             'items.variant.size',
         ])->findOrFail($id);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && ! $user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
-        $settings = \App\Models\GeneralSetting::first();
+        $settings = GeneralSetting::first();
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
@@ -371,27 +376,27 @@ class ProductRequestController extends Controller implements HasMiddleware
         set_time_limit(300);
 
         $productRequest = ProductRequest::with(['user', 'order', 'items.product.unit', 'items.variant.color', 'items.variant.size'])->findOrFail($id);
-        
-        /** @var \App\Models\User $user */
+
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && ! $user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
-        $settings = \App\Models\GeneralSetting::first();
+        $settings = GeneralSetting::first();
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
 
         // Configure DomPDF wrapper for better performance
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
+        $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
-            'defaultFont' => 'sans-serif'
+            'defaultFont' => 'sans-serif',
         ])->loadView('backend.product-request.print_pdf', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
-        $filename = 'request-' . $productRequest->request_no . '.pdf';
-        
+        $filename = 'request-'.$productRequest->request_no.'.pdf';
+
         return $pdf->download($filename);
     }
 
@@ -417,13 +422,13 @@ class ProductRequestController extends Controller implements HasMiddleware
             'items.variant.size',
         ])->findOrFail($id);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->hasRole('Admin') && !$user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
+        if (! $user->hasRole('Admin') && ! $user->can('Manage Product Requests') && $productRequest->user_id != Auth::id()) {
             abort(403);
         }
 
-        $settings = \App\Models\GeneralSetting::first();
+        $settings = GeneralSetting::first();
         $piInfo = PiInfoSupport::prepare($productRequest->pi_info, $productRequest->items, 'qty');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($productRequest->pi_info);
@@ -439,13 +444,13 @@ class ProductRequestController extends Controller implements HasMiddleware
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
+        $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
-            'defaultFont' => 'sans-serif'
+            'defaultFont' => 'sans-serif',
         ])->loadView('backend.product-request.pi_invoice', compact('productRequest', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
 
-        return $pdf->download('pi-invoice-' . $productRequest->request_no . '.pdf');
+        return $pdf->download('pi-invoice-'.$productRequest->request_no.'.pdf');
     }
 
     /**
@@ -457,14 +462,15 @@ class ProductRequestController extends Controller implements HasMiddleware
         set_time_limit(300);
 
         $productRequest = ProductRequest::with(['user', 'order.items.product', 'order.items.variant.color', 'order.items.variant.size'])->findOrFail($id);
-        
-        if (!$productRequest->order) {
-            toastr()->error('No linked order found for this request. Please contact admin.');
+
+        if (! $productRequest->order) {
+            Toastr::error('No linked order found for this request. Please contact admin.');
+
             return redirect()->back();
         }
 
         $order = $productRequest->order;
-        $settings = \App\Models\GeneralSetting::first();
+        $settings = GeneralSetting::first();
 
         // Optimize logo for PDF
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
@@ -475,8 +481,9 @@ class ProductRequestController extends Controller implements HasMiddleware
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
-        return $pdf->download('customer-invoice-' . $order->order_no . '.pdf');
+        $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
+
+        return $pdf->download('customer-invoice-'.$order->order_no.'.pdf');
     }
 
     /**
@@ -486,9 +493,9 @@ class ProductRequestController extends Controller implements HasMiddleware
     {
         $productRequest = ProductRequest::with('items')->findOrFail($id);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests')) {
+        if (! $user->can('Manage Product Requests')) {
             abort(403);
         }
 
@@ -538,6 +545,7 @@ class ProductRequestController extends Controller implements HasMiddleware
         $this->notifyPiReady($productRequest);
 
         Toastr::success('PI info saved successfully!');
+
         return redirect()->route('admin.product-requests.show', $productRequest->id);
     }
 
@@ -550,24 +558,24 @@ class ProductRequestController extends Controller implements HasMiddleware
     public function updateStatus(Request $request, $id)
     {
         $productRequest = ProductRequest::findOrFail($id);
-        
+
         // Only Admin/Manager can update status
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests')) {
+        if (! $user->can('Manage Product Requests')) {
             abort(403);
         }
 
         $request->validate([
             'status' => 'required|in:pending,approved,rejected,shipped,completed',
-            'admin_note' => 'nullable|string'
+            'admin_note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
             $productRequest->update([
                 'status' => $request->status,
-                'admin_note' => $request->admin_note
+                'admin_note' => $request->admin_note,
             ]);
 
             // Sync Order status if linked
@@ -578,13 +586,14 @@ class ProductRequestController extends Controller implements HasMiddleware
                 $productRequest->order->update(['status' => $orderStatus]);
             }
 
-            
             DB::commit();
-            toastr()->success('Product Request updated successfully!');
+            Toastr::success('Product Request updated successfully!');
+
             return redirect()->back();
         } catch (\Exception $e) {
             DB::rollBack();
-            toastr()->error('Something went wrong: ' . $e->getMessage());
+            Toastr::error('Something went wrong: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -595,15 +604,16 @@ class ProductRequestController extends Controller implements HasMiddleware
     public function destroy(string $id)
     {
         $productRequest = ProductRequest::findOrFail($id);
-        
+
         // Authorization: Manager can delete anything, User can only delete own pending requests
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if (!$user->can('Manage Product Requests') && ($productRequest->user_id != Auth::id() || $productRequest->status !== 'pending')) {
-             return response(['status' => 'error', 'message' => 'Unauthorized or request already processed']);
+        if (! $user->can('Manage Product Requests') && ($productRequest->user_id != Auth::id() || $productRequest->status !== 'pending')) {
+            return response(['status' => 'error', 'message' => 'Unauthorized or request already processed']);
         }
 
         $productRequest->delete(); // Items deleted by cascade
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
@@ -615,7 +625,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             ?: $productRequest->order?->billing_email
             ?: ($productRequest->user?->email ?? null);
 
-        if (!$recipient) {
+        if (! $recipient) {
             return;
         }
 

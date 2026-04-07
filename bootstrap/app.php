@@ -1,19 +1,22 @@
 <?php
 
+use App\Http\Middleware\CheckPermission;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__ . '/../routes/web.php',
-        commands: __DIR__ . '/../routes/console.php',
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
             Route::middleware(['web', 'auth', 'verified', 'role:Admin'])
@@ -34,16 +37,17 @@ return Application::configure(basePath: dirname(__DIR__))
             if (Auth::user()?->hasRole('Admin')) {
                 return route('admin.dashboard');
             }
+
             return route('home');
         });
         $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'check.permission' => \App\Http\Middleware\CheckPermission::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'check.permission' => CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\Throwable $exception, $request) {
+        $exceptions->render(function (Throwable $exception, $request) {
             // Keep default JSON API error formatting.
             if ($request->expectsJson() || $request->is('api/*')) {
                 return null;
@@ -117,7 +121,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->view('errors.unified', array_merge($meta, [
                 'status' => $status,
-                'title' => $status . ' | ' . $statusText,
+                'title' => $status.' | '.$statusText,
                 'debug' => $debugPayload,
             ]), $status);
         });

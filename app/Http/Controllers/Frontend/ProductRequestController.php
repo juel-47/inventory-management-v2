@@ -89,6 +89,6 @@ class ProductRequestController extends Controller
             'isPdf' => true,
         ]);
 
-        return $pdf->download('pi-invoice-' . $productRequest->request_no . '.pdf');
+        return $pdf->download('pi-invoice-'.$productRequest->request_no.'.pdf');
     }
 }

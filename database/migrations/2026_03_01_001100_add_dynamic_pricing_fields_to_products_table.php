@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'discount_type')) {
+            if (! Schema::hasColumn('products', 'discount_type')) {
                 $table->string('discount_type', 20)->nullable()->after('discount');
             }
 
-            if (!Schema::hasColumn('products', 'vat_type')) {
+            if (! Schema::hasColumn('products', 'vat_type')) {
                 $table->string('vat_type', 20)->nullable()->after('tax');
             }
 
-            if (!Schema::hasColumn('products', 'vat_value')) {
+            if (! Schema::hasColumn('products', 'vat_value')) {
                 $table->decimal('vat_value', 10, 2)->nullable()->after('vat_type');
             }
         });
@@ -46,7 +46,7 @@ return new class extends Migration
                 $dropColumns[] = 'discount_type';
             }
 
-            if (!empty($dropColumns)) {
+            if (! empty($dropColumns)) {
                 $table->dropColumn($dropColumns);
             }
         });

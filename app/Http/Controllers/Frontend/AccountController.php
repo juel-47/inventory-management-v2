@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\CustomProductRequest;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\CustomProductRequest;
 use App\Models\SavedPurchaseForm;
 use App\Models\SavedPurchaseFormItem;
+use App\Models\User;
 use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,11 +43,11 @@ class AccountController extends Controller
             $normalized = trim($normalized);
 
             $ordersQuery->where(function ($query) use ($search, $normalized) {
-                $query->where('order_no', 'like', '%' . $search . '%')
-                    ->orWhere('status', 'like', '%' . $search . '%');
+                $query->where('order_no', 'like', '%'.$search.'%')
+                    ->orWhere('status', 'like', '%'.$search.'%');
 
                 if ($normalized !== '' && $normalized !== $search) {
-                    $query->orWhere('order_no', 'like', '%' . $normalized . '%');
+                    $query->orWhere('order_no', 'like', '%'.$normalized.'%');
                 }
             });
         }
@@ -78,55 +79,55 @@ class AccountController extends Controller
 
         $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
         $mapOrderFormProduct = function ($product) use ($isOutletRole) {
-                $price = $isOutletRole
-                    ? (float) ($product->outlet_price ?: $product->price)
-                    : (float) $product->price;
+            $price = $isOutletRole
+                ? (float) ($product->outlet_price ?: $product->price)
+                : (float) $product->price;
 
-                $variants = $product->variants
-                    ->map(function ($variant) use ($product, $isOutletRole) {
-                        $variantPrice = $isOutletRole
-                            ? (float) ($variant->outlet_price ?: $variant->price ?: $product->outlet_price ?: $product->price)
-                            : (float) ($variant->price ?: $product->price);
+            $variants = $product->variants
+                ->map(function ($variant) use ($product, $isOutletRole) {
+                    $variantPrice = $isOutletRole
+                        ? (float) ($variant->outlet_price ?: $variant->price ?: $product->outlet_price ?: $product->price)
+                        : (float) ($variant->price ?: $product->price);
 
-                        $colorRelation = $variant->getRelation('color');
-                        $sizeRelation = $variant->getRelation('size');
-                        $name = trim((string) ($variant->name ?? ''));
-                        $color = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($variant->color ?? '')));
-                        $size = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($variant->size ?? '')));
+                    $colorRelation = $variant->getRelation('color');
+                    $sizeRelation = $variant->getRelation('size');
+                    $name = trim((string) ($variant->name ?? ''));
+                    $color = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($variant->color ?? '')));
+                    $size = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($variant->size ?? '')));
 
-                        $labelParts = [];
-                        if ($name !== '') {
-                            $labelParts[] = preg_replace('/\s+/', ' ', $name);
-                        }
-                        if ($color !== '' && stripos($name, $color) === false) {
-                            $labelParts[] = $color;
-                        }
-                        if ($size !== '' && stripos($name, $size) === false) {
-                            $labelParts[] = $size;
-                        }
-                        $label = trim(implode(' / ', array_values(array_unique(array_filter($labelParts)))));
-                        if ($label === '') {
-                            $label = 'Variant #' . $variant->id;
-                        }
+                    $labelParts = [];
+                    if ($name !== '') {
+                        $labelParts[] = preg_replace('/\s+/', ' ', $name);
+                    }
+                    if ($color !== '' && stripos($name, $color) === false) {
+                        $labelParts[] = $color;
+                    }
+                    if ($size !== '' && stripos($name, $size) === false) {
+                        $labelParts[] = $size;
+                    }
+                    $label = trim(implode(' / ', array_values(array_unique(array_filter($labelParts)))));
+                    if ($label === '') {
+                        $label = 'Variant #'.$variant->id;
+                    }
 
-                        return [
-                            'id' => (int) $variant->id,
-                            'name' => $label,
-                            'label' => $label,
-                            'price' => $variantPrice,
-                        ];
-                    })
-                    ->values()
-                    ->all();
+                    return [
+                        'id' => (int) $variant->id,
+                        'name' => $label,
+                        'label' => $label,
+                        'price' => $variantPrice,
+                    ];
+                })
+                ->values()
+                ->all();
 
-                return [
-                    'id' => (int) $product->id,
-                    'name' => (string) $product->name,
-                    'price' => $price,
-                    'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
-                    'variants' => $variants,
-                ];
-            };
+            return [
+                'id' => (int) $product->id,
+                'name' => (string) $product->name,
+                'price' => $price,
+                'minimum_order_qty' => max(1, (int) ($product->minimum_order_qty ?? 1)),
+                'variants' => $variants,
+            ];
+        };
 
         $productsForOrderForm = Product::query()
             ->where('status', 1)
@@ -159,10 +160,11 @@ class AccountController extends Controller
             if ($savedRequest) {
                 $reorderSeedRows = $savedRequest->items
                     ->groupBy(function ($item) {
-                        return ((int) $item->product_id) . '|' . ((int) ($item->variant_id ?? 0));
+                        return ((int) $item->product_id).'|'.((int) ($item->variant_id ?? 0));
                     })
                     ->map(function ($items) {
                         $first = $items->first();
+
                         return [
                             'product_id' => (int) $first->product_id,
                             'variant_id' => $first->variant_id ? (int) $first->variant_id : null,
@@ -185,10 +187,11 @@ class AccountController extends Controller
             if ($reorderOrder) {
                 $reorderSeedRows = $reorderOrder->items
                     ->groupBy(function ($item) {
-                        return ((int) $item->product_id) . '|' . ((int) ($item->variant_id ?? 0));
+                        return ((int) $item->product_id).'|'.((int) ($item->variant_id ?? 0));
                     })
                     ->map(function ($items) {
                         $first = $items->first();
+
                         return [
                             'product_id' => (int) $first->product_id,
                             'variant_id' => $first->variant_id ? (int) $first->variant_id : null,
@@ -242,7 +245,7 @@ class AccountController extends Controller
     public function storeCustomProductRequest(Request $request)
     {
         $user = Auth::user();
-        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+        if (! $user || ! ($user->hasRole('Outlet User') || $user->hasRole('User'))) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -256,8 +259,8 @@ class AccountController extends Controller
         ]);
 
         try {
-            $customRequest = new CustomProductRequest();
-            $customRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
+            $customRequest = new CustomProductRequest;
+            $customRequest->request_no = 'CPR-'.strtoupper(Str::random(10));
             $customRequest->user_id = $user->id;
             $customRequest->product_name = $validated['product_name'] ?? null;
             $customRequest->product_description = $validated['product_description'];
@@ -268,27 +271,29 @@ class AccountController extends Controller
             if ($request->hasFile('example_image')) {
                 $paths = [];
                 foreach ($request->file('example_image') as $image) {
-                    if (!$image || !$image->isValid()) {
+                    if (! $image->isValid()) {
                         continue;
                     }
-                    $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                    $imageName = time().'_'.Str::random(10).'.'.$image->getClientOriginalExtension();
                     $paths[] = StoredFileSupport::storePrivateFile(
                         $image,
-                        'custom-product-requests/' . $user->id,
+                        'custom-product-requests/'.$user->id,
                         $imageName
                     );
                 }
-                if (!empty($paths)) {
+                if (! empty($paths)) {
                     $customRequest->example_image = json_encode($paths);
                 }
             }
 
             $customRequest->save();
+
             return redirect()
                 ->route('account.index', ['panel' => 'custom-requests'])
                 ->with('success', 'Custom product request submitted successfully.');
         } catch (\Throwable $e) {
             Log::error('Failed to create custom product request', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->route('account.index', ['panel' => 'custom-requests'])
                 ->with('error', 'Something went wrong. Please try again.');
@@ -298,14 +303,14 @@ class AccountController extends Controller
     public function reorderCustomProductRequest(CustomProductRequest $customProductRequest)
     {
         $user = Auth::user();
-        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+        if (! $user || ! ($user->hasRole('Outlet User') || $user->hasRole('User'))) {
             abort(403, 'Unauthorized access.');
         }
 
         abort_if((int) $customProductRequest->user_id !== (int) $user->id, 403);
 
-        $newRequest = new CustomProductRequest();
-        $newRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
+        $newRequest = new CustomProductRequest;
+        $newRequest->request_no = 'CPR-'.strtoupper(Str::random(10));
         $newRequest->user_id = $user->id;
         $newRequest->product_name = $customProductRequest->product_name;
         $newRequest->product_description = $customProductRequest->product_description;
@@ -324,7 +329,7 @@ class AccountController extends Controller
     public function showCustomProductRequest(CustomProductRequest $customProductRequest)
     {
         $user = Auth::user();
-        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+        if (! $user || ! ($user->hasRole('Outlet User') || $user->hasRole('User'))) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -340,7 +345,7 @@ class AccountController extends Controller
     public function showCustomProductRequestImage(CustomProductRequest $customProductRequest, int $index)
     {
         $user = Auth::user();
-        if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
+        if (! $user || ! ($user->hasRole('Outlet User') || $user->hasRole('User'))) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -349,7 +354,7 @@ class AccountController extends Controller
         $imagePath = $customProductRequest->resolveExampleImagePath($index);
         $response = StoredFileSupport::inline($imagePath);
 
-        abort_if(!$response, 404);
+        abort_if(! $response, 404);
 
         return $response;
     }
@@ -402,7 +407,7 @@ class AccountController extends Controller
 
         foreach ($items as $item) {
             $product = $products->get($item['product_id']);
-            if (!$product) {
+            if (! $product) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid product selected in order form.',
@@ -419,7 +424,7 @@ class AccountController extends Controller
 
             if ($variantId !== null) {
                 $variant = $variants->get($variantId);
-                if (!$variant || (int) $variant->product_id !== (int) $item['product_id']) {
+                if (! $variant || (int) $variant->product_id !== (int) $item['product_id']) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Invalid variant for selected product.',
@@ -470,7 +475,7 @@ class AccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $addedRows . ' row(s) added to cart.',
+            'message' => $addedRows.' row(s) added to cart.',
             'count' => $count,
         ]);
     }
@@ -494,10 +499,11 @@ class AccountController extends Controller
                 ];
             })
             ->groupBy(function ($row) {
-                return $row['product_id'] . '|' . ($row['variant_id'] ?? 0);
+                return $row['product_id'].'|'.($row['variant_id'] ?? 0);
             })
             ->map(function ($group) {
                 $first = $group->first();
+
                 return [
                     'product_id' => $first['product_id'],
                     'variant_id' => $first['variant_id'],
@@ -535,7 +541,7 @@ class AccountController extends Controller
 
         foreach ($rows as $row) {
             $product = $products->get($row['product_id']);
-            if (!$product) {
+            if (! $product) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid product selected in order form.',
@@ -551,7 +557,7 @@ class AccountController extends Controller
 
             if ($row['variant_id'] !== null) {
                 $variant = $variants->get($row['variant_id']);
-                if (!$variant || (int) $variant->product_id !== (int) $row['product_id']) {
+                if (! $variant || (int) $variant->product_id !== (int) $row['product_id']) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Invalid variant for selected product.',
@@ -619,7 +625,7 @@ class AccountController extends Controller
             ->with(['items:id,saved_purchase_form_id,product_id,variant_id,qty'])
             ->first();
 
-        if (!$saved) {
+        if (! $saved) {
             return redirect()
                 ->route('account.index', ['panel' => 'saved-forms'])
                 ->with('error_profile', 'Saved form not found.');
@@ -634,10 +640,11 @@ class AccountController extends Controller
                 ];
             })
             ->groupBy(function ($row) {
-                return $row['product_id'] . '|' . ($row['variant_id'] ?? 0);
+                return $row['product_id'].'|'.($row['variant_id'] ?? 0);
             })
             ->map(function ($group) {
                 $first = $group->first();
+
                 return [
                     'product_id' => (int) $first['product_id'],
                     'variant_id' => $first['variant_id'],
@@ -667,7 +674,7 @@ class AccountController extends Controller
 
         foreach ($rows as $row) {
             $product = $products->get($row['product_id']);
-            if (!$product) {
+            if (! $product) {
                 return redirect()
                     ->route('account.index', ['panel' => 'saved-forms'])
                     ->with('error_profile', 'A product from this form is no longer available.');
@@ -675,7 +682,7 @@ class AccountController extends Controller
 
             if ($row['variant_id'] !== null) {
                 $variant = $variants->get($row['variant_id']);
-                if (!$variant || (int) $variant->product_id !== (int) $row['product_id']) {
+                if (! $variant || (int) $variant->product_id !== (int) $row['product_id']) {
                     return redirect()
                         ->route('account.index', ['panel' => 'saved-forms'])
                         ->with('error_profile', 'A variant from this form is no longer valid.');
@@ -715,7 +722,7 @@ class AccountController extends Controller
             ->whereKey($savedRequest)
             ->delete();
 
-        if (!$deleted) {
+        if (! $deleted) {
             return redirect()
                 ->route('account.index', ['panel' => 'saved-forms'])
                 ->with('error_profile', 'Saved form not found.');
@@ -731,12 +738,12 @@ class AccountController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $validated = $request->validateWithBag('profileUpdate', [
             'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'image' => ['nullable', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:2048'],
             'phone' => ['nullable', 'string', 'max:30'],
             'outlet_name' => ['nullable', 'string', 'max:255'],
@@ -749,9 +756,9 @@ class AccountController extends Controller
             }
 
             $image = $request->file('image');
-            $imageName = rand() . '_' . $image->getClientOriginalName();
+            $imageName = rand().'_'.$image->getClientOriginalName();
             $image->storeAs('uploads', $imageName, 'public');
-            $user->image = '/storage/uploads/' . $imageName;
+            $user->image = '/storage/uploads/'.$imageName;
         }
 
         $user->fill([
@@ -778,7 +785,7 @@ class AccountController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $user->update([
             'password' => Hash::make($validated['password']),
@@ -805,7 +812,7 @@ class AccountController extends Controller
         $prefix = $isOutletRole ? 'DS-REQ-' : 'REQ-';
 
         do {
-            $requestNo = $prefix . strtoupper(Str::random(10));
+            $requestNo = $prefix.strtoupper(Str::random(10));
         } while (SavedPurchaseForm::query()->where('request_no', $requestNo)->exists());
 
         return $requestNo;

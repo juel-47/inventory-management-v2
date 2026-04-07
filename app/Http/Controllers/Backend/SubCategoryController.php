@@ -28,6 +28,7 @@ class SubCategoryController extends Controller
     public function create()
     {
         $categories = Category::select('id', 'name', 'status')->get();
+
         return view('backend.sub-category.create', compact('categories'));
     }
 
@@ -43,6 +44,7 @@ class SubCategoryController extends Controller
             'status' => $request->status,
         ]);
         Toastr::success('Sub Category Created Successfully!');
+
         return redirect()->route('admin.sub-category.index');
     }
 
@@ -53,6 +55,7 @@ class SubCategoryController extends Controller
     {
         $subCategory = SubCategory::findOrFail($id);
         $categories = Category::select('id', 'name', 'status')->get();
+
         return view('backend.sub-category.edit', compact('subCategory', 'categories'));
     }
 
@@ -69,6 +72,7 @@ class SubCategoryController extends Controller
             'status' => $request->status,
         ]);
         Toastr::success('Sub Category Updated Successfully!');
+
         return redirect()->route('admin.sub-category.index');
     }
 

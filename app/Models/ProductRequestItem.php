@@ -15,7 +15,7 @@ class ProductRequestItem extends Model
         'variant_id',
         'qty',
         'unit_price',
-        'subtotal'
+        'subtotal',
     ];
 
     public function productRequest()

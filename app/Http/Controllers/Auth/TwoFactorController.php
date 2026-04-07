@@ -18,6 +18,7 @@ use Illuminate\View\View;
 class TwoFactorController extends Controller
 {
     private const MAX_ATTEMPTS = 3;
+
     private const DECAY_SECONDS = 15 * 60;
 
     public function create(Request $request): View|RedirectResponse

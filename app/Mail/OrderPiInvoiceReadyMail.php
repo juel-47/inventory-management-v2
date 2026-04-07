@@ -7,6 +7,7 @@ use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -17,9 +18,13 @@ class OrderPiInvoiceReadyMail extends Mailable
     use Queueable, SerializesModels;
 
     public Order $order;
+
     public GeneralSetting $settings;
+
     public string $viewUrl;
+
     public string $downloadUrl;
+
     public bool $attachPdf;
 
     public function __construct(Order $order, string $viewUrl, string $downloadUrl, bool $attachPdf = false)
@@ -37,7 +42,7 @@ class OrderPiInvoiceReadyMail extends Mailable
             'user',
         ]);
 
-        $this->settings = GeneralSetting::first() ?? new GeneralSetting();
+        $this->settings = GeneralSetting::first() ?? new GeneralSetting;
         $this->viewUrl = $viewUrl;
         $this->downloadUrl = $downloadUrl;
         $this->attachPdf = $attachPdf;
@@ -49,8 +54,8 @@ class OrderPiInvoiceReadyMail extends Mailable
         $fromEmail = $this->settings->contact_email ?? config('mail.from.address');
 
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address($fromEmail, $fromName),
-            subject: 'Proforma Invoice Ready — Order #' . $this->order->order_no,
+            from: new Address($fromEmail, $fromName),
+            subject: 'Proforma Invoice Ready — Order #'.$this->order->order_no,
         );
     }
 
@@ -73,7 +78,7 @@ class OrderPiInvoiceReadyMail extends Mailable
 
     public function attachments(): array
     {
-        if (!$this->attachPdf) {
+        if (! $this->attachPdf) {
             return [];
         }
 
@@ -86,7 +91,7 @@ class OrderPiInvoiceReadyMail extends Mailable
             'settings' => $this->settings,
         ]);
 
-        $filename = 'pi-invoice-' . $this->order->order_no . '.pdf';
+        $filename = 'pi-invoice-'.$this->order->order_no.'.pdf';
 
         return [
             Attachment::fromData(fn () => $pdf->output(), $filename)

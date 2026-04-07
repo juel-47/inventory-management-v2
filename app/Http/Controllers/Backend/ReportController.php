@@ -13,10 +13,10 @@ use App\Models\PurchaseDetail;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller implements HasMiddleware
 {
@@ -38,18 +38,18 @@ class ReportController extends Controller implements HasMiddleware
             ->join('products', 'inventory_stocks.product_id', '=', 'products.id')
             ->where('products.status', 1)
             ->sum(DB::raw('inventory_stocks.quantity * products.purchase_price'));
-        
+
         $totalProducts = Product::where('status', 1)->count();
-        
+
         $lowStockCount = Product::where('status', 1)
             ->withSum('inventoryStocks', 'quantity')
             ->havingRaw('inventory_stocks_sum_quantity <= 100 OR inventory_stocks_sum_quantity IS NULL')
             ->get()
             ->count();
-        
+
         // 2. Total Revenue: From completed Product Requests
         $totalRevenue = ProductRequest::where('status', 'completed')->sum('total_amount');
-        
+
         // 3. COGS: Estimated from ProductRequestItems for completed requests
         $totalCost = DB::table('product_request_items')
             ->join('product_requests', 'product_request_items.product_request_id', '=', 'product_requests.id')
@@ -103,7 +103,7 @@ class ReportController extends Controller implements HasMiddleware
         $potentialProfit = $potentialRevenue - $totalValue;
 
         $products = $query->paginate(30)->withQueryString();
-        
+
         $categories = Category::where('status', 1)->get();
         $brands = Brand::where('status', 1)->get();
         $settings = GeneralSetting::first();
@@ -113,9 +113,9 @@ class ReportController extends Controller implements HasMiddleware
                 'html' => view('backend.reports.partials.stock_table_rows', compact('products', 'settings'))->render(),
                 'pagination' => $products->links()->render(),
                 'totalQty' => number_format($totalQty),
-                'totalValue' => $settings->currency_icon . number_format($totalValue, 2),
-                'potentialRevenue' => $settings->currency_icon . number_format($potentialRevenue, 2),
-                'potentialProfit' => $settings->currency_icon . number_format($potentialProfit, 2),
+                'totalValue' => $settings->currency_icon.number_format($totalValue, 2),
+                'potentialRevenue' => $settings->currency_icon.number_format($potentialRevenue, 2),
+                'potentialProfit' => $settings->currency_icon.number_format($potentialProfit, 2),
             ]);
         }
 
@@ -202,6 +202,7 @@ class ReportController extends Controller implements HasMiddleware
     public function lowStockCheck()
     {
         $data = $this->getNotificationData();
+
         return response()->json($data);
     }
 
@@ -211,6 +212,7 @@ class ReportController extends Controller implements HasMiddleware
     public function allNotifications()
     {
         $data = $this->getNotificationData();
+
         return view('backend.notifications.all', ['notifications' => $data['notifications']]);
     }
 
@@ -220,6 +222,7 @@ class ReportController extends Controller implements HasMiddleware
     public function markNotificationsRead()
     {
         session(['notifications_read_at' => now()]);
+
         return response()->json(['status' => 'success']);
     }
 
@@ -227,7 +230,7 @@ class ReportController extends Controller implements HasMiddleware
     {
         $notifications = [];
         $lastReadAt = session('notifications_read_at');
-        
+
         // Expire "Mark as Read" after 10 minutes
         if ($lastReadAt && $lastReadAt->diffInMinutes(now()) >= 10) {
             session()->forget('notifications_read_at');
@@ -235,7 +238,7 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         $unreadCount = 0;
-        
+
         // 1. Fetch Low Stock Products (Threshold 100)
         $lowStockProducts = Product::where('status', 1)
             ->withSum('inventoryStocks', 'quantity')
@@ -245,27 +248,29 @@ class ReportController extends Controller implements HasMiddleware
             ->get();
 
         foreach ($lowStockProducts as $product) {
-            $isUnread = !$lastReadAt || $product->updated_at->gt($lastReadAt);
-            if ($isUnread) $unreadCount++;
+            $isUnread = ! $lastReadAt || $product->updated_at->gt($lastReadAt);
+            if ($isUnread) {
+                $unreadCount++;
+            }
 
             $notifications[] = [
                 'type' => 'lowStock',
                 'title' => $product->name,
-                'desc' => ($product->inventory_stocks_sum_quantity ?? 0) . ' in stock',
+                'desc' => ($product->inventory_stocks_sum_quantity ?? 0).' in stock',
                 'time' => $product->updated_at->diffForHumans(),
                 'timestamp' => $product->updated_at->timestamp, // For sorting
                 'url' => route('admin.reports.low-stock'),
                 'icon' => 'fas fa-exclamation-triangle',
                 'class' => ($product->inventory_stocks_sum_quantity <= 0) ? 'bg-danger' : 'bg-warning',
                 'is_unread' => $isUnread,
-                'is_out_of_stock' => ($product->inventory_stocks_sum_quantity <= 0)
+                'is_out_of_stock' => ($product->inventory_stocks_sum_quantity <= 0),
             ];
         }
 
         // 2. Fetch Pending Product Requests (Admin only)
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        if ($user && $user->can('Manage Product Requests')) {
+        if ($user->can('Manage Product Requests')) {
             $pendingRequests = ProductRequest::with('user')
                 ->where('status', 'pending')
                 ->orderBy('created_at', 'desc')
@@ -273,27 +278,29 @@ class ReportController extends Controller implements HasMiddleware
                 ->get();
 
             foreach ($pendingRequests as $req) {
-                $isUnread = !$lastReadAt || $req->created_at->gt($lastReadAt);
-                if ($isUnread) $unreadCount++;
+                $isUnread = ! $lastReadAt || $req->created_at->gt($lastReadAt);
+                if ($isUnread) {
+                    $unreadCount++;
+                }
 
                 $userName = $req->user ? $req->user->name : 'Unknown User';
                 $notifications[] = [
                     'type' => 'request',
-                    'title' => 'New Request: ' . $req->request_no,
-                    'desc' => 'From ' . $userName . ' (Qty: ' . $req->total_qty . ')',
+                    'title' => 'New Request: '.$req->request_no,
+                    'desc' => 'From '.$userName.' (Qty: '.$req->total_qty.')',
                     'time' => $req->created_at->diffForHumans(),
                     'timestamp' => $req->created_at->timestamp, // For sorting
                     'url' => route('admin.product-requests.index'),
                     'icon' => 'fas fa-box-open',
                     'class' => 'bg-info',
                     'is_unread' => $isUnread,
-                    'is_out_of_stock' => false
+                    'is_out_of_stock' => false,
                 ];
             }
         }
 
         // 3. Fetch Pending User Registrations (Admin only)
-        if ($user && $user->can('Administration')) {
+        if ($user->can('Administration')) {
             $pendingUsers = User::where('status', 0)
                 ->where('role_id', '!=', 1) // Exclude main admin if somehow status=0
                 ->orderBy('created_at', 'desc')
@@ -301,38 +308,40 @@ class ReportController extends Controller implements HasMiddleware
                 ->get();
 
             foreach ($pendingUsers as $pUser) {
-                $isUnread = !$lastReadAt || $pUser->created_at->gt($lastReadAt);
-                if ($isUnread) $unreadCount++;
+                $isUnread = ! $lastReadAt || $pUser->created_at->gt($lastReadAt);
+                if ($isUnread) {
+                    $unreadCount++;
+                }
 
                 // Map role_id to name
-                $roleName = match($pUser->role_id) {
+                $roleName = match ($pUser->role_id) {
                     1 => 'Admin',
                     2 => 'User',
                     3 => 'Outlet User',
-                    default => 'Unknown Role (' . $pUser->role_id . ')'
+                    default => 'Unknown Role ('.$pUser->role_id.')'
                 };
 
                 $notifications[] = [
                     'type' => 'registration',
-                    'title' => 'New User: ' . $pUser->name,
-                    'desc' => 'Needs Approval (Role: ' . $roleName . ')',
+                    'title' => 'New User: '.$pUser->name,
+                    'desc' => 'Needs Approval (Role: '.$roleName.')',
                     'time' => $pUser->created_at->diffForHumans(),
                     'timestamp' => $pUser->created_at->timestamp,
                     'url' => route('admin.users.index'),
                     'icon' => 'fas fa-user-plus',
                     'class' => 'bg-primary',
                     'is_unread' => $isUnread,
-                    'is_out_of_stock' => false
+                    'is_out_of_stock' => false,
                 ];
             }
         }
-        usort($notifications, function($a, $b) {
+        usort($notifications, function ($a, $b) {
             return $b['timestamp'] <=> $a['timestamp'];
         });
 
         return [
             'count' => $unreadCount,
-            'notifications' => array_slice($notifications, 0, 20) // Limit to top 20
+            'notifications' => array_slice($notifications, 0, 20), // Limit to top 20
         ];
     }
 
@@ -343,13 +352,13 @@ class ReportController extends Controller implements HasMiddleware
     {
         $revenueQuery = ProductRequest::where('status', 'completed');
         $purchasesQuery = Purchase::query();
-        
+
         if ($request->start_date) {
-            $revenueQuery->where('created_at', '>=', $request->start_date . ' 00:00:00');
+            $revenueQuery->where('created_at', '>=', $request->start_date.' 00:00:00');
             $purchasesQuery->where('date', '>=', $request->start_date);
         }
         if ($request->end_date) {
-            $revenueQuery->where('created_at', '<=', $request->end_date . ' 23:59:59');
+            $revenueQuery->where('created_at', '<=', $request->end_date.' 23:59:59');
             $purchasesQuery->where('date', '<=', $request->end_date);
         }
 
@@ -358,7 +367,7 @@ class ReportController extends Controller implements HasMiddleware
 
         // Calculate COGS for those completed requests
         $completedRequestIds = $revenueQuery->pluck('id');
-        
+
         $totalCost = DB::table('product_request_items')
             ->join('products', 'product_request_items.product_id', '=', 'products.id')
             ->whereIn('product_request_items.product_request_id', $completedRequestIds)
@@ -367,7 +376,7 @@ class ReportController extends Controller implements HasMiddleware
         // Calculate Profit
         $grossProfit = $totalRevenue - $totalCost;
         $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
-        
+
         $totalPurchases = $purchasesQuery->sum('total_amount');
 
         return view('backend.reports.profit_loss', compact(
@@ -378,5 +387,4 @@ class ReportController extends Controller implements HasMiddleware
             'totalPurchases'
         ));
     }
-
 }

@@ -65,6 +65,7 @@ class TaxController extends Controller
         });
 
         Toastr::success('Tax / VAT Created Successfully!');
+
         return redirect()->route('admin.taxes.index');
     }
 
@@ -82,6 +83,7 @@ class TaxController extends Controller
     public function edit(string $id)
     {
         $tax = Tax::findOrFail($id);
+
         return view('backend.tax.edit', compact('tax'));
     }
 
@@ -93,7 +95,7 @@ class TaxController extends Controller
         $tax = Tax::findOrFail($id);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:taxes,name,' . $tax->id,
+            'name' => 'required|string|max:255|unique:taxes,name,'.$tax->id,
             'type' => 'required|in:flat,percent',
             'value' => 'required|numeric|min:0',
             'is_default' => 'nullable|boolean',
@@ -125,6 +127,7 @@ class TaxController extends Controller
         });
 
         Toastr::success('Tax / VAT Updated Successfully!');
+
         return redirect()->route('admin.taxes.index');
     }
 

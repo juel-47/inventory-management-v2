@@ -31,4 +31,3 @@ return new class extends Migration
         Schema::dropIfExists('saved_purchase_forms');
     }
 };
-

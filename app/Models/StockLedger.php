@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Product;
-use App\Models\ProductVariant;
 
 class StockLedger extends Model
 {
@@ -17,7 +15,14 @@ class StockLedger extends Model
         'in_qty',
         'out_qty',
         'balance_qty',
-        'date'
+        'date',
+    ];
+
+    protected $casts = [
+        'in_qty' => 'decimal:2',
+        'out_qty' => 'decimal:2',
+        'balance_qty' => 'decimal:2',
+        'date' => 'date',
     ];
 
     public function product()

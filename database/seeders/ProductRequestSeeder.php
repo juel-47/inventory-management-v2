@@ -30,9 +30,9 @@ class ProductRequestSeeder extends Seeder
         // 3. Assign Permissions to Outlet User
         // They need 'Manage' to see the dropdown, and 'Create' to see the link
         $outletRole->givePermissionTo([
-            'Manage Product Requests', 
+            'Manage Product Requests',
             'View Product Requests',
-            'Create Product Requests'
+            'Create Product Requests',
         ]);
 
         // 4. Assign All to Admin

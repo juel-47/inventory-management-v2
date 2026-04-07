@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Purchase extends Model
 {
-    use \Illuminate\Database\Eloquent\Factories\HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'invoice_no',
@@ -21,7 +22,15 @@ class Purchase extends Model
         'material_cost',
         'transport_cost',
         'tax',
-        'invoice_attachment'
+        'invoice_attachment',
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'total_amount' => 'decimal:2',
+        'material_cost' => 'decimal:2',
+        'transport_cost' => 'decimal:2',
+        'tax' => 'decimal:2',
     ];
 
     public function vendor()

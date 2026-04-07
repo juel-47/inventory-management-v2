@@ -13,7 +13,7 @@ class Issue extends Model
         'status',
         'total_qty',
         'note',
-        'invoice_path'
+        'invoice_path',
     ];
 
     public function productRequest()

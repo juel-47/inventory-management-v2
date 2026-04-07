@@ -5,13 +5,11 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 
 trait ImageUploadTrait
 {
-
     // // /** handle slider image file */
 
     // public function sliderImage(Request $request, $inputName, $path)
@@ -87,7 +85,7 @@ trait ImageUploadTrait
     //     return $oldImage;
     // }
 
-    // //check of svg/webp/gif 
+    // //check of svg/webp/gif
     // public function uploadSpecialImage($request, $imageField, $directory, $oldImage = null)
     // {
     //     if ($request->hasFile($imageField)) {
@@ -170,25 +168,19 @@ trait ImageUploadTrait
     //     return $oldImage;
     // }
 
-
-
-
-
-
-
-
-    // normal way handle image 
+    // normal way handle image
     public function upload_image(Request $request, $inputName, $path)
     {
         if ($request->hasFile($inputName)) {
             $image = $request->file($inputName);
             $ext = $image->getClientOriginalExtension();
-            $imageName = 'media_' . uniqid() . '.' . $ext;
+            $imageName = 'media_'.uniqid().'.'.$ext;
 
             $image->storeAs($path, $imageName, 'public');
 
-            return $path . '/' . $imageName;
+            return $path.'/'.$imageName;
         }
+
         return null;
     }
 
@@ -200,14 +192,16 @@ trait ImageUploadTrait
             $images = $request->{$inputName};
             foreach ($images as $image) {
                 $ext = $image->getClientOriginalExtension();
-                $imageName = 'media_' . uniqid() . '.' . $ext;
+                $imageName = 'media_'.uniqid().'.'.$ext;
 
                 $image->storeAs($path, $imageName, 'public');
 
-                $imagepaths[] = $path . '/' . $imageName;
+                $imagepaths[] = $path.'/'.$imageName;
             }
+
             return $imagepaths;
         }
+
         return null;
     }
 
@@ -221,12 +215,13 @@ trait ImageUploadTrait
 
             $image = $request->file($inputName);
             $ext = $image->getClientOriginalExtension();
-            $imageName = 'media_' . uniqid() . '.' . $ext;
+            $imageName = 'media_'.uniqid().'.'.$ext;
 
             $image->storeAs($path, $imageName, 'public');
 
-            return $path . '/' . $imageName;
+            return $path.'/'.$imageName;
         }
+
         return null;
     }
 

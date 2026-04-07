@@ -36,6 +36,7 @@ class VendorController extends Controller
         $validated = $request->validated();
         Vendor::create($validated);
         Toastr::success('Vendor Created Successfully');
+
         return redirect()->route('admin.vendor.index');
     }
 
@@ -53,6 +54,7 @@ class VendorController extends Controller
     public function edit(string $id)
     {
         $vendor = Vendor::findOrFail($id);
+
         return view('backend.vendor.edit', compact('vendor'));
     }
 
@@ -65,6 +67,7 @@ class VendorController extends Controller
         $validated = $request->validated();
         $vendor->update($validated);
         Toastr::success('Vendor Updated Successfully');
+
         return redirect()->route('admin.vendor.index');
     }
 
@@ -75,19 +78,23 @@ class VendorController extends Controller
     {
         $vendor = Vendor::findOrFail($id);
         $vendor->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
-    public function changeStatus(Request $request) {
+    public function changeStatus(Request $request)
+    {
         $vendor = Vendor::findOrFail($request->id);
         $vendor->status = $request->status == 'true' ? 1 : 0;
         $vendor->save();
+
         return response(['message' => 'Status has been updated!']);
     }
 
     public function getVendorDetails(Request $request)
     {
         $vendor = Vendor::findOrFail($request->id);
+
         return response()->json($vendor);
     }
 }

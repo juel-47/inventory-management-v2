@@ -10,7 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class RegisteredUserController extends Controller
 {
@@ -25,7 +27,7 @@ class RegisteredUserController extends Controller
     /**
      * Handle an incoming registration request.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
@@ -49,10 +51,8 @@ class RegisteredUserController extends Controller
         ]);
 
         // Assign Spatie Role
-        $role = \Spatie\Permission\Models\Role::findById($request->role_id);
-        if ($role) {
-            $user->assignRole($role->name);
-        }
+        $role = Role::findById($request->role_id);
+        $user->assignRole($role->name);
 
         event(new Registered($user));
 

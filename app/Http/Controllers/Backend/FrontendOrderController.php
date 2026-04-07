@@ -7,14 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Mail\OrderPiInvoiceReadyMail;
 use App\Models\GeneralSetting;
 use App\Models\Order;
+use App\Support\PdfImageHelper;
 use App\Support\PiInfoSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Support\PdfImageHelper;
 
 class FrontendOrderController extends Controller
 {
@@ -68,7 +68,7 @@ class FrontendOrderController extends Controller
             'items.product.productType',
             'items.variant.color',
             'items.variant.size',
-            'user'
+            'user',
         ]);
         $settings = GeneralSetting::first();
         $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
@@ -131,6 +131,7 @@ class FrontendOrderController extends Controller
         $this->notifyPiReady($order);
 
         Toastr::success('PI info saved successfully!');
+
         return redirect()->route('admin.orders.show', $order->id);
     }
 
@@ -161,7 +162,7 @@ class FrontendOrderController extends Controller
 
         $pdf->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
 
-        return $pdf->download('order-' . $order->order_no . '.pdf');
+        return $pdf->download('order-'.$order->order_no.'.pdf');
     }
 
     /**
@@ -206,7 +207,7 @@ class FrontendOrderController extends Controller
 
         $pdf->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
 
-        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
+        return $pdf->download('pi-invoice-'.$order->order_no.'.pdf');
     }
 
     /**
@@ -230,7 +231,8 @@ class FrontendOrderController extends Controller
         }
 
         $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
-        return $pdf->download('customer-invoice-' . $order->order_no . '.pdf');
+
+        return $pdf->download('customer-invoice-'.$order->order_no.'.pdf');
     }
 
     /**
@@ -246,6 +248,7 @@ class FrontendOrderController extends Controller
         $order->save();
 
         Toastr::success('Order status updated successfully!');
+
         return redirect()->route('admin.orders.show', $order->id);
     }
 
@@ -266,7 +269,7 @@ class FrontendOrderController extends Controller
     {
         $order->loadMissing('user');
         $recipient = $order->pi_email ?: $order->billing_email ?: ($order->user?->email ?? null);
-        if (!$recipient) {
+        if (! $recipient) {
             return;
         }
 

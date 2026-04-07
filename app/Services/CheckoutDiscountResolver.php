@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 class CheckoutDiscountResolver
 {
     private ?Discount $defaultDiscount = null;
+
     private bool $defaultDiscountLoaded = false;
 
     public function resolveForLine($product, float $lineSubtotal, int $quantity = 1): array
@@ -64,9 +65,10 @@ class CheckoutDiscountResolver
             return $this->defaultDiscount;
         }
 
-        if (!Schema::hasTable('discounts')) {
+        if (! Schema::hasTable('discounts')) {
             $this->defaultDiscountLoaded = true;
             $this->defaultDiscount = null;
+
             return null;
         }
 
@@ -76,12 +78,13 @@ class CheckoutDiscountResolver
             ->first();
 
         $this->defaultDiscountLoaded = true;
+
         return $this->defaultDiscount;
     }
 
     private function resolveProductDiscount($product): ?array
     {
-        if (!$product) {
+        if (! $product) {
             return null;
         }
 
@@ -93,7 +96,7 @@ class CheckoutDiscountResolver
             $type = 'percent';
         }
 
-        if (!in_array($type, ['flat', 'percent'], true)) {
+        if (! in_array($type, ['flat', 'percent'], true)) {
             return null;
         }
 
@@ -117,8 +120,7 @@ class CheckoutDiscountResolver
         float $value,
         int $quantity = 1,
         bool $flatPerUnit = false
-    ): float
-    {
+    ): float {
         if ($lineSubtotal <= 0 || $value <= 0) {
             return 0.0;
         }

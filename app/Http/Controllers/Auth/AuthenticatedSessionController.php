@@ -33,6 +33,7 @@ class AuthenticatedSessionController extends Controller
         // Check if user is Admin
         if (! $user->hasRole('Admin')) {
             Auth::logout();
+
             return redirect('/')->with('error', 'Only admins can login via this portal.');
         }
 
@@ -44,6 +45,7 @@ class AuthenticatedSessionController extends Controller
         // If mail isn't configured, allow direct admin access (no 2FA).
         if (! $this->isMailConfigured()) {
             $request->session()->regenerate();
+
             return redirect()->to($intended);
         }
 
@@ -69,6 +71,7 @@ class AuthenticatedSessionController extends Controller
         // return redirect()->route('admin.two-factor.challenge');
 
         $request->session()->regenerate();
+
         return redirect()->route('admin.dashboard');
     }
 

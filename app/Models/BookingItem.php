@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Booking;
-use App\Models\Product;
-use App\Models\ProductVariant;
 
 class BookingItem extends Model
 {
@@ -15,7 +12,7 @@ class BookingItem extends Model
         'variant_id',
         'quantity',
         'unit_price',
-        'total_price'
+        'total_price',
     ];
 
     public function booking()

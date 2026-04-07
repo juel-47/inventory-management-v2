@@ -9,7 +9,6 @@ use App\Http\Requests\Category\CategoryUpdateRequest;
 use App\Models\Category;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -43,6 +42,7 @@ class CategoryController extends Controller
         ]);
 
         Toastr::success('Category Created Successfully!');
+
         return redirect()->route('admin.category.index');
     }
 
@@ -52,6 +52,7 @@ class CategoryController extends Controller
     public function edit(string $id)
     {
         $category = Category::findOrFail($id);
+
         return view('backend.category.edit', compact('category'));
     }
 
@@ -69,6 +70,7 @@ class CategoryController extends Controller
         $category->save();
 
         Toastr::success('Category Updated Successfully!');
+
         return redirect()->route('admin.category.index');
     }
 
@@ -83,6 +85,7 @@ class CategoryController extends Controller
             return response(['status' => 'error', 'message' => 'This category has subcategories. Please delete them first!']);
         }
         $category->delete();
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 

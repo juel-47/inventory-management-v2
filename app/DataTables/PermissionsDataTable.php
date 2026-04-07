@@ -14,15 +14,16 @@ class PermissionsDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param mixed $query Results from query() method.
+     * @param  mixed  $query  Results from query() method.
      */
     public function dataTable($query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $edit = '<a href="' . route('admin.permission.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
-                $delete = '<a href="' . route('admin.permission.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
-                return $edit . $delete;
+                $edit = '<a href="'.route('admin.permission.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                $delete = '<a href="'.route('admin.permission.destroy', $query->id).'" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
+
+                return $edit.$delete;
             })
             ->setRowId('id');
     }
@@ -44,7 +45,7 @@ class PermissionsDataTable extends DataTable
             ->setTableId('permission-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            //->dom('Bfrtip')
+            // ->dom('Bfrtip')
             ->orderBy(0)
             ->selectStyleSingle()
             ->buttons([
@@ -78,6 +79,6 @@ class PermissionsDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Permissions_' . date('YmdHis');
+        return 'Permissions_'.date('YmdHis');
     }
 }

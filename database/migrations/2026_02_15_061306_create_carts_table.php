@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->enum('cart_type', ['booking', 'request'])->default('booking'); // booking or request basket
             $table->timestamps();
-            
+
             // Unique constraint: one user can have max one of each product per cart type
             $table->unique(['user_id', 'product_id', 'cart_type']);
         });

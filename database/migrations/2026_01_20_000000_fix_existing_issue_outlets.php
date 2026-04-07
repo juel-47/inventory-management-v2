@@ -1,11 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use App\Models\Issue;
 use App\Models\ProductRequest;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -23,7 +20,7 @@ return new class extends Migration
                 // Update outlet_id and reset invoice_path to force regeneration
                 $issue->update([
                     'outlet_id' => $request->user_id,
-                    'invoice_path' => null 
+                    'invoice_path' => null,
                 ]);
             }
         }

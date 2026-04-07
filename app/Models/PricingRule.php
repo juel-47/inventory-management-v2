@@ -21,4 +21,3 @@ class PricingRule extends Model
         'status' => 'boolean',
     ];
 }
-

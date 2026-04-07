@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Product;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProductUpdateRequest extends FormRequest
@@ -17,13 +18,13 @@ class ProductUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'image' => ['nullable', 'image', 'max:2048'],
-            'name' => ['required', 'max:200', 'unique:products,name,' . $this->product],
+            'name' => ['required', 'max:200', 'unique:products,name,'.$this->product],
             'category_id' => ['required', 'integer'],
             'sub_category_id' => ['nullable', 'integer'],
             'child_category_id' => ['nullable', 'integer'],

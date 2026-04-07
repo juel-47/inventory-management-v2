@@ -11,16 +11,18 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class DispatchProductAnnouncementChunksJob implements ShouldQueue, ShouldBeUnique
+class DispatchProductAnnouncementChunksJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 180;
+
     public int $uniqueFor = 3600;
 
     /**
-     * @param array<int, int> $productIds
+     * @param  array<int, int>  $productIds
      */
     public function __construct(
         public array $productIds,
@@ -44,7 +46,8 @@ class DispatchProductAnnouncementChunksJob implements ShouldQueue, ShouldBeUniqu
     public function uniqueId(): string
     {
         $campaignToken = $this->campaignId ?: 'auto';
-        return 'dispatch-product-announcement:' . $this->source . ':' . $campaignToken . ':' . sha1(json_encode($this->productIds));
+
+        return 'dispatch-product-announcement:'.$this->source.':'.$campaignToken.':'.sha1(json_encode($this->productIds));
     }
 
     public function handle(): void

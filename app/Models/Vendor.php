@@ -19,6 +19,11 @@ class Vendor extends Model
         'currency_icon',
         'currency_rate',
         'description',
-        'status'
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
+        'currency_rate' => 'decimal:2',
     ];
 }

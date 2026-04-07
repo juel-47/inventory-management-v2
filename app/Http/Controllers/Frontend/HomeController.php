@@ -4,17 +4,17 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ContactMessageMail;
-use App\Models\Product;
 use App\Models\Category;
 use App\Models\GeneralSetting;
+use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\Slider;
 use App\Services\CheckoutDiscountResolver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -31,9 +31,9 @@ class HomeController extends Controller
 
         $sliders = Schema::hasTable('sliders')
             ? Slider::query()
-            ->where('status', 1)
-            ->orderBy('serial')
-            ->get()
+                ->where('status', 1)
+                ->orderBy('serial')
+                ->get()
             : collect();
         $latestCategories = Category::query()
             ->where('status', 1)
@@ -44,7 +44,7 @@ class HomeController extends Controller
             ->withMax([
                 'products as latest_product_created_at' => function ($query) {
                     $query->where('status', 1);
-                }
+                },
             ], 'created_at')
             ->with([
                 'products' => function ($query) use ($roleContext, $isOutletCustomer, $outletId) {
@@ -62,10 +62,10 @@ class HomeController extends Controller
                         $query->withSum([
                             'inventoryStocks as scoped_stock_qty' => function ($stockQuery) use ($outletId) {
                                 $stockQuery->where('outlet_id', $outletId);
-                            }
+                            },
                         ], 'quantity');
                     }
-                }
+                },
             ])
             ->orderByDesc('latest_product_created_at')
             ->take(6)
@@ -74,7 +74,7 @@ class HomeController extends Controller
         $latestCategoryBlocks = $latestCategories
             ->map(function (Category $category) use ($roleContext): array {
                 $cards = $category->products
-                    ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
+                    ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
                     ->values();
 
                 return [
@@ -118,7 +118,7 @@ class HomeController extends Controller
             $query->withSum([
                 'inventoryStocks as scoped_stock_qty' => function ($query) use ($outletId) {
                     $query->where('outlet_id', $outletId);
-                }
+                },
             ], 'quantity');
         }
 
@@ -189,7 +189,7 @@ class HomeController extends Controller
 
         $products = $query->paginate(24)->withQueryString();
         $shopCards = collect($products->items())
-            ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
+            ->map(fn (Product $product) => $this->transformProductForCard($product, $roleContext))
             ->values();
 
         $categories = Category::with(['subCategories' => function ($q) {
@@ -294,7 +294,7 @@ class HomeController extends Controller
             }
         }
 
-        if (!$adminEmail || !$mailSent) {
+        if (! $adminEmail || ! $mailSent) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -321,6 +321,7 @@ class HomeController extends Controller
     public function contact()
     {
         $settings = GeneralSetting::first();
+
         return view('frontend.pages.contact', compact('settings'));
     }
 
@@ -461,11 +462,11 @@ class HomeController extends Controller
         ];
 
         $detailVariantData = $product->variants
-            ->map(fn($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
+            ->map(fn ($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
             ->values();
 
         $relatedCards = $relatedProducts
-            ->map(fn(Product $relatedProduct) => $this->transformProductForCard($relatedProduct, $roleContext))
+            ->map(fn (Product $relatedProduct) => $this->transformProductForCard($relatedProduct, $roleContext))
             ->values();
 
         return view('frontend.pages.products.show', [
@@ -506,18 +507,18 @@ class HomeController extends Controller
 
     private function resolveRoleNames($user): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
         $roleNames = $user->roles->pluck('name')
-            ->map(fn($name) => strtolower((string) $name))
+            ->map(fn ($name) => strtolower((string) $name))
             ->filter()
             ->values()
             ->all();
 
         $roleFromColumn = strtolower((string) optional($user->userRole)->name);
-        if ($roleFromColumn !== '' && !in_array($roleFromColumn, $roleNames, true)) {
+        if ($roleFromColumn !== '' && ! in_array($roleFromColumn, $roleNames, true)) {
             $roleNames[] = $roleFromColumn;
         }
 
@@ -527,7 +528,7 @@ class HomeController extends Controller
     private function resolveRequestOutletId(Request $request): int
     {
         $userOutletId = $request->user()?->outlet_id ?? null;
-        if (!empty($userOutletId)) {
+        if (! empty($userOutletId)) {
             return (int) $userOutletId;
         }
 
@@ -540,7 +541,7 @@ class HomeController extends Controller
             ->where('status', 1)
             ->with(['color:id,name', 'size:id,name']);
 
-        if (!empty($roleContext['canViewInventory']) && !empty($roleContext['outletId'])) {
+        if (! empty($roleContext['canViewInventory']) && ! empty($roleContext['outletId'])) {
             $outletId = (int) $roleContext['outletId'];
             $query->withSum([
                 'inventoryStocks as scoped_stock_qty' => function ($stockQuery) use ($outletId) {
@@ -575,7 +576,7 @@ class HomeController extends Controller
         ];
 
         $variantPayload = $product->variants
-            ->map(fn($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
+            ->map(fn ($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
             ->values();
 
         return [
@@ -618,7 +619,7 @@ class HomeController extends Controller
         $type = strtolower(trim((string) ($defaultDiscount->type ?? '')));
         $value = max(0, (float) ($defaultDiscount->value ?? 0));
 
-        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+        if (! in_array($type, ['flat', 'percent'], true) || $value <= 0) {
             $this->defaultDiscountContext = [
                 'type' => '',
                 'value' => 0.0,
@@ -652,7 +653,8 @@ class HomeController extends Controller
         $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($variant->size ?? '')));
 
         $fallback = trim(implode(' ', array_filter([$colorName, $sizeName])));
-        return $fallback !== '' ? $fallback : ('Variant #' . (int) $variant->id);
+
+        return $fallback !== '' ? $fallback : ('Variant #'.(int) $variant->id);
     }
 
     private function resolveImageUrl(?string $path): ?string
@@ -671,8 +673,8 @@ class HomeController extends Controller
         }
 
         $storageRelative = ltrim($cleanPath, '/');
-        if (file_exists(storage_path('app/public/' . $storageRelative))) {
-            return asset('storage/' . $storageRelative);
+        if (file_exists(storage_path('app/public/'.$storageRelative))) {
+            return asset('storage/'.$storageRelative);
         }
 
         return null;

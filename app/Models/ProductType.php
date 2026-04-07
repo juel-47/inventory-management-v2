@@ -12,7 +12,11 @@ class ProductType extends Model
     protected $fillable = [
         'name',
         'slug',
-        'status'
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     public function products()

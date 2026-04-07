@@ -39,13 +39,13 @@ class SettingController extends Controller
             $file = $request->file('site_logo');
             $directory = public_path('uploads/settings');
 
-            if (!File::exists($directory)) {
+            if (! File::exists($directory)) {
                 File::makeDirectory($directory, 0755, true);
             }
 
-            $filename = 'site-logo-' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'site-logo-'.time().'.'.$file->getClientOriginalExtension();
             $file->move($directory, $filename);
-            $logoPath = 'uploads/settings/' . $filename;
+            $logoPath = 'uploads/settings/'.$filename;
         }
 
         GeneralSetting::updateOrCreate(
@@ -59,6 +59,7 @@ class SettingController extends Controller
         );
 
         Toastr::success('General settings updated successfully!');
+
         return redirect()->route('admin.settings.general');
     }
 
@@ -87,7 +88,8 @@ class SettingController extends Controller
             ]
         );
 
-         Toastr::success('Currency settings updated successfully!');
+        Toastr::success('Currency settings updated successfully!');
+
         return redirect()->route('admin.settings.currency');
     }
 
@@ -129,6 +131,7 @@ class SettingController extends Controller
         );
 
         Toastr::success('Email configuration updated successfully!');
+
         return redirect()->route('admin.settings.email');
     }
 
@@ -144,21 +147,23 @@ class SettingController extends Controller
 
             Mail::raw('This is a test email from your admin email configuration.', function ($message) use ($toEmail, $siteName) {
                 $message->to($toEmail)
-                    ->subject($siteName . ' - SMTP Test Email');
+                    ->subject($siteName.' - SMTP Test Email');
             });
 
-            Toastr::success('Test email sent successfully to ' . $toEmail . '!');
+            Toastr::success('Test email sent successfully to '.$toEmail.'!');
+
             return redirect()
                 ->route('admin.settings.email')
                 ->with('email_test_status', 'success')
-                ->with('email_test_message', 'Test email sent successfully to ' . $toEmail . '.');
+                ->with('email_test_message', 'Test email sent successfully to '.$toEmail.'.');
         } catch (\Throwable $exception) {
-            Toastr::error('Test email failed: ' . $exception->getMessage());
+            Toastr::error('Test email failed: '.$exception->getMessage());
+
             return redirect()
                 ->route('admin.settings.email')
                 ->withInput()
                 ->with('email_test_status', 'error')
-                ->with('email_test_message', 'Test email failed: ' . $exception->getMessage());
+                ->with('email_test_message', 'Test email failed: '.$exception->getMessage());
         }
     }
 }

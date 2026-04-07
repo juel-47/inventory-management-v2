@@ -8,6 +8,7 @@ use App\Support\PiInfoSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -18,13 +19,19 @@ class ProductRequestPiInvoiceReadyMail extends Mailable
     use Queueable, SerializesModels;
 
     public ProductRequest $productRequest;
+
     public GeneralSetting $settings;
+
     public string $viewUrl;
+
     public string $downloadUrl;
+
     public bool $attachPdf;
 
     private array $piInfo;
+
     private array $piTotals;
+
     private bool $hasSavedPiInfo;
 
     public function __construct(ProductRequest $productRequest, string $viewUrl, string $downloadUrl, bool $attachPdf = false)
@@ -43,7 +50,7 @@ class ProductRequestPiInvoiceReadyMail extends Mailable
             'items.variant.size',
         ]);
 
-        $this->settings = GeneralSetting::first() ?? new GeneralSetting();
+        $this->settings = GeneralSetting::first() ?? new GeneralSetting;
         $this->viewUrl = $viewUrl;
         $this->downloadUrl = $downloadUrl;
         $this->attachPdf = $attachPdf;
@@ -59,8 +66,8 @@ class ProductRequestPiInvoiceReadyMail extends Mailable
         $fromEmail = $this->settings->contact_email ?? config('mail.from.address');
 
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address($fromEmail, $fromName),
-            subject: 'Proforma Invoice Ready — Request #' . $this->productRequest->request_no,
+            from: new Address($fromEmail, $fromName),
+            subject: 'Proforma Invoice Ready — Request #'.$this->productRequest->request_no,
         );
     }
 
@@ -83,7 +90,7 @@ class ProductRequestPiInvoiceReadyMail extends Mailable
 
     public function attachments(): array
     {
-        if (!$this->attachPdf) {
+        if (! $this->attachPdf) {
             return [];
         }
 
@@ -99,7 +106,7 @@ class ProductRequestPiInvoiceReadyMail extends Mailable
             'hasSavedPiInfo' => $this->hasSavedPiInfo,
         ]);
 
-        $filename = 'pi-invoice-' . $this->productRequest->request_no . '.pdf';
+        $filename = 'pi-invoice-'.$this->productRequest->request_no.'.pdf';
 
         return [
             Attachment::fromData(fn () => $pdf->output(), $filename)

@@ -13,20 +13,20 @@ class PdfImageHelper
      * Optimize an image for PDF embedding.
      * Resizes, compresses, and returns a Base64 encoded string.
      *
-     * @param string|null $path File path or URL
-     * @param int $width Max width
-     * @param int $height Max height
-     * @param int $quality JPEG quality (0-100)
+     * @param  string|null  $path  File path or URL
+     * @param  int  $width  Max width
+     * @param  int  $height  Max height
+     * @param  int  $quality  JPEG quality (0-100)
      * @return string|null Base64 data URI or null on failure
      */
     public static function optimize(?string $path, int $width = 80, int $height = 80, int $quality = 70): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
         // Check cache
-        $cacheKey = md5($path . $width . $height . $quality);
+        $cacheKey = md5($path.$width.$height.$quality);
         if (isset(self::$cache[$cacheKey])) {
             return self::$cache[$cacheKey];
         }
@@ -38,7 +38,7 @@ class PdfImageHelper
             // Handle remote URLs
             if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
                 $imageData = @file_get_contents($path);
-                if (!$imageData) {
+                if (! $imageData) {
                     return null;
                 }
                 $tempFile = tempnam(sys_get_temp_dir(), 'pdf_img_');
@@ -53,8 +53,8 @@ class PdfImageHelper
                 $normalized = ltrim($path, '/');
                 $candidates = [
                     public_path($normalized),
-                    public_path('storage/' . ltrim(str_replace('storage/', '', $normalized), '/')),
-                    storage_path('app/public/' . ltrim(str_replace('storage/', '', $normalized), '/')),
+                    public_path('storage/'.ltrim(str_replace('storage/', '', $normalized), '/')),
+                    storage_path('app/public/'.ltrim(str_replace('storage/', '', $normalized), '/')),
                 ];
 
                 foreach ($candidates as $candidate) {
@@ -69,7 +69,7 @@ class PdfImageHelper
                 }
             }
 
-            if (!$type) {
+            if (! $type) {
                 return null;
             }
 
@@ -91,7 +91,7 @@ class PdfImageHelper
                     break;
             }
 
-            if (!$src) {
+            if (! $src) {
                 return null;
             }
 
@@ -129,11 +129,11 @@ class PdfImageHelper
             imagedestroy($src);
             imagedestroy($dst);
 
-            if (!$finalData) {
+            if (! $finalData) {
                 return null;
             }
 
-            $base64 = 'data:image/jpeg;base64,' . base64_encode($finalData);
+            $base64 = 'data:image/jpeg;base64,'.base64_encode($finalData);
             self::$cache[$cacheKey] = $base64;
 
             return $base64;

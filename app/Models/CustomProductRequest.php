@@ -18,7 +18,7 @@ class CustomProductRequest extends Model
         'quantity_needed',
         'expected_price',
         'status',
-        'admin_note'
+        'admin_note',
     ];
 
     public function user()
@@ -56,7 +56,7 @@ class CustomProductRequest extends Model
     {
         $images = $this->example_image ?? [];
 
-        if (!array_key_exists($index, $images)) {
+        if (! array_key_exists($index, $images)) {
             return null;
         }
 
@@ -94,7 +94,7 @@ class CustomProductRequest extends Model
             $image = $image['path'] ?? $image['url'] ?? ($image[0] ?? null);
         }
 
-        if (!is_string($image)) {
+        if (! is_string($image)) {
             return null;
         }
 

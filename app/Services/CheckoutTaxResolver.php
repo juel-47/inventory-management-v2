@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 class CheckoutTaxResolver
 {
     private ?Tax $defaultTax = null;
+
     private bool $defaultTaxLoaded = false;
 
     public function resolveForLine($product, float $lineSubtotal): array
@@ -51,9 +52,10 @@ class CheckoutTaxResolver
             return $this->defaultTax;
         }
 
-        if (!Schema::hasTable('taxes')) {
+        if (! Schema::hasTable('taxes')) {
             $this->defaultTaxLoaded = true;
             $this->defaultTax = null;
+
             return null;
         }
 
@@ -63,12 +65,13 @@ class CheckoutTaxResolver
             ->first();
 
         $this->defaultTaxLoaded = true;
+
         return $this->defaultTax;
     }
 
     private function resolveProductTax($product): ?array
     {
-        if (!$product) {
+        if (! $product) {
             return null;
         }
 
@@ -86,7 +89,7 @@ class CheckoutTaxResolver
         }
 
         $type = strtolower((string) $type);
-        if (!in_array($type, ['flat', 'percent'], true)) {
+        if (! in_array($type, ['flat', 'percent'], true)) {
             return null;
         }
 

@@ -14,24 +14,27 @@ class RolesDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param mixed $query Results from query() method.
+     * @param  mixed  $query  Results from query() method.
      */
     public function dataTable($query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-                $edit = '<a href="' . route('admin.role.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                $edit = '<a href="'.route('admin.role.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
                 if ($query->name !== 'Admin') {
-                    $delete = '<a href="' . route('admin.role.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
-                    return $edit . $delete;
+                    $delete = '<a href="'.route('admin.role.destroy', $query->id).'" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
+
+                    return $edit.$delete;
                 }
+
                 return $edit;
             })
             ->addColumn('permissions', function ($query) {
                 $badges = '';
                 foreach ($query->permissions as $permission) {
-                    $badges .= '<span class="badge badge-primary m-1">' . $permission->name . '</span>';
+                    $badges .= '<span class="badge badge-primary m-1">'.$permission->name.'</span>';
                 }
+
                 return $badges != '' ? $badges : '<span class="badge badge-warning">No Permissions</span>';
             })
             ->rawColumns(['action', 'permissions'])
@@ -55,7 +58,7 @@ class RolesDataTable extends DataTable
             ->setTableId('role-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            //->dom('Bfrtip')
+            // ->dom('Bfrtip')
             ->orderBy(0)
             ->selectStyleSingle()
             ->buttons([
@@ -90,6 +93,6 @@ class RolesDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Roles_' . date('YmdHis');
+        return 'Roles_'.date('YmdHis');
     }
 }

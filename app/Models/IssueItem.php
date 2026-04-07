@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Issue;
-use App\Models\Product;
-use App\Models\ProductVariant;
 
 class IssueItem extends Model
 {
@@ -13,7 +10,7 @@ class IssueItem extends Model
         'issue_id',
         'product_id',
         'variant_id',
-        'quantity'
+        'quantity',
     ];
 
     public function issue()
@@ -28,6 +25,6 @@ class IssueItem extends Model
 
     public function variant()
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 }

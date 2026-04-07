@@ -3,40 +3,38 @@
 namespace App\Http\Controllers\Backend;
 
 use App\DataTables\ProductAnnouncementDataTable;
-use App\DataTables\ProductDataTable;
+use App\Events\ProductsPublished;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductCreateRequest;
 use App\Http\Requests\Product\ProductUpdateRequest;
+use App\Imports\ProductsImport;
+use App\Jobs\DispatchProductAnnouncementChunksJob;
 use App\Models\Brand;
-use App\Models\ProductType;
 use App\Models\Category;
-use App\Models\SubCategory;
 use App\Models\ChildCategory;
 use App\Models\Color;
+use App\Models\InventoryStock;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\ProductVariant;
 use App\Models\Size;
+use App\Models\StockLedger;
+use App\Models\SubCategory;
 use App\Models\Unit;
 use App\Models\Vendor;
 use App\Traits\ImageUploadTrait;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
-use App\Models\InventoryStock;
-use App\Models\StockLedger;
-use App\Jobs\DispatchProductAnnouncementChunksJob;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\ProductsImport;
-use App\Events\ProductsPublished;
-
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller implements HasMiddleware
 {
@@ -55,19 +53,19 @@ class ProductController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $query = Product::with(['category', 'variants.color', 'variants.size', 'inventoryStocks', 'vendor']);
-        
+
         // Visibility Constraints for non-admins
-        if (!Auth::user()->hasRole('Admin')) {
+        if (! Auth::user()->hasRole('Admin')) {
             $query->where('status', 1)
-                  ->whereHas('category', function($q) {
-                      $q->where('status', 1);
-                  })
-                  ->where(function($q) {
-                      $q->whereNull('product_type_id')
-                        ->orWhereHas('productType', function($sq) {
+                ->whereHas('category', function ($q) {
+                    $q->where('status', 1);
+                })
+                ->where(function ($q) {
+                    $q->whereNull('product_type_id')
+                        ->orWhereHas('productType', function ($sq) {
                             $sq->where('status', 1);
                         });
-                  });
+                });
         }
 
         // Handle Sorting
@@ -76,14 +74,13 @@ class ProductController extends Controller implements HasMiddleware
             $query->orderBy('name', 'desc');
         } elseif ($sort == 'a-z') {
             $query->orderBy('name', 'asc');
-        }elseif ($sort == 'active') {
+        } elseif ($sort == 'active') {
             $query->where('status', 1)->latest();
 
         } elseif ($sort == 'inactive') {
             $query->where('status', 0)->latest();
 
-        } 
-        else {
+        } else {
             $query->latest();
         }
 
@@ -122,7 +119,7 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         if ($request->has('alphabet') && $request->alphabet != '') {
-            $query->where('name', 'like', $request->alphabet . '%');
+            $query->where('name', 'like', $request->alphabet.'%');
         }
 
         if ($request->has('vendor') && $request->vendor != '') {
@@ -152,6 +149,7 @@ class ProductController extends Controller implements HasMiddleware
         $colors = Color::where('status', 1)->get();
         $sizes = Size::where('status', 1)->get();
         $productTypes = ProductType::where('status', 1)->get();
+
         return view('backend.product.create', compact('categories', 'brands', 'units', 'vendors', 'colors', 'sizes', 'productTypes'));
     }
 
@@ -166,9 +164,9 @@ class ProductController extends Controller implements HasMiddleware
             $vatConfig = $this->normalizeVatInput($request);
             $imagePath = $this->upload_image($request, 'image', 'uploads/products');
             $variantRows = $this->extractVariantRows($request->input('variants', []), false);
-            $hasVariantRows = !empty($variantRows);
+            $hasVariantRows = ! empty($variantRows);
 
-            $product = new Product();
+            $product = new Product;
             $product->thumb_image = $imagePath;
             $product->name = $request->name;
             $product->slug = Str::slug($request->name);
@@ -197,17 +195,17 @@ class ProductController extends Controller implements HasMiddleware
             $product->discount = $discountConfig['value'];
             $product->vat_type = $vatConfig['type'];
             $product->vat_value = $vatConfig['value'];
-            
+
             // Set qty for backward compatibility if needed, but we reflect in InventoryStock
             $product->qty = $hasVariantRows ? 0 : max(0, (int) ($request->qty ?? 0));
             $product->save();
 
             // Handle Product Opening Stock
-            if ($product->qty > 0 && !$hasVariantRows) {
+            if ($product->qty > 0 && ! $hasVariantRows) {
                 $stock = InventoryStock::firstOrCreate([
                     'product_id' => $product->id,
                     'variant_id' => null,
-                    'outlet_id' => 1 // Default
+                    'outlet_id' => 1, // Default
                 ]);
                 $stock->increment('quantity', $product->qty);
 
@@ -220,13 +218,13 @@ class ProductController extends Controller implements HasMiddleware
                     'in_qty' => $product->qty,
                     'out_qty' => 0,
                     'balance_qty' => $stock->quantity,
-                    'date' => date('Y-m-d')
+                    'date' => date('Y-m-d'),
                 ]);
             }
 
             // Handle Variants
             foreach ($variantRows as $row) {
-                $productVariant = new ProductVariant();
+                $productVariant = new ProductVariant;
                 $productVariant->product_id = $product->id;
                 $productVariant->color_id = $row['color_id'];
                 $productVariant->size_id = $row['size_id'];
@@ -241,7 +239,7 @@ class ProductController extends Controller implements HasMiddleware
                     $stock = InventoryStock::firstOrCreate([
                         'product_id' => $product->id,
                         'variant_id' => $productVariant->id,
-                        'outlet_id' => 1 // Default
+                        'outlet_id' => 1, // Default
                     ]);
                     $stock->increment('quantity', $productVariant->qty);
 
@@ -254,7 +252,7 @@ class ProductController extends Controller implements HasMiddleware
                         'in_qty' => $productVariant->qty,
                         'out_qty' => 0,
                         'balance_qty' => $stock->quantity,
-                        'date' => date('Y-m-d')
+                        'date' => date('Y-m-d'),
                     ]);
                 }
             }
@@ -263,6 +261,7 @@ class ProductController extends Controller implements HasMiddleware
             // Manual announcement only: auto product-create announcement is intentionally disabled.
             // $this->dispatchProductsPublishedEvent([$product->id], 'created');
             Toastr::success('Product Created Successfully!');
+
             return redirect()->route('admin.products.index');
 
         } catch (ValidationException $e) {
@@ -270,7 +269,8 @@ class ProductController extends Controller implements HasMiddleware
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            Toastr::error('Error: ' . $e->getMessage());
+            Toastr::error('Error: '.$e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -298,6 +298,7 @@ class ProductController extends Controller implements HasMiddleware
         $colors = Color::where('status', 1)->get();
         $sizes = Size::where('status', 1)->get();
         $productTypes = ProductType::where('status', 1)->get();
+
         return view('backend.product.edit', compact('product', 'categories', 'subCategories', 'childCategories', 'brands', 'units', 'vendors', 'colors', 'sizes', 'productTypes'));
     }
 
@@ -311,7 +312,7 @@ class ProductController extends Controller implements HasMiddleware
             $discountConfig = $this->normalizeDiscountInput($request);
             $vatConfig = $this->normalizeVatInput($request);
             $variantRows = $this->extractVariantRows($request->input('variants', []), true);
-            $hasVariantRows = !empty($variantRows);
+            $hasVariantRows = ! empty($variantRows);
             $product = Product::findOrFail($id);
             $imagePath = $this->update_image($request, 'image', 'uploads/products', $product->thumb_image);
 
@@ -353,20 +354,20 @@ class ProductController extends Controller implements HasMiddleware
 
             // Handle Product Manual Stock Adjustment
             $adjustment = 0;
-            if (!$hasVariantRows && $request->has('current_stock')) {
+            if (! $hasVariantRows && $request->has('current_stock')) {
                 $currentDbStock = $product->inventory_stock;
-                $submittedStock = (float)$request->current_stock;
-                
+                $submittedStock = (float) $request->current_stock;
+
                 if ($submittedStock != $currentDbStock) {
                     $adjustment = $submittedStock - $currentDbStock;
                 }
             }
-            
+
             if ($adjustment != 0) {
                 $stock = InventoryStock::firstOrCreate([
                     'product_id' => $product->id,
                     'variant_id' => null,
-                    'outlet_id' => 1
+                    'outlet_id' => 1,
                 ]);
                 $stock->increment('quantity', $adjustment);
 
@@ -379,9 +380,9 @@ class ProductController extends Controller implements HasMiddleware
                     'in_qty' => $adjustment > 0 ? $adjustment : 0,
                     'out_qty' => $adjustment < 0 ? abs($adjustment) : 0,
                     'balance_qty' => $stock->quantity,
-                    'date' => date('Y-m-d')
+                    'date' => date('Y-m-d'),
                 ]);
-                
+
                 $product->increment('qty', $adjustment);
             }
 
@@ -393,8 +394,8 @@ class ProductController extends Controller implements HasMiddleware
                     $variant = ProductVariant::where('product_id', $product->id)->find($vData['id']);
                 }
 
-                if (!$variant) {
-                    $variant = new ProductVariant();
+                if (! $variant) {
+                    $variant = new ProductVariant;
                     $variant->product_id = $product->id;
                 }
 
@@ -404,7 +405,7 @@ class ProductController extends Controller implements HasMiddleware
                 $variant->price = $vData['price'];
                 $variant->outlet_price = $vData['outlet_price'];
                 $variant->save();
-                
+
                 $keepVariantIds[] = $variant->id;
 
                 // Variant Manual Stock Adjustment
@@ -414,12 +415,12 @@ class ProductController extends Controller implements HasMiddleware
                 if ($vSubmittedVal != $vCurrentDbStock) {
                     $vAdjustment = $vSubmittedVal - $vCurrentDbStock;
                 }
-                
+
                 if ($vAdjustment != 0) {
                     $vStock = InventoryStock::firstOrCreate([
                         'product_id' => $product->id,
                         'variant_id' => $variant->id,
-                        'outlet_id' => 1
+                        'outlet_id' => 1,
                     ]);
                     $vStock->increment('quantity', $vAdjustment);
 
@@ -432,9 +433,9 @@ class ProductController extends Controller implements HasMiddleware
                         'in_qty' => $vAdjustment > 0 ? $vAdjustment : 0,
                         'out_qty' => $vAdjustment < 0 ? abs($vAdjustment) : 0,
                         'balance_qty' => $vStock->quantity,
-                        'date' => date('Y-m-d')
+                        'date' => date('Y-m-d'),
                     ]);
-                    
+
                     $variant->increment('qty', $vAdjustment);
                 }
             }
@@ -444,11 +445,11 @@ class ProductController extends Controller implements HasMiddleware
 
             DB::commit();
             Toastr::success('Product Updated Successfully!');
-            
+
             if ($request->has('return_url')) {
                 return redirect($request->return_url);
             }
-            
+
             return redirect()->route('admin.products.index');
 
         } catch (ValidationException $e) {
@@ -456,7 +457,8 @@ class ProductController extends Controller implements HasMiddleware
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            Toastr::error('Error: ' . $e->getMessage());
+            Toastr::error('Error: '.$e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -478,6 +480,7 @@ class ProductController extends Controller implements HasMiddleware
 
         $this->delete_image($product->thumb_image);
         $product->delete(); // Cascade delete variants
+
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
@@ -506,33 +509,33 @@ class ProductController extends Controller implements HasMiddleware
     {
         // Log::info('ProductController@importPreview hit');
         // Log::info('Request data: ' . json_encode($request->except('import_file')));
-        
+
         $request->validate([
-            'import_file' => 'required|mimes:csv,xlsx,xls|max:204800'
+            'import_file' => 'required|mimes:csv,xlsx,xls|max:204800',
         ]);
 
         try {
             $file = $request->file('import_file');
             $originalName = $file->getClientOriginalName();
-            
+
             // Save file temporarily in public storage so it can be accessed in next step
-            $tempName = 'temp_import_' . time() . '_' . $originalName;
+            $tempName = 'temp_import_'.time().'_'.$originalName;
             $path = $file->storeAs('temp', $tempName, 'public');
             $fullPath = Storage::disk('public')->path($path);
 
-            $importer = new ProductsImport();
+            $importer = new ProductsImport;
             $preview = $importer->getPreviewData($fullPath, $originalName);
 
             return response()->json([
                 'success' => true,
                 'preview' => $preview,
                 'temp_path' => $path,
-                'original_name' => $originalName
+                'original_name' => $originalName,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -549,18 +552,18 @@ class ProductController extends Controller implements HasMiddleware
         if ($request->has('temp_path')) {
             $request->validate([
                 'temp_path' => 'required',
-                'original_name' => 'required'
+                'original_name' => 'required',
             ]);
             $tempPath = $request->temp_path;
             $originalName = $request->original_name;
             $fullPath = Storage::disk('public')->path($tempPath);
         } else {
             $request->validate([
-                'import_file' => 'required|mimes:csv,xlsx,xls|max:204800'
+                'import_file' => 'required|mimes:csv,xlsx,xls|max:204800',
             ], [
                 'import_file.required' => 'Please upload a file',
                 'import_file.mimes' => 'Only CSV, xlsx, and xls files are allowed',
-                'import_file.max' => 'File size must be less than 200MB'
+                'import_file.max' => 'File size must be less than 200MB',
             ]);
             $file = $request->file('import_file');
             $fullPath = $file->getRealPath();
@@ -572,13 +575,13 @@ class ProductController extends Controller implements HasMiddleware
             // Debug info
             // Log::info('File processing: ' . $originalName);
             // Log::info('Path: ' . $fullPath);
-            
-            if (!file_exists($fullPath)) {
+
+            if (! file_exists($fullPath)) {
                 throw new \Exception('Could not access file');
             }
-            
+
             // Import using CSV/Excel processor
-            $importer = new ProductsImport();
+            $importer = new ProductsImport;
             $results = $importer->import($fullPath, $originalName);
 
             $createdProductIds = collect($results['created_product_ids'] ?? [])
@@ -592,30 +595,32 @@ class ProductController extends Controller implements HasMiddleware
             // if (!empty($createdProductIds)) {
             //     $this->dispatchProductsPublishedEvent($createdProductIds, 'imported');
             // }
-            
+
             // Delete temp file if it exists
             if ($tempPath) {
                 Storage::disk('public')->delete($tempPath);
             }
-            
-            $message = 'Import completed! Success: ' . $results['success'] . ', Skipped: ' . ($results['skipped'] ?? 0) . ', Failed: ' . $results['failed'];
-            
-            if (!empty($results['errors'])) {
+
+            $message = 'Import completed! Success: '.$results['success'].', Skipped: '.($results['skipped'] ?? 0).', Failed: '.$results['failed'];
+
+            if (! empty($results['errors'])) {
                 $message .= ' Errors found in some rows.';
             }
 
             Toastr::success($message);
-            
+
             if ($request->ajax()) {
                 return response()->json(['success' => true, 'redirect' => route('admin.products.index')]);
             }
+
             return redirect()->route('admin.products.index');
-            
+
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
-            Toastr::error('Import failed: ' . $e->getMessage());
+            Toastr::error('Import failed: '.$e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -681,22 +686,22 @@ class ProductController extends Controller implements HasMiddleware
             actorId: Auth::id() ? (int) Auth::id() : null,
             customSubject: $subject !== '' ? $subject : null,
             customMessage: $message !== '' ? $message : null,
-            campaignId: 'manual-' . (string) Str::uuid()
+            campaignId: 'manual-'.(string) Str::uuid()
         )->onConnection('database')->onQueue('mail-notifications');
 
         return response()->json([
             'success' => true,
-            'message' => 'Announcement queued for ' . count($validProductIds) . ' selected products.',
+            'message' => 'Announcement queued for '.count($validProductIds).' selected products.',
         ]);
     }
 
     /**
-     * @param mixed $rawRows
+     * @param  mixed  $rawRows
      * @return array<int, array<string, mixed>>
      */
     private function extractVariantRows($rawRows, bool $isUpdate): array
     {
-        if (!is_array($rawRows)) {
+        if (! is_array($rawRows)) {
             return [];
         }
 
@@ -704,7 +709,7 @@ class ProductController extends Controller implements HasMiddleware
         $seenPairs = [];
 
         foreach ($rawRows as $row) {
-            if (!is_array($row)) {
+            if (! is_array($row)) {
                 continue;
             }
 
@@ -715,7 +720,7 @@ class ProductController extends Controller implements HasMiddleware
                 continue;
             }
 
-            $pairKey = ($colorId ?? 0) . '|' . ($sizeId ?? 0);
+            $pairKey = ($colorId ?? 0).'|'.($sizeId ?? 0);
             if (isset($seenPairs[$pairKey])) {
                 throw ValidationException::withMessages([
                     'variants' => 'Duplicate variant combination found. Please keep each color-size combination unique.',
@@ -731,7 +736,7 @@ class ProductController extends Controller implements HasMiddleware
             ];
 
             if ($isUpdate) {
-                if (!empty($row['id'])) {
+                if (! empty($row['id'])) {
                     $prepared['id'] = (int) $row['id'];
                 }
                 $prepared['current_stock'] = max(0, (float) ($row['current_stock'] ?? 0));
@@ -758,6 +763,7 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         $name = trim(implode(' ', array_filter([$colorName, $sizeName])));
+
         return $name !== '' ? $name : 'Default';
     }
 
@@ -766,7 +772,7 @@ class ProductController extends Controller implements HasMiddleware
         $type = strtolower(trim((string) $request->input('discount_type', '')));
         $value = max(0, (float) $request->input('discount', 0));
 
-        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+        if (! in_array($type, ['flat', 'percent'], true) || $value <= 0) {
             return [
                 'type' => null,
                 'value' => 0.0,
@@ -788,7 +794,7 @@ class ProductController extends Controller implements HasMiddleware
         $type = strtolower(trim((string) $request->input('vat_type', '')));
         $value = max(0, (float) $request->input('vat_value', 0));
 
-        if (!in_array($type, ['flat', 'percent'], true) || $value <= 0) {
+        if (! in_array($type, ['flat', 'percent'], true) || $value <= 0) {
             return [
                 'type' => null,
                 'value' => null,
@@ -806,7 +812,7 @@ class ProductController extends Controller implements HasMiddleware
     }
 
     /**
-     * @param array<int, int|string> $productIds
+     * @param  array<int, int|string>  $productIds
      */
     private function dispatchProductsPublishedEvent(array $productIds, string $source): void
     {
@@ -821,10 +827,10 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         $source = in_array($source, ['created', 'imported'], true) ? $source : 'created';
-        $dispatchLockKey = 'product-announcement:dispatch:' . $source . ':' . sha1(json_encode($ids));
+        $dispatchLockKey = 'product-announcement:dispatch:'.$source.':'.sha1(json_encode($ids));
 
         // Guard against accidental double-submit / duplicate request replay.
-        if (!Cache::add($dispatchLockKey, 1, now()->addMinutes(10))) {
+        if (! Cache::add($dispatchLockKey, 1, now()->addMinutes(10))) {
             return;
         }
 

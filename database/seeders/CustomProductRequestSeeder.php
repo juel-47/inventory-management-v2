@@ -29,7 +29,7 @@ class CustomProductRequestSeeder extends Seeder
 
         // 3. Assign Permissions to Outlet User
         $outletRole->givePermissionTo([
-            'Create Custom Product Requests'
+            'Create Custom Product Requests',
         ]);
 
         // 4. Assign Permissions to Admin (but NOT Create permission for Outlet User requests)

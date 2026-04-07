@@ -15,29 +15,32 @@ class SliderDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Slider> $query Results from query() method.
+     * @param  QueryBuilder<Slider>  $query  Results from query() method.
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('banner', function ($query) {
-                $path = $query->banner ? asset('storage/' . ltrim($query->banner, '/')) : asset('uploads/default.png');
-                return '<img src="' . $path . '" width="50px" class="img-thumbnail">';
+                $path = $query->banner ? asset('storage/'.ltrim($query->banner, '/')) : asset('uploads/default.png');
+
+                return '<img src="'.$path.'" width="50px" class="img-thumbnail">';
             })
             ->addColumn('starting_price', function ($query) {
                 return number_format((float) $query->starting_price, 2);
             })
             ->addColumn('status', function ($query) {
                 $checked = $query->status ? 'checked' : '';
+
                 return '<label class="custom-switch mt-2">
-                            <input type="checkbox" name="custom-switch-checkbox" data-id="' . $query->id . '" class="custom-switch-input change-status" ' . $checked . '>
+                            <input type="checkbox" name="custom-switch-checkbox" data-id="'.$query->id.'" class="custom-switch-input change-status" '.$checked.'>
                             <span class="custom-switch-indicator"></span>
                         </label>';
             })
             ->addColumn('action', function ($query) {
-                $edit = '<a href="' . route('admin.slider.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
-                $delete = '<a href="' . route('admin.slider.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
-                return $edit . $delete;
+                $edit = '<a href="'.route('admin.slider.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                $delete = '<a href="'.route('admin.slider.destroy', $query->id).'" class="btn btn-danger delete-item ml-2"><i class="fas fa-trash"></i></a>';
+
+                return $edit.$delete;
             })
             ->rawColumns(['banner', 'status', 'action'])
             ->setRowId('id');
@@ -97,6 +100,6 @@ class SliderDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'Slider_' . date('YmdHis');
+        return 'Slider_'.date('YmdHis');
     }
 }

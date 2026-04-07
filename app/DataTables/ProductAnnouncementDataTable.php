@@ -14,23 +14,23 @@ class ProductAnnouncementDataTable extends DataTable
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Product> $query
+     * @param  QueryBuilder<Product>  $query
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('select', function (Product $product): string {
-                return '<input type="checkbox" class="announcement-product-checkbox" data-id="' . (int) $product->id . '">';
+                return '<input type="checkbox" class="announcement-product-checkbox" data-id="'.(int) $product->id.'">';
             })
             ->addColumn('category_name', function (Product $product): string {
                 return (string) ($product->category?->name ?? 'N/A');
             })
             ->addColumn('product_type_name', function (Product $product): string {
-                if (!empty($product->productType?->name)) {
+                if (! empty($product->productType?->name)) {
                     return (string) $product->productType->name;
                 }
 
-                return !empty($product->product_type) ? (string) $product->product_type : 'N/A';
+                return ! empty($product->product_type) ? (string) $product->product_type : 'N/A';
             })
             ->addColumn('vendor_name', function (Product $product): string {
                 return (string) ($product->vendor?->shop_name ?? 'N/A');
@@ -39,7 +39,7 @@ class ProductAnnouncementDataTable extends DataTable
                 $stockQty = (float) ($product->stock_qty ?? 0);
                 $badgeClass = $stockQty > 0 ? 'badge badge-info' : 'badge badge-danger';
 
-                return '<span class="' . $badgeClass . '">' . rtrim(rtrim(number_format($stockQty, 2, '.', ''), '0'), '.') . '</span>';
+                return '<span class="'.$badgeClass.'">'.rtrim(rtrim(number_format($stockQty, 2, '.', ''), '0'), '.').'</span>';
             })
             ->addColumn('status_badge', function (Product $product): string {
                 if ((int) $product->status === 1) {
@@ -180,6 +180,6 @@ class ProductAnnouncementDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'ProductAnnouncement_' . date('YmdHis');
+        return 'ProductAnnouncement_'.date('YmdHis');
     }
 }

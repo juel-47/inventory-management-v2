@@ -3,10 +3,15 @@
 namespace App\Providers;
 
 use App\Models\GeneralSetting;
+use Google\Client;
+use Google\Service\Drive;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Pagination\Paginator;
+use League\Flysystem\Filesystem;
+use Masbug\Flysystem\GoogleDriveAdapter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -64,15 +69,15 @@ class AppServiceProvider extends ServiceProvider
             Storage::extend('google', function ($app, $config) {
                 $options = [];
 
-                if (!empty($config['teamDriveId'] ?? null)) {
+                if (! empty($config['teamDriveId'] ?? null)) {
                     $options['teamDriveId'] = $config['teamDriveId'];
                 }
 
-                if (!empty($config['sharedFolderId'] ?? null)) {
+                if (! empty($config['sharedFolderId'] ?? null)) {
                     $options['sharedFolderId'] = $config['sharedFolderId'];
                 }
 
-                if (!empty($config['parameters'] ?? null)) {
+                if (! empty($config['parameters'] ?? null)) {
                     $options['parameters'] = $config['parameters'];
                 }
 
@@ -80,22 +85,22 @@ class AppServiceProvider extends ServiceProvider
                     $options['useDisplayPaths'] = (bool) $config['useDisplayPaths'];
                 }
 
-                $client = new \Google\Client();
+                $client = new Client;
                 $client->setClientId($config['clientId'] ?? null);
                 $client->setClientSecret($config['clientSecret'] ?? null);
                 $client->refreshToken($config['refreshToken'] ?? null);
 
-                if (!empty($config['applicationName'] ?? null)) {
+                if (! empty($config['applicationName'] ?? null)) {
                     $client->setApplicationName($config['applicationName']);
                 }
 
-                $service = new \Google\Service\Drive($client);
+                $service = new Drive($client);
                 $root = $config['folder'] ?? $config['folderId'] ?? '/';
 
-                $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $root, $options);
-                $driver = new \League\Flysystem\Filesystem($adapter);
+                $adapter = new GoogleDriveAdapter($service, $root, $options);
+                $driver = new Filesystem($adapter);
 
-                return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
+                return new FilesystemAdapter($driver, $adapter);
             });
         } catch (\Throwable $e) {
             // Keep app booting if Google Drive configuration is incomplete.
@@ -104,7 +109,7 @@ class AppServiceProvider extends ServiceProvider
 
     private function ensureGoogleBackupDirectory(): void
     {
-        if (!app()->runningInConsole()) {
+        if (! app()->runningInConsole()) {
             return;
         }
 
@@ -112,12 +117,12 @@ class AppServiceProvider extends ServiceProvider
         $command = $argv[1] ?? '';
         $backupCommands = ['backup:run', 'backup:clean', 'backup:monitor', 'backup:list'];
 
-        if (!in_array($command, $backupCommands, true)) {
+        if (! in_array($command, $backupCommands, true)) {
             return;
         }
 
         $disks = (array) config('backup.backup.destination.disks', []);
-        if (!in_array('google', $disks, true)) {
+        if (! in_array('google', $disks, true)) {
             return;
         }
 

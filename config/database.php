@@ -14,7 +14,7 @@ if ($mysqlDumpPath === '' && PHP_OS_FAMILY === 'Windows') {
     ];
 
     foreach ($candidateDirs as $dir) {
-        if (is_file($dir . DIRECTORY_SEPARATOR . 'mysqldump.exe')) {
+        if (is_file($dir.DIRECTORY_SEPARATOR.'mysqldump.exe')) {
             $mysqlDumpPath = $dir;
             break;
         }

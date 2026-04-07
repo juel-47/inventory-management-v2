@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
 use App\DataTables\UsersDataTable;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -26,6 +26,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
+
         return view('backend.authorization.users.create', compact('roles'));
     }
 
@@ -41,15 +42,15 @@ class UserController extends Controller
             'phone' => ['nullable', 'max:255'],
             'password' => ['required', 'min:8'],
             'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id']
+            'user_role' => ['required', 'exists:roles,id'],
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = rand() . '_' . $image->getClientOriginalName();
+            $imageName = rand().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads'), $imageName);
-            $imagePath = 'uploads/' . $imageName;
+            $imagePath = 'uploads/'.$imageName;
         }
 
         $user = User::create([
@@ -88,10 +89,10 @@ class UserController extends Controller
         $request->validate([
             'image' => ['nullable', 'image', 'max:2048'],
             'name' => ['required', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,' . $id],
+            'email' => ['required', 'email', 'unique:users,email,'.$id],
             'phone' => ['nullable', 'max:255'],
             'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id']
+            'user_role' => ['required', 'exists:roles,id'],
         ]);
 
         $user = User::findOrFail($id);
@@ -101,9 +102,9 @@ class UserController extends Controller
                 File::delete(public_path($user->image));
             }
             $image = $request->file('image');
-            $imageName = rand() . '_' . $image->getClientOriginalName();
+            $imageName = rand().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads'), $imageName);
-            $user->image = 'uploads/' . $imageName;
+            $user->image = 'uploads/'.$imageName;
         }
 
         $user->name = $request->name;

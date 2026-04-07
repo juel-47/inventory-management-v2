@@ -2,19 +2,21 @@
 
 namespace App\Mail;
 
+use App\Models\GeneralSetting;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\GeneralSetting;
 
 class BookingNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $booking;
+
     public $settings;
 
     /**
@@ -35,8 +37,8 @@ class BookingNotification extends Mailable
         $fromEmail = $this->settings->contact_email ?? config('mail.from.address');
 
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address($fromEmail, $fromName),
-            subject: 'New Booking Notification - ' . ($this->settings->site_name ?? '') . ' [' . $this->booking->booking_no . ']',
+            from: new Address($fromEmail, $fromName),
+            subject: 'New Booking Notification - '.($this->settings->site_name ?? '').' ['.$this->booking->booking_no.']',
         );
     }
 
@@ -53,7 +55,7 @@ class BookingNotification extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

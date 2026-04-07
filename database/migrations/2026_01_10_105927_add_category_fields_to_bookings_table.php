@@ -16,11 +16,11 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->after('product_id')->constrained('categories')->onDelete('set null');
             $table->foreignId('sub_category_id')->nullable()->after('category_id')->constrained('sub_categories')->onDelete('set null');
             $table->foreignId('child_category_id')->nullable()->after('sub_category_id')->constrained('child_categories')->onDelete('set null');
-            
+
             // Change status from boolean to enum
             $table->dropColumn('status');
         });
-        
+
         Schema::table('bookings', function (Blueprint $table) {
             $table->enum('status', ['pending', 'completed', 'cancelled'])->default('pending')->after('custom_fields');
         });
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->dropColumn(['category_id', 'sub_category_id', 'child_category_id']);
             $table->dropColumn('status');
         });
-        
+
         Schema::table('bookings', function (Blueprint $table) {
             $table->boolean('status')->default(1);
         });

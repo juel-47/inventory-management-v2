@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -33,6 +31,6 @@ return new class extends Migration
         DB::table('bookings')->where('status', 'pending')->update(['status' => '0']);
         DB::table('bookings')->where('status', 'cancelled')->update(['status' => '0']); // Lossy
 
-        DB::statement("ALTER TABLE bookings MODIFY status TINYINT(1) DEFAULT 1");
+        DB::statement('ALTER TABLE bookings MODIFY status TINYINT(1) DEFAULT 1');
     }
 };

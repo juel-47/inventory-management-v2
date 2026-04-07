@@ -46,11 +46,10 @@ return new class extends Migration
             ->havingRaw('COUNT(*) > 1')
             ->exists();
 
-        if (!$hasDuplicate) {
+        if (! $hasDuplicate) {
             Schema::table('carts', function (Blueprint $table) {
                 $table->unique(['user_id', 'product_id', 'cart_type'], 'carts_user_id_product_id_cart_type_unique');
             });
         }
     }
 };
-

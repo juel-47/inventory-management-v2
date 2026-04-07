@@ -16,20 +16,21 @@ class BookingDataTable extends DataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('action', function ($query) {
-            $edit = '<a href="' . route('admin.bookings.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
-            $invoice = '<a href="' . route('admin.bookings.view-invoice', $query->id) . '" target="_blank" class="btn btn-warning ml-2" title="View Invoice"><i class="fas fa-file-invoice"></i></a>';
-            $download = '<a href="' . route('admin.bookings.download-pdf', $query->id) . '" class="btn btn-secondary ml-2" title="Download PDF"><i class="fas fa-download"></i></a>';
-            $delete = '<a href="' . route('admin.bookings.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2" data-booking-no="' . $query->booking_no . '"><i class="fas fa-trash"></i></a>';
-            return $edit . $invoice . $download . $delete;
+                $edit = '<a href="'.route('admin.bookings.edit', $query->id).'" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
+                $invoice = '<a href="'.route('admin.bookings.view-invoice', $query->id).'" target="_blank" class="btn btn-warning ml-2" title="View Invoice"><i class="fas fa-file-invoice"></i></a>';
+                $download = '<a href="'.route('admin.bookings.download-pdf', $query->id).'" class="btn btn-secondary ml-2" title="Download PDF"><i class="fas fa-download"></i></a>';
+                $delete = '<a href="'.route('admin.bookings.destroy', $query->id).'" class="btn btn-danger delete-item ml-2" data-booking-no="'.$query->booking_no.'"><i class="fas fa-trash"></i></a>';
+
+                return $edit.$invoice.$download.$delete;
             })
             ->addColumn('vendor', function ($query) {
                 return $query->vendor_shop_name ?? 'N/A';
             })
             ->addColumn('product_count', function ($query) {
-                return '<span class="badge badge-info">' . $query->product_count . ' Items</span>';
+                return '<span class="badge badge-info">'.$query->product_count.' Items</span>';
             })
             ->addColumn('total_qty', function ($query) {
-                return '<strong>' . $query->total_qty . '</strong>';
+                return '<strong>'.$query->total_qty.'</strong>';
             })
             ->addColumn('status', function ($query) {
                 $status = strtolower($query->status);
@@ -37,16 +38,16 @@ class BookingDataTable extends DataTable
                     'pending' => 'Pending',
                     'complete' => 'Complete',
                     'cancelled' => 'Cancelled',
-                    'missing' => 'Missing'
+                    'missing' => 'Missing',
                 ];
-                
-                $html = '<select class="form-control change-booking-status" data-id="' . $query->id . '" data-booking-no="' . $query->booking_no . '" style="min-width: 100px;">';
-                foreach($options as $key => $label) {
+
+                $html = '<select class="form-control change-booking-status" data-id="'.$query->id.'" data-booking-no="'.$query->booking_no.'" style="min-width: 100px;">';
+                foreach ($options as $key => $label) {
                     $selected = $status === $key ? 'selected' : '';
                     $html .= '<option value="'.$key.'" '.$selected.'>'.$label.'</option>';
                 }
                 $html .= '</select>';
-                
+
                 return $html;
             })
             ->rawColumns(['action', 'status', 'product_count', 'total_qty'])
@@ -106,6 +107,6 @@ class BookingDataTable extends DataTable
 
     protected function filename(): string
     {
-        return 'Booking_' . date('YmdHis');
+        return 'Booking_'.date('YmdHis');
     }
 }
