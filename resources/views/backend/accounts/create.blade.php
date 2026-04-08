@@ -73,7 +73,7 @@
                                                 <select name="payment_method" class="form-control selectric" required>
                                                     <option value="cash">Cash</option>
                                                     <option value="bank">Bank Transfer</option>
-                                                    <option value="mobile_banking">Mobile Banking (Bkash/Nagad)</option>
+                                                    <option value="mobile_banking">Mobile Pay</option>
                                                     <option value="cheque">Cheque</option>
                                                 </select>
                                             </div>
