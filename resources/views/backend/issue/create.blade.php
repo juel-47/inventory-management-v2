@@ -1,6 +1,12 @@
 @extends('backend.layouts.master')
 
 @section('content')
+    @php
+        $isOrderSource = $isOrderSource ?? false;
+        $orderOutletShop = $selectedOrder
+            ? ($selectedOrder->billing_outlet_name ?: ($selectedOrder->user->outlet_name ?? 'N/A'))
+            : null;
+    @endphp
     <section class="section">
         <div class="section-header">
             <h1>Create Stock Issue</h1>
@@ -22,7 +28,7 @@
                                 <div class="card border-0 shadow-sm">
                                     <div class="card-header bg-white border-bottom-0 pb-0">
                                         <h4 class="text-primary mb-0"><i class="fas fa-box-open mr-2"></i>Issue Items</h4>
-                                        <div class="row mt-3">
+                                        <div class="row mt-3" @if($isOrderSource) style="display: none;" @endif>
                                             <div class="col-12 col-md-6 col-lg-3 mb-2">
                                                 <select class="form-control select2" name="outlet_id" id="outlet_select" required>
                                                     <option value="" disabled selected>Select Outlet...</option>
@@ -94,6 +100,16 @@
                                             <span class="text-muted">Issue Date:</span>
                                             <span class="font-weight-bold text-dark">{{ date('d M, Y') }}</span>
                                         </div>
+                                        @if($isOrderSource && $selectedOrder)
+                                            <div class="d-flex justify-content-between mb-3 border-top pt-3 px-1">
+                                                <span class="text-muted text-uppercase small" style="font-size: 11px; letter-spacing: 0.5px;">Outlet/Shop:</span>
+                                                <span class="font-weight-bold text-dark text-right">{{ $orderOutletShop }}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-3 px-1">
+                                                <span class="text-muted text-uppercase small" style="font-size: 11px; letter-spacing: 0.5px;">Order Number:</span>
+                                                <span class="font-weight-bold text-dark">#{{ $selectedOrder->order_no }}</span>
+                                            </div>
+                                        @endif
                                         <div class="d-flex justify-content-between mb-3 border-top pt-3 px-1">
                                             <span class="text-muted text-uppercase small" style="font-size: 11px; letter-spacing: 0.5px;">Product Types:</span>
                                             <span id="summary_total_items" class="font-weight-bold">0</span>

@@ -93,8 +93,23 @@ class IssueController extends Controller
         $requestId = $request->query('request_id');
         $orderId = $request->query('order_id');
         $outletUsers = User::role(['Outlet User', 'User'])->get();
-            
-        return view('backend.issue.create', compact('products', 'productRequests', 'frontendOrders', 'requestId', 'orderId', 'outletUsers'));
+        $selectedOrder = null;
+        $isOrderSource = !empty($orderId);
+
+        if ($isOrderSource) {
+            $selectedOrder = Order::with('user')->find($orderId);
+        }
+             
+        return view('backend.issue.create', compact(
+            'products',
+            'productRequests',
+            'frontendOrders',
+            'requestId',
+            'orderId',
+            'outletUsers',
+            'selectedOrder',
+            'isOrderSource'
+        ));
     }
 
     public function getRequestItems(Request $request)

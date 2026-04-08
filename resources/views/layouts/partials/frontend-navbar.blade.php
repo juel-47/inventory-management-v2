@@ -105,13 +105,15 @@
                 @if($isFrontendCustomer)
                     {{-- Logged in: link to wishlist page with live count badge --}}
                     <a href="{{ route('wishlist.index') }}"
-                       class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative"
+                       class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
                        title="My Wishlist">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        <span x-show="wishlistCount > 0"
-                              x-text="wishlistCount"
-                              class="absolute top-1.5 right-1.5 bg-rose-500 text-white text-[10px] font-bold h-5 w-5 rounded-full border-2 border-white flex items-center justify-center"
-                              x-cloak></span>
+                        <span
+                            x-show="wishlistCount > 0"
+                            x-text="wishlistCount"
+                            class="pointer-events-none absolute -top-1 -right-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-b from-rose-500 to-rose-600 px-1.5 text-[10px] font-extrabold tabular-nums leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)] ring-2 ring-white whitespace-nowrap"
+                            x-cloak
+                        ></span>
                     </a>
 
                     {{-- <a href="{{ route('account.index') }}"
@@ -128,16 +130,20 @@
                 @else
                     {{-- Guest: redirect to login --}}
                     <a href="{{ route('login') }}"
-                       class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative"
+                       class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
                        title="Login to use Wishlist">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </a>
                 @endif
 
                 {{-- Cart --}}
-                <button @click="isCartOpen = true" class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300 relative group">
+                <button @click="isCartOpen = true" class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    <span x-show="cartCount > 0" x-text="cartCount" class="absolute top-1.5 right-1.5 bg-rose-500 text-white text-[10px] font-bold h-5 w-5 rounded-full border-2 border-white flex items-center justify-center"></span>
+                    <span
+                        x-show="cartCount > 0"
+                        x-text="cartCount"
+                        class="pointer-events-none absolute -top-1 -right-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-b from-rose-500 to-rose-600 px-1.5 text-[10px] font-extrabold tabular-nums leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)] ring-2 ring-white whitespace-nowrap"
+                    ></span>
                 </button>
 
                 <div class="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
