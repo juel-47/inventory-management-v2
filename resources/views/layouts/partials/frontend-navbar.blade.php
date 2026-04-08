@@ -56,23 +56,23 @@
         }
     @endphp
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
+        <div class="flex justify-between items-center h-16 md:h-20">
 
             {{-- Logo & Site Name --}}
             <div class="flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                    <div class="w-12 h-12 overflow-hidden rounded-md border border-slate-100 flex items-center justify-center p-1 bg-white transition-all duration-300">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 overflow-hidden rounded-md border border-slate-100 flex items-center justify-center p-1 bg-white transition-all duration-300">
                         <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-full h-full object-contain">
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[14px] md:text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>
-                        <span class="text-[5px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{{ optional($settings)->site_name ?? 'B2B Portal' }}</span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="truncate text-[14px] md:text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>
+                        <span class="truncate text-[10px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{{ optional($settings)->site_name ?? 'B2B Portal' }}</span>
                     </div>
                 </a>
             </div>
 
-            {{-- Navigation Links --}}
-            <div class="hidden md:flex items-center gap-8">
+            {{-- Navigation Links (desktop only, to avoid tablet overflow) --}}
+            <div class="hidden lg:flex items-center gap-8">
                 <a href="{{ route('home') }}"
                    class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('home') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     Home
@@ -93,11 +93,23 @@
 
             {{-- Right Icons --}}
             <div class="flex items-center gap-2 sm:gap-4">
+                {{-- Mobile/Tablet Menu --}}
+                <button type="button"
+                        @click="openMobileNav()"
+                        class="lg:hidden relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
+                        :aria-expanded="mobileNavOpen.toString()"
+                        aria-label="Open menu">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
                 {{-- Search --}}
                 <button
                     @click="toggleSearch()"
                     :aria-expanded="searchOpen.toString()"
-                    class="p-2 text-slate-500 hover:text-slate-900 transition-all duration-300">
+                    class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
+                    aria-label="Search">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
 
@@ -285,23 +297,104 @@
                 </a>
             </div>
         </div>
-        <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 text-xs font-semibold md:hidden">
-            <a href="{{ route('home') }}"
-               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('home') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
-                Home
-            </a>
-            <a href="{{ route('shop') }}"
-               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('shop') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
-                B2B Shop
-            </a>
-            <a href="{{ route('about') }}"
-               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('about') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
-                About
-            </a>
-            <a href="{{ route('contact') }}"
-               class="whitespace-nowrap rounded-full border px-3 py-1.5 transition-colors {{ request()->routeIs('contact') ? 'border-indigo-200 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600' }}">
-                Contact Us
-            </a>
+
+        <!-- Mobile Nav Drawer -->
+        <div x-show="mobileNavOpen"
+             x-cloak
+             @keydown.escape.window="closeMobileNav()"
+             class="fixed inset-0 z-[90] lg:hidden"
+             role="dialog"
+             aria-modal="true">
+            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+                 x-transition.opacity
+                 @click="closeMobileNav()"></div>
+
+            <div class="absolute inset-y-0 left-0 w-[min(92vw,360px)] bg-white shadow-2xl flex h-full flex-col"
+                 x-transition:enter="transform transition ease-out duration-300"
+                 x-transition:enter-start="-translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in duration-200"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="-translate-x-full">
+                <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Menu</p>
+                        <p class="truncate text-base font-semibold text-slate-900">{{ config('app.name', 'Inventory B2B') }}</p>
+                    </div>
+                    <button type="button"
+                            @click="closeMobileNav()"
+                            class="grid h-10 w-10 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition"
+                            aria-label="Close menu">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="px-2 py-3 flex-1 overflow-y-auto">
+                    @if(request()->routeIs('shop'))
+                        <button type="button"
+                                @click="openShopFilters()"
+                                class="lg:hidden w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            <span>Filters</span>
+                            <span class="text-slate-400">→</span>
+                        </button>
+                    @endif
+                    <a href="{{ route('home') }}"
+                       @click="closeMobileNav()"
+                       class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold {{ request()->routeIs('home') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                        <span>Home</span>
+                        <span class="text-slate-400">→</span>
+                    </a>
+                    <a href="{{ route('shop') }}"
+                       @click="closeMobileNav()"
+                       class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold {{ request()->routeIs('shop') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                        <span>B2B Shop</span>
+                        <span class="text-slate-400">→</span>
+                    </a>
+                    <a href="{{ route('about') }}"
+                       @click="closeMobileNav()"
+                       class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold {{ request()->routeIs('about') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                        <span>About</span>
+                        <span class="text-slate-400">→</span>
+                    </a>
+                    <a href="{{ route('contact') }}"
+                       @click="closeMobileNav()"
+                       class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold {{ request()->routeIs('contact') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                        <span>Contact Us</span>
+                        <span class="text-slate-400">→</span>
+                    </a>
+
+                    @if($isFrontendCustomer)
+                        <div class="my-3 border-t border-slate-100"></div>
+                        <a href="{{ route('account.index') }}"
+                           @click="closeMobileNav()"
+                           class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            <span>My Account</span>
+                            <span class="text-slate-400">→</span>
+                        </a>
+                    @elseif($isAdminAuth)
+                        <div class="my-3 border-t border-slate-100"></div>
+                        <a href="{{ route('admin.dashboard') }}"
+                           @click="closeMobileNav()"
+                           class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            <span>Admin Dashboard</span>
+                            <span class="text-slate-400">→</span>
+                        </a>
+                    @endif
+                </div>
+
+                @if($isFrontendCustomer)
+                    <div class="mt-auto border-t border-slate-100 px-4 py-4">
+                        <form method="POST" action="{{ route('logout') }}" @submit.prevent="handleLogout($el); closeMobileNav()">
+                            @csrf
+                            <button type="submit" class="w-full rounded-xl bg-rose-50 px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-rose-700 hover:bg-rose-100 transition">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </nav>
@@ -314,11 +407,28 @@
         window.__navbarSearchRegistered = true;
 
         Alpine.data('navbarSearch', (currencyIcon = 'Tk') => ({
+            mobileNavOpen: false,
             searchOpen: false,
             searchQuery: @js((string) request('search', '')),
             searchResults: [],
             searchLoading: false,
             searchDebounceTimer: null,
+
+            openMobileNav() {
+                this.mobileNavOpen = true;
+                this.searchOpen = false;
+                document.documentElement.classList.add('overflow-hidden');
+            },
+
+            closeMobileNav() {
+                this.mobileNavOpen = false;
+                document.documentElement.classList.remove('overflow-hidden');
+            },
+
+            openShopFilters() {
+                window.dispatchEvent(new CustomEvent('shop-open-filters'));
+                this.closeMobileNav();
+            },
 
             toggleSearch() {
                 this.searchOpen = !this.searchOpen;

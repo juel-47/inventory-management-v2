@@ -12,25 +12,27 @@
     <div id="shop-page-root"
          class="bg-slate-50 min-h-screen"
          x-data="shopFilter($el)"
+         @shop-open-filters.window="openMobileFilters()"
+         @keydown.escape.window="mobileFiltersOpen = false"
          data-active-cat="{{ request('category', '') }}"
          data-active-sub="{{ request('subcategory', '') }}"
          data-min-range="{{ $min_range }}"
          data-max-range="{{ $max_range }}"
          data-min-price="{{ request('min_price', $min_range) }}"
-         data-max-price="{{ request('max_price', $max_range) }}"
-         data-sort="{{ request('sort', 'latest') }}"
-         data-product-type="{{ request('product_type', '') }}"
+        data-max-price="{{ request('max_price', $max_range) }}"
+        data-sort="{{ request('sort', 'latest') }}"
+        data-product-type="{{ request('product_type', '') }}"
          data-search="{{ request('search', '') }}">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex flex-col sm:flex-row gap-8">
                 <!-- Sidebar Filters -->
-                <aside class="w-full lg:w-72 shrink-0">
-                    <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 sticky top-24">
+                <aside class="shop-desktop-sidebar hidden lg:block w-full lg:w-72 shrink-0">
+                    <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 sm:sticky sm:top-24">
                         <div class="flex items-center justify-between mb-5">
                             <h2 class="text-[13px] font-semibold uppercase tracking-[0.12em] text-slate-900">Filters</h2>
                             <button type="button"
                                 @click="resetFilters()"
-                                class="text-[10px] font-semibold uppercase tracking-[0.12em] bg-red-50 px-3 py-1.5 roudned-md text-red-500 hover:text-red-600 transition-colors">
+                                class="text-[10px] font-semibold uppercase tracking-[0.12em] bg-red-50 px-3 py-1.5 rounded-md text-red-500 hover:text-red-600 transition-colors">
                                 Clear
                             </button>
                         </div>
@@ -38,7 +40,7 @@
                         <!-- Categories -->
                         <div class="mb-9">
                             <h3 class="text-[12px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-4">Categories</h3>
-                            <div class="space-y-3">
+                            <div class="shop-filter-categories space-y-3">
                                 @foreach ($categories as $category)
                                     <div class="space-y-2">
                                         <div class="flex items-center justify-between group">
@@ -159,6 +161,24 @@
 
                 <!-- Main Content -->
                 <div class="flex-1">
+                    <!-- Mobile Filters Trigger -->
+                    <div class="shop-mobile-filters-trigger lg:hidden mb-4">
+                        <div class="bg-white rounded-lg px-4 py-3 shadow-sm border border-slate-200 flex items-center justify-between gap-3">
+                            <button type="button"
+                                    @click="openMobileFilters()"
+                                    class="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-black transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></path>
+                                </svg>
+                                Filters
+                            </button>
+                            <button type="button"
+                                    @click="resetFilters()"
+                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] bg-red-50 px-3 py-2 rounded-md text-red-600 hover:text-red-700 transition-colors">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
                     <!-- Top Toolbar -->
                     <div
                         class="bg-white rounded-lg px-4 py-3 mb-8 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -201,7 +221,7 @@
                     </div>
 
                     <!-- Products Grid -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
                         @forelse($shopCards as $card)
                             <x-frontend.product-card
                                 :product="$card['product']"
@@ -232,6 +252,37 @@
                     <div id="shop-pagination" class="mt-24 border-t border-slate-200">
                         {{ $products->links('vendor.pagination.tailwind') }}
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Filters Drawer -->
+        <div x-show="mobileFiltersOpen"
+             x-cloak
+             class="fixed inset-0 z-[70] lg:hidden">
+            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+                 @click="closeMobileFilters()"></div>
+            <div class="absolute inset-y-0 left-0 w-[min(92vw,380px)] bg-white shadow-2xl overflow-y-auto">
+                <div class="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-100 px-4 py-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Shop</p>
+                        <h2 class="text-lg font-semibold text-slate-900">Filters</h2>
+                    </div>
+                    <button type="button"
+                            @click="closeMobileFilters()"
+                            class="grid h-10 w-10 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-4">
+                    @include('frontend.partials.shop-filters', ['filterCardClass' => 'bg-white rounded-2xl p-5 border border-slate-200 shadow-sm'])
+                    <button type="button"
+                            @click="closeMobileFilters()"
+                            class="mt-4 w-full inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-200 transition">
+                        Done
+                    </button>
                 </div>
             </div>
         </div>
@@ -319,6 +370,7 @@
                     const maxPrice = parseFloatOr(root?.dataset?.maxPrice, maxRange);
 
                     return {
+                        mobileFiltersOpen: false,
                         activeCat: parseIntOrNull(root?.dataset?.activeCat),
                         activeSub: parseIntOrNull(root?.dataset?.activeSub),
                         minRange: minRange,
@@ -328,6 +380,14 @@
                         sort: (root?.dataset?.sort || 'latest'),
                         productType: (root?.dataset?.productType || ''),
                         search: (root?.dataset?.search || ''),
+
+                        openMobileFilters() {
+                            this.mobileFiltersOpen = true;
+                        },
+
+                        closeMobileFilters() {
+                            this.mobileFiltersOpen = false;
+                        },
 
                         toggleCategory(id) {
                             if (this.activeCat === id) {
@@ -377,6 +437,7 @@
                         },
 
                         updateUrl(params) {
+                            this.mobileFiltersOpen = false;
                             const url = new URL(window.location.href);
                             Object.keys(params).forEach(key => {
                                 if (params[key] === null || params[key] === undefined || params[key] === '') {

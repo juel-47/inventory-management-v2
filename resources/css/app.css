@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind v4: explicitly declare template sources so all Blade pages (including shop)
+   are scanned and responsive utilities like `sm:w-72` are generated in production builds. */
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+
 @theme {
   --animate-blob: blob 7s infinite;
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;

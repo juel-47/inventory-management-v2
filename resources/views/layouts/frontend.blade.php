@@ -15,6 +15,7 @@
 
     {{-- Assets (Vite) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('backend/assets/css/custom.css') }}">
 
     @yield('head')
 </head>

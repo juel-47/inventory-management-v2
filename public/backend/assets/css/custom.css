@@ -1,20 +1,22 @@
 /* Custom CSS */
 
-body.layout-3 .navbar{
+body.layout-3 .navbar {
     margin: 16px;
 }
 
 input[type="number"] {
-  -moz-appearance: textfield !important;   /* Firefox */
-  -webkit-appearance: none !important;     /* Chrome, Safari */
-  appearance: none !important;
+    -moz-appearance: textfield !important;
+    /* Firefox */
+    -webkit-appearance: none !important;
+    /* Chrome, Safari */
+    appearance: none !important;
 }
 
 /* Remove arrows in WebKit browsers */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 /* Mobile Pagination Fix */
@@ -24,12 +26,14 @@ input[type="number"]::-webkit-outer-spin-button {
         justify-content: center !important;
         margin-top: 10px;
     }
+
     .custom-pagination .page-item .page-link {
         padding: 6px 10px !important;
         font-size: 11px !important;
         margin: 2px;
         border-radius: 4px !important;
     }
+
     /* Hide some elements on very small screens if needed, 
        but for now just wrapping and sizing should fix the overlay */
 }
@@ -51,23 +55,31 @@ input[type="number"]::-webkit-outer-spin-button {
         z-index: 999999 !important;
         pointer-events: none !important;
         display: flex !important;
-        width: auto !important; /* Fix: Don't take full width */
-        height: auto !important; /* Fix: Don't take full height */
+        width: auto !important;
+        /* Fix: Don't take full width */
+        height: auto !important;
+        /* Fix: Don't take full height */
         flex-direction: column-reverse !important;
         align-items: flex-end !important;
         gap: 10px !important;
     }
-    #floating-baskets-container > div {
+
+    #floating-baskets-container>div {
         pointer-events: auto !important;
     }
+
     .basket-fab {
-        width: 55px !important; /* Slightly larger for touch */
+        width: 55px !important;
+        /* Slightly larger for touch */
         height: 55px !important;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important; /* More shadow on mobile */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        /* More shadow on mobile */
     }
+
     .basket-fab i {
         font-size: 20px !important;
     }
+
     #floating-baskets-container span.badge {
         width: 22px !important;
         height: 22px !important;
@@ -79,4 +91,54 @@ input[type="number"]::-webkit-outer-spin-button {
         right: -5px !important;
         border: 2px solid #fff !important;
     }
+}
+
+/* Minimal, production-safe overrides for frontend pages.
+   This file is loaded after Vite assets so it can patch layouts even when
+   Tailwind build output is stale or missing a few utilities. */
+
+/* Shop page: keep desktop sidebar usable and prevent mobile/tablet toolbar on desktop. */
+@media (min-width: 64rem) {
+    .shop-mobile-filters-trigger {
+        display: none !important;
+    }
+
+    .shop-desktop-sidebar {
+        width: 13.25rem !important;
+        flex: 0 0 auto !important;
+        display: block !important;
+    }
+
+    /* Categories: show roughly ~10 items, scroll the rest (desktop only). */
+    .shop-desktop-sidebar .shop-filter-categories {
+        max-height: 24rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 0.35rem;
+    }
+
+    .shop-desktop-sidebar .shop-filter-categories::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .shop-desktop-sidebar .shop-filter-categories::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.55);
+        border-radius: 999px;
+        border: 3px solid rgba(255, 255, 255, 1);
+    }
+
+    .shop-desktop-sidebar .shop-filter-categories::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
+@media (max-width: 63.999rem) {
+    .shop-desktop-sidebar {
+        display: none !important;
+    }
+}
+
+/* Prevent tiny accidental horizontal overflows on tablet/desktop (usually from long nav rows). */
+.frontend-classic {
+    overflow-x: hidden;
 }
