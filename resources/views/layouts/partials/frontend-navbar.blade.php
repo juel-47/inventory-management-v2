@@ -40,6 +40,18 @@
 {{-- =====================================================
      NAVIGATION BAR
      ===================================================== --}}
+<style>
+    /* Hard-guard responsive navbar behavior even when Tailwind build output is stale. */
+    @media (min-width: 1024px) {
+        .nav-desktop-links { display: flex !important; }
+        .nav-mobile-toggle { display: none !important; }
+        .nav-mobile-drawer { display: none !important; }
+    }
+
+    @media (max-width: 1023.98px) {
+        .nav-desktop-links { display: none !important; }
+    }
+</style>
 <nav class="bg-white border-b border-slate-200 sticky top-0 z-50" x-data="navbarSearch(@js($settings->currency_icon ?? 'Tk'))">
     @php
         $isAdminAuth = auth()->check() && auth()->user()->hasRole('Admin');
@@ -72,7 +84,7 @@
             </div>
 
             {{-- Navigation Links (desktop only, to avoid tablet overflow) --}}
-            <div class="hidden lg:flex items-center gap-8">
+            <div class="nav-desktop-links hidden lg:flex items-center gap-8">
                 <a href="{{ route('home') }}"
                    class="text-[12px] font-medium uppercase tracking-[0.1em] transition-colors {{ request()->routeIs('home') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900' }}">
                     Home
@@ -96,7 +108,7 @@
                 {{-- Mobile/Tablet Menu --}}
                 <button type="button"
                         @click="openMobileNav()"
-                        class="lg:hidden relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
+                        class="nav-mobile-toggle lg:hidden relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
                         :aria-expanded="mobileNavOpen.toString()"
                         aria-label="Open menu">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,7 +314,7 @@
         <div x-show="mobileNavOpen"
              x-cloak
              @keydown.escape.window="closeMobileNav()"
-             class="fixed inset-0 z-[90] lg:hidden"
+             class="nav-mobile-drawer fixed inset-0 z-[90] lg:hidden"
              role="dialog"
              aria-modal="true">
             <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
