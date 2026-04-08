@@ -49,7 +49,7 @@
                     <div class="space-y-3.5 lg:col-span-5">
                         <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                             @if ($displayPath)
-                                <img src="{{ $displayPath }}" alt="{{ $product->name }}" class="aspect-square w-full object-cover">
+                                <img src="{{ $displayPath }}" alt="{{ $product->name }}" class="aspect-square w-full object-contain">
                             @else
                                 <div class="flex aspect-square items-center justify-center">
                                     <span class="rounded-full border border-slate-300 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">

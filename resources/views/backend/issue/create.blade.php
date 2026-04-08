@@ -9,7 +9,23 @@
     @endphp
     <section class="section">
         <div class="section-header">
+            <div class="section-header-back">
+                <a href="{{ $orderId ? route('admin.orders.show', $orderId) : ($requestId ? route('admin.product-requests.show', $requestId) : route('admin.issues.index')) }}"
+                   class="btn btn-icon">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
             <h1>Create Stock Issue</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></div>
+                <div class="breadcrumb-item"><a href="{{ route('admin.issues.index') }}">Issues</a></div>
+                @if($orderId)
+                    <div class="breadcrumb-item"><a href="{{ route('admin.orders.show', $orderId) }}">Order</a></div>
+                @elseif($requestId)
+                    <div class="breadcrumb-item"><a href="{{ route('admin.product-requests.show', $requestId) }}">Request</a></div>
+                @endif
+                <div class="breadcrumb-item">Create</div>
+            </div>
         </div>
 
         <div class="section-body">

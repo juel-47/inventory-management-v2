@@ -33,7 +33,7 @@
     <div class="relative mb-4 aspect-square overflow-hidden rounded-lg border border-slate-200 bg-[#f6f4ef]">
         @if ($resolvedDisplayPath !== '')
             <a href="{{ $resolvedDetailsUrl }}"><img src="{{ $resolvedDisplayPath }}" alt="{{ $productName }}"
-                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"></a>
+                class="h-full w-full object-contain transition-transform duration-700 group-hover:scale-105"></a>
         @else
             <div class="flex h-full w-full items-center justify-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 No image uploaded

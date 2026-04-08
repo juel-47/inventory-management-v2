@@ -65,8 +65,8 @@
                         <img src="{{ asset(optional($settings)->site_logo ?: 'uploads/logo.png') }}" alt="{{ config('app.name') }}" class="w-full h-full object-contain">
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>
-                        <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{{ optional($settings)->site_name ?? 'B2B Portal' }}</span>
+                        <span class="text-[14px] md:text-xl font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">{{ config('app.name', 'Inventory B2B') }}</span>
+                        <span class="text-[5px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{{ optional($settings)->site_name ?? 'B2B Portal' }}</span>
                     </div>
                 </a>
             </div>
