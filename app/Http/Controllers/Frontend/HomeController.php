@@ -409,7 +409,7 @@ class HomeController extends Controller
         $relatedQuery = Product::query()
             ->with([
                 'category:id,name',
-                'brand:id,name',
+                // 'brand:id,name',
                 'variants' => function ($query) use ($roleContext) {
                     $this->configureVariantQuery($query, $roleContext);
                 },
@@ -475,7 +475,7 @@ class HomeController extends Controller
             'roleContext' => $roleContext,
             'displayPath' => $displayPath,
             'productCategoryName' => $productCategoryName,
-            'productBrandName' => $productBrandName,
+            // 'productBrandName' => $productBrandName,
             'productSku' => $productSku,
             'productNumber' => $productNumber,
             'summaryText' => $summaryText,

@@ -10,7 +10,7 @@
         $canViewInventory = (bool) data_get($roleContext, 'canViewInventory', false);
         $displayPath = $displayPath ?? null;
         $productCategoryName = $productCategoryName ?? '';
-        $productBrandName = $productBrandName ?? '';
+        // $productBrandName = $productBrandName ?? '';
         $productSku = $productSku ?? '';
         $productNumber = $productNumber ?? '';
         $summaryText = $summaryText ?? null;
@@ -119,10 +119,10 @@
                                 <span class="font-bold text-slate-800">Category:</span>
                                 {{ $productCategoryName !== '' ? $productCategoryName : 'Not set' }}
                             </div>
-                            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] text-slate-700">
+                            {{-- <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] text-slate-700">
                                 <span class="font-bold text-slate-800">Brand:</span>
                                 {{ $productBrandName !== '' ? $productBrandName : 'Not set' }}
-                            </div>
+                            </div> --}}
                             <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] text-slate-700">
                                 <span class="font-bold text-slate-800">Variant count:</span>
                                 {{ $detailVariantData->count() }}
