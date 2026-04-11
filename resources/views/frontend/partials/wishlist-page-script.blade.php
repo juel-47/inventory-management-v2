@@ -42,22 +42,61 @@
                 return this.uniqueVariantOptions[parseInt(this.selectedVariantIndex, 10)] || null;
             },
 
+            resolvePositivePrice(...candidates) {
+                for (const candidate of candidates) {
+                    const value = parseFloat(candidate);
+                    if (!Number.isNaN(value) && value > 0) {
+                        return value;
+                    }
+                }
+
+                return 0;
+            },
+
             getSelectedPrice(priceType) {
                 if (this.selectedVariant) {
                     if (priceType === 'outlet_price') {
-                        return (this.selectedVariant.outlet_price || this.selectedVariant.price || this.product.outlet_price || this.product.price).toFixed(2);
+                        return this.resolvePositivePrice(
+                            this.selectedVariant.wholesale_price,
+                            this.selectedVariant.outlet_price,
+                            this.product.wholesale_price,
+                            this.product.outlet_price,
+                            this.selectedVariant.customer_price,
+                            this.selectedVariant.price,
+                            this.product.customer_price,
+                            this.product.price
+                        ).toFixed(2);
                     }
 
                     if (priceType === 'price') {
-                        return (this.selectedVariant.price || this.product.price).toFixed(2);
+                        return this.resolvePositivePrice(
+                            this.selectedVariant.customer_price,
+                            this.selectedVariant.price,
+                            this.product.customer_price,
+                            this.product.price,
+                            this.selectedVariant.wholesale_price,
+                            this.selectedVariant.outlet_price,
+                            this.product.wholesale_price,
+                            this.product.outlet_price
+                        ).toFixed(2);
                     }
                 } else {
                     if (priceType === 'outlet_price') {
-                        return this.product.outlet_price.toFixed(2);
+                        return this.resolvePositivePrice(
+                            this.product.wholesale_price,
+                            this.product.outlet_price,
+                            this.product.customer_price,
+                            this.product.price
+                        ).toFixed(2);
                     }
 
                     if (priceType === 'price') {
-                        return this.product.price.toFixed(2);
+                        return this.resolvePositivePrice(
+                            this.product.customer_price,
+                            this.product.price,
+                            this.product.wholesale_price,
+                            this.product.outlet_price
+                        ).toFixed(2);
                     }
                 }
 

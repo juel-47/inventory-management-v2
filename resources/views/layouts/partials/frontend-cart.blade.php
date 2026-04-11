@@ -1,3 +1,8 @@
+@php
+    $showWholesalePrice = auth()->check() && (auth()->user()->hasRole('Outlet User') || auth()->user()->hasRole('User'));
+    $showCustomerReferencePrice = auth()->check() && auth()->user()->hasRole('Outlet User');
+@endphp
+
 {{-- =====================================================
      CART DRAWER (Slide-over Panel)
      ===================================================== --}}
@@ -69,13 +74,29 @@
                                                     <template x-if="item.variant_label">
                                                         <p class="mt-1 text-xs text-slate-500" x-text="item.variant_label"></p>
                                                     </template>
-                                                    <p class="mt-1 text-xs text-slate-500">
-                                                        Unit:
-                                                        <span x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.display_price ?? item.price) || 0).toFixed(2)"></span>
-                                                        <template x-if="item.has_discount">
-                                                            <span class="ml-1 text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.original_price ?? item.price) || 0).toFixed(2)"></span>
-                                                        </template>
-                                                    </p>
+                                                    @if ($showWholesalePrice)
+                                                        <p class="mt-1 text-xs text-slate-500">
+                                                            Wholesale:
+                                                            <span x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.display_price ?? item.price) || 0).toFixed(2)"></span>
+                                                            <template x-if="item.has_discount">
+                                                                <span class="ml-1 text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.original_price ?? item.price) || 0).toFixed(2)"></span>
+                                                            </template>
+                                                        </p>
+                                                        @if ($showCustomerReferencePrice)
+                                                            <p class="mt-1 text-xs text-slate-500" x-show="(parseFloat(item.customer_price) || 0) > 0">
+                                                                Outlet/Customer:
+                                                                <span x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.customer_price) || 0).toFixed(2)"></span>
+                                                            </p>
+                                                        @endif
+                                                    @else
+                                                        <p class="mt-1 text-xs text-slate-500">
+                                                            Unit:
+                                                            <span x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.display_price ?? item.price) || 0).toFixed(2)"></span>
+                                                            <template x-if="item.has_discount">
+                                                                <span class="ml-1 text-slate-400 line-through" x-text="'{{ $settings->currency_icon }}' + (parseFloat(item.original_price ?? item.price) || 0).toFixed(2)"></span>
+                                                            </template>
+                                                        </p>
+                                                    @endif
                                                 </div>
                                                 <div class="flex flex-1 items-end justify-between text-sm">
                                                     {{-- Quantity Controls --}}

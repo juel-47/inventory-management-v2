@@ -11,6 +11,7 @@ use App\Models\CustomProductRequest;
 use App\Models\ProductRequest;
 use App\Models\SavedPurchaseForm;
 use App\Models\SavedPurchaseFormItem;
+use App\Support\ProductPriceSupport;
 use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -88,14 +89,14 @@ class AccountController extends Controller
         $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
         $mapOrderFormProduct = function ($product) use ($isOutletRole) {
                 $price = $isOutletRole
-                    ? (float) ($product->outlet_price ?: $product->price)
-                    : (float) $product->price;
+                    ? ProductPriceSupport::resolveWholesalePrice($product)
+                    : ProductPriceSupport::resolveCustomerPrice($product);
 
                 $variants = $product->variants
                     ->map(function ($variant) use ($product, $isOutletRole) {
                         $variantPrice = $isOutletRole
-                            ? (float) ($variant->outlet_price ?: $variant->price ?: $product->outlet_price ?: $product->price)
-                            : (float) ($variant->price ?: $product->price);
+                            ? ProductPriceSupport::resolveWholesalePrice($product, $variant)
+                            : ProductPriceSupport::resolveCustomerPrice($product, $variant);
 
                         $colorRelation = $variant->getRelation('color');
                         $sizeRelation = $variant->getRelation('size');
@@ -802,12 +803,7 @@ class AccountController extends Controller
 
     private function resolveOrderFormUnitPrice(Product $product, ?ProductVariant $variant, $user): float
     {
-        $isOutletRole = $user && ($user->hasRole('Outlet User') || $user->hasRole('User'));
-        if ($isOutletRole) {
-            return (float) ($variant ? ($variant->outlet_price ?: $variant->price ?: $product->outlet_price ?: $product->price) : ($product->outlet_price ?: $product->price));
-        }
-
-        return (float) ($variant ? ($variant->price ?: $product->price) : $product->price);
+        return ProductPriceSupport::resolveRoleUnitPrice($product, $variant, $user);
     }
 
     private function generateProductRequestNo($user): string

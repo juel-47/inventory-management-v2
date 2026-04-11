@@ -10,6 +10,7 @@ use App\Models\GeneralSetting;
 use App\Models\ProductType;
 use App\Models\Slider;
 use App\Services\CheckoutDiscountResolver;
+use App\Support\ProductPriceSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -450,6 +451,8 @@ class HomeController extends Controller
             'thumb_image' => (string) ($displayPath ?? ''),
             'price' => (float) ($product->price ?? 0),
             'outlet_price' => (float) ($product->outlet_price ?? 0),
+            'customer_price' => ProductPriceSupport::resolveCustomerPrice($product),
+            'wholesale_price' => ProductPriceSupport::resolveWholesalePrice($product),
             'discount_type' => (string) ($product->discount_type ?? ''),
             'discount' => (float) ($product->discount ?? 0),
             'global_discount_type' => (string) ($this->resolveDefaultDiscountContext()['type'] ?? ''),
@@ -564,6 +567,8 @@ class HomeController extends Controller
             'thumb_image' => (string) ($displayPath ?? ''),
             'price' => (float) ($product->price ?? 0),
             'outlet_price' => (float) ($product->outlet_price ?? 0),
+            'customer_price' => ProductPriceSupport::resolveCustomerPrice($product),
+            'wholesale_price' => ProductPriceSupport::resolveWholesalePrice($product),
             'discount_type' => (string) ($product->discount_type ?? ''),
             'discount' => (float) ($product->discount ?? 0),
             'global_discount_type' => (string) ($globalDiscount['type'] ?? ''),
@@ -594,12 +599,16 @@ class HomeController extends Controller
         $sizeRelation = $variant->getRelation('size');
         $colorName = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ''));
         $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ''));
+        $customerPrice = ProductPriceSupport::resolveCustomerPrice($product, $variant);
+        $wholesalePrice = ProductPriceSupport::resolveWholesalePrice($product, $variant);
 
         return [
             'id' => (int) $variant->id,
             'name' => $variantLabel,
-            'price' => $variant->price > 0 ? (float) $variant->price : (float) ($product->price ?? 0),
-            'outlet_price' => $variant->outlet_price > 0 ? (float) $variant->outlet_price : (float) ($product->outlet_price ?? 0),
+            'price' => $customerPrice,
+            'outlet_price' => $wholesalePrice,
+            'customer_price' => $customerPrice,
+            'wholesale_price' => $wholesalePrice,
             'color' => $colorName !== '' ? $colorName : (string) ($variant->color ?? ''),
             'size' => $sizeName !== '' ? $sizeName : (string) ($variant->size ?? ''),
             'stock' => $canViewInventory ? (int) ($variant->scoped_stock_qty ?? 0) : null,

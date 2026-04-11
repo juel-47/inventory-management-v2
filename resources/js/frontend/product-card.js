@@ -227,16 +227,55 @@ document.addEventListener('alpine:init', () => {
             return Math.max(0, numericPrice - this.productDiscountValue);
         },
 
+        resolvePositivePrice(...candidates) {
+            for (const candidate of candidates) {
+                const value = parseFloat(candidate);
+                if (!Number.isNaN(value) && value > 0) {
+                    return value;
+                }
+            }
+
+            return 0;
+        },
+
         get outletBasePrice() {
             return this.selectedVariant
-                ? (this.selectedVariant.outlet_price || this.selectedVariant.price || this.product.outlet_price || this.product.price || 0)
-                : (this.product.outlet_price || this.product.price || 0);
+                ? this.resolvePositivePrice(
+                    this.selectedVariant.wholesale_price,
+                    this.selectedVariant.outlet_price,
+                    this.product.wholesale_price,
+                    this.product.outlet_price,
+                    this.selectedVariant.customer_price,
+                    this.selectedVariant.price,
+                    this.product.customer_price,
+                    this.product.price
+                )
+                : this.resolvePositivePrice(
+                    this.product.wholesale_price,
+                    this.product.outlet_price,
+                    this.product.customer_price,
+                    this.product.price
+                );
         },
 
         get retailBasePrice() {
             return this.selectedVariant
-                ? (this.selectedVariant.price || this.product.price || 0)
-                : (this.product.price || 0);
+                ? this.resolvePositivePrice(
+                    this.selectedVariant.customer_price,
+                    this.selectedVariant.price,
+                    this.product.customer_price,
+                    this.product.price,
+                    this.selectedVariant.wholesale_price,
+                    this.selectedVariant.outlet_price,
+                    this.product.wholesale_price,
+                    this.product.outlet_price
+                )
+                : this.resolvePositivePrice(
+                    this.product.customer_price,
+                    this.product.price,
+                    this.product.wholesale_price,
+                    this.product.outlet_price
+                );
         },
 
         get outletDisplayPrice() {

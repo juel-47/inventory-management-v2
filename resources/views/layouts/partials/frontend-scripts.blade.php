@@ -171,6 +171,43 @@
                 return this.items.reduce((total, item) => total + (parseFloat(item.price) * (parseInt(item.quantity) || 0)), 0);
             },
 
+            _pickPrice(...candidates) {
+                for (const candidate of candidates) {
+                    const value = parseFloat(candidate);
+                    if (!Number.isNaN(value) && value > 0) {
+                        return value;
+                    }
+                }
+
+                return 0;
+            },
+
+            resolveWholesalePrice(product, variant = null) {
+                return this._pickPrice(
+                    variant?.wholesale_price,
+                    variant?.outlet_price,
+                    product?.wholesale_price,
+                    product?.outlet_price,
+                    variant?.customer_price,
+                    variant?.price,
+                    product?.customer_price,
+                    product?.price
+                );
+            },
+
+            resolveCustomerPrice(product, variant = null) {
+                return this._pickPrice(
+                    variant?.customer_price,
+                    variant?.price,
+                    product?.customer_price,
+                    product?.price,
+                    variant?.wholesale_price,
+                    variant?.outlet_price,
+                    product?.wholesale_price,
+                    product?.outlet_price
+                );
+            },
+
             _rebuildServerSnapshot() {
                 const snapshot = {};
                 this.items.forEach((item) => {
@@ -315,14 +352,14 @@
             async addItem(product, variant = null, quantity = 1) {
                 const q    = parseInt(quantity) || 1;
                 const role = window.APP_USER_ROLE || 'Guest';
-                let price  = 0;
+                const wholesalePrice = this.resolveWholesalePrice(product, variant);
+                const customerPrice = this.resolveCustomerPrice(product, variant);
+                let price = 0;
 
                 if (role === 'Outlet User' || role === 'User') {
-                    price = variant
-                        ? (variant.outlet_price || variant.price)
-                        : (product.outlet_price || product.price);
+                    price = wholesalePrice;
                 } else {
-                    price = variant ? variant.price : product.price;
+                    price = customerPrice;
                 }
 
                 if (window.APP_AUTHENTICATED) {
@@ -372,6 +409,8 @@
                     if (existingItem) {
                         existingItem.quantity += q;
                         existingItem.price = price;
+                        existingItem.wholesale_price = wholesalePrice;
+                        existingItem.customer_price = customerPrice;
                     } else {
                         this.items.push({
                             id:            Date.now() + Math.random(),
@@ -379,6 +418,8 @@
                             variant_id:    variant ? variant.id : null,
                             name:          product.name,
                             price:         price,
+                            wholesale_price: wholesalePrice,
+                            customer_price: customerPrice,
                             image:         product.thumb_image,
                             category:      product.category?.name || product.category || 'General',
                             variant_label: variant

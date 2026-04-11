@@ -13,6 +13,7 @@ use App\Models\SavedPurchaseForm;
 use App\Models\Wishlist;
 use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
+use App\Support\ProductPriceSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -515,14 +516,7 @@ class CartController extends Controller
 
     private function resolveCartItemUnitPrice(Product $product, ?ProductVariant $variant): float
     {
-        $user = Auth::user();
-        $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
-
-        $price = $isOutletRole
-            ? ($variant ? ($variant->outlet_price ?: $product->outlet_price ?: $product->price) : ($product->outlet_price ?? $product->price))
-            : ($variant ? ($variant->price ?: $product->price) : $product->price);
-
-        return (float) $price;
+        return ProductPriceSupport::resolveRoleUnitPrice($product, $variant, Auth::user());
     }
 
     private function calculateCheckoutSummary($items): array
@@ -781,6 +775,8 @@ class CartController extends Controller
 
                         $variant = $item->variant;
                         $price = (float) $this->resolveCartItemUnitPrice($product, $variant);
+                        $wholesalePrice = ProductPriceSupport::resolveWholesalePrice($product, $variant);
+                        $customerPrice = ProductPriceSupport::resolveCustomerPrice($product, $variant);
                         $variantLabel = $this->resolveVariantLabel($variant);
                         $availableStock = $this->resolveAvailableStock($product, $variant);
                         $quantity = (int) ($item->quantity ?? 1);
@@ -800,6 +796,8 @@ class CartController extends Controller
                             'price' => (float) $price,
                             'original_price' => (float) $price,
                             'display_price' => (float) $displayPrice,
+                            'wholesale_price' => (float) $wholesalePrice,
+                            'customer_price' => (float) $customerPrice,
                             'has_discount' => $lineDiscountAmount > 0,
                             'discount_source' => (string) ($lineDiscount['source'] ?? 'none'),
                             'discount_type' => (string) ($lineDiscount['type'] ?? ''),

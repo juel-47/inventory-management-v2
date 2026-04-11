@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Wishlist;
+use App\Support\ProductPriceSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,6 +37,8 @@ class WishlistController extends Controller
                     $colorName = trim((string) (is_object($colorRelation) ? ($colorRelation->name ?? '') : ($v->color ?? '')));
                     $sizeName = trim((string) (is_object($sizeRelation) ? ($sizeRelation->name ?? '') : ($v->size ?? '')));
                     $label = trim((string) ($v->name ?? ''));
+                    $customerPrice = ProductPriceSupport::resolveCustomerPrice($product, $v);
+                    $wholesalePrice = ProductPriceSupport::resolveWholesalePrice($product, $v);
                     if ($label === '') {
                         $label = trim(implode(' ', array_filter([$colorName, $sizeName])));
                     }
@@ -50,8 +53,10 @@ class WishlistController extends Controller
                         'color'           => $colorName,
                         'size'            => $sizeName,
                         'stock'           => (int)$v->inventory_stock,
-                        'price'           => (float) ($v->price ?: $product->price ?: 0),
-                        'outlet_price'    => (float) ($v->outlet_price ?: $v->price ?: $product->outlet_price ?: $product->price ?: 0),
+                        'price'           => $customerPrice,
+                        'outlet_price'    => $wholesalePrice,
+                        'customer_price'  => $customerPrice,
+                        'wholesale_price' => $wholesalePrice,
                     ];
                 })->toArray() : [];
 
@@ -61,6 +66,8 @@ class WishlistController extends Controller
                     'slug'       => $product->slug,
                     'price'      => $product->price,
                     'outlet_price' => $product->outlet_price,
+                    'customer_price' => ProductPriceSupport::resolveCustomerPrice($product),
+                    'wholesale_price' => ProductPriceSupport::resolveWholesalePrice($product),
                     'minimum_order_qty' => (int) ($product->minimum_order_qty ?? 1),
                     'image'      => $imageUrl,
                     'category'   => $product->category->name ?? 'General',

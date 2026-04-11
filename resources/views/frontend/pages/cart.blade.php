@@ -4,6 +4,8 @@
 @section('content')
     @php
         $currencyIcon = optional($settings)->currency_icon ?? 'Tk';
+        $showWholesalePrice = auth()->check() && (auth()->user()->hasRole('Outlet User') || auth()->user()->hasRole('User'));
+        $showCustomerReferencePrice = auth()->check() && auth()->user()->hasRole('Outlet User');
     @endphp
 
     <div class="min-h-screen bg-slate-50 py-8 sm:py-10" x-data="cartPage(@js($currencyIcon))">
@@ -89,10 +91,20 @@
 
                                             <div class="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
                                                 <div class="text-right">
-                                                    <p class="text-[11px] font-semibold text-slate-500" x-text="formatMoney(parseFloat(item.display_price ?? item.price) || 0) + ' / unit'"></p>
-                                                    <template x-if="item.has_discount">
-                                                        <p class="text-[10px] font-semibold text-slate-400 line-through" x-text="formatMoney(parseFloat(item.original_price ?? item.price) || 0) + ' / unit'"></p>
-                                                    </template>
+                                                    @if ($showWholesalePrice)
+                                                        <p class="text-[11px] font-semibold text-slate-500" x-text="'Wholesale: ' + formatMoney(parseFloat(item.display_price ?? item.price) || 0)"></p>
+                                                        @if ($showCustomerReferencePrice)
+                                                            <p class="text-[11px] font-semibold text-slate-500" x-show="(parseFloat(item.customer_price) || 0) > 0" x-text="'Outlet/Customer: ' + formatMoney(parseFloat(item.customer_price) || 0)"></p>
+                                                        @endif
+                                                        <template x-if="item.has_discount">
+                                                            <p class="text-[10px] font-semibold text-slate-400 line-through" x-text="'Wholesale Was: ' + formatMoney(parseFloat(item.original_price ?? item.price) || 0)"></p>
+                                                        </template>
+                                                    @else
+                                                        <p class="text-[11px] font-semibold text-slate-500" x-text="formatMoney(parseFloat(item.display_price ?? item.price) || 0) + ' / unit'"></p>
+                                                        <template x-if="item.has_discount">
+                                                            <p class="text-[10px] font-semibold text-slate-400 line-through" x-text="formatMoney(parseFloat(item.original_price ?? item.price) || 0) + ' / unit'"></p>
+                                                        </template>
+                                                    @endif
                                                 </div>
                                                 <button type="button"
                                                     @click="removeItem(item.id)"

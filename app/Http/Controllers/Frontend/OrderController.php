@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Services\CheckoutDiscountResolver;
 use App\Services\CheckoutTaxResolver;
 use App\Support\PiInfoSupport;
+use App\Support\ProductPriceSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -312,13 +313,7 @@ class OrderController extends Controller
 
     private function resolveCurrentUnitPrice(Product $product, ?ProductVariant $variant, $user): float
     {
-        $isOutletRole = $user->hasRole('Outlet User') || $user->hasRole('User');
-
-        $price = $isOutletRole
-            ? ($variant ? ($variant->outlet_price ?: $product->outlet_price ?: $product->price) : ($product->outlet_price ?: $product->price))
-            : ($variant ? ($variant->price ?: $product->price) : $product->price);
-
-        return (float) $price;
+        return ProductPriceSupport::resolveRoleUnitPrice($product, $variant, $user);
     }
 
     private function resolveVariantLabel(?ProductVariant $variant, OrderItem $oldItem): ?string
