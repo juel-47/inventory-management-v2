@@ -124,7 +124,7 @@
                                             </span>
                                         </div>
                                         <div class="flex flex-col border-t border-slate-50 pt-1">
-                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Selling Price</span>
+                                            <span class="text-[9px] font-black text-red-500 uppercase tracking-widest">Selling Price</span>
                                             <span class="text-xs font-bold text-slate-500">
                                                 {{$settings->currency_icon}}{{ number_format($product->price, 2) }}
                                             </span>

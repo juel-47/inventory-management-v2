@@ -78,9 +78,15 @@
             </div>
         </div>
 
-        <div class="mt-10 border-t border-slate-200 pt-6">
-            <p class="text-xs text-slate-500 text-center sm:text-right">
+        <div class="mt-10 border-t flex lg:flex-row flex-col text-center space-y-3 items-center justify-between border-slate-200 pt-6">
+            <p class='text-sm text-slate-500 '>
+                Ideation & Design Shahadat
+            </p>
+            <p class="text-sm text-slate-500 ">
                 &copy; {{ date('Y') }} {{ $footerSiteName }} - Copenhagen Tourist Point . All rights reserved.
+            </p>
+            <p class="text-sm text-slate-500 text-center">
+                Developed by <span class='text-orange-700 font-medium'>Inoodex</span>
             </p>
         </div>
     </div>

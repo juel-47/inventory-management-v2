@@ -113,13 +113,13 @@
         <div class="mt-auto">
             @auth
                 <div class="space-y-3">
-                    <div class="flex items-end justify-between gap-3">
-                        <div class="min-w-0 flex flex-col">
+                    <div class="flex items-center justify-between">
+                        <div class="min-w-0 w-full flex flex-col">
                             @if ($isOutletUser)
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="flex flex-col items-start space-y-2">
                                     <div class="flex flex-col">
                                         <span class="mb-1 whitespace-nowrap text-[10px] font-medium uppercase leading-none tracking-wider text-slate-500">Whole sale Price</span>
-                                        <span class="text-lg font-semibold leading-none text-slate-800">
+                                        <span class="text-[16px] font-semibold leading-none text-slate-800">
                                             {{ $currencyIcon }}<span x-text="outletDisplayPrice"></span>
                                         </span>
                                         <template x-if="showOutletOriginalPrice">
@@ -128,13 +128,13 @@
                                             </span>
                                         </template>
                                     </div>
-                                    <div class="flex flex-col items-end text-right">
+                                    <div class="flex flex-col mt-2">
                                         <span class="mb-1 whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-500">Selling Price</span>
-                                        <span class="text-base font-semibold leading-none text-slate-800">
+                                        <span class="text-[16px] font-semibold leading-none text-slate-800">
                                             {{ $currencyIcon }}<span x-text="retailDisplayPrice"></span>
                                         </span>
                                         <template x-if="showRetailOriginalPrice">
-                                            <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through text-right">
+                                            <span class="mt-1 text-[11px] font-medium leading-none text-slate-400 line-through">
                                                 {{ $currencyIcon }}<span x-text="retailOriginalDisplayPrice"></span>
                                             </span>
                                         </template>
@@ -181,7 +181,7 @@
                     </div>
 
                     
-                        <div class="rounded-md border border-slate-200 bg-white p-3">
+                        <div class="rounded-md bg-white">
                             {{-- <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                                 <span>MIM: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
                                 <template x-if="isInCart">
@@ -246,7 +246,7 @@
 </div> --}}
 
 {{-- new code --}}
-<div class="rounded-md border border-slate-200 bg-white p-3 text-[9.5px] font-semibold uppercase tracking-wide text-slate-600 mb-1">
+<div class="rounded-md border border-slate-200 bg-black/3 p-3 text-[9.5px] font-semibold uppercase tracking-wide text-slate-600 mb-1">
 
     <!-- লাইন ১: MIM + TOTAL IN CART (যদি থাকে) -->
     <div class="flex justify-between items-center mb-1">
@@ -281,7 +281,7 @@
     </div>
 
 </div>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-5 gap-2">
                             <input type="number"
                                 x-model.number="qty"
                                 :min="minimumOrderQty"
@@ -289,13 +289,13 @@
                                 :step="minimumOrderQty"
                                 @input="lastRawQty = $event.target.value"
                                 @change="normalizeQty()"
-                                class="h-11 w-full rounded-md border border-slate-300 bg-white p-0 text-center text-sm font-semibold text-slate-900 focus:border-slate-900 focus:outline-none">
+                                class="h-11 w-full col-span-2 rounded-md border border-slate-300 bg-black/3 p-0 text-center text-sm font-semibold text-slate-900 focus:border-slate-900 focus:outline-none">
 
                             <button @click="canAdd ? addToCart(product, selectedVariant, qty) : notify(cannotAddMessage, 'error')"
                                 :class="canAdd
                                     ? 'bg-slate-900 text-white hover:bg-black'
                                     : 'cursor-not-allowed bg-slate-200 text-slate-400'"
-                                class="flex h-11 w-full items-center justify-center gap-1.5 rounded-md text-[12px] font-semibold uppercase tracking-wider transition-colors active:scale-95">
+                                class="flex h-11 w-full col-span-3 items-center justify-center gap-1.5 rounded-md text-[12px] font-semibold uppercase tracking-wider transition-colors active:scale-95">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>

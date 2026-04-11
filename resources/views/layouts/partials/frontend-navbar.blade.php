@@ -92,17 +92,8 @@
             </div>
 
             {{-- Right Icons --}}
-            <div class="flex items-center gap-2 sm:gap-4">
-                {{-- Mobile/Tablet Menu --}}
-                <button type="button"
-                        @click="openMobileNav()"
-                        class="lg:hidden relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
-                        :aria-expanded="mobileNavOpen.toString()"
-                        aria-label="Open menu">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+            <div class="flex items-center gap-1 md:gap-5">
+                
 
                 {{-- Search --}}
                 <button
@@ -160,6 +151,7 @@
 
                 <div class="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
 
+                
                 {{-- User Menu --}}
                 @if($isFrontendCustomer)
                     <div x-data="{ open: false }" class="relative">
@@ -213,6 +205,16 @@
                             </form>
                         </div>
                     </div>
+                    {{-- Mobile/Tablet Menu --}}
+                <button type="button"
+                        @click="openMobileNav()"
+                        class="lg:hidden relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition duration-300 hover:bg-slate-100/80 hover:text-slate-900"
+                        :aria-expanded="mobileNavOpen.toString()"
+                        aria-label="Open menu">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
                 @elseif($isAdminAuth)
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

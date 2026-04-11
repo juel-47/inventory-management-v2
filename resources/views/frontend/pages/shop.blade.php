@@ -188,7 +188,7 @@
                                 results</span>
                         </div>
 
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center flex-wrap justify-between md:justify-end gap-3 w-full">
                             @auth
                             <div class="flex items-center gap-2">
                                 <label
@@ -221,7 +221,7 @@
                     </div>
 
                     <!-- Products Grid -->
-                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
+                    <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         @forelse($shopCards as $card)
                             <x-frontend.product-card
                                 :product="$card['product']"
