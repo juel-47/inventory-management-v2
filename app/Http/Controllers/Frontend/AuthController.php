@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Slider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
 
@@ -17,7 +19,16 @@ class AuthController extends Controller
      */
     public function create(): View
     {
-        return view('frontend.auth.login');
+        $sliders = Schema::hasTable('sliders')
+            ? Slider::query()
+                ->where('status', 1)
+                ->orderBy('serial')
+                ->get()
+            : collect();
+
+        return view('frontend.auth.login', [
+            'sliders' => $sliders,
+        ]);
     }
 
     /**
