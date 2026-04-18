@@ -31,8 +31,11 @@
                                             <th>Shipping</th>
                                             <th>Created By</th>
                                             <th>local currency Total</th>
+                                            <th>Paid</th>
+                                            <th>Due</th>
                                             <th>Vendor Total price</th>
                                             <th>Status</th>
+                                            <th>Payment</th>
                                             <th>Invoice Attachments</th>
                                             <th style="min-width: 180px;">Action</th>
                                         </tr>
@@ -46,6 +49,8 @@
                                                 <td>{{ $purchase->shipping_method ?? 'N/A' }}</td>
                                                 <td>{{ $purchase->user->name ?? 'System' }}</td>
                                                 <td>{{ formatConverted($purchase->total_amount) }}</td>
+                                                <td class="text-success font-weight-bold">{{ formatConverted($purchase->paid_amount) }}</td>
+                                                <td class="text-danger font-weight-bold">{{ formatConverted($purchase->due_amount) }}</td>
                                                 <td>
                                                     @if($purchase->vendor)
                                                         @php
@@ -62,6 +67,16 @@
                                                     @else
                                                         <div class="badge badge-warning">Draft</div>
                                                     @endif
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $paymentClass = match($purchase->payment_status) {
+                                                            'paid' => 'badge-success',
+                                                            'partial' => 'badge-warning',
+                                                            default => 'badge-secondary',
+                                                        };
+                                                    @endphp
+                                                    <div class="badge {{ $paymentClass }}">{{ ucfirst($purchase->payment_status ?? 'pending') }}</div>
                                                 </td>
                                                 <td>
                                                     @php
@@ -116,6 +131,14 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-nowrap" style="min-width: 180px;">
+                                                    @if((float) $purchase->due_amount > 0)
+                                                        <a href="{{ route('admin.accounts.vendor-payments.record-payment', ['invoice_no' => $purchase->invoice_no]) }}" class="btn btn-dark btn-sm" title="Pay Vendor Invoice">
+                                                            <i class="fas fa-money-bill-wave"></i>
+                                                        </a>
+                                                    @endif
+                                                    <a href="{{ route('admin.purchases.show', $purchase->id) }}" class="btn btn-primary btn-sm ml-1" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
                                                     <a href="{{ route('admin.purchases.view-invoice', $purchase->id) }}" target="_blank" class="btn btn-warning btn-sm" title="View Invoice"><i class="fas fa-file-invoice"></i></a>
                                                     <a href="{{ route('admin.purchases.download-pdf', $purchase->id) }}" class="btn btn-secondary btn-sm ml-1" title="Download PDF"><i class="fas fa-download"></i></a>
                                                     <button type="button"
@@ -178,7 +201,7 @@
         $("#table-1").dataTable({
             "order": [[0, "desc"]],
             "columnDefs": [
-                { "sortable": false, "targets": [9] }
+                { "sortable": false, "targets": [12] }
             ],
             "order": [[0, "desc"]]
         });

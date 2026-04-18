@@ -124,6 +124,72 @@
                                             @endif
                                         </div>
                                     @endif
+
+                                    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                                        <div class="section-title mb-0">Vendor Payment History</div>
+                                        @if($purchase->payments->count() > 0)
+                                            <div>
+                                                <a href="{{ route('admin.accounts.vendor-purchases.payments.pdf', $purchase->id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-file-pdf mr-1"></i> Download All
+                                                </a>
+                                                <a href="{{ route('admin.accounts.vendor-purchases.payments.view', $purchase->id) }}" class="btn btn-sm btn-outline-primary ml-2" target="_blank">
+                                                    <i class="fas fa-eye mr-1"></i> View
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover table-md">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Method</th>
+                                                    <th>Transaction ID</th>
+                                                    <th>Receipts</th>
+                                                    <th>PDF</th>
+                                                    <th class="text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($purchase->payments->sortByDesc('id') as $payment)
+                                                    <tr>
+                                                        <td>{{ $payment->created_at->format('d M, Y h:i A') }}</td>
+                                                        <td><span class="badge badge-info">{{ strtoupper($payment->payment_method) }}</span></td>
+                                                        <td>{{ $payment->transaction_id ?: 'N/A' }}</td>
+                                                        <td>
+                                                            @if($payment->receipts->count() > 0)
+                                                                @foreach($payment->receipts as $receipt)
+                                                                    <div class="mb-1">
+                                                                        <a href="{{ route('admin.accounts.vendor-payments.receipts.download', $receipt->id) }}" class="btn btn-sm btn-outline-primary">
+                                                                            <i class="fas fa-download mr-1"></i>
+                                                                        </a>
+                                                                        <a href="{{ route('admin.accounts.vendor-payments.receipts.destroy', $receipt->id) }}" class="btn btn-sm btn-outline-danger delete-item">
+                                                                            <i class="fas fa-trash mr-1"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                @endforeach
+                                                            @else
+                                                                <span class="text-muted">N/A</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-nowrap">
+                                                            <a href="{{ route('admin.accounts.vendor-payments.single.pdf', $payment->id) }}" class="btn btn-sm btn-warning">
+                                                                <i class="fas fa-file-pdf mr-1"></i>
+                                                            </a>
+                                                            <a href="{{ route('admin.accounts.vendor-payments.single.view', $payment->id) }}" class="btn btn-sm btn-outline-primary ml-2" target="_blank">
+                                                                <i class="fas fa-eye mr-1"></i>
+                                                            </a>
+                                                        </td>
+                                                        <td class="text-right font-weight-bold text-success">{{ formatConverted($payment->amount) }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="6" class="text-center py-4 text-muted">No vendor payments recorded yet.</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                                 <div class="col-lg-4 text-right">
                                     <div class="invoice-detail-item">
@@ -163,6 +229,35 @@
                                          <div class="invoice-detail-name">Vendor Total ({{ $purchase->vendor->currency_name }})</div>
                                          <div class="invoice-detail-value">{{ $purchase->vendor->currency_icon }}{{ number_format($vendorItemTotal, 2) }}</div>
                                      </div>
+                                     <hr class="mt-2 mb-2">
+                                     @php
+                                         $paymentStatusClass = match($purchase->payment_status) {
+                                             'paid' => 'success',
+                                             'partial' => 'warning',
+                                             default => 'secondary',
+                                         };
+                                     @endphp
+                                     <div class="invoice-detail-item">
+                                         <div class="invoice-detail-name">Paid Amount</div>
+                                         <div class="invoice-detail-value text-success">{{ formatConverted($purchase->paid_amount) }}</div>
+                                     </div>
+                                     <div class="invoice-detail-item">
+                                         <div class="invoice-detail-name">Due Amount</div>
+                                         <div class="invoice-detail-value text-danger">{{ formatConverted($purchase->due_amount) }}</div>
+                                     </div>
+                                     <div class="invoice-detail-item">
+                                         <div class="invoice-detail-name">Payment Status</div>
+                                         <div class="invoice-detail-value">
+                                             <span class="badge badge-{{ $paymentStatusClass }}">{{ ucfirst($purchase->payment_status ?? 'pending') }}</span>
+                                         </div>
+                                     </div>
+                                     @if((float) $purchase->due_amount > 0)
+                                         <div class="mt-3 text-right">
+                                             <a href="{{ route('admin.accounts.vendor-payments.record-payment', ['invoice_no' => $purchase->invoice_no]) }}" class="btn btn-dark btn-sm px-3 py-2">
+                                                 <i class="fas fa-money-bill-wave mr-1"></i> Pay Vendor Invoice
+                                             </a>
+                                         </div>
+                                     @endif
                                 </div>
                             </div>
                         </div>

@@ -351,6 +351,16 @@ Route::controller(BackendAccountController::class)->group(function () {
     Route::get('accounts/record-payment', 'create')->name('accounts.record-payment');
     Route::get('accounts/search-order', 'searchOrder')->name('accounts.search-order');
     Route::get('accounts/due-orders', 'dueOrders')->name('accounts.due-orders');
+    Route::get('accounts/vendor-payments', 'vendorPaymentIndex')->name('accounts.vendor-payments.index');
+    Route::get('accounts/vendor-payments/record-payment', 'createVendorPayment')->name('accounts.vendor-payments.record-payment');
+    Route::get('accounts/vendor-payments/search-purchase', 'searchPurchase')->name('accounts.vendor-payments.search-purchase');
+    Route::get('accounts/vendor-payments/due-purchases', 'vendorDuePurchases')->name('accounts.vendor-payments.due-purchases');
+    Route::get('accounts/vendor-payments/pdf', 'vendorPaymentHistoryPdf')->name('accounts.vendor-payments.pdf');
+    Route::get('accounts/vendor-payments/pdf/view', 'vendorPaymentHistoryView')->name('accounts.vendor-payments.pdf.view');
+    Route::get('accounts/vendor-payments/{payment}/pdf', 'vendorPaymentSinglePdf')->name('accounts.vendor-payments.single.pdf');
+    Route::get('accounts/vendor-payments/{payment}/view', 'vendorPaymentSingleView')->name('accounts.vendor-payments.single.view');
+    Route::get('accounts/purchases/{purchase}/payments/pdf', 'vendorPurchasePaymentsPdf')->name('accounts.vendor-purchases.payments.pdf');
+    Route::get('accounts/purchases/{purchase}/payments/view', 'vendorPurchasePaymentsView')->name('accounts.vendor-purchases.payments.view');
     Route::get('accounts/payments/pdf', 'paymentHistoryPdf')->name('accounts.payments.pdf');
     Route::get('accounts/payments/pdf/view', 'paymentHistoryPdfView')->name('accounts.payments.pdf.view');
     Route::get('accounts/payments/{payment}/pdf', 'paymentSinglePdf')->name('accounts.payments.single.pdf');
@@ -358,8 +368,11 @@ Route::controller(BackendAccountController::class)->group(function () {
     Route::get('accounts/orders/{order}/payments/pdf', 'paymentOrderPdf')->name('accounts.orders.payments.pdf');
     Route::get('accounts/orders/{order}/payments/view', 'paymentOrderView')->name('accounts.orders.payments.view');
     Route::post('accounts/orders/{order}/payment', 'storePayment')->name('accounts.store-payment');
+    Route::post('accounts/purchases/{purchase}/payment', 'storePurchasePayment')->name('accounts.vendor-payments.store');
     Route::get('accounts/payments/receipts/{receipt}/download', 'downloadReceipt')->name('accounts.receipts.download');
     Route::delete('accounts/payments/receipts/{receipt}', 'destroyReceipt')->name('accounts.receipts.destroy');
+    Route::get('accounts/vendor-payments/receipts/{receipt}/download', 'downloadPurchaseReceipt')->name('accounts.vendor-payments.receipts.download');
+    Route::delete('accounts/vendor-payments/receipts/{receipt}', 'destroyPurchaseReceipt')->name('accounts.vendor-payments.receipts.destroy');
 });
 
 });

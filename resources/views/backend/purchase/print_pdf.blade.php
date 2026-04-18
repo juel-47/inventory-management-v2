@@ -229,6 +229,18 @@
                     </div>
                 </div>
             @endif
+            <div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
+                <div style="font-size: 12px; color: #666;">Paid</div>
+                <div style="font-size: 16px; font-weight: bold; color: #28a745; margin-top: 3px;">
+                    {{ $settings->currency_icon }}{{ number_format($purchase->paid_amount, 2) }}
+                </div>
+            </div>
+            <div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
+                <div style="font-size: 12px; color: #666;">Due</div>
+                <div style="font-size: 16px; font-weight: bold; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; margin-top: 3px;">
+                    {{ $settings->currency_icon }}{{ number_format($purchase->due_amount, 2) }}
+                </div>
+            </div>
         </div>
         <div class="clear"></div>
 

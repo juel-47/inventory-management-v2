@@ -306,6 +306,18 @@
                             </tr>
                         @endif
                     @endif
+                    <tr>
+                        <td colspan="3" style="text-align: right; color: #28a745; font-weight: bold;">PAID</td>
+                        <td style="text-align: center;"></td>
+                        <td></td>
+                        <td style="text-align: right; color: #28a745; font-weight: bold;">{{ $settings->currency_icon }}{{ number_format($purchase->paid_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="text-align: right; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">DUE</td>
+                        <td style="text-align: center;"></td>
+                        <td></td>
+                        <td style="text-align: right; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">{{ $settings->currency_icon }}{{ number_format($purchase->due_amount, 2) }}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>

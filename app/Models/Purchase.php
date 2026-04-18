@@ -21,7 +21,19 @@ class Purchase extends Model
         'material_cost',
         'transport_cost',
         'tax',
-        'invoice_attachment'
+        'invoice_attachment',
+        'paid_amount',
+        'due_amount',
+        'payment_status',
+    ];
+
+    protected $casts = [
+        'total_amount' => 'float',
+        'material_cost' => 'float',
+        'transport_cost' => 'float',
+        'tax' => 'float',
+        'paid_amount' => 'float',
+        'due_amount' => 'float',
     ];
 
     public function vendor()
@@ -42,5 +54,10 @@ class Purchase extends Model
     public function attachments()
     {
         return $this->hasMany(PurchaseAttachment::class)->latest();
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(PurchasePayment::class);
     }
 }

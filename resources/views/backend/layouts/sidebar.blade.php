@@ -151,9 +151,12 @@
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-file-invoice-dollar"></i>
                     <span>Accounts</span></a>
                 <ul class="dropdown-menu">
-                    <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}"><i class="fas fa-list-ul"></i> Transaction History</a></li>
-                    <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}"><i class="fas fa-plus-circle"></i> Recive Payment</a></li>
-                    <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}"><i class="fas fa-exclamation-circle"></i> Due Orders</a></li>
+                    <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}"><i class="fas fa-list-ul"></i> Customer Transactions</a></li>
+                    <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}"><i class="fas fa-plus-circle"></i> Receive Customer Payment</a></li>
+                    <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}"><i class="fas fa-exclamation-circle"></i> Customer Due Orders</a></li>
+                    <li class="{{ setActive(['admin.accounts.vendor-payments.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.index') }}"><i class="fas fa-hand-holding-usd"></i> Vendor Payments</a></li>
+                    <li class="{{ setActive(['admin.accounts.vendor-payments.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.record-payment') }}"><i class="fas fa-file-invoice-dollar"></i> Pay Vendor Invoice</a></li>
+                    <li class="{{ setActive(['admin.accounts.vendor-payments.due-purchases']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.due-purchases') }}"><i class="fas fa-exclamation-circle"></i> Vendor Due Purchases</a></li>
                 </ul>
             </li>
             @endif
@@ -205,5 +208,3 @@
         </ul>
     </aside>
 </div>
-
-

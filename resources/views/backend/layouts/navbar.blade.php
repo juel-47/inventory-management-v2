@@ -248,9 +248,12 @@
              <li class="nav-item dropdown {{ setActive(['admin.accounts.*']) }}">
                  <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-file-invoice-dollar"></i><span>Accounts</span></a>
                  <ul class="dropdown-menu">
-                     <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}">Transaction History</a></li>
-                     <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}">Recive Payment</a></li>
-                     <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}">Due Orders</a></li>
+                     <li class="{{ setActive(['admin.accounts.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.index') }}">Customer Transactions</a></li>
+                     <li class="{{ setActive(['admin.accounts.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.record-payment') }}">Receive Customer Payment</a></li>
+                     <li class="{{ setActive(['admin.accounts.due-orders']) }}"><a class="nav-link" href="{{ route('admin.accounts.due-orders') }}">Customer Due Orders</a></li>
+                     <li class="{{ setActive(['admin.accounts.vendor-payments.index']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.index') }}">Vendor Payments</a></li>
+                     <li class="{{ setActive(['admin.accounts.vendor-payments.record-payment']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.record-payment') }}">Pay Vendor Invoice</a></li>
+                     <li class="{{ setActive(['admin.accounts.vendor-payments.due-purchases']) }}"><a class="nav-link" href="{{ route('admin.accounts.vendor-payments.due-purchases') }}">Vendor Due Purchases</a></li>
                  </ul>
              </li>
 
@@ -351,4 +354,3 @@
       </li>
     </ul>
   </nav>
-

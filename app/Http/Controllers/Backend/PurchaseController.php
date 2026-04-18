@@ -384,6 +384,9 @@ class PurchaseController extends Controller
 
             // The totalAmount already includes material, transport, and tax distributed at row level
             $purchase->total_amount = $totalAmount;
+            $purchase->paid_amount = 0;
+            $purchase->due_amount = $totalAmount;
+            $purchase->payment_status = $totalAmount > 0 ? 'pending' : 'paid';
             $purchase->save();
 
             // Automate Booking Completion for the entire group
@@ -411,7 +414,7 @@ class PurchaseController extends Controller
      */
     public function show(string $id)
     {
-        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->findOrFail($id);
+        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments', 'payments.receipts'])->findOrFail($id);
         return view('backend.purchase.show', compact('purchase'));
     }
 
