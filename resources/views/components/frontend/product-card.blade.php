@@ -129,7 +129,7 @@
                                         </template>
                                     </div>
                                     <div class="flex flex-col mt-2">
-                                        <span class="mb-1 whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-500">Selling Price</span>
+                                        <span class="mb-1 whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-500">Outlet Price</span>
                                         <span class="text-[16px] font-semibold leading-none text-slate-800">
                                             {{ $currencyIcon }}<span x-text="retailDisplayPrice"></span>
                                         </span>
