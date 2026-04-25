@@ -141,6 +141,7 @@
                     <li class="{{ setActive(['admin.reports.product-purchase-history']) }}"><a class="nav-link" href="{{ route('admin.reports.product-purchase-history') }}"><i class="fas fa-map-marker-alt"></i> Product Tracking</a></li>
                     <li class="{{ setActive(['admin.reports.low-stock']) }}"><a class="nav-link" href="{{ route('admin.reports.low-stock') }}"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</a></li>
                     <li class="{{ setActive(['admin.reports.profit-loss']) }}"><a class="nav-link" href="{{ route('admin.reports.profit-loss') }}"><i class="fas fa-chart-bar"></i> Profit & Loss</a></li>
+                    <li class="{{ setActive(['admin.reports.audit']) }}"><a class="nav-link" href="{{ route('admin.reports.audit') }}"><i class="fas fa-user-shield"></i> Audit Report</a></li>
                 </ul>
             </li>
             @endcan

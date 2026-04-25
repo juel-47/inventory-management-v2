@@ -14,6 +14,7 @@ use App\Models\StockLedger;
 use App\Models\Vendor;
 use App\Models\PricingRule;
 use App\Support\StoredFileSupport;
+use App\Support\AuditLogSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -397,6 +398,27 @@ class PurchaseController extends Controller
                 }
             }
 
+            AuditLogSupport::log([
+                'vendor_id' => $purchase->vendor_id,
+                'module' => 'purchases',
+                'action' => 'purchase_created',
+                'entity_type' => 'purchase',
+                'entity_id' => $purchase->id,
+                'reference_no' => $purchase->invoice_no,
+                'description' => 'Purchase created.',
+                'new_values' => [
+                    'vendor_id' => $purchase->vendor_id,
+                    'booking_id' => $purchase->booking_id,
+                    'date' => $purchase->date,
+                    'total_amount' => (float) $purchase->total_amount,
+                    'paid_amount' => (float) $purchase->paid_amount,
+                    'due_amount' => (float) $purchase->due_amount,
+                    'payment_status' => (string) $purchase->payment_status,
+                    'item_count' => count($request->items ?? []),
+                    'attachment_count' => $purchase->attachments()->count(),
+                ],
+            ]);
+
             DB::commit();
             
             Toastr::success('Purchase Created Successfully!');
@@ -487,6 +509,24 @@ class PurchaseController extends Controller
                     $purchase->invoice_attachment = $path;
                     $purchase->save();
                 }
+
+                $latestAttachment = $purchase->attachments()->latest('id')->first();
+
+                AuditLogSupport::log([
+                    'vendor_id' => $purchase->vendor_id,
+                    'module' => 'purchases',
+                    'action' => 'purchase_attachment_uploaded',
+                    'entity_type' => 'purchase_attachment',
+                    'entity_id' => $latestAttachment?->id,
+                    'reference_no' => $purchase->invoice_no,
+                    'description' => 'Purchase attachment uploaded.',
+                    'new_values' => [
+                        'purchase_id' => $purchase->id,
+                        'attachment_id' => $latestAttachment?->id,
+                        'original_name' => $file->getClientOriginalName(),
+                        'file_size' => $file->getSize(),
+                    ],
+                ]);
             }
 
             DB::commit();
@@ -514,6 +554,22 @@ class PurchaseController extends Controller
         try {
             $filePath = $attachment->file_path;
             $legacyMatchesThis = $purchase->invoice_attachment === $filePath;
+
+            AuditLogSupport::log([
+                'vendor_id' => $purchase->vendor_id,
+                'module' => 'purchases',
+                'action' => 'purchase_attachment_deleted',
+                'entity_type' => 'purchase_attachment',
+                'entity_id' => $attachment->id,
+                'reference_no' => $purchase->invoice_no,
+                'description' => 'Purchase attachment deleted.',
+                'old_values' => [
+                    'purchase_id' => $purchase->id,
+                    'attachment_id' => $attachment->id,
+                    'original_name' => $attachment->original_name,
+                    'file_path' => $attachment->file_path,
+                ],
+            ]);
 
             StoredFileSupport::delete($filePath);
 
@@ -612,6 +668,25 @@ class PurchaseController extends Controller
             foreach ($attachmentPaths as $filePath) {
                 StoredFileSupport::delete($filePath);
             }
+
+            AuditLogSupport::log([
+                'vendor_id' => $purchase->vendor_id,
+                'module' => 'purchases',
+                'action' => 'purchase_deleted',
+                'entity_type' => 'purchase',
+                'entity_id' => $purchase->id,
+                'reference_no' => $purchase->invoice_no,
+                'description' => 'Purchase deleted and stock reverted.',
+                'old_values' => [
+                    'vendor_id' => $purchase->vendor_id,
+                    'total_amount' => (float) $purchase->total_amount,
+                    'paid_amount' => (float) $purchase->paid_amount,
+                    'due_amount' => (float) $purchase->due_amount,
+                    'payment_status' => (string) $purchase->payment_status,
+                    'detail_count' => $purchase->details->count(),
+                    'attachment_count' => $purchase->attachments->count(),
+                ],
+            ]);
 
             $purchase->delete();
 

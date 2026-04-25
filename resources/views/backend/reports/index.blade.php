@@ -131,6 +131,11 @@
                                         <i class="fas fa-exclamation-circle"></i> Low Stock Alert
                                     </a>
                                 </div>
+                                <div class="col-md-4 mb-3">
+                                    <a href="{{ route('admin.reports.audit') }}" class="btn btn-dark btn-lg btn-block">
+                                        <i class="fas fa-user-shield"></i> Audit Report
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

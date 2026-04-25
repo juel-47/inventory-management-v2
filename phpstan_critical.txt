@@ -1,6 +1,0 @@
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Auth\RegisteredUserController.php:53:If condition is always true.
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Backend\AccountController.php:387:Negated boolean expression is always false.
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Backend\CustomProductRequestController.php:97:Negated boolean expression is always false.
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Backend\ReportController.php:268:Left side of && is always true.
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Backend\ReportController.php:296:Left side of && is always true.
-C:\Users\dell\Downloads\Documents\Project\inventory-management - v2\app\Http\Controllers\Frontend\AccountController.php:271:Negated boolean expression is always false.

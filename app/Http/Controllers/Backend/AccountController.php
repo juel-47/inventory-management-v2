@@ -13,6 +13,7 @@ use App\Models\GeneralSetting;
 use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
+use App\Support\AuditLogSupport;
 use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -756,7 +757,12 @@ class AccountController extends Controller
             return redirect()->back();
         }
 
-        // Create the payment record
+        $before = [
+            'paid_amount' => (float) $order->paid_amount,
+            'due_amount' => (float) $order->due_amount,
+            'payment_status' => (string) $order->payment_status,
+        ];
+
         $payment = OrderPayment::create([
             'order_id' => $order->id,
             'amount' => $amount,
@@ -795,6 +801,26 @@ class AccountController extends Controller
 
         $order->save();
 
+        AuditLogSupport::log([
+            'module' => 'accounts',
+            'action' => 'customer_payment_created',
+            'entity_type' => 'order_payment',
+            'entity_id' => $payment->id,
+            'reference_no' => $order->order_no,
+            'description' => 'Customer payment recorded.',
+            'old_values' => $before,
+            'new_values' => [
+                'payment_id' => $payment->id,
+                'amount' => $amount,
+                'payment_method' => $payment->payment_method,
+                'transaction_id' => $payment->transaction_id,
+                'receipt_count' => $payment->receipts()->count(),
+                'paid_amount' => (float) $order->paid_amount,
+                'due_amount' => (float) $order->due_amount,
+                'payment_status' => (string) $order->payment_status,
+            ],
+        ]);
+
         Toastr::success('Payment recorded successfully!');
 
         if ($request->filled('source') && $request->source === 'central_entry') {
@@ -824,6 +850,12 @@ class AccountController extends Controller
             Toastr::error('Payment amount cannot be greater than the due amount!');
             return redirect()->back();
         }
+
+        $before = [
+            'paid_amount' => (float) $purchase->paid_amount,
+            'due_amount' => (float) $purchase->due_amount,
+            'payment_status' => (string) $purchase->payment_status,
+        ];
 
         DB::beginTransaction();
 
@@ -861,6 +893,29 @@ class AccountController extends Controller
             $purchase->payment_status = $purchase->due_amount <= 0 ? 'paid' : 'partial';
             $purchase->save();
 
+            AuditLogSupport::log([
+                'user_id' => auth()->id(),
+                'vendor_id' => $purchase->vendor_id,
+                'module' => 'accounts',
+                'action' => 'vendor_payment_created',
+                'entity_type' => 'purchase_payment',
+                'entity_id' => $payment->id,
+                'reference_no' => $purchase->invoice_no,
+                'description' => 'Vendor payment recorded.',
+                'old_values' => $before,
+                'new_values' => [
+                    'payment_id' => $payment->id,
+                    'purchase_id' => $purchase->id,
+                    'amount' => $amount,
+                    'payment_method' => $payment->payment_method,
+                    'transaction_id' => $payment->transaction_id,
+                    'receipt_count' => $payment->receipts()->count(),
+                    'paid_amount' => (float) $purchase->paid_amount,
+                    'due_amount' => (float) $purchase->due_amount,
+                    'payment_status' => (string) $purchase->payment_status,
+                ],
+            ]);
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -892,6 +947,23 @@ class AccountController extends Controller
 
     public function destroyReceipt(OrderPaymentReceipt $receipt)
     {
+        $payment = $receipt->payment()->with('order')->first();
+
+        AuditLogSupport::log([
+            'module' => 'accounts',
+            'action' => 'customer_payment_receipt_deleted',
+            'entity_type' => 'order_payment_receipt',
+            'entity_id' => $receipt->id,
+            'reference_no' => $payment?->order?->order_no,
+            'description' => 'Customer payment receipt deleted.',
+            'old_values' => [
+                'receipt_id' => $receipt->id,
+                'payment_id' => $payment?->id,
+                'original_name' => $receipt->original_name,
+                'file_path' => $receipt->file_path,
+            ],
+        ]);
+
         StoredFileSupport::delete($receipt->file_path);
 
         $receipt->delete();
@@ -923,6 +995,24 @@ class AccountController extends Controller
 
     public function destroyPurchaseReceipt(PurchasePaymentReceipt $receipt)
     {
+        $payment = $receipt->payment()->with('purchase')->first();
+
+        AuditLogSupport::log([
+            'vendor_id' => $payment?->vendor_id,
+            'module' => 'accounts',
+            'action' => 'vendor_payment_receipt_deleted',
+            'entity_type' => 'purchase_payment_receipt',
+            'entity_id' => $receipt->id,
+            'reference_no' => $payment?->purchase?->invoice_no,
+            'description' => 'Vendor payment receipt deleted.',
+            'old_values' => [
+                'receipt_id' => $receipt->id,
+                'payment_id' => $payment?->id,
+                'original_name' => $receipt->original_name,
+                'file_path' => $receipt->file_path,
+            ],
+        ]);
+
         StoredFileSupport::delete($receipt->file_path);
         $receipt->delete();
 

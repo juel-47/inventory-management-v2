@@ -240,6 +240,7 @@
                      <li class="{{ setActive(['admin.reports.product-purchase-history']) }}"><a class="nav-link" href="{{ route('admin.reports.product-purchase-history') }}">Product Tracking</a></li>
                      <li class="{{ setActive(['admin.reports.low-stock']) }}"><a class="nav-link" href="{{ route('admin.reports.low-stock') }}">Low Stock Alert</a></li>
                      <li class="{{ setActive(['admin.reports.profit-loss']) }}"><a class="nav-link" href="{{ route('admin.reports.profit-loss') }}">Profit & Loss</a></li>
+                     <li class="{{ setActive(['admin.reports.audit']) }}"><a class="nav-link" href="{{ route('admin.reports.audit') }}">Audit Report</a></li>
                  </ul>
              </li>
              @endcan

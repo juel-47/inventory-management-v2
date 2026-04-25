@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\AuditLog;
 use App\Models\GeneralSetting;
 use App\Models\Product;
 use App\Models\ProductRequest;
@@ -12,6 +13,7 @@ use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\User;
 use App\Models\Vendor;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -377,6 +379,70 @@ class ReportController extends Controller implements HasMiddleware
             'profitMargin',
             'totalPurchases'
         ));
+    }
+
+    /**
+     * Audit trail report.
+     */
+    public function auditReport(Request $request)
+    {
+        $query = AuditLog::with(['user', 'vendor'])->latest();
+
+        if ($request->filled('module')) {
+            $query->where('module', $request->module);
+        }
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', (int) $request->user_id);
+        }
+
+        if ($request->filled('vendor_id')) {
+            $query->where('vendor_id', (int) $request->vendor_id);
+        }
+
+        if ($request->filled('reference')) {
+            $reference = trim((string) $request->reference);
+            $query->where('reference_no', 'like', '%' . $reference . '%');
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('created_at', '>=', Carbon::parse($request->start_date)->startOfDay());
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('created_at', '<=', Carbon::parse($request->end_date)->endOfDay());
+        }
+
+        $logs = $query->paginate(30)->withQueryString();
+        $summaryQuery = clone $query;
+
+        $summary = [
+            'count' => (clone $summaryQuery)->count(),
+            'today_count' => (clone $summaryQuery)->whereDate('created_at', today())->count(),
+            'modules' => (clone $summaryQuery)->select('module')->distinct()->count('module'),
+            'users' => (clone $summaryQuery)->whereNotNull('user_id')->distinct()->count('user_id'),
+        ];
+
+        $modules = AuditLog::query()
+            ->whereNotNull('module')
+            ->distinct()
+            ->orderBy('module')
+            ->pluck('module');
+
+        $actions = AuditLog::query()
+            ->whereNotNull('action')
+            ->distinct()
+            ->orderBy('action')
+            ->pluck('action');
+
+        $users = User::query()->orderBy('name')->get(['id', 'name']);
+        $vendors = Vendor::query()->orderBy('shop_name')->get(['id', 'shop_name']);
+
+        return view('backend.reports.audit', compact('logs', 'summary', 'modules', 'actions', 'users', 'vendors'));
     }
 
 }
