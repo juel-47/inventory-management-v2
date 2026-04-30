@@ -216,6 +216,22 @@
         </div>
 
         <table>
+            @php
+                // Group items by category and sort alphabetically
+                $groupedItems = $order->items->groupBy(function($item) {
+                    return $item->category_name ?: 'General';
+                })->sortKeys();
+
+                // Sort items within each category by product name (letter by letter)
+                $sortedGroupedItems = $groupedItems->map(function($items) {
+                    return $items->sortBy(function($item) {
+                        return strtolower($item->product_name);
+                    })->values();
+                });
+
+                $globalIndex = 0;
+            @endphp
+
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
@@ -228,7 +244,13 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->items as $index => $item)
+                @foreach($sortedGroupedItems as $categoryName => $categoryItems)
+                    <tr style="background-color: #e9ecef;">
+                        <td colspan="7" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
+                            {{ $categoryName }}
+                        </td>
+                    </tr>
+                    @foreach($categoryItems as $item)
                     @php
                         $imagePath = (string) ($item->product_image ?? '');
                         $imageUrl = null;
@@ -244,8 +266,9 @@
                             }
                         }
                     @endphp
+                    @php $globalIndex++; @endphp
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $globalIndex }}</td>
                         <td class="image-cell">
                             @if($imageUrl)
                                 <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
@@ -262,6 +285,7 @@
                         <td class="text-right">{{ $currency }}{{ number_format($item->unit_price, 2) }}</td>
                         <td class="text-right">{{ $currency }}{{ number_format($item->line_total, 2) }}</td>
                     </tr>
+                @endforeach
                 @endforeach
                 <tr class="total-row">
                     <td colspan="6" class="text-right">Subtotal</td>

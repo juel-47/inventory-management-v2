@@ -69,6 +69,22 @@
         </div>
     </div>
 
+    @php
+        // Group items by category and sort alphabetically
+        $groupedItems = $order->items->groupBy(function($item) {
+            return $item->category_name ?: 'General';
+        })->sortKeys();
+
+        // Sort items within each category by product name (letter by letter)
+        $sortedGroupedItems = $groupedItems->map(function($items) {
+            return $items->sortBy(function($item) {
+                return strtolower($item->product_name);
+            })->values();
+        });
+
+        $globalIndex = 0;
+    @endphp
+
     <table>
         <thead>
             <tr>
@@ -82,7 +98,13 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($order->items as $index => $item)
+            @foreach($sortedGroupedItems as $categoryName => $categoryItems)
+                <tr style="background-color: #f0f0f0;">
+                    <td colspan="7" style="padding: 6px 10px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555;">
+                        {{ $categoryName }}
+                    </td>
+                </tr>
+                @foreach($categoryItems as $item)
                 @php
                     $imagePath = (string) ($item->product_image ?? '');
                     $base64 = null;
@@ -113,8 +135,9 @@
                         }
                     }
                 @endphp
+                @php $globalIndex++; @endphp
                 <tr>
-                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $globalIndex }}</td>
                     <td class="image-cell">
                         @if($base64)
                             <img src="{{ $base64 }}" alt="">
@@ -131,6 +154,7 @@
                     <td class="text-right">{{ $currency }}{{ number_format($item->unit_price, 2) }}</td>
                     <td class="text-right">{{ $currency }}{{ number_format($item->line_total, 2) }}</td>
                 </tr>
+            @endforeach
             @endforeach
             <tr class="total-row">
                 <td colspan="6" class="text-right">Subtotal</td>

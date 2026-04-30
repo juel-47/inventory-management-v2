@@ -249,6 +249,22 @@
             </div>
         @endunless
 
+        @php
+            // Group items by category and sort alphabetically
+            $groupedItems = $productRequest->items->groupBy(function($item) {
+                return $item->product?->category?->name ?? 'General';
+            })->sortKeys();
+
+            // Sort items within each category by product name (letter by letter)
+            $sortedGroupedItems = $groupedItems->map(function($items) {
+                return $items->sortBy(function($item) {
+                    return strtolower($item->product?->name ?? ('Product #' . $item->product_id));
+                })->values();
+            });
+
+            $globalIndex = 0;
+        @endphp
+
         <table>
             <thead>
                 <tr>
@@ -263,39 +279,46 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($productRequest->items as $index => $item)
-                    @php
-                        $imagePath = (string) ($item->product->thumb_image ?? '');
-                        $imageUrl = $imagePath !== '' ? asset('storage/' . ltrim($imagePath, '/')) : null;
-                        $imageBase64 = null;
-                        if ($isPdf && $imagePath !== '') {
-                            $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
-                            $candidates = [
-                                public_path('storage/' . $normalized),
-                                storage_path('app/public/' . $normalized),
-                                public_path(ltrim($imagePath, '/')),
-                            ];
-                            foreach ($candidates as $candidate) {
-                                if (is_file($candidate)) {
-                                    $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                                    $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                    $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
-                                    break;
+                @foreach($sortedGroupedItems as $categoryName => $categoryItems)
+                    <tr style="background-color: #e9ecef;">
+                        <td colspan="8" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
+                            {{ $categoryName }}
+                        </td>
+                    </tr>
+                    @foreach($categoryItems as $item)
+                        @php
+                            $imagePath = (string) ($item->product->thumb_image ?? '');
+                            $imageUrl = $imagePath !== '' ? asset('storage/' . ltrim($imagePath, '/')) : null;
+                            $imageBase64 = null;
+                            if ($isPdf && $imagePath !== '') {
+                                $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
+                                $candidates = [
+                                    public_path('storage/' . $normalized),
+                                    storage_path('app/public/' . $normalized),
+                                    public_path(ltrim($imagePath, '/')),
+                                ];
+                                foreach ($candidates as $candidate) {
+                                    if (is_file($candidate)) {
+                                        $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
+                                        $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
+                                        $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
-                        $variantText = trim((string) ($item->variant->name ?? ''));
-                        if ($variantText === '') {
-                            $variantText = trim(collect([
-                                $item->variant->color->name ?? null,
-                                $item->variant->size->name ?? null,
-                            ])->filter()->implode(' / '));
-                        }
-                    @endphp
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
+                            $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
+                            $variantText = trim((string) ($item->variant->name ?? ''));
+                            if ($variantText === '') {
+                                $variantText = trim(collect([
+                                    $item->variant->color->name ?? null,
+                                    $item->variant->size->name ?? null,
+                                ])->filter()->implode(' / '));
+                            }
+                            $globalIndex++;
+                        @endphp
+                        <tr>
+                            <td>{{ $globalIndex }}</td>
                         <td class="image-cell">
                             @if($imageSrc)
                                 <img src="{{ $imageSrc }}" alt="{{ $item->product->name ?? 'Item' }}">
@@ -331,7 +354,8 @@
                         <td>{{ $item->product?->unit?->name ?? 'N/A' }}</td>
                         <td>{{ $variantText !== '' ? $variantText : 'Standard' }}</td>
                         <td class="text-right"><strong>{{ $item->qty }}</strong></td>
-                    </tr>
+                        </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>

@@ -10,25 +10,25 @@
         .site-info h2 { margin: 5px 0; font-size: 18px; text-transform: uppercase; color: #000; }
         .site-info p { margin: 2px 0; color: #666; font-size: 11px; }
         .logo { margin-bottom: 10px; }
-        
+
         .invoice-header { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .invoice-header table { width: 100%; border: none; }
         .invoice-header td { vertical-align: top; border: none; padding: 0; }
-        
+
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { background: #f4f4f4; text-align: left; padding: 8px; border: 1px solid #ddd; text-transform: uppercase; font-size: 10px; font-weight: bold; }
         td { padding: 8px; border: 1px solid #ddd; vertical-align: middle; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        
+
         .totals { margin-top: 15px; width: 40%; float: right; }
         .totals table { margin-top: 0; border: none; }
         .totals td { border: none; padding: 4px 8px; }
         .totals .grand-total { font-weight: bold; font-size: 14px; border-top: 1px solid #333; }
-        
+
         .footer { clear: both; margin-top: 40px; text-align: center; font-size: 10px; color: #999; padding-top: 10px; border-top: 1px solid #eee; }
         .clearfix:after { content: ""; display: table; clear: both; }
-        
+
         @page { margin: 20px; }
     </style>
 </head>
@@ -83,11 +83,18 @@
             </thead>
             <tbody>
                 @php
-                    $groupedItems = [];
+                    // First group by category, then by product within each category
+                    $groupedByCategory = [];
                     foreach($order->items as $item) {
+                        $categoryName = $item->category_name ?: 'General';
                         $productId = $item->product_id;
-                        if (!isset($groupedItems[$productId])) {
-                            $groupedItems[$productId] = [
+
+                        if (!isset($groupedByCategory[$categoryName])) {
+                            $groupedByCategory[$categoryName] = [];
+                        }
+
+                        if (!isset($groupedByCategory[$categoryName][$productId])) {
+                            $groupedByCategory[$categoryName][$productId] = [
                                 'product_name' => $item->product_name,
                                 'optimized_image' => $item->optimized_image,
                                 'unit_price' => $item->unit_price,
@@ -96,23 +103,40 @@
                                 'variants' => []
                             ];
                         }
-                        $groupedItems[$productId]['total_qty'] += $item->quantity;
-                        $groupedItems[$productId]['total_price'] += $item->line_total;
-                        
+                        $groupedByCategory[$categoryName][$productId]['total_qty'] += $item->quantity;
+                        $groupedByCategory[$categoryName][$productId]['total_price'] += $item->line_total;
+
                         if ($item->variant_label) {
                             $vName = $item->variant_label;
-                            if (!isset($groupedItems[$productId]['variants'][$vName])) {
-                                $groupedItems[$productId]['variants'][$vName] = 0;
+                            if (!isset($groupedByCategory[$categoryName][$productId]['variants'][$vName])) {
+                                $groupedByCategory[$categoryName][$productId]['variants'][$vName] = 0;
                             }
-                            $groupedItems[$productId]['variants'][$vName] += $item->quantity;
+                            $groupedByCategory[$categoryName][$productId]['variants'][$vName] += $item->quantity;
                         }
                     }
+
+                    // Sort categories alphabetically
+                    ksort($groupedByCategory);
+
+                    // Sort products within each category alphabetically
+                    foreach ($groupedByCategory as $categoryName => &$products) {
+                        uksort($products, function($a, $b) use ($products) {
+                            return strcasecmp($products[$a]['product_name'], $products[$b]['product_name']);
+                        });
+                    }
+
                     $rowNum = 1;
                 @endphp
 
-                @foreach($groupedItems as $productId => $group)
-                <tr style="page-break-inside: avoid;">
-                    <td class="text-center">{{ $rowNum++ }}</td>
+                @foreach($groupedByCategory as $categoryName => $categoryProducts)
+                    <tr style="background-color: #f4f4f4;">
+                        <td colspan="6" style="padding: 6px 8px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555; border: 1px solid #ddd;">
+                            {{ $categoryName }}
+                        </td>
+                    </tr>
+                    @foreach($categoryProducts as $productId => $group)
+                    <tr style="page-break-inside: avoid;">
+                        <td class="text-center">{{ $rowNum++ }}</td>
                     <td class="text-center">
                         @if($group['optimized_image'])
                             <img src="{{ $group['optimized_image'] }}" width="40" height="40" style="object-fit: cover; border-radius: 2px;">
@@ -134,6 +158,7 @@
                     <td class="text-right">{{ $currency }}{{ number_format($group['unit_price'], 2) }}</td>
                     <td class="text-right">{{ $currency }}{{ number_format($group['total_price'], 2) }}</td>
                 </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>

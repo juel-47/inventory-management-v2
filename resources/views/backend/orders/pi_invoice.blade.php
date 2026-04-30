@@ -358,6 +358,46 @@
             $showVariantsCol = $itemsForColumns->contains(fn ($row) => !empty($row->variant_label));
         @endphp
 
+        @php
+            // Group items by category first, then by product
+            $groupedByCategory = [];
+            foreach ($order->items as $item) {
+                $categoryName = $item->category_name ?: 'General';
+                $productId = $item->product_id;
+
+                if (!isset($groupedByCategory[$categoryName])) {
+                    $groupedByCategory[$categoryName] = [];
+                }
+
+                if (!isset($groupedByCategory[$categoryName][$productId])) {
+                    $groupedByCategory[$categoryName][$productId] = [
+                        'first_item' => $item,
+                        'total_qty' => 0,
+                        'variants' => [],
+                    ];
+                }
+                $groupedByCategory[$categoryName][$productId]['total_qty'] += $item->quantity;
+                $variantName = $item->variant_label ?: 'Standard';
+
+                if (!isset($groupedByCategory[$categoryName][$productId]['variants'][$variantName])) {
+                    $groupedByCategory[$categoryName][$productId]['variants'][$variantName] = 0;
+                }
+                $groupedByCategory[$categoryName][$productId]['variants'][$variantName] += $item->quantity;
+            }
+
+            // Sort categories alphabetically
+            ksort($groupedByCategory);
+
+            // Sort products within each category alphabetically by product name
+            foreach ($groupedByCategory as $categoryName => &$products) {
+                uksort($products, function($a, $b) use ($products) {
+                    return strcasecmp($products[$a]['first_item']->product_name, $products[$b]['first_item']->product_name);
+                });
+            }
+
+            $globalIndex = 0;
+        @endphp
+
         <table>
             <thead>
                 <tr>
@@ -382,77 +422,61 @@
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $groupedItems = [];
-                    foreach ($order->items as $item) {
-                        $productId = $item->product_id;
-                        if (!isset($groupedItems[$productId])) {
-                            $groupedItems[$productId] = [
-                                'first_item' => $item,
-                                'total_qty' => 0,
-                                'variants' => [],
-                            ];
-                        }
-                        $groupedItems[$productId]['total_qty'] += $item->quantity;
-                        $variantName = $item->variant_label ?: 'Standard';
-
-                        if (!isset($groupedItems[$productId]['variants'][$variantName])) {
-                            $groupedItems[$productId]['variants'][$variantName] = 0;
-                        }
-                        $groupedItems[$productId]['variants'][$variantName] += $item->quantity;
-                    }
-                    $index = 0;
-                @endphp
-
-                @foreach ($groupedItems as $productId => $group)
-                    @php
-                        $item = $group['first_item'];
-                        $index++;
-                        $imagePath = (string) ($item->product_image ?? '');
-                        $imageUrl = null;
-                        $imageBase64 = null;
-                        if ($imagePath !== '') {
-                            if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                $imageUrl = $imagePath;
-                            } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
-                                $imageUrl = asset(ltrim($imagePath, '/'));
-                            } elseif (str_starts_with($imagePath, 'storage/')) {
-                                $imageUrl = asset($imagePath);
-                            } else {
-                                $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                            }
-                        }
-
-                        if (
-                            $isPdf &&
-                            $imagePath !== '' &&
-                            !str_starts_with($imagePath, 'http://') &&
-                            !str_starts_with($imagePath, 'https://')
-                        ) {
-                            $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
-                            $candidates = [
-                                public_path(ltrim($imagePath, '/')),
-                                public_path('storage/' . $normalized),
-                                storage_path('app/public/' . $normalized),
-                            ];
-                            foreach ($candidates as $candidate) {
-                                if (is_file($candidate)) {
-                                    $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                                    $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                    $imageBase64 =
-                                        'data:image/' .
-                                        $mime .
-                                        ';base64,' .
-                                        base64_encode(file_get_contents($candidate));
-                                    break;
+                @foreach ($groupedByCategory as $categoryName => $categoryProducts)
+                    <tr style="background-color: #e9ecef;">
+                        <td colspan="{{ 2 + ($showImageCol ? 1 : 0) + ($showProductNoCol ? 1 : 0) + ($showCategoryCol ? 1 : 0) + ($showUnitCol ? 1 : 0) + ($showVariantsCol ? 1 : 0) }}" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
+                            {{ $categoryName }}
+                        </td>
+                    </tr>
+                    @foreach ($categoryProducts as $productId => $group)
+                        @php
+                            $item = $group['first_item'];
+                            $globalIndex++;
+                            $imagePath = (string) ($item->product_image ?? '');
+                            $imageUrl = null;
+                            $imageBase64 = null;
+                            if ($imagePath !== '') {
+                                if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                                    $imageUrl = $imagePath;
+                                } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
+                                    $imageUrl = asset(ltrim($imagePath, '/'));
+                                } elseif (str_starts_with($imagePath, 'storage/')) {
+                                    $imageUrl = asset($imagePath);
+                                } else {
+                                    $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
                                 }
                             }
-                        }
 
-                        $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
-                    @endphp
-                    <tr>
-                        <td>{{ $index }}</td>
+                            if (
+                                $isPdf &&
+                                $imagePath !== '' &&
+                                !str_starts_with($imagePath, 'http://') &&
+                                !str_starts_with($imagePath, 'https://')
+                            ) {
+                                $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
+                                $candidates = [
+                                    public_path(ltrim($imagePath, '/')),
+                                    public_path('storage/' . $normalized),
+                                    storage_path('app/public/' . $normalized),
+                                ];
+                                foreach ($candidates as $candidate) {
+                                    if (is_file($candidate)) {
+                                        $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
+                                        $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
+                                        $imageBase64 =
+                                            'data:image/' .
+                                            $mime .
+                                            ';base64,' .
+                                            base64_encode(file_get_contents($candidate));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
+                        @endphp
+                        <tr>
+                            <td>{{ $globalIndex }}</td>
                         @if ($showImageCol)
                             <td class="image-cell">
                                 @if ($imageSrc)
@@ -557,7 +581,8 @@
                         @endif
 
                         <td class="text-right"><strong>{{ $group['total_qty'] }}</strong></td>
-                    </tr>
+                        </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>

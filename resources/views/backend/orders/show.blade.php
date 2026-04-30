@@ -43,25 +43,47 @@
                                             <th class="text-right">Line Total</th>
                                         </tr>
                                     </thead>
+                                    @php
+                                        // Group items by category and sort alphabetically
+                                        $groupedItems = $order->items->groupBy(function($item) {
+                                            return $item->category_name ?: 'General';
+                                        })->sortKeys();
+
+                                        // Sort items within each category by product name (letter by letter)
+                                        $sortedGroupedItems = $groupedItems->map(function($items) {
+                                            return $items->sortBy(function($item) {
+                                                return strtolower($item->product_name);
+                                            })->values();
+                                        });
+
+                                        $globalIndex = 0;
+                                    @endphp
                                     <tbody>
-                                        @forelse($order->items as $index => $item)
-                                            @php
-                                                $imagePath = (string) ($item->product_image ?? '');
-                                                $imageUrl = null;
-                                                if ($imagePath !== '') {
-                                                    if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                                        $imageUrl = $imagePath;
-                                                    } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
-                                                        $imageUrl = asset(ltrim($imagePath, '/'));
-                                                    } elseif (str_starts_with($imagePath, 'storage/')) {
-                                                        $imageUrl = asset($imagePath);
-                                                    } else {
-                                                        $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
+                                        @forelse($sortedGroupedItems as $categoryName => $categoryItems)
+                                            <tr class="bg-light">
+                                                <td colspan="7" class="py-2 px-3 font-weight-bold text-uppercase text-muted" style="background-color: #e9ecef; font-size: 12px;">
+                                                    {{ $categoryName }}
+                                                </td>
+                                            </tr>
+                                            @foreach($categoryItems as $item)
+                                                @php
+                                                    $imagePath = (string) ($item->product_image ?? '');
+                                                    $imageUrl = null;
+                                                    if ($imagePath !== '') {
+                                                        if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                                                            $imageUrl = $imagePath;
+                                                        } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
+                                                            $imageUrl = asset(ltrim($imagePath, '/'));
+                                                        } elseif (str_starts_with($imagePath, 'storage/')) {
+                                                            $imageUrl = asset($imagePath);
+                                                        } else {
+                                                            $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
+                                                        }
                                                     }
-                                                }
-                                            @endphp
-                                            <tr>
-                                                <td class="text-center font-weight-bold">{{ $index + 1 }}</td>
+                                                    $globalIndex++;
+                                                @endphp
+                                                <tr>
+                                                    <td class="text-center font-weight-bold">{{ $globalIndex }}</td>
                                                 <td class="text-center">
                                                     @if($imageUrl)
                                                         <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}" style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">
@@ -85,7 +107,8 @@
                                                 </td>
                                                 <td class="text-right">{{ formatConverted($item->unit_price, 2) }}</td>
                                                 <td class="text-right font-weight-bold text-primary">{{ formatConverted($item->line_total, 2) }}</td>
-                                            </tr>
+                                                </tr>
+                                            @endforeach
                                         @empty
                                             <tr>
                                                 <td colspan="7" class="text-center py-4 text-muted">No items found.</td>
@@ -185,7 +208,7 @@
                                                         @foreach($payment->receipts as $receipt)
                                                             <div class="mb-1">
                                                                 <a href="{{ route('admin.accounts.receipts.download', $receipt->id) }}" class="btn btn-sm btn-outline-primary">
-                                                                    <i class="fas fa-download mr-1"></i> 
+                                                                    <i class="fas fa-download mr-1"></i>
                                                                 </a>
                                                                 <a href="{{ route('admin.accounts.receipts.destroy', $receipt->id) }}" class="btn btn-sm btn-outline-danger delete-item">
                                                                     <i class="fas fa-trash mr-1"></i>
@@ -295,7 +318,7 @@
                                     <div class="h5 font-weight-bold text-danger mb-0">{{ number_format($order->due_amount, 2) }}</div>
                                 </div>
                             </div>
-                            
+
                             @if($order->due_amount <= 0 && $order->total_amount > 0)
                                 <div class="alert alert-success text-center py-2 mb-0 mt-3">
                                     <i class="fas fa-check-circle mr-1"></i> Full Paid
