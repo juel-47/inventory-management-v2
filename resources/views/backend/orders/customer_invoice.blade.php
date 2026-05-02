@@ -137,24 +137,24 @@
                     @foreach($categoryProducts as $productId => $group)
                     <tr style="page-break-inside: avoid;">
                         <td class="text-center">{{ $rowNum++ }}</td>
-                    <td class="text-center">
-                        @if($group['optimized_image'])
-                            <img src="{{ $group['optimized_image'] }}" width="40" height="40" style="object-fit: cover; border-radius: 2px;">
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td>
-                        <div style="font-weight: bold;">{{ $group['product_name'] }}</div>
-                        @if(count($group['variants']) > 0)
-                            <div style="font-size: 10px; color: #666; margin-top: 4px;">
-                                @foreach($group['variants'] as $vName => $vQty)
-                                    <div>• {{ $vName }}: <strong>{{ $vQty }}</strong></div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </td>
-                    <td class="text-center">{{ $group['total_qty'] }}</td>
+                        <td class="text-center">
+                            @if($group['optimized_image'])
+                                <img src="{{ $group['optimized_image'] }}" width="40" height="40" style="object-fit: cover; border-radius: 2px;">
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            <div style="font-weight: bold;">{{ $group['product_name'] }}</div>
+                            @if(count($group['variants']) > 0)
+                                <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                                    @foreach($group['variants'] as $vName => $vQty)
+                                        <div>• {{ $vName }}: <strong>{{ $vQty }}</strong></div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </td>
+                        <td class="text-center">{{ $group['total_qty'] }}</td>
                     <td class="text-right">{{ $currency }}{{ number_format($group['unit_price'], 2) }}</td>
                     <td class="text-right">{{ $currency }}{{ number_format($group['total_price'], 2) }}</td>
                 </tr>

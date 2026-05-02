@@ -455,25 +455,17 @@ class PurchaseController extends Controller
      */
     public function downloadPdf(string $id)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
-        $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->findOrFail($id);
-        $settings = \App\Models\GeneralSetting::first();
+        $purchase = Purchase::findOrFail($id);
+        $path = 'purchases/purchase_' . $purchase->invoice_no . '.pdf';
         
-        // Optimize logo
-        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
-
-        // Optimize product images
-        foreach ($purchase->details as $detail) {
-            if ($detail->product && $detail->product->thumb_image) {
-                $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 60, 60);
-            }
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('backend.purchase.print_pdf', compact('purchase', 'settings'));
-        return $pdf->download('purchase_' . $purchase->invoice_no . '.pdf');
+        \App\Jobs\GeneratePurchasePdfJob::dispatch($purchase->id);
+        
+        Toastr::info('Purchase PDF is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**

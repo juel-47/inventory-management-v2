@@ -139,7 +139,10 @@
                 <tr>
                     <td>{{ $globalIndex }}</td>
                     <td class="image-cell">
-                        @if($base64)
+                        @php
+                            $showImages = true;
+                        @endphp
+                        @if($showImages && $base64)
                             <img src="{{ $base64 }}" alt="">
                         @else
                             <span class="image-empty">No Image</span>

@@ -169,29 +169,17 @@ class BookingController extends Controller
 
     public function downloadPdf(string $id)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
         $targetBooking = Booking::findOrFail($id);
-        $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)
-            ->with(['product.variants.color', 'product.variants.size', 'vendor', 'unit'])
-            ->get();
+        $path = 'bookings/booking_' . $targetBooking->booking_no . '.pdf';
         
-        $settings = \App\Models\GeneralSetting::first();
-
-        // Optimize logo
-        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
-
-        // Optimize product images
-        foreach ($orderGroup as $item) {
-            if ($item->product && $item->product->thumb_image) {
-                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
-            }
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        $pdf = Pdf::loadView('backend.booking.print_pdf', compact('orderGroup', 'targetBooking', 'settings'));
-        return $pdf->download('Booking_'.$targetBooking->booking_no.'.pdf');
+        \App\Jobs\GenerateBookingPdfJob::dispatch($targetBooking->id);
+        
+        Toastr::info('Booking PDF is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**

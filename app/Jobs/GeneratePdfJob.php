@@ -20,7 +20,7 @@ class GeneratePdfJob implements ShouldQueue
 
     public $orderId;
     public $type;
-    public $timeout = 600; // 10 minutes max execution time for very large PDFs
+    public $timeout = 0; // 0 means infinite timeout, will never fail due to time
 
     /**
      * Create a new job instance.
@@ -37,7 +37,8 @@ class GeneratePdfJob implements ShouldQueue
     public function handle(): void
     {
         ini_set('memory_limit', '-1');
-        set_time_limit(0);
+        ini_set('max_execution_time', '1200');
+        set_time_limit(1200);
 
         $order = Order::find($this->orderId);
         if (!$order) {
@@ -53,6 +54,38 @@ class GeneratePdfJob implements ShouldQueue
         } elseif ($this->type === 'customer_invoice') {
             $this->generateCustomerInvoice($order, $settings);
         }
+
+        // Notify the user via Cache without using database tables
+        /*
+        if ($order && $order->user_id) {
+            $title = 'PDF Ready';
+            $message = 'Your PDF is ready to download.';
+            $link = '#';
+
+            if ($this->type === 'invoice') {
+                $title = 'Invoice Ready';
+                $message = "Invoice for Order #{$order->order_no} is ready.";
+                $link = route('admin.orders.download-invoice', $order->id);
+            } elseif ($this->type === 'pi_invoice') {
+                $title = 'PI Invoice Ready';
+                $message = "PI Invoice for Order #{$order->order_no} is ready.";
+                $link = route('admin.orders.pi-invoice.download', $order->id); 
+            } elseif ($this->type === 'customer_invoice') {
+                $title = 'Customer Invoice Ready';
+                $message = "Customer Invoice for Order #{$order->order_no} is ready.";
+                $link = route('admin.orders.download-customer-invoice', $order->id);
+            }
+
+            $this->addCacheNotification($order->user_id, [
+                'type' => 'pdf_ready',
+                'title' => $title,
+                'desc' => $message,
+                'url' => $link,
+                'icon' => 'fas fa-file-pdf',
+                'class' => 'bg-success',
+            ]);
+        }
+        */
     }
 
     private function generateInvoice(Order $order, $settings)
@@ -64,10 +97,8 @@ class GeneratePdfJob implements ShouldQueue
 
         $itemCount = $order->items->count();
 
-        if ($itemCount <= 500) {
-            foreach ($order->items as $item) {
-                $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
-            }
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
         }
 
         $pdf = Pdf::setOption([
@@ -104,10 +135,8 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
 
-        if ($itemCount <= 500) {
-            foreach ($order->items as $item) {
-                $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
-            }
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
         }
 
         $pdf = Pdf::setOption([
@@ -128,15 +157,55 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
 
-        if ($itemCount <= 500) {
-            foreach ($order->items as $item) {
-                $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
-            }
+        foreach ($order->items as $item) {
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
         }
 
         $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount'));
         
         $path = 'invoices/customer-invoice-' . $order->order_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        /*
+        $order = Order::find($this->orderId);
+        if ($order && $order->user_id) {
+            $this->addCacheNotification($order->user_id, [
+                'type' => 'pdf_failed',
+                'title' => 'PDF Generation Failed',
+                'desc' => "Failed to generate PDF for Order #{$order->order_no}. Please try again.",
+                'url' => '#',
+                'icon' => 'fas fa-times-circle',
+                'class' => 'bg-danger',
+            ]);
+        }
+        */
+    }
+
+    /**
+     * Add notification to cache
+     */
+    private function addCacheNotification($userId, $data)
+    {
+        /*
+        $notifications = \Illuminate\Support\Facades\Cache::get('user_notifications_' . $userId, []);
+        
+        $data['time'] = now()->diffForHumans();
+        $data['timestamp'] = now()->timestamp;
+        $data['is_unread'] = true;
+        $data['is_out_of_stock'] = false;
+        
+        $notifications[] = $data;
+        
+        // Keep only the latest 20 notifications in cache
+        $notifications = array_slice($notifications, -20);
+        
+        \Illuminate\Support\Facades\Cache::put('user_notifications_' . $userId, $notifications, now()->addDays(7));
+        */
     }
 }
