@@ -333,7 +333,7 @@ class ReportController extends Controller implements HasMiddleware
         if ($user) {
             $pdfCacheKey = 'user_pdf_notifications_' . $user->id;
             $pdfNotifications = \Illuminate\Support\Facades\Cache::get($pdfCacheKey, []);
-            \Illuminate\Support\Facades\Log::info("Fetching PDF notifications for user {$user->id} from key {$pdfCacheKey}. Found: " . count($pdfNotifications));
+            // \Illuminate\Support\Facades\Log::info("Fetching PDF notifications for user {$user->id} from key {$pdfCacheKey}. Found: " . count($pdfNotifications));
             
             foreach ($pdfNotifications as $pdfNotif) {
                 $notifTime = \Illuminate\Support\Carbon::createFromTimestamp($pdfNotif['timestamp']);

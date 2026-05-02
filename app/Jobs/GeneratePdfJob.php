@@ -109,16 +109,16 @@ class GeneratePdfJob implements ShouldQueue
 
         $itemCount = $order->items->count();
 
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Invoice Order #{$order->order_no}");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
             $processed++;
             if ($processed % 500 === 0) {
-                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Invoice Order #{$order->order_no}");
+                // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Invoice Order #{$order->order_no}");
             }
         }
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Invoice Order #{$order->order_no}...");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
@@ -165,16 +165,16 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
 
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
             $processed++;
             if ($processed % 500 === 0) {
-                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for PI Invoice Order #{$order->order_no}");
+                // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for PI Invoice Order #{$order->order_no}");
             }
         }
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for PI Invoice Order #{$order->order_no}...");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for PI Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
@@ -195,16 +195,16 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
 
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
             $processed++;
             if ($processed % 500 === 0) {
-                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Customer Invoice Order #{$order->order_no}");
+                // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Customer Invoice Order #{$order->order_no}");
             }
         }
-        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Customer Invoice Order #{$order->order_no}...");
+        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Customer Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
@@ -255,6 +255,6 @@ class GeneratePdfJob implements ShouldQueue
         $notifications = array_slice($notifications, -20);
         
         \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
-        \Illuminate\Support\Facades\Log::info("Notification pushed to cache for user {$userId}: " . json_encode($data));
+        // \Illuminate\Support\Facades\Log::info("Notification pushed to cache for user {$userId}: " . json_encode($data));
     }
 }
