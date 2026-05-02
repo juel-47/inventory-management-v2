@@ -432,48 +432,19 @@
                         @php
                             $item = $group['first_item'];
                             $globalIndex++;
-                            $imagePath = (string) ($item->product_image ?? '');
-                            $imageUrl = null;
-                            $imageBase64 = null;
-                            if ($imagePath !== '') {
-                                if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                    $imageUrl = $imagePath;
-                                } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
-                                    $imageUrl = asset(ltrim($imagePath, '/'));
-                                } elseif (str_starts_with($imagePath, 'storage/')) {
-                                    $imageUrl = asset($imagePath);
-                                } else {
-                                    $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                                }
-                            }
-
-                            if (
-                                $isPdf &&
-                                $imagePath !== '' &&
-                                !str_starts_with($imagePath, 'http://') &&
-                                !str_starts_with($imagePath, 'https://')
-                            ) {
-                                $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
-                                $candidates = [
-                                    public_path(ltrim($imagePath, '/')),
-                                    public_path('storage/' . $normalized),
-                                    storage_path('app/public/' . $normalized),
-                                ];
-                                foreach ($candidates as $candidate) {
-                                    if (is_file($candidate)) {
-                                        $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                                        $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                        $imageBase64 =
-                                            'data:image/' .
-                                            $mime .
-                                            ';base64,' .
-                                            base64_encode(file_get_contents($candidate));
-                                        break;
+                            $imageSrc = $item->optimized_image ?? null;
+                            
+                            // Fallback for non-PDF view if needed
+                            if (!$isPdf && !$imageSrc) {
+                                $imagePath = (string) ($item->product_image ?? '');
+                                if ($imagePath !== '') {
+                                    if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                                        $imageSrc = $imagePath;
+                                    } else {
+                                        $imageSrc = asset('storage/' . ltrim($imagePath, '/'));
                                     }
                                 }
                             }
-
-                            $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
                         @endphp
                         <tr>
                             <td>{{ $globalIndex }}</td>

@@ -105,42 +105,13 @@
                     </td>
                 </tr>
                 @foreach($categoryItems as $item)
-                @php
-                    $imagePath = (string) ($item->product_image ?? '');
-                    $base64 = null;
-                    if ($imagePath !== '' && (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://'))) {
-                        $remoteData = @file_get_contents($imagePath);
-                        if ($remoteData !== false) {
-                            $pathPart = parse_url($imagePath, PHP_URL_PATH) ?: '';
-                            $ext = strtolower(pathinfo($pathPart, PATHINFO_EXTENSION) ?: 'jpg');
-                            $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                            $base64 = 'data:image/' . $mime . ';base64,' . base64_encode($remoteData);
-                        }
-                    }
-
-                    if ($base64 === null && $imagePath !== '' && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
-                        $normalized = ltrim($imagePath, '/');
-                        $candidates = [
-                            public_path($normalized),
-                            public_path('storage/' . ltrim(str_replace('storage/', '', $normalized), '/')),
-                            storage_path('app/public/' . ltrim(str_replace('storage/', '', $normalized), '/')),
-                        ];
-                        foreach ($candidates as $candidate) {
-                            if (is_file($candidate)) {
-                                $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                                $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                $base64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
-                                break;
-                            }
-                        }
-                    }
-                @endphp
                 @php $globalIndex++; @endphp
                 <tr>
                     <td>{{ $globalIndex }}</td>
                     <td class="image-cell">
                         @php
                             $showImages = true;
+                            $base64 = $item->optimized_image ?? null;
                         @endphp
                         @if($showImages && $base64)
                             <img src="{{ $base64 }}" alt="">

@@ -91,6 +91,16 @@ class GeneratePdfJob implements ShouldQueue
     {
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
         $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        
+        // Optimize images in PI Info blocks for faster PDF rendering
+        if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
+            foreach ($piInfo['blocks'] as &$block) {
+                if (!empty($block['image'])) {
+                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                }
+            }
+        }
+
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
@@ -109,8 +119,9 @@ class GeneratePdfJob implements ShouldQueue
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
+            'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
+            'enable_remote' => false,
         ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount'));
 
         $path = 'invoices/invoice-' . $order->order_no . '.pdf';
@@ -133,6 +144,16 @@ class GeneratePdfJob implements ShouldQueue
         ]);
         
         $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        
+        // Optimize images in PI Info blocks for faster PDF rendering
+        if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
+            foreach ($piInfo['blocks'] as &$block) {
+                if (!empty($block['image'])) {
+                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                }
+            }
+        }
+
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
@@ -154,8 +175,9 @@ class GeneratePdfJob implements ShouldQueue
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
+            'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
+            'enable_remote' => false,
         ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount') + ['isPdf' => true]);
 
         $path = 'invoices/pi-invoice-' . $order->order_no . '.pdf';
@@ -181,7 +203,12 @@ class GeneratePdfJob implements ShouldQueue
         }
         \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Customer Invoice Order #{$order->order_no}...");
 
-        $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount'));
+        $pdf = Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif',
+            'enable_remote' => false,
+        ])->loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount'));
         
         $path = 'invoices/customer-invoice-' . $order->order_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());

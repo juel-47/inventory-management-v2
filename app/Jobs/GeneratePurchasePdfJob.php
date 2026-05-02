@@ -46,7 +46,12 @@ class GeneratePurchasePdfJob implements ShouldQueue
             }
         }
 
-        $pdf = Pdf::loadView('backend.purchase.print_pdf', compact('purchase', 'settings'));
+        $pdf = Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif',
+            'enable_remote' => false,
+        ])->loadView('backend.purchase.print_pdf', compact('purchase', 'settings'));
         
         $path = 'purchases/purchase_' . $purchase->invoice_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());

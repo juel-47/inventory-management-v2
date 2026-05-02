@@ -50,7 +50,12 @@ class GenerateBookingPdfJob implements ShouldQueue
             }
         }
 
-        $pdf = Pdf::loadView('backend.booking.print_pdf', compact('orderGroup', 'targetBooking', 'settings'));
+        $pdf = Pdf::setOption([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'sans-serif',
+            'enable_remote' => false,
+        ])->loadView('backend.booking.print_pdf', compact('orderGroup', 'targetBooking', 'settings'));
         
         $path = 'bookings/booking_' . $targetBooking->booking_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());

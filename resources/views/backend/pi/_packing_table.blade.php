@@ -81,26 +81,28 @@
                         ->filter()
                         ->first() ?? '';
                 }
-                $imagePath = (string) ($block['image'] ?? '');
-                $imageBase64 = null;
-                if ($imagePath !== '') {
-                    $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
-                    $candidates = [
-                        public_path(ltrim($imagePath, '/')),
-                        public_path('storage/' . $normalized),
-                        storage_path('app/public/' . $normalized),
-                    ];
-                    foreach ($candidates as $candidate) {
-                        if (is_file($candidate)) {
-                            $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                            $mime = match ($ext) {
-                                'png' => 'png',
-                                'gif' => 'gif',
-                                'webp' => 'webp',
-                                default => 'jpeg',
-                            };
-                            $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
-                            break;
+                $imageBase64 = $block['optimized_image'] ?? null;
+                if (!$imageBase64) {
+                    $imagePath = (string) ($block['image'] ?? '');
+                    if ($imagePath !== '') {
+                        $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
+                        $candidates = [
+                            public_path(ltrim($imagePath, '/')),
+                            public_path('storage/' . $normalized),
+                            storage_path('app/public/' . $normalized),
+                        ];
+                        foreach ($candidates as $candidate) {
+                            if (is_file($candidate)) {
+                                $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
+                                $mime = match ($ext) {
+                                    'png' => 'png',
+                                    'gif' => 'gif',
+                                    'webp' => 'webp',
+                                    default => 'jpeg',
+                                };
+                                $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
+                                break;
+                            }
                         }
                     }
                 }

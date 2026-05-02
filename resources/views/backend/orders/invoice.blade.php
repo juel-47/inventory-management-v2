@@ -251,25 +251,21 @@
                         </td>
                     </tr>
                     @foreach($categoryItems as $item)
-                    @php
-                        $imagePath = (string) ($item->product_image ?? '');
-                        $imageUrl = null;
-                        if ($imagePath !== '') {
-                            if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                $imageUrl = $imagePath;
-                            } elseif (is_file(public_path(ltrim($imagePath, '/')))) {
-                                $imageUrl = asset(ltrim($imagePath, '/'));
-                            } elseif (str_starts_with($imagePath, 'storage/')) {
-                                $imageUrl = asset($imagePath);
-                            } else {
-                                $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                            }
-                        }
-                    @endphp
                     @php $globalIndex++; @endphp
                     <tr>
                         <td>{{ $globalIndex }}</td>
                         <td class="image-cell">
+                            @php
+                                $imageUrl = null;
+                                $imagePath = (string) ($item->product_image ?? '');
+                                if ($imagePath !== '') {
+                                    if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                                        $imageUrl = $imagePath;
+                                    } else {
+                                        $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
+                                    }
+                                }
+                            @endphp
                             @if($imageUrl)
                                 <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
                             @else

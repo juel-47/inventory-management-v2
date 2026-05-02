@@ -174,7 +174,12 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td class="text-center">
-                            @if ($detail->product && $detail->product->thumb_image)
+                            @php
+                                $base64 = $detail->product->optimized_image ?? null;
+                            @endphp
+                            @if ($base64)
+                                <img src="{{ $base64 }}" style="width: 40px; height: 40px; object-fit: cover;">
+                            @elseif ($detail->product && $detail->product->thumb_image)
                                 <img src="{{ public_path('storage/' . $detail->product->thumb_image) }}"
                                     style="width: 40px; height: 40px; object-fit: cover;">
                             @else
