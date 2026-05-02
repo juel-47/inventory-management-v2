@@ -139,29 +139,16 @@ class FrontendOrderController extends Controller
      */
     public function downloadInvoice(Order $order)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
-        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
-        $settings = GeneralSetting::first();
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
-        $piTotals = PiInfoSupport::summarize($piInfo);
-        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
-
-        $pdf = Pdf::setOption([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true, // Enabled for potential remote images, but helper handles them too
-            'defaultFont' => 'sans-serif',
-        ]);
-
-        // Optimize product images for PDF
-        foreach ($order->items as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+        $path = 'invoices/invoice-' . $order->order_no . '.pdf';
+        
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        $pdf->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
-
-        return $pdf->download('order-' . $order->order_no . '.pdf');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'invoice');
+        
+        Toastr::info('PDF is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**
@@ -169,44 +156,16 @@ class FrontendOrderController extends Controller
      */
     public function downloadPiInvoice(Order $order)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
-        $order->load([
-            'items.product.category',
-            'items.product.subCategory',
-            'items.product.childCategory',
-            'items.product.brand',
-            'items.product.vendor',
-            'items.product.unit',
-            'items.product.productType',
-            'items.variant.color',
-            'items.variant.size',
-            'user',
-        ]);
-        $settings = GeneralSetting::first();
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
-        $piTotals = PiInfoSupport::summarize($piInfo);
-        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
-
-        $pdf = Pdf::setOption([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'sans-serif',
-        ]);
-
-        // Optimize logo for PDF
-        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
-
-        // Optimize product images for PDF
-        foreach ($order->items as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+        $path = 'invoices/pi-invoice-' . $order->order_no . '.pdf';
+        
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        $pdf->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
-
-        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice');
+        
+        Toastr::info('PI Invoice is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**
@@ -214,23 +173,16 @@ class FrontendOrderController extends Controller
      */
     public function downloadCustomerInvoice(Order $order)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
-        $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
-        $settings = GeneralSetting::first();
-
-        // Optimize logo for PDF
-        $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
-
-        // Optimize product images for PDF (smaller for customer invoice)
-        foreach ($order->items as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+        $path = 'invoices/customer-invoice-' . $order->order_no . '.pdf';
+        
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings'));
-        return $pdf->download('customer-invoice-' . $order->order_no . '.pdf');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'customer_invoice');
+        
+        Toastr::info('Customer Invoice is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**

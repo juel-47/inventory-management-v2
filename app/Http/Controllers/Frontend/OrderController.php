@@ -89,34 +89,15 @@ class OrderController extends Controller
     {
         abort_if((int) $order->user_id !== (int) Auth::id(), 403);
 
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
+        $path = 'invoices/pi-invoice-' . $order->order_no . '.pdf';
+        
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
+        }
 
-        $order->load([
-            'items.product.category',
-            'items.product.subCategory',
-            'items.product.childCategory',
-            'items.product.brand',
-            'items.product.vendor',
-            'items.product.unit',
-            'items.product.productType',
-            'items.variant.color',
-            'items.variant.size',
-            'user',
-        ]);
-
-        $settings = GeneralSetting::first();
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
-        $piTotals = PiInfoSupport::summarize($piInfo);
-        $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
-
-        $pdf = Pdf::setOption([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-            'defaultFont' => 'sans-serif',
-        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo') + ['isPdf' => true]);
-
-        return $pdf->download('pi-invoice-' . $order->order_no . '.pdf');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice');
+        
+        return redirect()->back()->with('success', 'PI Invoice is generating in the background. Please refresh and click download again after a minute.');
     }
 
     /**

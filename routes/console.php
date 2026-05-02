@@ -18,3 +18,17 @@ Artisan::command('inspire', function () {
 
 Schedule::command('backup:clean')->dailyAt('02:30');
 Schedule::command('backup:run')->dailyAt('03:00');
+
+// Clean up generated invoice PDFs older than 24 hours
+Schedule::call(function () {
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    $files = $disk->files('invoices');
+    $now = now();
+    
+    foreach ($files as $file) {
+        $lastModified = $disk->lastModified($file);
+        if ($now->diffInHours(\Carbon\Carbon::createFromTimestamp($lastModified)) >= 24) {
+            $disk->delete($file);
+        }
+    }
+})->dailyAt('04:00')->name('clean-old-invoices')->withoutOverlapping();
