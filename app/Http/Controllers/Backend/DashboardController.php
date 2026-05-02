@@ -25,7 +25,7 @@ class DashboardController extends Controller
             $totalInactiveProducts = Product::where('status', 0)->count();
             $totalProducts = Product::count();
             $totalIssues = Issue::count();
-            $pendingRequests = ProductRequest::where('status', 'pending')->count();
+            $pendingRequests = Order::where('status', 'pending')->count();
             $totalOutlets = User::role('Outlet User')->count();
             
             // Recent frontend orders for Admin
