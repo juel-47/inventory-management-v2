@@ -18,11 +18,13 @@ class GenerateBookingPdfJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $bookingId;
+    public $userId;
     public $timeout = 3600; // 1 hour timeout
 
-    public function __construct($bookingId)
+    public function __construct($bookingId, $userId = null)
     {
         $this->bookingId = $bookingId;
+        $this->userId = $userId;
     }
 
     public function handle(): void
@@ -60,7 +62,32 @@ class GenerateBookingPdfJob implements ShouldQueue
         $path = 'bookings/booking_' . $targetBooking->booking_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
 
-        // We could notify the user here if needed
-        // Auth is not available here, but we can assume admins generate bookings
+        // Notify user via Cache
+        if ($this->userId) {
+            $this->addCacheNotification($this->userId, [
+                'type' => 'pdf_ready',
+                'title' => 'Booking PDF Ready',
+                'desc' => "PDF for Booking #{$targetBooking->booking_no} is ready.",
+                'url' => route('admin.bookings.download-pdf', $targetBooking->id),
+                'icon' => 'fas fa-book',
+                'class' => 'bg-primary',
+                'timestamp' => now()->timestamp,
+            ]);
+        }
+    }
+
+    private function addCacheNotification($userId, $data)
+    {
+        $key = 'user_pdf_notifications_' . $userId;
+        $notifications = \Illuminate\Support\Facades\Cache::get($key, []);
+        
+        $data['time'] = now()->diffForHumans();
+        $data['is_unread'] = true;
+        $data['is_out_of_stock'] = false;
+        
+        $notifications[] = $data;
+        $notifications = array_slice($notifications, -20);
+        
+        \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
     }
 }

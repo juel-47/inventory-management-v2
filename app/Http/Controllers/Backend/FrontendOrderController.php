@@ -145,7 +145,7 @@ class FrontendOrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'invoice');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'invoice', \Illuminate\Support\Facades\Auth::id());
         
         Toastr::info('PDF is generating in the background. Please refresh and click download again after a minute.');
         return redirect()->back();
@@ -162,7 +162,7 @@ class FrontendOrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice', \Illuminate\Support\Facades\Auth::id());
         
         Toastr::info('PI Invoice is generating in the background. Please refresh and click download again after a minute.');
         return redirect()->back();
@@ -179,7 +179,7 @@ class FrontendOrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'customer_invoice');
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'customer_invoice', \Illuminate\Support\Facades\Auth::id());
         
         Toastr::info('Customer Invoice is generating in the background. Please refresh and click download again after a minute.');
         return redirect()->back();

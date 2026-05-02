@@ -18,11 +18,13 @@ class GeneratePurchasePdfJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $purchaseId;
+    public $userId;
     public $timeout = 3600; // 1 hour timeout
 
-    public function __construct($purchaseId)
+    public function __construct($purchaseId, $userId = null)
     {
         $this->purchaseId = $purchaseId;
+        $this->userId = $userId;
     }
 
     public function handle(): void
@@ -56,10 +58,32 @@ class GeneratePurchasePdfJob implements ShouldQueue
         $path = 'purchases/purchase_' . $purchase->invoice_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
 
-        // Notify user if needed (reusing the same notification concept, or generic)
-        if ($purchase->user) {
-            // Re-using PdfReadyNotification
-            // $purchase->user->notify(new \App\Notifications\PdfReadyNotification($purchase, 'purchase'));
+        // Notify user via Cache
+        if ($purchase->user_id) {
+            $this->addCacheNotification($purchase->user_id, [
+                'type' => 'pdf_ready',
+                'title' => 'Purchase PDF Ready',
+                'desc' => "PDF for Purchase #{$purchase->invoice_no} is ready.",
+                'url' => route('admin.purchases.download-pdf', $purchase->id),
+                'icon' => 'fas fa-file-invoice',
+                'class' => 'bg-info',
+                'timestamp' => now()->timestamp,
+            ]);
         }
+    }
+
+    private function addCacheNotification($userId, $data)
+    {
+        $key = 'user_pdf_notifications_' . $userId;
+        $notifications = \Illuminate\Support\Facades\Cache::get($key, []);
+        
+        $data['time'] = now()->diffForHumans();
+        $data['is_unread'] = true;
+        $data['is_out_of_stock'] = false;
+        
+        $notifications[] = $data;
+        $notifications = array_slice($notifications, -20);
+        
+        \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
     }
 }

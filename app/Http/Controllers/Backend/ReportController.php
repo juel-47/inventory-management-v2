@@ -328,6 +328,32 @@ class ReportController extends Controller implements HasMiddleware
                 ];
             }
         }
+
+        // 4. Fetch PDF Ready Notifications from Cache
+        if ($user) {
+            $pdfCacheKey = 'user_pdf_notifications_' . $user->id;
+            $pdfNotifications = \Illuminate\Support\Facades\Cache::get($pdfCacheKey, []);
+            \Illuminate\Support\Facades\Log::info("Fetching PDF notifications for user {$user->id} from key {$pdfCacheKey}. Found: " . count($pdfNotifications));
+            
+            foreach ($pdfNotifications as $pdfNotif) {
+                $notifTime = \Illuminate\Support\Carbon::createFromTimestamp($pdfNotif['timestamp']);
+                $isUnread = !$lastReadAt || $notifTime->gt($lastReadAt);
+                if ($isUnread) $unreadCount++;
+
+                $notifications[] = [
+                    'type' => 'pdf_ready',
+                    'title' => $pdfNotif['title'],
+                    'desc' => $pdfNotif['desc'],
+                    'time' => $notifTime->diffForHumans(),
+                    'timestamp' => $pdfNotif['timestamp'],
+                    'url' => $pdfNotif['url'],
+                    'icon' => $pdfNotif['icon'],
+                    'class' => $pdfNotif['class'],
+                    'is_unread' => $isUnread,
+                    'is_out_of_stock' => false
+                ];
+            }
+        }
         usort($notifications, function($a, $b) {
             return $b['timestamp'] <=> $a['timestamp'];
         });

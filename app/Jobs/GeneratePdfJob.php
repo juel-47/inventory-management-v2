@@ -20,15 +20,17 @@ class GeneratePdfJob implements ShouldQueue
 
     public $orderId;
     public $type;
+    public $userId;
     public $timeout = 3600; // 1 hour timeout for large PDFs
 
     /**
      * Create a new job instance.
      */
-    public function __construct($orderId, $type)
+    public function __construct($orderId, $type, $userId = null)
     {
         $this->orderId = $orderId;
         $this->type = $type;
+        $this->userId = $userId;
     }
 
     /**
@@ -55,8 +57,9 @@ class GeneratePdfJob implements ShouldQueue
         }
 
         // Notify the user via Cache without using database tables
-        /*
-        if ($order && $order->user_id) {
+        $notifyUserId = $this->userId ?: ($order ? $order->user_id : null);
+        
+        if ($notifyUserId) {
             $title = 'PDF Ready';
             $message = 'Your PDF is ready to download.';
             $link = '#';
@@ -75,16 +78,16 @@ class GeneratePdfJob implements ShouldQueue
                 $link = route('admin.orders.download-customer-invoice', $order->id);
             }
 
-            $this->addCacheNotification($order->user_id, [
+            $this->addCacheNotification($notifyUserId, [
                 'type' => 'pdf_ready',
                 'title' => $title,
                 'desc' => $message,
                 'url' => $link,
                 'icon' => 'fas fa-file-pdf',
                 'class' => 'bg-success',
+                'timestamp' => now()->timestamp,
             ]);
         }
-        */
     }
 
     private function generateInvoice(Order $order, $settings)
@@ -239,11 +242,10 @@ class GeneratePdfJob implements ShouldQueue
      */
     private function addCacheNotification($userId, $data)
     {
-        /*
-        $notifications = \Illuminate\Support\Facades\Cache::get('user_notifications_' . $userId, []);
+        $key = 'user_pdf_notifications_' . $userId;
+        $notifications = \Illuminate\Support\Facades\Cache::get($key, []);
         
         $data['time'] = now()->diffForHumans();
-        $data['timestamp'] = now()->timestamp;
         $data['is_unread'] = true;
         $data['is_out_of_stock'] = false;
         
@@ -252,7 +254,7 @@ class GeneratePdfJob implements ShouldQueue
         // Keep only the latest 20 notifications in cache
         $notifications = array_slice($notifications, -20);
         
-        \Illuminate\Support\Facades\Cache::put('user_notifications_' . $userId, $notifications, now()->addDays(7));
-        */
+        \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
+        \Illuminate\Support\Facades\Log::info("Notification pushed to cache for user {$userId}: " . json_encode($data));
     }
 }

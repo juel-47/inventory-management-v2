@@ -176,7 +176,7 @@ class BookingController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GenerateBookingPdfJob::dispatch($targetBooking->id);
+        \App\Jobs\GenerateBookingPdfJob::dispatch($targetBooking->id, \Illuminate\Support\Facades\Auth::id());
         
         Toastr::info('Booking PDF is generating in the background. Please refresh and click download again after a minute.');
         return redirect()->back();
