@@ -68,7 +68,7 @@
             @canany(['Manage Order Place', 'Manage Order Receive'])
             @can('Manage Order Place')
              <li class="menu-header">Order Place</li>
-            <li class="dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
+            <li class="dropdown {{ setActive([ 'admin.orders.*', 'admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-book"></i>
                     <span>Manage Request</span></a>
                 <ul class="dropdown-menu">
@@ -87,7 +87,7 @@
 
             @can('Manage Order Receive')
             <li class="menu-header">Order Receive</li>
-            <li class="dropdown {{ setActive(['admin.purchases.*']) }}">
+            <li class="dropdown {{ setActive(['admin.purchases.*','admin.bookings.*']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-shopping-cart"></i>
                     <span>Manage Order Place/Receive</span></a>
                 <ul class="dropdown-menu">

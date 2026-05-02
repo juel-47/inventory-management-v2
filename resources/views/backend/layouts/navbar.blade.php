@@ -175,7 +175,7 @@
 
              <!-- Order Place -->
             @can('Manage Order Place')
-            <li class="nav-item dropdown {{ setActive(['admin.bookings.*', 'admin.orders.*', 'admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
+            <li class="nav-item dropdown {{ setActive(['admin.orders.*', 'admin.product-requests.*', 'admin.custom-product-requests.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-book"></i><span>Order Request</span></a>
                 <ul class="dropdown-menu">
                     {{-- <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}">All Order Place</a></li> --}}
@@ -193,7 +193,7 @@
 
             <!-- Purchases -->
             @can('Manage Order Receive')
-            <li class="nav-item dropdown {{ setActive(['admin.purchases.*']) }}">
+            <li class="nav-item dropdown {{ setActive(['admin.purchases.*','admin.bookings.*']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-shopping-cart"></i><span>Order Place/Receive</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.bookings.*']) }}"><a class="nav-link" href="{{ route('admin.bookings.index') }}">All Order Place</a></li>
