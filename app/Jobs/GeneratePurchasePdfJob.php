@@ -18,7 +18,7 @@ class GeneratePurchasePdfJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $purchaseId;
-    public $timeout = 0; // Infinite timeout
+    public $timeout = 3600; // 1 hour timeout
 
     public function __construct($purchaseId)
     {
@@ -28,8 +28,7 @@ class GeneratePurchasePdfJob implements ShouldQueue
     public function handle(): void
     {
         ini_set('memory_limit', '-1');
-        ini_set('max_execution_time', '1200');
-        set_time_limit(1200);
+        set_time_limit(0); // Infinite time limit for CLI process
 
         $purchase = Purchase::with(['vendor', 'user', 'details.product', 'attachments'])->find($this->purchaseId);
         if (!$purchase) {

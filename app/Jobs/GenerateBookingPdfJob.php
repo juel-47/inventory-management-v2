@@ -18,7 +18,7 @@ class GenerateBookingPdfJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $bookingId;
-    public $timeout = 0; // Infinite timeout
+    public $timeout = 3600; // 1 hour timeout
 
     public function __construct($bookingId)
     {
@@ -28,8 +28,7 @@ class GenerateBookingPdfJob implements ShouldQueue
     public function handle(): void
     {
         ini_set('memory_limit', '-1');
-        ini_set('max_execution_time', '1200');
-        set_time_limit(1200);
+        set_time_limit(0); // Infinite time limit for CLI process
 
         $targetBooking = Booking::find($this->bookingId);
         if (!$targetBooking) {

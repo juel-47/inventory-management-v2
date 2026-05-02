@@ -20,7 +20,7 @@ class GeneratePdfJob implements ShouldQueue
 
     public $orderId;
     public $type;
-    public $timeout = 0; // 0 means infinite timeout, will never fail due to time
+    public $timeout = 3600; // 1 hour timeout for large PDFs
 
     /**
      * Create a new job instance.
@@ -37,8 +37,7 @@ class GeneratePdfJob implements ShouldQueue
     public function handle(): void
     {
         ini_set('memory_limit', '-1');
-        ini_set('max_execution_time', '1200');
-        set_time_limit(1200);
+        set_time_limit(0); // Infinite time limit for CLI process
 
         $order = Order::find($this->orderId);
         if (!$order) {
@@ -97,9 +96,16 @@ class GeneratePdfJob implements ShouldQueue
 
         $itemCount = $order->items->count();
 
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Invoice Order #{$order->order_no}");
+        $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            $processed++;
+            if ($processed % 500 === 0) {
+                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Invoice Order #{$order->order_no}");
+            }
         }
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
@@ -135,9 +141,16 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
 
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
+        $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            $processed++;
+            if ($processed % 500 === 0) {
+                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for PI Invoice Order #{$order->order_no}");
+            }
         }
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for PI Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::setOption([
             'isHtml5ParserEnabled' => true,
@@ -157,9 +170,16 @@ class GeneratePdfJob implements ShouldQueue
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
 
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
+        $processed = 0;
         foreach ($order->items as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+            $processed++;
+            if ($processed % 500 === 0) {
+                \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Customer Invoice Order #{$order->order_no}");
+            }
         }
+        \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Rendering DOMPDF for Customer Invoice Order #{$order->order_no}...");
 
         $pdf = Pdf::loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount'));
         
