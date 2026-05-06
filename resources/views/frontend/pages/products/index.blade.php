@@ -5,7 +5,7 @@
     <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
     <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]"></div>
     <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
-    
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         <span class="inline-block px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-black uppercase tracking-[0.2em] mb-6 animate-pulse">
             Premium B2B Commerce
@@ -24,18 +24,18 @@
     <div class="bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-4 mb-16">
         <div class="flex flex-col lg:flex-row gap-4">
             <div class="flex-1 relative group">
-                <input type="text" name="search" value="{{ request('search') }}" 
+                <input type="text" name="search" value="{{ request('search') }}"
                        x-model="searchQuery"
                        @keyup.enter="window.location.href = `?search=${searchQuery}`"
-                       placeholder="Search by product name or serial number..." 
+                       placeholder="Search by product name or serial number..."
                        class="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl pl-14 pr-6 py-4 outline-none transition-all font-bold text-slate-700 placeholder-slate-400">
                 <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
-            
+
             <div class="lg:w-64 relative">
-                <select @change="window.location.href = `?category=${$event.target.value}`" 
+                <select @change="window.location.href = `?category=${$event.target.value}`"
                         class="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer">
                     <option value="">All Categories</option>
                     @foreach($categories as $category)
@@ -61,16 +61,16 @@
                 <div class="aspect-4/5 rounded-4xl bg-slate-50 overflow-hidden relative mb-6">
                     @php
                         $imagePath = $product->thumb_image;
-                        $displayPath = (strpos($imagePath, 'http') === 0) 
-                            ? $imagePath 
-                            : (file_exists(public_path($imagePath)) 
-                                ? asset($imagePath) 
+                        $displayPath = (strpos($imagePath, 'http') === 0)
+                            ? $imagePath
+                            : (file_exists(public_path($imagePath))
+                                ? asset($imagePath)
                                 : asset('storage/' . $imagePath));
                     @endphp
-                    <img src="{{ $displayPath }}" 
-                         alt="{{ $product->name }}" 
+                    <img src="{{ $displayPath }}"
+                         alt="{{ $product->name }}"
                          class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000">
-                    
+
                     <!-- Overlay for Guests -->
                     @guest
                         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
@@ -111,7 +111,7 @@
                     <h3 class="text-xl font-bold text-slate-900 leading-tight mb-2 line-clamp-2">
                         <a href="{{ route('product.details', $product->slug) }}" class="hover:text-indigo-600 transition-colors">{{ $product->name }}</a>
                     </h3>
-                    
+
                     <div class="mt-auto pt-6 flex items-center justify-between border-t border-slate-50">
                         @auth
                             <div class="flex flex-col">

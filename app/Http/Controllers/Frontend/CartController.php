@@ -94,12 +94,25 @@ class CartController extends Controller
 
         $productId = $validated['product_id'];
         $variantId = isset($validated['variant_id']) ? (int) $validated['variant_id'] : null;
-        $product = Product::with('inventoryStocks')
+        $product = Product::with(['inventoryStocks', 'productType'])
             ->where('status', 1)
             ->whereHas('category', function ($query) {
                 $query->where('status', 1);
             })
             ->findOrFail($productId);
+
+        // Check if product is upcoming - prevent adding to cart
+        $productTypeName = trim((string) optional($product->productType)->name);
+        if ($productTypeName === '') {
+            $productTypeName = trim((string) ($product->product_type ?? ''));
+        }
+        if (strtolower($productTypeName) === 'upcoming' || str_contains(strtolower($productTypeName), 'upcoming')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This product is coming soon and not available for purchase yet.',
+            ], 422);
+        }
+
         $variant = null;
         if ($variantId) {
             $variant = ProductVariant::with('inventoryStocks')

@@ -3,6 +3,7 @@
     'variants' => [],
     'displayPath' => null,
     'categoryName' => 'General',
+    'productType' => null,
     'currencyIcon' => 'Tk',
     'isOutletUser' => false,
     'isStandardUser' => false,
@@ -28,7 +29,7 @@
     $discountBadgeClasses = 'border-slate-200 bg-slate-100 text-slate-600';
 @endphp
 
-<article x-data="{{ $alpineComponent }}(@js($product), @js($variants))"
+<article x-data="{{ $alpineComponent }}(@js($product), @js($variants), '{{ $productType }}')"
     {{ $attributes->merge(['class' => $cardClasses]) }}>
     <div class="relative mb-4 aspect-square overflow-hidden rounded-lg border border-slate-200 bg-[#f6f4ef]">
         @if ($resolvedDisplayPath !== '')
@@ -44,6 +45,21 @@
             <span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                 {{ $resolvedCategoryName }}
             </span>
+            @if ($productType)
+                @php
+                    $productTypeLower = strtolower($productType);
+                    if (str_contains($productTypeLower, 'upcoming')) {
+                        $badgeClass = 'border-amber-200 bg-amber-50 text-amber-600';
+                    } elseif (str_contains($productTypeLower, 'new') || str_contains($productTypeLower, 'arrival')) {
+                        $badgeClass = 'border-emerald-200 bg-emerald-50 text-emerald-600';
+                    } else {
+                        $badgeClass = 'border-slate-200 bg-white text-slate-600';
+                    }
+                @endphp
+                <span class="rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider {{ $badgeClass }}">
+                    {{ str_replace('_', ' ', $productType) }}
+                </span>
+            @endif
             @auth
                 <template x-if="hasProductDiscount">
                     <span class="rounded-md border {{ $discountBadgeClasses }} px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
@@ -180,7 +196,7 @@
                         </div>
                     </div>
 
-                    
+
                         <div class="rounded-md bg-white">
                             {{-- <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                                 <span>MIM: <span class="text-slate-600" x-text="minimumOrderQty"></span></span>
@@ -203,7 +219,7 @@
     <div class="flex items-center justify-between gap-3 mb-1.5">
         <div class="flex items-center gap-3">
             <span>MIM: <span class="text-slate-700" x-text="minimumOrderQty"></span></span>
-            
+
             <template x-if="isInCart">
                 <span class="text-red-600">
                     Total in cart: <span class="text-red-600" x-text="inCartQty"></span>

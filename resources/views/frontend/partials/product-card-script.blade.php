@@ -5,11 +5,12 @@
         }
         window.__productCardItemRegistered = true;
 
-        Alpine.data('productCardItem', (product, variants) => ({
+        Alpine.data('productCardItem', (product, variants, productType = null) => ({
             qty: Math.max(1, parseInt(product.minimum_order_qty, 10) || 1),
             selectedVariantIndex: '',
             product,
             variants,
+            productType,
 
             init() {
                 if (!this.hasVariants || !this.inventoryVisible) {
@@ -212,7 +213,16 @@
                 return Math.floor(stock / moq) * moq;
             },
 
+            get isUpcoming() {
+                const type = String(this.productType || '').toLowerCase();
+                return type.includes('upcoming');
+            },
+
             get canAdd() {
+                if (this.isUpcoming) {
+                    return false;
+                }
+
                 if (this.hasVariants && !this.selectedVariant) {
                     return false;
                 }
@@ -226,6 +236,10 @@
             },
 
             get cannotAddMessage() {
+                if (this.isUpcoming) {
+                    return 'Coming soon - not available for purchase yet';
+                }
+
                 if (this.hasVariants && !this.selectedVariant) {
                     return 'Please select a variant';
                 }

@@ -473,6 +473,7 @@
                                 :variants="$card['variants']"
                                 :display-path="$card['display_path']"
                                 :category-name="$card['category_name']"
+                                :product-type="$card['product_type']"
                                 :currency-icon="$currencyIcon"
                                 :is-outlet-user="$isOutletUser"
                                 :is-standard-user="$isStandardUser"

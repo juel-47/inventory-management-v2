@@ -42,6 +42,7 @@
                                     :variants="$card['variants']"
                                     :display-path="$card['display_path']"
                                     :category-name="$card['category_name']"
+                                    :product-type="$card['product_type']"
                                     :currency-icon="$currencyIcon"
                                     :is-outlet-user="$isOutletUser"
                                     :is-standard-user="$isStandardUser"
@@ -51,6 +52,35 @@
                         </div>
                     </section>
                 @endforeach
+
+                {{-- Pagination --}}
+                @if($latestCategories->hasPages())
+                    <div class="flex items-center justify-center gap-4 pt-4">
+                        @if($latestCategories->onFirstPage())
+                            <button disabled class="rounded-lg border border-slate-200 bg-slate-100 px-6 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed">
+                                Previous
+                            </button>
+                        @else
+                            <a href="{{ $latestCategories->previousPageUrl() }}" class="rounded-lg border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors">
+                                Previous
+                            </a>
+                        @endif
+
+                        <span class="text-sm text-slate-600">
+                            Page {{ $latestCategories->currentPage() }} of {{ $latestCategories->lastPage() }}
+                        </span>
+
+                        @if($latestCategories->hasMorePages())
+                            <a href="{{ $latestCategories->nextPageUrl() }}" class="rounded-lg border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors">
+                                Next
+                            </a>
+                        @else
+                            <button disabled class="rounded-lg border border-slate-200 bg-slate-100 px-6 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed">
+                                Next
+                            </button>
+                        @endif
+                    </div>
+                @endif
             @endif
         </div>
     </div>

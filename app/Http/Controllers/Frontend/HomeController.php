@@ -53,6 +53,7 @@ class HomeController extends Controller
                         ->take(4)
                         ->with([
                             'category:id,name',
+                            'productType:id,name',
                             'variants' => function ($variantQuery) use ($roleContext) {
                                 $this->configureVariantQuery($variantQuery, $roleContext);
                             },
@@ -67,11 +68,11 @@ class HomeController extends Controller
                     }
                 }
             ])
-            ->orderByDesc('latest_product_created_at')
-            ->take(6)
-            ->get();
+            ->orderByDesc('latest_product_created_at');
 
-        $latestCategoryBlocks = $latestCategories
+        $latestCategories = $latestCategories->paginate(5)->withQueryString();
+
+        $latestCategoryBlocks = collect($latestCategories->items())
             ->map(function (Category $category) use ($roleContext): array {
                 $cards = $category->products
                     ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
@@ -87,9 +88,83 @@ class HomeController extends Controller
         return view('frontend.pages.home', [
             'sliders' => $sliders,
             'latestCategoryBlocks' => $latestCategoryBlocks,
+            'latestCategories' => $latestCategories,
             'roleContext' => $roleContext,
             'isOutletCustomer' => $isOutletCustomer,
             'outletId' => $outletId,
+        ]);
+    }
+
+    /**
+     * Load paginated categories via AJAX for infinite scroll pagination.
+     */
+    public function loadCategories(Request $request)
+    {
+        $roleContext = $this->resolveFrontendRoleContext($request);
+        $isOutletCustomer = $roleContext['isOutletCustomer'];
+        $outletId = $roleContext['outletId'] ?? $this->resolveRequestOutletId($request);
+        $page = max(1, (int) $request->get('page', 1));
+
+        $latestCategories = Category::query()
+            ->where('status', 1)
+            ->where('frontend_show', 1)
+            ->whereHas('products', function ($query) {
+                $query->where('status', 1);
+            })
+            ->withMax([
+                'products as latest_product_created_at' => function ($query) {
+                    $query->where('status', 1);
+                }
+            ], 'created_at')
+            ->with([
+                'products' => function ($query) use ($roleContext, $isOutletCustomer, $outletId) {
+                    $query->where('status', 1)
+                        ->latest()
+                        ->take(4)
+                        ->with([
+                            'category:id,name',
+                            'productType:id,name',
+                            'variants' => function ($variantQuery) use ($roleContext) {
+                                $this->configureVariantQuery($variantQuery, $roleContext);
+                            },
+                        ]);
+
+                    if ($isOutletCustomer) {
+                        $query->withSum([
+                            'inventoryStocks as scoped_stock_qty' => function ($stockQuery) use ($outletId) {
+                                $stockQuery->where('outlet_id', $outletId);
+                            }
+                        ], 'quantity');
+                    }
+                }
+            ])
+            ->orderByDesc('latest_product_created_at')
+            ->paginate(5)
+            ->withQueryString();
+
+        $categoryBlocks = collect($latestCategories->items())
+            ->map(function (Category $category) use ($roleContext): array {
+                $cards = $category->products
+                    ->map(fn(Product $product) => $this->transformProductForCard($product, $roleContext))
+                    ->values();
+
+                return [
+                    'category' => [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'slug' => $category->slug ?? null,
+                    ],
+                    'cards' => $cards,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'categories' => $categoryBlocks,
+            'current_page' => $latestCategories->currentPage(),
+            'last_page' => $latestCategories->lastPage(),
+            'has_more' => $latestCategories->hasMorePages(),
+            'total' => $latestCategories->total(),
         ]);
     }
 
@@ -105,6 +180,7 @@ class HomeController extends Controller
         $query = Product::query()
             ->with([
                 'category:id,name',
+                'productType:id,name',
                 'variants' => function ($query) use ($roleContext) {
                     $this->configureVariantQuery($query, $roleContext);
                 },
@@ -578,11 +654,17 @@ class HomeController extends Controller
             ->map(fn($variant) => $this->mapVariantForCard($variant, $product, $canViewInventory))
             ->values();
 
+        $productTypeName = trim((string) optional($product->productType)->name);
+        if ($productTypeName === '') {
+            $productTypeName = trim((string) ($product->product_type ?? ''));
+        }
+
         return [
             'product' => $productPayload,
             'variants' => $variantPayload,
             'display_path' => $displayPath,
             'category_name' => $categoryName !== '' ? $categoryName : 'Category not set',
+            'product_type' => $productTypeName !== '' ? $productTypeName : null,
             'details_url' => route('product.details', $product->slug),
         ];
     }

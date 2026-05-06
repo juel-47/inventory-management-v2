@@ -123,22 +123,22 @@
                     @auth
                         <div class="pt-6 border-t border-slate-200">
                             <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.25em] mb-5">Price Range</h3>
-                            
+
                             <div class="relative w-full h-10 mt-4">
                                 <div class="h-1.5 w-full bg-slate-200 rounded-full absolute top-1/2 -translate-y-1/2"></div>
                                 <div class="h-1.5 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2"
                                      :style="`left: ${((minPrice - minRange) / (maxRange - minRange)) * 100}%; right: ${100 - ((maxPrice - minRange) / (maxRange - minRange)) * 100}%`" class="text-blue-500"></div>
-                                
-                                <input type="range" 
-                                       :min="minRange" :max="maxRange" step="1" 
-                                       x-model.number="minPrice" 
+
+                                <input type="range"
+                                       :min="minRange" :max="maxRange" step="1"
+                                       x-model.number="minPrice"
                                        @input="if(minPrice > maxPrice) minPrice = maxPrice - 1"
                                        @change="applyFilters()"
                                        class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
-                                
-                                <input type="range" 
-                                       :min="minRange" :max="maxRange" step="1" 
-                                       x-model.number="maxPrice" 
+
+                                <input type="range"
+                                       :min="minRange" :max="maxRange" step="1"
+                                       x-model.number="maxPrice"
                                        @input="if(maxPrice < minPrice) maxPrice = minPrice + 1"
                                        @change="applyFilters()"
                                        class="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none px-0 cursor-pointer [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white">
@@ -216,7 +216,7 @@
                                 </select>
                             </div>
                             @endauth
-                           
+
                         </div>
                     </div>
 
@@ -228,6 +228,7 @@
                                 :variants="$card['variants']"
                                 :display-path="$card['display_path']"
                                 :category-name="$card['category_name']"
+                                :product-type="$card['product_type']"
                                 :currency-icon="$currencyIcon"
                                 :is-outlet-user="$isOutletUser"
                                 :is-standard-user="$isStandardUser"
