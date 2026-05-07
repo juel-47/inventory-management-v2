@@ -212,11 +212,22 @@
                         <div class="flex items-center justify-between">
                             <span class="text-slate-500">
                                 Discount
-                                @if(!empty($discountBreakdown['total_rate_label']))
-                                    <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{{ $discountBreakdown['total_rate_label'] }}</span>
+                                @if(!empty($discountBreakdown['product_rate_label']))
+                                    <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{{ $discountBreakdown['product_rate_label'] }}</span>
                                 @endif
                             </span>
-                            <span class="font-semibold text-emerald-600">-{{ $settings->currency_icon ?? '$' }}{{ number_format($discountAmount, 2) }}</span>
+                            <span class="font-semibold text-emerald-600">-{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($discountBreakdown['product_discount'] ?? 0), 2) }}</span>
+                        </div>
+
+                        {{-- User Level Discount --}}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">
+                                User Level Discount
+                                @if(!empty($discountBreakdown['user_rate_label']))
+                                    <span class="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">{{ $discountBreakdown['user_rate_label'] }}</span>
+                                @endif
+                            </span>
+                            <span class="font-semibold text-indigo-600">-{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($discountBreakdown['user_discount'] ?? 0), 2) }}</span>
                         </div>
                         @if(((float) ($discountBreakdown['default_discount'] ?? 0) > 0) && ((float) ($discountBreakdown['product_discount'] ?? 0) > 0))
                             <details class="group rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs">
@@ -243,6 +254,18 @@
                                         </span>
                                         <span class="font-semibold text-emerald-700">-{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($discountBreakdown['product_discount'] ?? 0), 2) }}</span>
                                     </div>
+
+                                    @if((float) ($discountBreakdown['user_discount'] ?? 0) > 0)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">
+                                            User Discount
+                                            @if(!empty($discountBreakdown['user_rate_label']))
+                                                <span class="text-[11px] text-slate-400">({{ $discountBreakdown['user_rate_label'] }})</span>
+                                            @endif
+                                        </span>
+                                        <span class="font-semibold text-indigo-700">-{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($discountBreakdown['user_discount'] ?? 0), 2) }}</span>
+                                    </div>
+                                    @endif
                                 </div>
                             </details>
                         @endif

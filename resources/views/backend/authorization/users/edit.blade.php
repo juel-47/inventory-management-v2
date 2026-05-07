@@ -71,6 +71,23 @@
                                         <label>Image preview </label>
                                         <img src="{{ asset($user->image) }}" alt="" width="150px">
                                     </div>
+                                    <div class="row col-md-12">
+                                        <!-- Discount Fields -->
+                                        <div class="form-group col-md-6">
+                                            <label for="discount_type">Discount Type</label>
+                                            <select id="discount_type" class="form-control" name="discount_type">
+                                                <option value="">No Discount</option>
+                                                <option value="percent" {{ $user->discount_type == 'percent' ? 'selected' : '' }}>Percentage (%)</option>
+                                                <option value="flat" {{ $user->discount_type == 'flat' ? 'selected' : '' }}>Flat Amount ($)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="discount_value">Discount Value</label>
+                                            <input type="number" id="discount_value" class="form-control" name="discount_value"
+                                                   step="0.01" min="0" value="{{ old('discount_value') ?? $user->discount_value }}"
+                                                   placeholder="Enter discount value">
+                                        </div>
+                                    </div>
 
                                 </div>
                                 <div class="text-right mt-3">

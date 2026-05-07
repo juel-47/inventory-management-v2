@@ -41,7 +41,9 @@ class UserController extends Controller
             'phone' => ['nullable', 'max:255'],
             'password' => ['required', 'min:8'],
             'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id']
+            'user_role' => ['required', 'exists:roles,id'],
+            'discount_type' => ['nullable', 'in:flat,percent'],
+            'discount_value' => ['nullable', 'numeric', 'min:0']
         ]);
 
         $imagePath = null;
@@ -60,6 +62,8 @@ class UserController extends Controller
             'image' => $imagePath,
             'status' => $request->status,
             'role_id' => $request->user_role,
+            'discount_type' => $request->discount_type,
+            'discount_value' => $request->discount_value,
         ]);
 
         $role = Role::findById($request->user_role);
@@ -91,7 +95,9 @@ class UserController extends Controller
             'email' => ['required', 'email', 'unique:users,email,' . $id],
             'phone' => ['nullable', 'max:255'],
             'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id']
+            'user_role' => ['required', 'exists:roles,id'],
+            'discount_type' => ['nullable', 'in:flat,percent'],
+            'discount_value' => ['nullable', 'numeric', 'min:0']
         ]);
 
         $user = User::findOrFail($id);
@@ -111,6 +117,8 @@ class UserController extends Controller
         $user->phone = $request->phone;
         $user->status = $request->status;
         $user->role_id = $request->user_role;
+        $user->discount_type = $request->discount_type;
+        $user->discount_value = $request->discount_value;
         $user->save();
 
         $role = Role::findById($request->user_role);

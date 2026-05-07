@@ -34,6 +34,13 @@ class UsersDataTable extends DataTable
             ->addColumn('role', function ($query) {
                 return $query->userRole?->name ?? 'No Role';
             })
+            ->addColumn('discount', function ($query) {
+                if ($query->discount_type && $query->discount_value) {
+                    $type = $query->discount_type === 'flat' ? '$' : '%';
+                    return '<span class="badge badge-info">' . $type . $query->discount_value . '</span>';
+                }
+                return '<span class="text-muted">No Discount</span>';
+            })
             ->addColumn('status', function ($query) {
                 $checked = $query->status ? 'checked' : '';
                 return '<label class="custom-switch mt-2">
@@ -41,7 +48,7 @@ class UsersDataTable extends DataTable
                             <span class="custom-switch-indicator"></span>
                         </label>';
             })
-            ->rawColumns(['image', 'action', 'status'])
+            ->rawColumns(['image', 'action', 'discount', 'status'])
             ->setRowId('id');
     }
 
@@ -86,6 +93,7 @@ class UsersDataTable extends DataTable
             Column::make('name'),
             Column::make('email'),
             Column::make('role'),
+            Column::make('discount'),
             Column::make('status'),
             Column::computed('action')
                 ->exportable(false)

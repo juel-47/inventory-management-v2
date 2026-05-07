@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Discount;
+use App\Models\User;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class CheckoutDiscountResolver
 {
@@ -14,47 +16,74 @@ class CheckoutDiscountResolver
     {
         $lineSubtotal = max(0, $lineSubtotal);
         $quantity = max(1, $quantity);
-        $productDiscount = $this->resolveProductDiscount($product);
+        $currentSubtotal = $lineSubtotal;
+        $discounts = [];
+        $totalAmount = 0.0;
 
+        // 1. Resolve Product Discount
+        $productDiscount = $this->resolveProductDiscount($product);
         if ($productDiscount !== null) {
-            return [
+            $amount = $this->calculateAmount(
+                $currentSubtotal,
+                $productDiscount['type'],
+                $productDiscount['value'],
+                $quantity,
+                true
+            );
+            $discounts[] = [
                 'source' => 'product',
                 'type' => $productDiscount['type'],
                 'value' => $productDiscount['value'],
-                'amount' => $this->calculateAmount(
-                    $lineSubtotal,
-                    $productDiscount['type'],
-                    $productDiscount['value'],
-                    $quantity,
-                    true
-                ),
+                'amount' => $amount,
             ];
+            $totalAmount += $amount;
+            $currentSubtotal = max(0, $currentSubtotal - $amount);
         }
 
-        $defaultDiscount = $this->getDefaultDiscount();
-        if ($defaultDiscount) {
-            $type = $defaultDiscount->type === 'flat' ? 'flat' : 'percent';
-            $value = max(0, (float) $defaultDiscount->value);
+        // 2. Resolve User Discount (Applied to the remaining amount after product discount)
+        $userDiscount = $this->resolveUserDiscount($currentSubtotal);
+        if ($userDiscount !== null) {
+            $amount = $userDiscount['amount'];
+            $discounts[] = [
+                'source' => 'user',
+                'type' => $userDiscount['type'],
+                'value' => $userDiscount['value'],
+                'amount' => $amount,
+            ];
+            $totalAmount += $amount;
+            $currentSubtotal = max(0, $currentSubtotal - $amount);
+        }
 
-            return [
-                'source' => 'default',
-                'type' => $type,
-                'value' => $value,
-                'amount' => $this->calculateAmount(
-                    $lineSubtotal,
+        // 3. Resolve Default Discount (Only if no product or user discount was applied)
+        if (empty($discounts)) {
+            $defaultDiscount = $this->getDefaultDiscount();
+            if ($defaultDiscount) {
+                $type = $defaultDiscount->type === 'flat' ? 'flat' : 'percent';
+                $value = max(0, (float) $defaultDiscount->value);
+                $amount = $this->calculateAmount(
+                    $currentSubtotal,
                     $type,
                     $value,
                     $quantity,
                     true
-                ),
-            ];
+                );
+                $discounts[] = [
+                    'source' => 'default',
+                    'type' => $type,
+                    'value' => $value,
+                    'amount' => $amount,
+                ];
+                $totalAmount += $amount;
+            }
         }
 
         return [
-            'source' => 'none',
-            'type' => null,
-            'value' => 0.0,
-            'amount' => 0.0,
+            'amount' => round($totalAmount, 2),
+            'discounts' => $discounts,
+            // Main source/type for backward compatibility if needed
+            'source' => count($discounts) > 1 ? 'mixed' : (isset($discounts[0]) ? $discounts[0]['source'] : 'none'),
+            'type' => count($discounts) === 1 ? $discounts[0]['type'] : null,
+            'value' => count($discounts) === 1 ? $discounts[0]['value'] : 0,
         ];
     }
 
@@ -77,6 +106,31 @@ class CheckoutDiscountResolver
 
         $this->defaultDiscountLoaded = true;
         return $this->defaultDiscount;
+    }
+
+    private function resolveUserDiscount(float $orderAmount): ?array
+    {
+        if (!Auth::check()) {
+            return null;
+        }
+
+        $user = Auth::user();
+
+        if (!$user->discount_type || !$user->discount_value) {
+            return null;
+        }
+
+        return [
+            'type' => $user->discount_type,
+            'value' => $user->discount_value,
+            'amount' => $this->calculateAmount(
+                $orderAmount,
+                $user->discount_type,
+                $user->discount_value,
+                1,
+                false
+            ),
+        ];
     }
 
     private function resolveProductDiscount($product): ?array

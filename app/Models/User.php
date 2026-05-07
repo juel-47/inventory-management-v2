@@ -27,7 +27,9 @@ class User extends Authenticatable
         'status',
         'role_id',
         'outlet_name',
-        'address'
+        'address',
+        'discount_type',
+        'discount_value'
     ];
 
     /**

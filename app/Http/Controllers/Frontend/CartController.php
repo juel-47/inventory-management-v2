@@ -558,10 +558,12 @@ class CartController extends Controller
         $appliedTaxSignatures = [];
         $appliedDiscountSignatures = [];
         $productDiscountAmount = 0.0;
+        $userDiscountAmount = 0.0;
         $defaultDiscountAmount = 0.0;
         $productTaxRates = [];
         $defaultTaxRates = [];
         $productDiscountRates = [];
+        $userDiscountRates = [];
         $defaultDiscountRates = [];
         $hasDefaultFlatTax = false;
         $defaultFlatTaxValue = 0.0;
@@ -574,15 +576,27 @@ class CartController extends Controller
             $lineDiscount = $discountResolver->resolveForLine($product, $lineSubtotal, $lineQty);
             $lineDiscountAmount = (float) ($lineDiscount['amount'] ?? 0);
             $discountAmount += $lineDiscountAmount;
-            if (($lineDiscount['source'] ?? 'none') === 'product') {
-                $productDiscountAmount += $lineDiscountAmount;
-                $this->addAppliedRate($productDiscountRates, $lineDiscount['type'] ?? null, $lineDiscount['value'] ?? 0);
-            } elseif (($lineDiscount['source'] ?? 'none') === 'default') {
-                $defaultDiscountAmount += $lineDiscountAmount;
-                $this->addAppliedRate($defaultDiscountRates, $lineDiscount['type'] ?? null, $lineDiscount['value'] ?? 0);
-            }
-            if (($lineDiscount['source'] ?? 'none') !== 'none') {
-                $appliedDiscountSignatures[] = ($lineDiscount['source'] . ':' . ($lineDiscount['type'] ?? 'none') . ':' . (string) $lineDiscount['value']);
+
+            foreach ($lineDiscount['discounts'] ?? [] as $subDiscount) {
+                $subAmount = (float) ($subDiscount['amount'] ?? 0);
+                $source = $subDiscount['source'] ?? 'none';
+                $type = $subDiscount['type'] ?? null;
+                $value = $subDiscount['value'] ?? 0;
+
+                if ($source === 'product') {
+                    $productDiscountAmount += $subAmount;
+                    $this->addAppliedRate($productDiscountRates, $type, $value);
+                } elseif ($source === 'user') {
+                    $userDiscountAmount += $subAmount;
+                    $this->addAppliedRate($userDiscountRates, $type, $value);
+                } elseif ($source === 'default') {
+                    $defaultDiscountAmount += $subAmount;
+                    $this->addAppliedRate($defaultDiscountRates, $type, $value);
+                }
+
+                if ($source !== 'none') {
+                    $appliedDiscountSignatures[] = ($source . ':' . ($type ?? 'none') . ':' . (string) $value);
+                }
             }
 
             $lineTax = $taxResolver->resolveForLine($product, $lineSubtotal);
@@ -618,6 +632,7 @@ class CartController extends Controller
         $defaultTaxAmount = round($defaultTaxAmount, 2);
         $discountAmount = round($discountAmount, 2);
         $productDiscountAmount = round($productDiscountAmount, 2);
+        $userDiscountAmount = round($userDiscountAmount, 2);
         $defaultDiscountAmount = round($defaultDiscountAmount, 2);
         $taxLabel = 'VAT / Tax';
         $vatRate = null;
@@ -664,11 +679,13 @@ class CartController extends Controller
             ],
             'discount_breakdown' => [
                 'product_discount' => $productDiscountAmount,
+                'user_discount' => $userDiscountAmount,
                 'default_discount' => $defaultDiscountAmount,
                 'total_discount' => $discountAmount,
                 'product_rate_label' => $this->buildAppliedRateLabel(array_values($productDiscountRates)),
+                'user_rate_label' => $this->buildAppliedRateLabel(array_values($userDiscountRates)),
                 'default_rate_label' => $this->buildAppliedRateLabel(array_values($defaultDiscountRates)),
-                'total_rate_label' => $this->buildCombinedRateLabel(array_values(array_merge($defaultDiscountRates, $productDiscountRates))),
+                'total_rate_label' => $this->buildCombinedRateLabel(array_values(array_merge($defaultDiscountRates, $productDiscountRates, $userDiscountRates))),
                 'is_mixed' => $isMixedDiscount,
             ],
         ];
@@ -817,6 +834,7 @@ class CartController extends Controller
                             'discount_source' => (string) ($lineDiscount['source'] ?? 'none'),
                             'discount_type' => (string) ($lineDiscount['type'] ?? ''),
                             'discount_value' => (float) ($lineDiscount['value'] ?? 0),
+                            'discounts' => $lineDiscount['discounts'] ?? [],
                             'line_discount' => (float) $lineDiscountAmount,
                             'line_total' => (float) $lineSubtotal,
                             'line_total_after_discount' => (float) $lineTotalAfterDiscount,

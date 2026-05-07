@@ -61,6 +61,22 @@
                                         </select>
                                     </div>
 
+                                    <!-- Discount Fields -->
+                                    <div class="form-group col-md-6">
+                                        <label for="discount_type">Discount Type</label>
+                                        <select id="discount_type" class="form-control" name="discount_type">
+                                            <option value="">No Discount</option>
+                                            <option value="percent">Percentage (%)</option>
+                                            <option value="flat">Flat Amount ($)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="discount_value">Discount Value</label>
+                                        <input type="number" id="discount_value" class="form-control" name="discount_value"
+                                               step="0.01" min="0" value="{{ old('discount_value') }}"
+                                               placeholder="Enter discount value">
+                                    </div>
+
                                 </div>
                                 <div class="text-right mt-3">
                                     <button type="submit" class="btn btn-primary px-4">Create</button>
