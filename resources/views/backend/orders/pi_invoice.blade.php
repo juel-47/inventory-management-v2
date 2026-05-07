@@ -433,7 +433,7 @@
                             $item = $group['first_item'];
                             $globalIndex++;
                             $imageSrc = $item->optimized_image ?? null;
-                            
+
                             // Fallback for non-PDF view if needed
                             if (!$isPdf && !$imageSrc) {
                                 $imagePath = (string) ($item->product_image ?? '');
@@ -461,16 +461,16 @@
                             <strong>{{ $item->product_name }}</strong><br>
 
                             @if ($item->product)
-                                @if ($item->product->slug)
+                                {{-- @if ($item->product->slug)
                                     <small><strong>Slug:</strong> {{ $item->product->slug }}</small><br>
-                                @endif
-                                @if ($item->product->brand)
+                                @endif --}}
+                                {{-- @if ($item->product->brand)
                                     <small><strong>Brand:</strong> {{ $item->product->brand->name }}</small><br>
                                 @endif
                                 @if ($item->product->vendor)
                                     <small><strong>Vendor:</strong>
                                         {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
-                                @endif
+                                @endif --}}
                                 @if ($item->product->barcode)
                                     <small><strong>Barcode:</strong> {{ $item->product->barcode }}</small><br>
                                 @endif

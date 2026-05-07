@@ -328,12 +328,12 @@
                         </td>
                         <td>
                             <strong>{{ $item->product->name ?? ('Product #' . $item->product_id) }}</strong><br>
-                            @if($item->product?->brand)
+                            {{-- @if($item->product?->brand)
                                 <small><strong>Brand:</strong> {{ $item->product->brand->name }}</small><br>
                             @endif
                             @if($item->product?->vendor)
                                 <small><strong>Vendor:</strong> {{ $item->product->vendor->shop_name ?? 'N/A' }}</small><br>
-                            @endif
+                            @endif --}}
                             @if($item->product?->productType)
                                 <small><strong>Type:</strong> {{ $item->product->productType->name }}</small><br>
                             @endif
