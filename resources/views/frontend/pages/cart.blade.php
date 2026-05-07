@@ -14,7 +14,7 @@
                     <h1 class="mt-1 text-2xl font-semibold text-slate-900 tracking-[0.04em]">Cart Summary</h1>
                     <p class="mt-1 text-sm text-slate-500">Check MOQ, adjust quantity, then continue to checkout.</p>
                 </div>
-                <a href="{{ route('shop') }}" class="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700">
+                <a href="{{ route('shop') }}" class="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-widest text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700">
                     Continue Shopping
                 </a>
             </div>
