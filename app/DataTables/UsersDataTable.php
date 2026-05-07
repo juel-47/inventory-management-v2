@@ -2,6 +2,7 @@
 
 namespace App\DataTables;
 
+use App\Models\GeneralSetting;
 use App\Models\User;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -36,8 +37,15 @@ class UsersDataTable extends DataTable
             })
             ->addColumn('discount', function ($query) {
                 if ($query->discount_type && $query->discount_value) {
-                    $type = $query->discount_type === 'flat' ? '$' : '%';
-                    return '<span class="badge badge-info">' . $type . $query->discount_value . '</span>';
+                    $settings = GeneralSetting::first();
+                    $type = $query->discount_type === 'flat' ? ($settings->currency_icon ?? 'kr') : '%';
+                    
+                    // If flat, show icon before value. If percent, show % after value.
+                    $label = $query->discount_type === 'flat' 
+                        ? $type . number_format($query->discount_value, 2)
+                        : number_format($query->discount_value, 2) . $type;
+                        
+                    return '<span class="badge badge-info">' . $label . '</span>';
                 }
                 return '<span class="text-muted">No Discount</span>';
             })

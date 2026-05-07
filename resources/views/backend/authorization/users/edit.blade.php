@@ -90,7 +90,7 @@
                                                    placeholder="Enter discount value">
                                         </div>
                                         <div class="form-group col-md-6" id="min_order_group" style="display: none;">
-                                            <label for="min_order_amount">Min Order Amount</label>
+                                            <label for="min_order_amount">Min Order Amount ({{ $settings->currency_icon ?? 'kr' }})</label>
                                             <input type="number" id="min_order_amount" class="form-control" name="min_order_amount"
                                                    step="0.01" min="0" value="{{ old('min_order_amount') ?? $user->min_order_amount }}"
                                                    placeholder="Minimum order amount for flat discount">
