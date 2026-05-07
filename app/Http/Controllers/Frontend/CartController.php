@@ -586,9 +586,6 @@ class CartController extends Controller
                 if ($source === 'product') {
                     $productDiscountAmount += $subAmount;
                     $this->addAppliedRate($productDiscountRates, $type, $value);
-                } elseif ($source === 'user') {
-                    $userDiscountAmount += $subAmount;
-                    $this->addAppliedRate($userDiscountRates, $type, $value);
                 } elseif ($source === 'default') {
                     $defaultDiscountAmount += $subAmount;
                     $this->addAppliedRate($defaultDiscountRates, $type, $value);
@@ -630,10 +627,43 @@ class CartController extends Controller
         $taxAmount = round($taxAmount, 2);
         $productTaxAmount = round($productTaxAmount, 2);
         $defaultTaxAmount = round($defaultTaxAmount, 2);
-        $discountAmount = round($discountAmount, 2);
         $productDiscountAmount = round($productDiscountAmount, 2);
-        $userDiscountAmount = round($userDiscountAmount, 2);
         $defaultDiscountAmount = round($defaultDiscountAmount, 2);
+
+        // Calculate User Level Discount at Order Level
+        $userDiscountAmount = 0.0;
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->discount_type && $user->discount_value > 0) {
+                $subtotalAfterProductDiscounts = $subtotal - $productDiscountAmount - $defaultDiscountAmount;
+                $canApply = true;
+
+                // Check Minimum Order Amount for Flat Discount
+                if ($user->discount_type === 'flat') {
+                    $minOrder = (float) ($user->min_order_amount ?? 0);
+                    if ($subtotalAfterProductDiscounts < $minOrder) {
+                        $canApply = false;
+                    }
+                }
+
+                if ($canApply) {
+                    if ($user->discount_type === 'percent') {
+                        $userDiscountAmount = round(($subtotalAfterProductDiscounts * $user->discount_value) / 100, 2);
+                    } else {
+                        // Flat
+                        $userDiscountAmount = round(min($subtotalAfterProductDiscounts, (float) $user->discount_value), 2);
+                    }
+
+                    if ($userDiscountAmount > 0) {
+                        $this->addAppliedRate($userDiscountRates, $user->discount_type, $user->discount_value);
+                        $appliedDiscountSignatures[] = ('user:' . $user->discount_type . ':' . (string) $user->discount_value);
+                    }
+                }
+            }
+        }
+
+        $discountAmount = round($productDiscountAmount + $defaultDiscountAmount + $userDiscountAmount, 2);
+        $userDiscountAmount = round($userDiscountAmount, 2);
         $taxLabel = 'VAT / Tax';
         $vatRate = null;
 

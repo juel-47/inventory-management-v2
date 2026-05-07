@@ -43,7 +43,8 @@ class UserController extends Controller
             'status' => ['required', 'boolean'],
             'user_role' => ['required', 'exists:roles,id'],
             'discount_type' => ['nullable', 'in:flat,percent'],
-            'discount_value' => ['nullable', 'numeric', 'min:0']
+            'discount_value' => ['nullable', 'numeric', 'min:0'],
+            'min_order_amount' => ['nullable', 'numeric', 'min:0']
         ]);
 
         $imagePath = null;
@@ -64,6 +65,7 @@ class UserController extends Controller
             'role_id' => $request->user_role,
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
+            'min_order_amount' => $request->min_order_amount,
         ]);
 
         $role = Role::findById($request->user_role);
@@ -97,7 +99,8 @@ class UserController extends Controller
             'status' => ['required', 'boolean'],
             'user_role' => ['required', 'exists:roles,id'],
             'discount_type' => ['nullable', 'in:flat,percent'],
-            'discount_value' => ['nullable', 'numeric', 'min:0']
+            'discount_value' => ['nullable', 'numeric', 'min:0'],
+            'min_order_amount' => ['nullable', 'numeric', 'min:0']
         ]);
 
         $user = User::findOrFail($id);
@@ -119,6 +122,7 @@ class UserController extends Controller
         $user->role_id = $request->user_role;
         $user->discount_type = $request->discount_type;
         $user->discount_value = $request->discount_value;
+        $user->min_order_amount = $request->min_order_amount;
         $user->save();
 
         $role = Role::findById($request->user_role);

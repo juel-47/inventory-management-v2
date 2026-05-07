@@ -60,14 +60,16 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                    <div class="form-group col-md-12">
+                                        <h6>User Level Discount Information</h6>
+                                    </div>
 
-                                    <!-- Discount Fields -->
                                     <div class="form-group col-md-6">
                                         <label for="discount_type">Discount Type</label>
                                         <select id="discount_type" class="form-control" name="discount_type">
                                             <option value="">No Discount</option>
                                             <option value="percent">Percentage (%)</option>
-                                            <option value="flat">Flat Amount ($)</option>
+                                            <option value="flat">Flat Amount</option>
                                         </select>
                                     </div>
                                     <div class="form-group col-md-6">
@@ -75,6 +77,12 @@
                                         <input type="number" id="discount_value" class="form-control" name="discount_value"
                                                step="0.01" min="0" value="{{ old('discount_value') }}"
                                                placeholder="Enter discount value">
+                                    </div>
+                                    <div class="form-group col-md-6" id="min_order_group" style="display: none;">
+                                        <label for="min_order_amount">Min Order Amount</label>
+                                        <input type="number" id="min_order_amount" class="form-control" name="min_order_amount"
+                                               step="0.01" min="0" value="{{ old('min_order_amount') }}"
+                                               placeholder="Minimum order amount for flat discount">
                                     </div>
 
                                 </div>
@@ -88,3 +96,26 @@
             </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        function toggleMinOrder() {
+            let type = $('#discount_type').val();
+            if (type === 'flat') {
+                $('#min_order_group').show();
+            } else {
+                $('#min_order_group').hide();
+                $('#min_order_amount').val(''); // Clear value when hidden
+            }
+        }
+
+        $('#discount_type').on('change', function() {
+            toggleMinOrder();
+        });
+
+        // Initialize on load
+        toggleMinOrder();
+    });
+</script>
+@endpush

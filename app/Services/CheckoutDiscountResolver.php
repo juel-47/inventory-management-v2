@@ -40,21 +40,7 @@ class CheckoutDiscountResolver
             $currentSubtotal = max(0, $currentSubtotal - $amount);
         }
 
-        // 2. Resolve User Discount (Applied to the remaining amount after product discount)
-        $userDiscount = $this->resolveUserDiscount($currentSubtotal);
-        if ($userDiscount !== null) {
-            $amount = $userDiscount['amount'];
-            $discounts[] = [
-                'source' => 'user',
-                'type' => $userDiscount['type'],
-                'value' => $userDiscount['value'],
-                'amount' => $amount,
-            ];
-            $totalAmount += $amount;
-            $currentSubtotal = max(0, $currentSubtotal - $amount);
-        }
-
-        // 3. Resolve Default Discount (Only if no product or user discount was applied)
+        // 2. Resolve Default Discount (Only if no product discount was applied)
         if (empty($discounts)) {
             $defaultDiscount = $this->getDefaultDiscount();
             if ($defaultDiscount) {
@@ -106,31 +92,6 @@ class CheckoutDiscountResolver
 
         $this->defaultDiscountLoaded = true;
         return $this->defaultDiscount;
-    }
-
-    private function resolveUserDiscount(float $orderAmount): ?array
-    {
-        if (!Auth::check()) {
-            return null;
-        }
-
-        $user = Auth::user();
-
-        if (!$user->discount_type || !$user->discount_value) {
-            return null;
-        }
-
-        return [
-            'type' => $user->discount_type,
-            'value' => $user->discount_value,
-            'amount' => $this->calculateAmount(
-                $orderAmount,
-                $user->discount_type,
-                $user->discount_value,
-                1,
-                false
-            ),
-        ];
     }
 
     private function resolveProductDiscount($product): ?array
