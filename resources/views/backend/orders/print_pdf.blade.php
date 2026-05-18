@@ -132,15 +132,15 @@
             @endforeach
             <tr class="total-row">
                 <td colspan="6" class="text-right">Subtotal</td>
-                <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount, 2) }}</td>
-            </tr>
-            <tr class="total-row">
-                <td colspan="6" class="text-right">{{ $order->tax_label ?: 'VAT / Tax' }}</td>
-                <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
+                <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</td>
             </tr>
             <tr class="total-row">
                 <td colspan="6" class="text-right">Discount</td>
                 <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="6" class="text-right">VAT</td>
+                <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
             </tr>
             <tr class="total-row">
                 <td colspan="6" class="text-right">Grand Total</td>

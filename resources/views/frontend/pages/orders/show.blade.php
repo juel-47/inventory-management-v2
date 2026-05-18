@@ -111,9 +111,9 @@
                 </p>
 
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-slate-500">Subtotal</span><span class="font-semibold text-slate-900">{{$settings->currency_icon}}{{ number_format($order->subtotal_amount, 2) }}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">{{ $order->tax_label ?: 'VAT / Tax' }}</span><span class="font-semibold text-slate-900">{{$settings->currency_icon}}{{ number_format($order->tax_amount, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Subtotal</span><span class="font-semibold text-slate-900">{{$settings->currency_icon}}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">Discount</span><span class="font-semibold text-emerald-600">-{{$settings->currency_icon}}{{ number_format($order->discount_amount, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">VAT</span><span class="font-semibold text-slate-900">{{$settings->currency_icon}}{{ number_format($order->tax_amount, 2) }}</span></div>
                     <div class="pt-2 border-t border-slate-100 flex justify-between"><span class="font-bold text-slate-900">Total</span><span class="font-black text-indigo-600">{{$settings->currency_icon}}{{ number_format($order->total_amount, 2) }}</span></div>
                 </div>
             </div>

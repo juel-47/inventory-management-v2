@@ -168,18 +168,18 @@
             <table>
                 <tr>
                     <td class="text-right">Subtotal:</td>
-                    <td class="text-right" width="40%">{{ $currency }}{{ number_format($order->subtotal_amount, 2) }}</td>
+                    <td class="text-right" width="40%">{{ $currency }}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</td>
                 </tr>
-                @if($order->tax_amount > 0)
-                <tr>
-                    <td class="text-right">{{ $order->tax_label ?: 'Tax' }}:</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
-                </tr>
-                @endif
                 @if($order->discount_amount > 0)
                 <tr>
                     <td class="text-right">Discount:</td>
                     <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
+                </tr>
+                @endif
+                @if($order->tax_amount > 0)
+                <tr>
+                    <td class="text-right">VAT:</td>
+                    <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
                 </tr>
                 @endif
                 <tr class="grand-total">

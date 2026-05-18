@@ -172,43 +172,7 @@
                             <span class="text-slate-500">Subtotal</span>
                             <span class="font-semibold text-slate-900">{{ $settings->currency_icon ?? '$' }}{{ number_format($subtotal, 2) }}</span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-500">
-                                VAT / Tax
-                                @if(!empty($taxBreakdown['total_rate_label']))
-                                    <span class="ml-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{{ $taxBreakdown['total_rate_label'] }}</span>
-                                @endif
-                            </span>
-                            <span class="font-semibold text-slate-900">{{ $settings->currency_icon ?? '$' }}{{ number_format($vatAmount, 2) }}</span>
-                        </div>
-                        @if(((float) ($taxBreakdown['default_vat'] ?? 0) > 0) && ((float) ($taxBreakdown['product_vat'] ?? 0) > 0))
-                            <details class="group rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
-                                <summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-600">
-                                    <span>Tax details</span>
-                                    <span class="transition-transform group-open:rotate-180">&#9662;</span>
-                                </summary>
-                                <div class="mt-2 space-y-1.5">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-slate-500">
-                                            Default VAT
-                                            @if(!empty($taxBreakdown['default_rate_label']))
-                                                <span class="text-[11px] text-slate-400">({{ $taxBreakdown['default_rate_label'] }})</span>
-                                            @endif
-                                        </span>
-                                        <span class="font-semibold text-slate-700">{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($taxBreakdown['default_vat'] ?? 0), 2) }}</span>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-slate-500">
-                                            Product VAT
-                                            @if(!empty($taxBreakdown['product_rate_label']))
-                                                <span class="text-[11px] text-slate-400">({{ $taxBreakdown['product_rate_label'] }})</span>
-                                            @endif
-                                        </span>
-                                        <span class="font-semibold text-slate-700">{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($taxBreakdown['product_vat'] ?? 0), 2) }}</span>
-                                    </div>
-                                </div>
-                            </details>
-                        @endif
+                        
                         <div class="flex items-center justify-between">
                             <span class="text-slate-500">
                                 Discount
@@ -266,6 +230,43 @@
                                         <span class="font-semibold text-indigo-700">-{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($discountBreakdown['user_discount'] ?? 0), 2) }}</span>
                                     </div>
                                     @endif
+                                </div>
+                            </details>
+                        @endif
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">
+                                Vat
+                                @if(!empty($taxBreakdown['total_rate_label']))
+                                    <span class="ml-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{{ $taxBreakdown['total_rate_label'] }}</span>
+                                @endif
+                            </span>
+                            <span class="font-semibold text-slate-900">{{ $settings->currency_icon ?? '$' }}{{ number_format($vatAmount, 2) }}</span>
+                        </div>
+                        @if(((float) ($taxBreakdown['default_vat'] ?? 0) > 0) && ((float) ($taxBreakdown['product_vat'] ?? 0) > 0))
+                            <details class="group rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                                {{-- <summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-600">
+                                    <span>Tax details</span>
+                                    <span class="transition-transform group-open:rotate-180">&#9662;</span>
+                                </summary> --}}
+                                <div class="mt-2 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">
+                                            Default VAT
+                                            @if(!empty($taxBreakdown['default_rate_label']))
+                                                <span class="text-[11px] text-slate-400">({{ $taxBreakdown['default_rate_label'] }})</span>
+                                            @endif
+                                        </span>
+                                        <span class="font-semibold text-slate-700">{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($taxBreakdown['default_vat'] ?? 0), 2) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">
+                                            Product VAT
+                                            @if(!empty($taxBreakdown['product_rate_label']))
+                                                <span class="text-[11px] text-slate-400">({{ $taxBreakdown['product_rate_label'] }})</span>
+                                            @endif
+                                        </span>
+                                        <span class="font-semibold text-slate-700">{{ $settings->currency_icon ?? '$' }}{{ number_format((float) ($taxBreakdown['product_vat'] ?? 0), 2) }}</span>
+                                    </div>
                                 </div>
                             </details>
                         @endif

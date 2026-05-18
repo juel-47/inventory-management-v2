@@ -289,9 +289,9 @@
                             <p class="mb-3"><strong>Source:</strong> {{ $order->shipping_method ?: 'frontend_checkout' }}</p>
 
                             <hr>
-                            <p class="mb-1 d-flex justify-content-between"><span>Subtotal</span><strong>{{ number_format($order->subtotal_amount, 2) }}</strong></p>
-                            <p class="mb-1 d-flex justify-content-between"><span>{{ $order->tax_label ?: 'VAT / Tax' }}</span><strong>{{ number_format($order->tax_amount, 2) }}</strong></p>
+                            <p class="mb-1 d-flex justify-content-between"><span>Subtotal</span><strong>{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</strong></p>
                             <p class="mb-1 d-flex justify-content-between"><span>Discount</span><strong>-{{ number_format($order->discount_amount, 2) }}</strong></p>
+                            <p class="mb-1 d-flex justify-content-between"><span>VAT</span><strong>{{ number_format($order->tax_amount, 2) }}</strong></p>
                             <p class="mb-0 d-flex justify-content-between"><span class="font-weight-bold">Total</span><strong class="text-primary">{{ number_format($order->total_amount, 2) }}</strong></p>
                         </div>
                     </div>

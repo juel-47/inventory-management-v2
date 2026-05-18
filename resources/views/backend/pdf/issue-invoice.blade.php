@@ -294,42 +294,63 @@
                     <th style="width: 30%; text-align: center;">Qty</th>
                 </tr>
             </thead>
+            @php
+                $groupedItems = $issue->items->groupBy(function($item) {
+                    return $item->product && $item->product->category ? $item->product->category->name : 'General';
+                })->sortKeys();
+
+                $sortedGroupedItems = $groupedItems->map(function($items) {
+                    return $items->sortBy(function($item) {
+                        return strtolower($item->product ? $item->product->name : '');
+                    })->values();
+                });
+
+                $globalIndex = 0;
+            @endphp
             <tbody>
-                @foreach($issue->items as $index => $item)
-                    <tr>
-                        <td style="text-align: center; color: #7f8c8d;">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</td>
-                        <td style="text-align: center;">
-                            @php
-                                $thumb = $item->product ? $item->product->thumb_image : null;
-                                $path = $thumb ? storage_path('app/public/'.$thumb) : null;
-                                $base64 = '';
-                                if ($path && file_exists($path)) {
-                                    $type = pathinfo($path, PATHINFO_EXTENSION);
-                                    $data = file_get_contents($path);
-                                    $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                                }
-                            @endphp
-                            @if($base64)
-                                <img src="{{ $base64 }}" alt="" width="35" style="border-radius: 3px; border: 1px solid #ecf0f1;">
-                            @else
-                                <div style="color: #bdc3c7; font-size: 9px;">No Image</div>
-                            @endif
+                @foreach($sortedGroupedItems as $categoryName => $categoryItems)
+                    <tr style="background-color: #f8f9fa;">
+                        <td colspan="4" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 11px; color: #2c3e50; border-bottom: 1px solid #ecf0f1;">
+                            {{ $categoryName }}
                         </td>
-                        <td>
-                            <div class="product-name">{{ $item->product->name }}</div>
-                            <div class="variant-info">
-                                @if($item->variant)
-                                    Variant: {{ $item->variant->name }}
-                                @else
-                                    Standard
-                                @endif
-                                @if($item->product->sku)
-                                    | SKU: {{ $item->product->sku }}
-                                @endif
-                            </div>
-                        </td>
-                        <td style="text-align: center; font-weight: bold; color: #2c3e50;">{{ $item->quantity }}</td>
                     </tr>
+                    @foreach($categoryItems as $item)
+                        @php $globalIndex++; @endphp
+                        <tr>
+                            <td style="text-align: center; color: #7f8c8d;">{{ str_pad($globalIndex, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td style="text-align: center;">
+                                @php
+                                    $thumb = $item->product ? $item->product->thumb_image : null;
+                                    $path = $thumb ? storage_path('app/public/'.$thumb) : null;
+                                    $base64 = '';
+                                    if ($path && file_exists($path)) {
+                                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                                        $data = file_get_contents($path);
+                                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                                    }
+                                @endphp
+                                @if($base64)
+                                    <img src="{{ $base64 }}" alt="" width="35" style="border-radius: 3px; border: 1px solid #ecf0f1;">
+                                @else
+                                    <div style="color: #bdc3c7; font-size: 9px;">No Image</div>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="product-name">{{ $item->product->name ?? 'Deleted Product' }}</div>
+                                <div class="variant-info">
+                                    @if($item->variant)
+                                        Variant: {{ $item->variant->name }}
+                                    @else
+                                        Standard
+                                    @endif
+                                    @if($item->product && $item->product->sku)
+                                        | SKU: {{ $item->product->sku }}
+                                    @endif
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: bold; color: #2c3e50;">{{ $item->quantity }}</td>
+                        </tr>
+                    @endforeach
                 @endforeach
                 <tr class="total-section">
                     <td colspan="3" class="total-label">Total Quantity Combined</td>
