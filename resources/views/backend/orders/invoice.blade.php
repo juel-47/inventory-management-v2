@@ -183,7 +183,7 @@
         <div class="header clearfix">
             <div class="invoice-title">
                 <h1>Outlet/Shop Order</h1>
-                <p><strong>Ref:</strong> #{{ $order->order_no }}</p>
+                <p><strong>Order No:</strong> #{{ $order->order_no }}</p>
                 <div style="margin-top: 10px;">
                     <span class="badge {{ $statusClass }}">{{ ucfirst($order->status) }}</span>
                 </div>

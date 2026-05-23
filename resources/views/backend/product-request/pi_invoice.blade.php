@@ -209,7 +209,7 @@
         <div class="header clearfix">
             <div class="invoice-title">
                 <h1>PI Invoice</h1>
-                <p><strong>Ref:</strong> #{{ $productRequest->request_no }}</p>
+                <p><strong>Order No:</strong> #{{ $productRequest->request_no }}</p>
                 <div style="margin-top: 10px;">
                     <span class="badge {{ $statusClass }}">{{ ucfirst($productRequest->status) }}</span>
                 </div>

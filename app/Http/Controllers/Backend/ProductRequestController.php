@@ -110,7 +110,8 @@ class ProductRequestController extends Controller implements HasMiddleware
             $productRequest = new ProductRequest();
 
             $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ-' : 'REQ-';
-            $productRequest->request_no = $prefix . strtoupper(Str::random(10));
+            // $productRequest->request_no = $prefix . strtoupper(Str::random(10));
+            $productRequest->request_no =$this->generateRequestNo($targetUser);
             $productRequest->user_id = (int) $targetUser->id;
             $productRequest->status = 'approved';
             $productRequest->admin_note = 'Created by admin. Stock will be deducted only after Issue is created.';
@@ -240,6 +241,30 @@ class ProductRequestController extends Controller implements HasMiddleware
             return redirect()->back();
         }
     }
+    private function generateRequestNo($targetUser): string
+{
+    $isOutletUser = $targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet');
+    $prefix = $isOutletUser ? 'DS-REQ' : 'REQ';
+
+    $year  = now()->format('Y');
+    $month = now()->format('m');
+
+    return DB::transaction(function () use ($prefix, $year, $month) {
+
+        $monthPrefix = $prefix . '-' . $year . $month . '-';
+
+        $count =ProductRequest::whereYear('created_at', $year)
+                      ->whereMonth('created_at', $month)
+                      ->where('request_no', 'LIKE', $monthPrefix . '%')
+                      ->lockForUpdate()
+                      ->distinct('request_no')
+                      ->count('request_no');
+
+        $next = $count + 1;
+
+        return $monthPrefix . str_pad($next, 5, '0', STR_PAD_LEFT);
+    });
+}
 
     private function missingOrderProfileFields(User $user): array
     {

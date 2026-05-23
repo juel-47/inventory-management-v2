@@ -74,78 +74,171 @@ class BookingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    // public function store(BookingStoreRequest $request)
+    // {
+    //     $booking_no = 'DS-' . strtoupper(Str::random(10));
+    //     $bookings_saved = [];
+
+    //     foreach ($request->items as $item) {
+    //         $booking = new Booking();
+    //         $booking->booking_no = $booking_no;
+    //         $booking->vendor_id = $request->vendor_id;
+    //         $booking->product_id = $item['product_id'];
+            
+    //         // Fetch product to get category/unit defaults
+    //         $product = Product::find($item['product_id']);
+    //         if (!$product) continue;
+
+    //         $booking->category_id = $product->category_id;
+    //         $booking->sub_category_id = $product->sub_category_id;
+    //         $booking->child_category_id = $product->child_category_id;
+    //         $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
+            
+    //         $booking->qty = $item['qty'];
+            
+    //         // Handle Variant Info
+    //         if (isset($item['variant_quantities']) && is_array($item['variant_quantities']) && count(array_filter($item['variant_quantities'])) > 0) {
+    //             $variantSum = 0;
+    //             $variantsData = [];
+    //             foreach ($item['variant_quantities'] as $variant => $qty) {
+    //                 if ($qty > 0) {
+    //                     $variantSum += $qty;
+    //                     $variantsData[$variant] = $qty;
+    //                 }
+    //             }
+    //             $booking->variant_info = $variantsData;
+    //             if ($booking->qty < $variantSum) {
+    //                 $booking->qty = $variantSum;
+    //             }
+    //         } else {
+    //             $booking->variant_info = $item['variant_info'] ?? null;
+    //         }
+
+    //         $booking->description = $request->description;
+    //         $booking->custom_fields = $request->custom_fields;
+    //         $booking->shipping_method = $request->shipping_method;
+    //         $booking->status = $request->status ?? 'pending';
+            
+    //         $booking->unit_price = 0;
+    //         $booking->extra_cost = 0;
+    //         $booking->total_cost = 0;
+    //         $booking->sale_price = 0;
+            
+    //         $booking->save();
+    //         $bookings_saved[] = $booking;
+    //     }
+
+    //     if (count($bookings_saved) > 0) {
+    //         // Clear the booking cart after successful booking
+    //         Cart::where('user_id', Auth::id())
+    //              ->where('cart_type', 'booking')
+    //              ->delete();
+            
+    //         $vendor = Vendor::find($request->vendor_id);
+    //         if ($vendor && $vendor->email) {
+    //             dispatch(function () use ($bookings_saved, $vendor) {
+    //                 Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
+    //             })->afterResponse();
+    //         }
+    //     }
+
+    //     Toastr::success('Order(s) Placed Successfully!');
+    //     session()->flash('clear_booking_basket', true);
+    //     return redirect()->route('admin.bookings.index');
+    // }
+
     public function store(BookingStoreRequest $request)
-    {
-        $booking_no = 'DS-' . strtoupper(Str::random(10));
-        $bookings_saved = [];
+{
+    $booking_no = $this->generateBookingNumber();
+    $bookings_saved = [];
 
-        foreach ($request->items as $item) {
-            $booking = new Booking();
-            $booking->booking_no = $booking_no;
-            $booking->vendor_id = $request->vendor_id;
-            $booking->product_id = $item['product_id'];
-            
-            // Fetch product to get category/unit defaults
-            $product = Product::find($item['product_id']);
-            if (!$product) continue;
+    foreach ($request->items as $item) {
+        $booking = new Booking();
+        $booking->booking_no = $booking_no;
+        $booking->vendor_id = $request->vendor_id;
+        $booking->product_id = $item['product_id'];
+        
+        // Fetch product to get category/unit defaults
+        $product = Product::find($item['product_id']);
+        if (!$product) continue;
 
-            $booking->category_id = $product->category_id;
-            $booking->sub_category_id = $product->sub_category_id;
-            $booking->child_category_id = $product->child_category_id;
-            $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
-            
-            $booking->qty = $item['qty'];
-            
-            // Handle Variant Info
-            if (isset($item['variant_quantities']) && is_array($item['variant_quantities']) && count(array_filter($item['variant_quantities'])) > 0) {
-                $variantSum = 0;
-                $variantsData = [];
-                foreach ($item['variant_quantities'] as $variant => $qty) {
-                    if ($qty > 0) {
-                        $variantSum += $qty;
-                        $variantsData[$variant] = $qty;
-                    }
+        $booking->category_id = $product->category_id;
+        $booking->sub_category_id = $product->sub_category_id;
+        $booking->child_category_id = $product->child_category_id;
+        $booking->unit_id = $item['unit_id'] ?? $product->unit_id;
+        
+        $booking->qty = $item['qty'];
+        
+        // Handle Variant Info
+        if (isset($item['variant_quantities']) && is_array($item['variant_quantities']) && count(array_filter($item['variant_quantities'])) > 0) {
+            $variantSum = 0;
+            $variantsData = [];
+            foreach ($item['variant_quantities'] as $variant => $qty) {
+                if ($qty > 0) {
+                    $variantSum += $qty;
+                    $variantsData[$variant] = $qty;
                 }
-                $booking->variant_info = $variantsData;
-                if ($booking->qty < $variantSum) {
-                    $booking->qty = $variantSum;
-                }
-            } else {
-                $booking->variant_info = $item['variant_info'] ?? null;
             }
-
-            $booking->description = $request->description;
-            $booking->custom_fields = $request->custom_fields;
-            $booking->shipping_method = $request->shipping_method;
-            $booking->status = $request->status ?? 'pending';
-            
-            $booking->unit_price = 0;
-            $booking->extra_cost = 0;
-            $booking->total_cost = 0;
-            $booking->sale_price = 0;
-            
-            $booking->save();
-            $bookings_saved[] = $booking;
+            $booking->variant_info = $variantsData;
+            if ($booking->qty < $variantSum) {
+                $booking->qty = $variantSum;
+            }
+        } else {
+            $booking->variant_info = $item['variant_info'] ?? null;
         }
 
-        if (count($bookings_saved) > 0) {
-            // Clear the booking cart after successful booking
-            Cart::where('user_id', Auth::id())
-                 ->where('cart_type', 'booking')
-                 ->delete();
-            
-            $vendor = Vendor::find($request->vendor_id);
-            if ($vendor && $vendor->email) {
-                dispatch(function () use ($bookings_saved, $vendor) {
-                    Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
-                })->afterResponse();
-            }
-        }
-
-        Toastr::success('Order(s) Placed Successfully!');
-        session()->flash('clear_booking_basket', true);
-        return redirect()->route('admin.bookings.index');
+        $booking->description = $request->description;
+        $booking->custom_fields = $request->custom_fields;
+        $booking->shipping_method = $request->shipping_method;
+        $booking->status = $request->status ?? 'pending';
+        
+        $booking->unit_price = 0;
+        $booking->extra_cost = 0;
+        $booking->total_cost = 0;
+        $booking->sale_price = 0;
+        
+        $booking->save();
+        $bookings_saved[] = $booking;
     }
+
+    if (count($bookings_saved) > 0) {
+        // Clear the booking cart after successful booking
+        Cart::where('user_id', Auth::id())
+             ->where('cart_type', 'booking')
+             ->delete();
+        
+        $vendor = Vendor::find($request->vendor_id);
+        if ($vendor && $vendor->email) {
+            dispatch(function () use ($bookings_saved, $vendor) {
+                Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
+            })->afterResponse();
+        }
+    }
+
+    session()->flash('clear_booking_basket', true);
+    Toastr::success('Order(s) Placed Successfully!');
+    return redirect()->route('admin.bookings.index');
+}
+
+private function generateBookingNumber(): string
+{
+    $year  = now()->format('Y');
+    $month = now()->format('m');
+    $prefix = "DS-{$year}{$month}-";
+
+    return DB::transaction(function () use ($prefix, $year, $month) {
+
+        $count = Booking::whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->lockForUpdate()
+                        ->distinct('booking_no')
+                        ->count('booking_no');
+
+        $next = $count + 1;
+
+        return $prefix . str_pad($next, 5, '0', STR_PAD_LEFT);
+    });
+}
 
     /**
      * Display the specified resource.

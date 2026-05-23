@@ -220,7 +220,7 @@
         <div class="header clearfix">
             <div class="invoice-title">
                 <h1>{{ $targetBooking->status == 'complete' ? 'ORDER PLACE' : 'ORDER PLACE' }}</h1>
-                <p><strong>Ref:</strong> #{{ $targetBooking->booking_no }}</p>
+                <p><strong>Order No:</strong> #{{ $targetBooking->booking_no }}</p>
                 <div style="margin-top: 10px;">
                     <span
                         class="badge {{ $targetBooking->status == 'complete' ? 'badge-success' : ($targetBooking->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">

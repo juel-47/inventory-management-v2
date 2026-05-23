@@ -168,7 +168,7 @@
         <div class="header clearfix">
             <div class="invoice-title">
                 <h1>OUTLET/SHOP REQUEST</h1>
-                <p><strong>Ref:</strong> #{{ $productRequest->request_no }}</p>
+                <p><strong>Order No:</strong> #{{ $productRequest->request_no }}</p>
                 <div style="margin-top: 10px;">
                     <span class="badge {{ $productRequest->status == 'completed' || $productRequest->status == 'approved' ? 'badge-success' : ($productRequest->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
                         {{ ucfirst($productRequest->status) }}
