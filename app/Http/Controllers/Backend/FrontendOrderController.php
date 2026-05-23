@@ -46,11 +46,14 @@ class FrontendOrderController extends Controller
     {
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
         $settings = GeneralSetting::first();
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+
+        // Filter items to only include those that have been issued
+        $issuedItems = $this->getIssuedItems($order);
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $issuedItems, 'quantity');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        return view('backend.orders.invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+        return view('backend.orders.invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'issuedItems'));
     }
 
     /**
@@ -71,13 +74,16 @@ class FrontendOrderController extends Controller
             'user'
         ]);
         $settings = GeneralSetting::first();
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+
+        // Filter items to only include those that have been issued
+        $issuedItems = $this->getIssuedItems($order);
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $issuedItems, 'quantity');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
         $downloadUrl = route('admin.orders.pi-invoice.download', $order->id);
 
-        return view('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'downloadUrl'));
+        return view('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'downloadUrl', 'issuedItems'));
     }
 
     /**
@@ -238,5 +244,34 @@ class FrontendOrderController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function getIssuedItems(Order $order)
+    {
+        $productIds = $order->items->pluck('product_id')->toArray();
+        $issueItems = \App\Models\IssueItem::whereIn('product_id', $productIds)->get();
+
+        if ($issueItems->isEmpty()) {
+            return $order->items;
+        }
+
+        $issuedMap = [];
+        foreach ($issueItems as $issueItem) {
+            $key = $issueItem->product_id . '_' . ($issueItem->variant_id ?? 0);
+            $issuedMap[$key] = ($issuedMap[$key] ?? 0) + $issueItem->quantity;
+        }
+
+        $issuedItems = $order->items->filter(function ($item) use ($issuedMap) {
+            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
+            return isset($issuedMap[$key]);
+        });
+
+        $issuedItems->each(function ($item) use ($issuedMap) {
+            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
+            $item->quantity = $issuedMap[$key];
+            $item->line_total = $item->unit_price * $item->quantity;
+        });
+
+        return $issuedItems;
     }
 }

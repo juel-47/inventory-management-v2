@@ -267,7 +267,7 @@
                         <th style="width: 10%; text-align: center;">Image</th>
                         <th style="width: 45%;">Product Details</th>
                         <th style="width: 20%; text-align: center;">Qty</th>
-                        <th style="width: 20%; text-align: center;">Unit</th>
+                        <th style="width: 20%; text-align: center;">Unit Price</th>
                     </tr>
                 </thead>
                 <tbody>

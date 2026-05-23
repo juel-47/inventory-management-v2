@@ -209,6 +209,7 @@ class IssueController extends Controller
             $issue = Issue::create([
                 'issue_no' => 'ISS-' . strtoupper(uniqid()),
                 'product_request_id' => $request->product_request_id,
+                'order_id' => $request->order_id,
                 'outlet_id' => $request->outlet_id,
                 'status' => 'confirmed',
                 'total_qty' => collect($request->items)->sum('quantity'),

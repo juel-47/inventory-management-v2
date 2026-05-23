@@ -93,7 +93,11 @@ class GeneratePdfJob implements ShouldQueue
     private function generateInvoice(Order $order, $settings)
     {
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        
+        $issuedItems = $this->getIssuedItems($order);
+        $itemCount = $issuedItems->count();
+
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $issuedItems, 'quantity');
         
         // Optimize images in PI Info blocks for faster PDF rendering
         if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
@@ -107,11 +111,8 @@ class GeneratePdfJob implements ShouldQueue
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        $itemCount = $order->items->count();
-
-        // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Invoice Order #{$order->order_no}");
         $processed = 0;
-        foreach ($order->items as $item) {
+        foreach ($issuedItems as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
             $processed++;
             if ($processed % 500 === 0) {
@@ -125,7 +126,7 @@ class GeneratePdfJob implements ShouldQueue
             'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
             'enable_remote' => false,
-        ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount'));
+        ])->loadView('backend.orders.print_pdf', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount', 'issuedItems'));
 
         $path = 'invoices/invoice-' . $order->order_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
@@ -146,7 +147,10 @@ class GeneratePdfJob implements ShouldQueue
             'user',
         ]);
         
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        $issuedItems = $this->getIssuedItems($order);
+        $itemCount = $issuedItems->count();
+
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $issuedItems, 'quantity');
         
         // Optimize images in PI Info blocks for faster PDF rendering
         if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
@@ -160,14 +164,12 @@ class GeneratePdfJob implements ShouldQueue
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        $itemCount = $order->items->count();
-
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
         $processed = 0;
-        foreach ($order->items as $item) {
+        foreach ($issuedItems as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
             $processed++;
             if ($processed % 500 === 0) {
@@ -181,7 +183,7 @@ class GeneratePdfJob implements ShouldQueue
             'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
             'enable_remote' => false,
-        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount') + ['isPdf' => true]);
+        ])->loadView('backend.orders.pi_invoice', compact('order', 'settings', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'itemCount', 'issuedItems') + ['isPdf' => true]);
 
         $path = 'invoices/pi-invoice-' . $order->order_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
@@ -190,14 +192,16 @@ class GeneratePdfJob implements ShouldQueue
     private function generateCustomerInvoice(Order $order, $settings)
     {
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
-        $itemCount = $order->items->count();
+        
+        $issuedItems = $this->getIssuedItems($order);
+        $itemCount = $issuedItems->count();
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
         $processed = 0;
-        foreach ($order->items as $item) {
+        foreach ($issuedItems as $item) {
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
             $processed++;
             if ($processed % 500 === 0) {
@@ -211,7 +215,7 @@ class GeneratePdfJob implements ShouldQueue
             'isRemoteEnabled' => false,
             'defaultFont' => 'sans-serif',
             'enable_remote' => false,
-        ])->loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount'));
+        ])->loadView('backend.orders.customer_invoice', compact('order', 'settings', 'itemCount', 'issuedItems'));
         
         $path = 'invoices/customer-invoice-' . $order->order_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
@@ -256,5 +260,38 @@ class GeneratePdfJob implements ShouldQueue
         
         \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
         // \Illuminate\Support\Facades\Log::info("Notification pushed to cache for user {$userId}: " . json_encode($data));
+    }
+
+    private function getIssuedItems(Order $order)
+    {
+        // Load issues specifically linked to this order
+        $issues = \App\Models\Issue::where('order_id', $order->id)->with('items')->get();
+
+        if ($issues->isEmpty()) {
+            return $order->items;
+        }
+
+        $issuedMap = [];
+        foreach ($issues as $issue) {
+            foreach ($issue->items as $issueItem) {
+                $key = $issueItem->product_id . '_' . ($issueItem->variant_id ?? 0);
+                $issuedMap[$key] = ($issuedMap[$key] ?? 0) + $issueItem->quantity;
+            }
+        }
+
+        // Filter order items to only include those that have been issued
+        $issuedItems = $order->items->filter(function ($item) use ($issuedMap) {
+            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
+            return isset($issuedMap[$key]);
+        });
+
+        // Update the quantity of each item to match the issued quantity
+        $issuedItems->each(function ($item) use ($issuedMap) {
+            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
+            $item->quantity = $issuedMap[$key];
+            $item->line_total = $item->unit_price * $item->quantity;
+        });
+
+        return $issuedItems;
     }
 }

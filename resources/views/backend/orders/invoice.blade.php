@@ -217,8 +217,11 @@
 
         <table>
             @php
+                // Use issuedItems if available, otherwise fallback to order items
+                $itemsToDisplay = isset($issuedItems) ? $issuedItems : $order->items;
+
                 // Group items by category and sort alphabetically
-                $groupedItems = $order->items->groupBy(function($item) {
+                $groupedItems = $itemsToDisplay->groupBy(function($item) {
                     return $item->category_name ?: 'General';
                 })->sortKeys();
 
@@ -239,7 +242,7 @@
                     <th style="width: 33%;">Product</th>
                     <th style="width: 17%;">Variant</th>
                     <th style="width: 10%;" class="text-right">Qty</th>
-                    <th style="width: 12%;" class="text-right">Unit</th>
+                    <th style="width: 12%;" class="text-right">Unit Price</th>
                     <th style="width: 13%;" class="text-right">Total</th>
                 </tr>
             </thead>
@@ -285,7 +288,7 @@
                 @endforeach
                 <tr class="total-row">
                     <td colspan="6" class="text-right">Subtotal</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</td>
+                    <td class="text-right">{{ $currency }}{{ number_format($issuedItems ? $issuedItems->sum('line_total') : ($order->subtotal_amount ?: $order->total_amount), 2) }}</td>
                 </tr>
                 <tr class="total-row">
                     <td colspan="6" class="text-right">Discount</td>
@@ -297,7 +300,7 @@
                 </tr>
                 <tr class="total-row">
                     <td colspan="6" class="text-right">Grand Total</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->total_amount, 2) }}</td>
+                    <td class="text-right">{{ $currency }}{{ number_format($issuedItems ? ($issuedItems->sum('line_total') - $order->discount_amount + $order->tax_amount) : $order->total_amount, 2) }}</td>
                 </tr>
                 <tr>
                     <td colspan="6" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
