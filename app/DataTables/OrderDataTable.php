@@ -32,6 +32,33 @@ class OrderDataTable extends DataTable
                 return '<span class="badge badge-info">' . (int) $query->items_count . ' Items</span>';
             })
             ->addColumn('total_amount_label', function ($query) {
+                // If this order has issues, compute displayed total from issued items
+                try {
+                    $hasIssues = \App\Models\Issue::where('order_id', $query->id)->exists();
+                    if ($hasIssues) {
+                        $issuedTotal = 0;
+                        $issueItems = \App\Models\IssueItem::whereHas('issue', function($q) use ($query) {
+                            $q->where('order_id', $query->id);
+                        })->get();
+
+                        $orderItems = ($query->relationLoaded('items') ? $query->items : $query->items()->get())
+                            ->keyBy(function($it) {
+                                return $it->product_id . '_' . ($it->variant_id ?? 0);
+                            });
+
+                        foreach ($issueItems as $ii) {
+                            $key = $ii->product_id . '_' . ($ii->variant_id ?? 0);
+                            if (isset($orderItems[$key])) {
+                                $issuedTotal += ($orderItems[$key]->unit_price ?? 0) * $ii->quantity;
+                            }
+                        }
+
+                        return number_format((float) $issuedTotal, 2);
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback to stored total on error
+                }
+
                 return number_format((float) $query->total_amount, 2);
             })
             ->editColumn('created_at', function ($query) {
@@ -91,6 +118,7 @@ class OrderDataTable extends DataTable
     {
         $query = $model->newQuery()
             ->with('user')
+            ->with('items')
             ->withCount('items');
 
         if (request()->filled('status')) {

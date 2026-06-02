@@ -463,19 +463,25 @@
             const newRow = $(`#row-${rowCount}`);
             newRow.find('.select2').select2({ width: '100%', dropdownAutoWidth: true });
             
-            // If we have pre-data (from import), trigger the population
+            // If we have pre-data (from import), set the product select and populate variant inputs
             if (preDataItems) {
                 const product = products.find(p => p.id == preDataItems[0].product_id);
                 if (product) {
-                    newRow.find('.product_selector').trigger('change');
-                    // Now fill specific variant quantities and prices
-                    preDataItems.forEach(item => {
-                        const vInput = newRow.find(`.variant-qty-input[data-variant-id="${item.variant_id || ''}"]`);
-                        if (vInput.length) {
-                             vInput.data('variant-price', item.unit_price);
-                             vInput.val(item.requested_qty).trigger('input');
-                        }
-                    });
+                    // Ensure select2 value is set and trigger change so variant inputs are rendered
+                    const $select = newRow.find('.product_selector');
+                    $select.val(product.id).trigger('change');
+
+                    // Give the change handler a moment to render variant inputs, then fill quantities
+                    setTimeout(() => {
+                        preDataItems.forEach(item => {
+                            const vid = item.variant_id || '';
+                            const vInput = newRow.find(`.variant-qty-input[data-variant-id="${vid}"]`);
+                            if (vInput.length) {
+                                vInput.data('variant-price', item.unit_price);
+                                vInput.val(item.requested_qty).trigger('input');
+                            }
+                        });
+                    }, 50);
                 }
             }
 

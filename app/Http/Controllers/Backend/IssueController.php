@@ -118,12 +118,20 @@ class IssueController extends Controller
             $order = Order::with(['items.product', 'items.variant.color', 'items.variant.size'])
                 ->findOrFail($request->order_id);
 
-            $items = $order->items->map(function ($item) {
+            $items = $order->items->map(function ($item) use ($order) {
                 $stock = InventoryStock::where([
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
                     'outlet_id' => 1,
                 ])->first();
+
+                // Calculate how much has already been issued for this specific order and product/variant
+                $issuedQty = IssueItem::whereHas('issue', function($q) use ($order) {
+                    $q->where('order_id', $order->id);
+                })->where([
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                ])->sum('quantity');
 
                 return [
                     'product_id' => $item->product_id,
@@ -134,6 +142,8 @@ class IssueController extends Controller
                     'color_name' => $this->resolveVariantColorName($item->variant),
                     'size_name' => $this->resolveVariantSizeName($item->variant),
                     'requested_qty' => (int) $item->quantity,
+                    'issued_qty' => (int) $issuedQty,
+                    'remaining_qty' => (int) $item->quantity - (int) $issuedQty,
                     'unit_price' => (float) $item->unit_price,
                     'available_stock' => $stock ? (int) $stock->quantity : 0,
                 ];
@@ -215,6 +225,12 @@ class IssueController extends Controller
                 'total_qty' => collect($request->items)->sum('quantity'),
                 'note' => $note !== '' ? $note : null,
             ]);
+
+            // Fallback: ensure order_id is persisted even if mass-assignment was blocked
+            if ($request->filled('order_id') && (!$issue->order_id || $issue->order_id != $request->order_id)) {
+                $issue->order_id = $request->order_id;
+                $issue->save();
+            }
 
             // If this issue is linked to a product request, update its status
             if ($request->product_request_id) {

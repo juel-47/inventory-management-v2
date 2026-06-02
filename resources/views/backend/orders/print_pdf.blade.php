@@ -130,9 +130,16 @@
                 </tr>
             @endforeach
             @endforeach
+            @php
+                $displaySubtotal = isset($issuedItems) ? $issuedItems->sum('line_total') : ($order->subtotal_amount ?: $order->total_amount);
+                $displayGrandTotal = isset($issuedItems) ? ($displaySubtotal - $order->discount_amount + $order->tax_amount) : $order->total_amount;
+                $displayPaid = (float) $order->paid_amount;
+                $displayDue = max(0, round($displayGrandTotal - $displayPaid, 2));
+            @endphp
+
             <tr class="total-row">
                 <td colspan="6" class="text-right">Subtotal</td>
-                <td class="text-right">{{ $currency }}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</td>
+                <td class="text-right">{{ $currency }}{{ number_format($displaySubtotal, 2) }}</td>
             </tr>
             <tr class="total-row">
                 <td colspan="6" class="text-right">Discount</td>
@@ -144,15 +151,15 @@
             </tr>
             <tr class="total-row">
                 <td colspan="6" class="text-right">Grand Total</td>
-                <td class="text-right">{{ $currency }}{{ number_format($order->total_amount, 2) }}</td>
+                <td class="text-right">{{ $currency }}{{ number_format($displayGrandTotal, 2) }}</td>
             </tr>
             <tr>
                 <td colspan="6" style="text-align: right; border: none; padding: 4px 10px; font-size: 12px;">PAID TOTAL</td>
-                <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 4px 10px; font-size: 12px;">{{ $currency }}{{ number_format($order->paid_amount, 2) }}</td>
+                <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 4px 10px; font-size: 12px;">{{ $currency }}{{ number_format($displayPaid, 2) }}</td>
             </tr>
             <tr>
                 <td colspan="6" style="text-align: right; border: none; font-weight: bold; padding: 6px 10px; font-size: 14px;">DUE BALANCE</td>
-                <td style="text-align: right; font-weight: bold; color: {{ $order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 14px; padding: 6px 10px;">{{ $currency }}{{ number_format($order->due_amount, 2) }}</td>
+                <td style="text-align: right; font-weight: bold; color: {{ $displayDue > 0 ? '#dc3545' : '#28a745' }}; font-size: 14px; padding: 6px 10px;">{{ $currency }}{{ number_format($displayDue, 2) }}</td>
             </tr>
 
         </tbody>

@@ -44,8 +44,11 @@
                                         </tr>
                                     </thead>
                                     @php
+                                        // Use issued items if provided by controller, otherwise fallback to order items
+                                        $displayItems = isset($items) ? $items : $order->items;
+
                                         // Group items by category and sort alphabetically
-                                        $groupedItems = $order->items->groupBy(function($item) {
+                                        $groupedItems = $displayItems->groupBy(function($item) {
                                             return $item->category_name ?: 'General';
                                         })->sortKeys();
 
@@ -98,6 +101,8 @@
                                                 <td class="text-center">
                                                     @if($item->variant_label)
                                                         <span class="badge badge-primary">{{ $item->variant_label }}</span>
+                                                    @elseif($item->variant && $item->variant->name)
+                                                        <span class="badge badge-primary">{{ $item->variant->name }}</span>
                                                     @else
                                                         <span class="text-muted">Standard</span>
                                                     @endif
@@ -131,7 +136,7 @@
                         'subtitle' => 'Save carton and packing details first, then open the PI invoice for review or sharing.',
                         'formAction' => route('admin.orders.pi-info.save', $order->id),
                         'piInvoiceUrl' => route('admin.orders.pi-invoice', $order->id),
-                        'items' => $order->items,
+                        'items' => isset($items) ? $items : $order->items,
                         'piInfo' => $piInfo,
                         'piTotals' => $piTotals,
                     ])

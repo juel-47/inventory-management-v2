@@ -9,6 +9,7 @@ class Issue extends Model
     protected $fillable = [
         'issue_no',
         'product_request_id',
+        'order_id',
         'outlet_id',
         'status',
         'total_qty',

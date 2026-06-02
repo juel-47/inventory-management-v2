@@ -112,6 +112,12 @@
                                 $groupedByCategory[$categoryName][$productId]['variants'][$vName] = 0;
                             }
                             $groupedByCategory[$categoryName][$productId]['variants'][$vName] += $item->quantity;
+                        } elseif ($item->variant && $item->variant->name) {
+                            $vName = $item->variant->name;
+                            if (!isset($groupedByCategory[$categoryName][$productId]['variants'][$vName])) {
+                                $groupedByCategory[$categoryName][$productId]['variants'][$vName] = 0;
+                            }
+                            $groupedByCategory[$categoryName][$productId]['variants'][$vName] += $item->quantity;
                         }
                     }
 
@@ -166,34 +172,41 @@
         <!-- Totals -->
         <div class="totals clearfix">
             <table>
+                @php
+                    $displaySubtotal = isset($issuedItems) ? $issuedItems->sum('line_total') : ($order->subtotal_amount ?: $order->total_amount);
+                    $displayGrandTotal = isset($issuedItems) ? ($displaySubtotal - $order->discount_amount + $order->tax_amount) : $order->total_amount;
+                    $displayPaid = (float) $order->paid_amount;
+                    $displayDue = max(0, round($displayGrandTotal - $displayPaid, 2));
+                @endphp
+
                 <tr>
-                    <td class="text-right">Subtotal:</td>
-                    <td class="text-right" width="40%">{{ $currency }}{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</td>
-                </tr>
-                @if($order->discount_amount > 0)
-                <tr>
-                    <td class="text-right">Discount:</td>
-                    <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
-                </tr>
-                @endif
-                @if($order->tax_amount > 0)
-                <tr>
-                    <td class="text-right">VAT:</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
-                </tr>
-                @endif
-                <tr class="grand-total">
-                    <td class="text-right">Grand Total:</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->total_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td class="text-right">Paid Amount:</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->paid_amount, 2) }}</td>
-                </tr>
-                <tr style="font-weight: bold; color: {{ $order->due_amount > 0 ? '#d9534f' : '#5cb85c' }};">
-                    <td class="text-right">Due Balance:</td>
-                    <td class="text-right">{{ $currency }}{{ number_format($order->due_amount, 2) }}</td>
-                </tr>
+                            <td class="text-right">Subtotal:</td>
+                            <td class="text-right" width="40%">{{ $currency }}{{ number_format($displaySubtotal, 2) }}</td>
+                        </tr>
+                        @if($order->discount_amount > 0)
+                        <tr>
+                            <td class="text-right">Discount:</td>
+                            <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if($order->tax_amount > 0)
+                        <tr>
+                            <td class="text-right">VAT:</td>
+                            <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        <tr class="grand-total">
+                            <td class="text-right">Grand Total:</td>
+                            <td class="text-right">{{ $currency }}{{ number_format($displayGrandTotal, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right">Paid Amount:</td>
+                            <td class="text-right">{{ $currency }}{{ number_format($displayPaid, 2) }}</td>
+                        </tr>
+                        <tr style="font-weight: bold; color: {{ $displayDue > 0 ? '#d9534f' : '#5cb85c' }};">
+                            <td class="text-right">Due Balance:</td>
+                            <td class="text-right">{{ $currency }}{{ number_format($displayDue, 2) }}</td>
+                        </tr>
             </table>
         </div>
 

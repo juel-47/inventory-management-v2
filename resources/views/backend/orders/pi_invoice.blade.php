@@ -350,7 +350,7 @@
         @endunless
 
         @php
-            $itemsForColumns = $order->items ?? collect();
+            $itemsForColumns = isset($issuedItems) ? $issuedItems : ($order->items ?? collect());
             $showImageCol = $itemsForColumns->contains(fn ($row) => !empty($row->product_image));
             $showProductNoCol = $itemsForColumns->contains(fn ($row) => !empty(optional($row->product)->product_number));
             $showCategoryCol = $itemsForColumns->contains(fn ($row) => !empty(optional(optional($row->product)->category)->name) || !empty($row->category_name));
@@ -361,7 +361,8 @@
         @php
             // Group items by category first, then by product
             $groupedByCategory = [];
-            foreach ($order->items as $item) {
+            $displayItems = isset($issuedItems) ? $issuedItems : $order->items;
+            foreach ($displayItems as $item) {
                 $categoryName = $item->category_name ?: 'General';
                 $productId = $item->product_id;
 
@@ -377,7 +378,7 @@
                     ];
                 }
                 $groupedByCategory[$categoryName][$productId]['total_qty'] += $item->quantity;
-                $variantName = $item->variant_label ?: 'Standard';
+                $variantName = $item->variant_label ?: ($item->variant->name ?? 'Standard');
 
                 if (!isset($groupedByCategory[$categoryName][$productId]['variants'][$variantName])) {
                     $groupedByCategory[$categoryName][$productId]['variants'][$variantName] = 0;

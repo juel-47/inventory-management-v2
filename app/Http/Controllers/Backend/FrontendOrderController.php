@@ -32,11 +32,15 @@ class FrontendOrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.vendor', 'user', 'payments.receipts']);
-        $piInfo = PiInfoSupport::prepare($order->pi_info, $order->items, 'quantity');
+        
+        // Use issued items if any exist for this order, otherwise use original order items
+        $items = $this->getIssuedItems($order);
+        
+        $piInfo = PiInfoSupport::prepare($order->pi_info, $items, 'quantity');
         $piTotals = PiInfoSupport::summarize($piInfo);
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
-        return view('backend.orders.show', compact('order', 'piInfo', 'piTotals', 'hasSavedPiInfo'));
+        return view('backend.orders.show', compact('order', 'piInfo', 'piTotals', 'hasSavedPiInfo', 'items'));
     }
 
     /**
@@ -248,30 +252,35 @@ class FrontendOrderController extends Controller
 
     private function getIssuedItems(Order $order)
     {
-        $productIds = $order->items->pluck('product_id')->toArray();
-        $issueItems = \App\Models\IssueItem::whereIn('product_id', $productIds)->get();
+        // Get only items issued for THIS specific order
+        $issueItems = \App\Models\IssueItem::whereHas('issue', function($q) use ($order) {
+            $q->where('order_id', $order->id);
+        })->with(['product', 'variant'])->get();
 
         if ($issueItems->isEmpty()) {
             return $order->items;
         }
 
-        $issuedMap = [];
-        foreach ($issueItems as $issueItem) {
-            $key = $issueItem->product_id . '_' . ($issueItem->variant_id ?? 0);
-            $issuedMap[$key] = ($issuedMap[$key] ?? 0) + $issueItem->quantity;
-        }
-
-        $issuedItems = $order->items->filter(function ($item) use ($issuedMap) {
-            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
-            return isset($issuedMap[$key]);
+        // We want to return a collection that looks like OrderItems but contains the actual issued data
+        return $issueItems->map(function ($issueItem) {
+            $product = $issueItem->product;
+            $variant = $issueItem->variant;
+            
+            // Create a dynamic object that mimics OrderItem
+            return (object) [
+                'id' => $issueItem->id,
+                'product_id' => $issueItem->product_id,
+                'variant_id' => $issueItem->variant_id,
+                'product_name' => $product->name ?? 'Deleted Product',
+                'product_image' => $product->thumb_image ?? null,
+                'category_name' => optional($product->category)->name ?? 'General',
+                'variant_label' => $variant->name ?? 'Standard',
+                'quantity' => $issueItem->quantity,
+                'unit_price' => $product->outlet_price ?? 0, // Fallback to product price
+                'line_total' => $issueItem->quantity * ($product->outlet_price ?? 0),
+                'product' => $product,
+                'variant' => $variant,
+            ];
         });
-
-        $issuedItems->each(function ($item) use ($issuedMap) {
-            $key = $item->product_id . '_' . ($item->variant_id ?? 0);
-            $item->quantity = $issuedMap[$key];
-            $item->line_total = $item->unit_price * $item->quantity;
-        });
-
-        return $issuedItems;
     }
 }
