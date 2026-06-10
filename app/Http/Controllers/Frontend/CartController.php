@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminOrderNotificationMail;
 use App\Models\Cart;
 use App\Models\InventoryStock;
 use App\Models\Order;
@@ -16,6 +17,8 @@ use App\Services\CheckoutTaxResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
@@ -495,6 +498,14 @@ class CartController extends Controller
             }
 
             DB::commit();
+
+            // Send Admin Notification Email
+            try {
+                Mail::to('tofayelhossaintuhin79@gmail.com')
+                    ->send(new AdminOrderNotificationMail($order));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin order notification: ' . $e->getMessage());
+            }
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()

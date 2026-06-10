@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminIssueNotificationMail;
 use App\Models\GeneralSetting;
 use App\Models\Issue;
 use App\Models\IssueItem;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\PdfImageHelper;
+use Illuminate\Support\Facades\Log;
 
 class IssueController extends Controller
 {
@@ -285,12 +287,19 @@ class IssueController extends Controller
                 ]);
             }
             
-            // Generate PDF Invoice - DEFERRED: User wants to generate only on download
             // try {
             //     $this->generateInvoice($issue);
             // } catch (\Exception $e) {
             //     \Illuminate\Support\Facades\Log::error('Invoice Generation Failed: ' . $e->getMessage());
             // }
+
+            // Send Admin Notification Email
+            try {
+                \Illuminate\Support\Facades\Mail::to('tofayelhossaintuhin79@gmail.com')
+                    ->send(new AdminIssueNotificationMail($issue));
+            } catch (\Exception $e) {
+               Log::error('Failed to send admin issue notification: ' . $e->getMessage());
+            }
         });
 
         return redirect()->route('admin.issues.index')->with('success', 'Stock Issued Successfully!');

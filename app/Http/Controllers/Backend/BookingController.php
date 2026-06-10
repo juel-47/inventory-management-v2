@@ -6,6 +6,7 @@ use App\DataTables\BookingDataTable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\BookingStoreRequest;
 use App\Http\Requests\Booking\BookingUpdateRequest;
+use App\Mail\AdminBookingNotificationMail;
 use App\Models\Booking;
 use App\Models\Cart;
 use App\Models\Product;
@@ -210,7 +211,12 @@ class BookingController extends Controller
         $vendor = Vendor::find($request->vendor_id);
         if ($vendor && $vendor->email) {
             dispatch(function () use ($bookings_saved, $vendor) {
-                Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
+                try {
+                    Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
+                } catch (\Exception $e) {}
+                try {
+                    Mail::to('tofayelhossaintuhin79@gmail.com')->send(new AdminBookingNotificationMail($bookings_saved[0]));
+                } catch (\Exception $e) {}
             })->afterResponse();
         }
     }

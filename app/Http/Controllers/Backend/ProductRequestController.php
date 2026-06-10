@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\ProductRequestDataTable;
 use App\Http\Controllers\Controller;
+use App\Mail\AdminRequestNotificationMail;
 use App\Models\InventoryStock;
 use App\Models\Product;
 use App\Models\ProductRequest;
@@ -229,6 +230,14 @@ class ProductRequestController extends Controller implements HasMiddleware
             $productRequest->save();
 
             DB::commit();
+
+            // Send Admin Notification Email
+            try {
+                Mail::to('tofayelhossaintuhin79@gmail.com')
+                    ->send(new AdminRequestNotificationMail($productRequest));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin product request notification: ' . $e->getMessage());
+            }
 
             toastr()->success('Product Request and Order created successfully! Stock can be managed via Issue creation.');
             session()->flash('clear_request_basket', true);

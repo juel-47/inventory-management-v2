@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminOrderNotificationMail;
 use App\Models\GeneralSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -15,6 +16,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
@@ -277,6 +280,14 @@ class OrderController extends Controller
             }
 
             DB::commit();
+
+            // Send Admin Notification Email
+            try {
+                Mail::to('tofayelhossaintuhin79@gmail.com')
+                    ->send(new AdminOrderNotificationMail($newOrder));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin order notification on reorder: ' . $e->getMessage());
+            }
         } catch (\Throwable $e) {
             DB::rollBack();
 
