@@ -70,8 +70,7 @@
         <thead>
             <tr>
                 <th width="5%">#</th>
-                <th width="10%">Image</th>
-                <th width="40%">Product Details</th>
+                <th width="50%">Product Details</th>
                 @if(Auth::user()->can('Manage Product Requests'))
                     <th width="10%" class="text-center">Shelve No</th>
                 @endif
@@ -84,22 +83,6 @@
             @foreach($productRequest->items as $index => $item)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td class="text-center">
-                    @php
-                        $path = $item->product && $item->product->thumb_image ? storage_path('app/public/' . $item->product->thumb_image) : null;
-                        $base64 = '';
-                        if ($path && file_exists($path)) {
-                            $type = pathinfo($path, PATHINFO_EXTENSION);
-                            $data = file_get_contents($path);
-                            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                        }
-                    @endphp
-                    @if($base64)
-                        <img src="{{ $base64 }}" width="35">
-                    @else
-                        -
-                    @endif
-                </td>
                 <td>
                     <div class="font-weight-bold">{{ $item->product->name }}</div>
                     @if($item->variant)
@@ -117,16 +100,16 @@
             </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" class="text-right">GRAND TOTAL</td>
+                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '5' : '4' }}" class="text-right">GRAND TOTAL</td>
                 <td class="text-right">{!! formatConverted($productRequest->total_amount) !!}</td>
             </tr>
             @if($productRequest->order)
             <tr>
-                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none;">PAID TOTAL</td>
+                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '5' : '4' }}" style="text-align: right; border: none;">PAID TOTAL</td>
                 <td class="text-right" style="color: #28a745; font-weight: bold;">{!! formatConverted($productRequest->order->paid_amount) !!}</td>
             </tr>
             <tr>
-                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '6' : '5' }}" style="text-align: right; border: none; font-weight: bold;">DUE BALANCE</td>
+                <td colspan="{{ Auth::user()->can('Manage Product Requests') ? '5' : '4' }}" style="text-align: right; border: none; font-weight: bold;">DUE BALANCE</td>
                 <td class="text-right" style="font-weight: bold; color: {{ $productRequest->order->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-size: 14px;">{!! formatConverted($productRequest->order->due_amount) !!}</td>
             </tr>
             @endif

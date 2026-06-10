@@ -95,9 +95,8 @@ class OrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice');
-        
-        return redirect()->back()->with('success', 'PI Invoice is generating in the background. Please refresh and click download again after a minute.');
+        \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'pi_invoice');
+        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
     }
 
     /**

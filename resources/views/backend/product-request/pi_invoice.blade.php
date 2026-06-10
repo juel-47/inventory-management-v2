@@ -269,8 +269,7 @@
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
-                    <th style="width: 12%;">Image</th>
-                    <th style="width: 23%;">Product Information</th>
+                    <th style="width: 35%;">Product Information</th>
                     <th style="width: 10%;">Product No</th>
                     <th style="width: 14%;">Category</th>
                     <th style="width: 10%;">Unit</th>
@@ -281,33 +280,12 @@
             <tbody>
                 @foreach($sortedGroupedItems as $categoryName => $categoryItems)
                     <tr style="background-color: #e9ecef;">
-                        <td colspan="8" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
+                        <td colspan="7" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
                             {{ $categoryName }}
                         </td>
                     </tr>
                     @foreach($categoryItems as $item)
                         @php
-                            $imagePath = (string) ($item->product->thumb_image ?? '');
-                            $imageUrl = $imagePath !== '' ? asset('storage/' . ltrim($imagePath, '/')) : null;
-                            $imageBase64 = null;
-                            if ($isPdf && $imagePath !== '') {
-                                $normalized = ltrim(str_replace('storage/', '', $imagePath), '/');
-                                $candidates = [
-                                    public_path('storage/' . $normalized),
-                                    storage_path('app/public/' . $normalized),
-                                    public_path(ltrim($imagePath, '/')),
-                                ];
-                                foreach ($candidates as $candidate) {
-                                    if (is_file($candidate)) {
-                                        $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION) ?: 'jpg');
-                                        $mime = in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) ? $ext : 'jpeg';
-                                        $imageBase64 = 'data:image/' . $mime . ';base64,' . base64_encode(file_get_contents($candidate));
-                                        break;
-                                    }
-                                }
-                            }
-
-                            $imageSrc = $isPdf ? $imageBase64 : $imageUrl;
                             $variantText = trim((string) ($item->variant->name ?? ''));
                             if ($variantText === '') {
                                 $variantText = trim(collect([
@@ -319,13 +297,6 @@
                         @endphp
                         <tr>
                             <td>{{ $globalIndex }}</td>
-                        <td class="image-cell">
-                            @if($imageSrc)
-                                <img src="{{ $imageSrc }}" alt="{{ $item->product->name ?? 'Item' }}">
-                            @else
-                                <span class="image-empty">No Image</span>
-                            @endif
-                        </td>
                         <td>
                             <strong>{{ $item->product->name ?? ('Product #' . $item->product_id) }}</strong><br>
                             {{-- @if($item->product?->brand)

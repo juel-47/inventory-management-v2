@@ -462,10 +462,8 @@ class PurchaseController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePurchasePdfJob::dispatch($purchase->id, \Illuminate\Support\Facades\Auth::id());
-        
-        Toastr::info('Purchase PDF is generating in the background. Please refresh and click download again after a minute.');
-        return redirect()->back();
+        \App\Jobs\GeneratePurchasePdfJob::dispatchSync($purchase->id, \Illuminate\Support\Facades\Auth::id());
+        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
     }
 
     /**

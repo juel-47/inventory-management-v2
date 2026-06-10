@@ -289,8 +289,7 @@
             <thead>
                 <tr>
                     <th style="width: 8%; text-align: center;">SL</th>
-                    <th style="width: 12%; text-align: center;">Image</th>
-                    <th style="width: 50%;">Product Description</th>
+                    <th style="width: 62%;">Product Description</th>
                     <th style="width: 30%; text-align: center;">Qty</th>
                 </tr>
             </thead>
@@ -318,26 +317,10 @@
                         @php $globalIndex++; @endphp
                         <tr>
                             <td style="text-align: center; color: #7f8c8d;">{{ str_pad($globalIndex, 2, '0', STR_PAD_LEFT) }}</td>
-                            <td style="text-align: center;">
-                                @php
-                                    $thumb = $item->product ? $item->product->thumb_image : null;
-                                    $path = $thumb ? storage_path('app/public/'.$thumb) : null;
-                                    $base64 = '';
-                                    if ($path && file_exists($path)) {
-                                        $type = pathinfo($path, PATHINFO_EXTENSION);
-                                        $data = file_get_contents($path);
-                                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                                    }
-                                @endphp
-                                @if($base64)
-                                    <img src="{{ $base64 }}" alt="" width="35" style="border-radius: 3px; border: 1px solid #ecf0f1;">
-                                @else
-                                    <div style="color: #bdc3c7; font-size: 9px;">No Image</div>
-                                @endif
-                            </td>
                             <td>
                                 <div class="product-name">{{ $item->product->name ?? 'Deleted Product' }}</div>
                                 <div class="variant-info">
+                                    <span style="color: #666;">No: {{ $item->product->product_number ?? 'N/A' }}</span><br>
                                     @if($item->variant)
                                         Variant: {{ $item->variant->name }}
                                     @else

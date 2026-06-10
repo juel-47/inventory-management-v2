@@ -264,8 +264,7 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;">#</th>
-                        <th style="width: 10%; text-align: center;">Image</th>
-                        <th style="width: 45%;">Product Details</th>
+                        <th style="width: 55%;">Product Details</th>
                         <th style="width: 20%; text-align: center;">Qty</th>
                         <th style="width: 20%; text-align: center;">Unit Price</th>
                     </tr>
@@ -276,18 +275,9 @@
                         @php $totalQty += $item->qty; @endphp
                         <tr>
                             <td>{{ $index + 1 }}</td>
-                            <td style="text-align: center;">
-                                @if ($item->product && $item->product->thumb_image)
-                                    <img src="{{ asset('storage/' . $item->product->thumb_image) }}"
-                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
-                                @else
-                                    <div
-                                        style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px;">
-                                        N/A</div>
-                                @endif
-                            </td>
                             <td>
-                                <strong>{{ $item->product->name }}</strong>
+                                <strong>{{ $item->product->name }}</strong><br>
+                                <span style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</span>
                                 @if ($item->variant_info)
                                     <div style="margin-top: 5px;">
                                         @foreach ($item->variant_info as $name => $qty)
@@ -301,7 +291,7 @@
                         </tr>
                     @endforeach
                     <tr class="total-row">
-                        <td colspan="3" style="text-align: right;">GRAND TOTAL QUANTITY</td>
+                        <td colspan="2" style="text-align: right;">GRAND TOTAL QUANTITY</td>
                         <td style="text-align: center;">{{ (float) $totalQty }}</td>
                         <td></td>
                     </tr>

@@ -160,7 +160,6 @@
             <thead>
                 <tr>
                     <th width="30">#</th>
-                    <th width="60" class="text-center">Image</th>
                     <th>Product Details</th>
                     <th width="80" class="text-center">Quantity</th>
                     <th width="100" class="text-right">Unit Cost</th>
@@ -173,21 +172,9 @@
                     @php $totalQty += $detail->qty; @endphp
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="text-center">
-                            @php
-                                $base64 = $detail->product->optimized_image ?? null;
-                            @endphp
-                            @if ($base64)
-                                <img src="{{ $base64 }}" style="width: 40px; height: 40px; object-fit: cover;">
-                            @elseif ($detail->product && $detail->product->thumb_image)
-                                <img src="{{ public_path('storage/' . $detail->product->thumb_image) }}"
-                                    style="width: 40px; height: 40px; object-fit: cover;">
-                            @else
-                                <span style="font-size: 8px; color: #ccc;">N/A</span>
-                            @endif
-                        </td>
                         <td>
                             <div style="font-weight: bold;">{{ $detail->product->name }}</div>
+                            <div style="font-size: 11px; color: #666;">Product No: {{ $detail->product->product_number ?? 'N/A' }}</div>
                             @if ($detail->variant_info)
                                 @foreach ($detail->variant_info as $name => $qty)
                                     <span class="variant-item">{{ $name }}: {{ $qty }}</span>

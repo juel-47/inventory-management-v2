@@ -238,8 +238,7 @@
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
-                    <th style="width: 12%;">Image</th>
-                    <th style="width: 33%;">Product</th>
+                    <th style="width: 45%;">Product</th>
                     <th style="width: 17%;">Variant</th>
                     <th style="width: 10%;" class="text-right">Qty</th>
                     <th style="width: 12%;" class="text-right">Unit Price</th>
@@ -249,7 +248,7 @@
             <tbody>
                 @foreach($sortedGroupedItems as $categoryName => $categoryItems)
                     <tr style="background-color: #e9ecef;">
-                        <td colspan="7" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
+                        <td colspan="6" style="padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; color: #495057;">
                             {{ $categoryName }}
                         </td>
                     </tr>
@@ -257,26 +256,9 @@
                     @php $globalIndex++; @endphp
                     <tr>
                         <td>{{ $globalIndex }}</td>
-                        <td class="image-cell">
-                            @php
-                                $imageUrl = null;
-                                $imagePath = (string) ($item->product_image ?? '');
-                                if ($imagePath !== '') {
-                                    if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-                                        $imageUrl = $imagePath;
-                                    } else {
-                                        $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                                    }
-                                }
-                            @endphp
-                            @if($imageUrl)
-                                <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}">
-                            @else
-                                <span class="image-empty">No Image</span>
-                            @endif
-                        </td>
                         <td>
                             <strong>{{ $item->product_name }}</strong><br>
+                            <span style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</span><br>
                             <small>{{ $item->category_name ?: 'General' }}</small>
                         </td>
                         <td>{{ $item->variant_label ?: ($item->variant->name ?? 'Standard') }}</td>
@@ -294,27 +276,27 @@
                 @endphp
 
                 <tr class="total-row">
-                    <td colspan="6" class="text-right">Subtotal</td>
+                    <td colspan="5" class="text-right">Subtotal</td>
                     <td class="text-right">{{ $currency }}{{ number_format($displaySubtotal, 2) }}</td>
                 </tr>
                 <tr class="total-row">
-                    <td colspan="6" class="text-right">Discount</td>
+                    <td colspan="5" class="text-right">Discount</td>
                     <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
                 </tr>
                 <tr class="total-row">
-                    <td colspan="6" class="text-right">VAT</td>
+                    <td colspan="5" class="text-right">VAT</td>
                     <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
                 </tr>
                 <tr class="total-row">
-                    <td colspan="6" class="text-right">Grand Total</td>
+                    <td colspan="5" class="text-right">Grand Total</td>
                     <td class="text-right">{{ $currency }}{{ number_format($displayGrandTotal, 2) }}</td>
                 </tr>
                 <tr>
-                    <td colspan="6" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
+                    <td colspan="5" style="text-align: right; border: none; padding: 5px 12px;">PAID TOTAL</td>
                     <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 5px 12px;">{{ $currency }}{{ number_format($displayPaid, 2) }}</td>
                 </tr>
                 <tr>
-                    <td colspan="6" style="text-align: right; border: none; font-weight: bold; padding: 8px 12px;">DUE BALANCE</td>
+                    <td colspan="5" style="text-align: right; border: none; font-weight: bold; padding: 8px 12px;">DUE BALANCE</td>
                     <td style="text-align: right; font-weight: bold; color: {{ $displayDue > 0 ? '#dc3545' : '#28a745' }}; font-size: 16px; padding: 8px 12px;">{{ $currency }}{{ number_format($displayDue, 2) }}</td>
                 </tr>
 

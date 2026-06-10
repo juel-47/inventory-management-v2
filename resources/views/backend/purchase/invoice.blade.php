@@ -247,8 +247,7 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;">#</th>
-                        <th style="width: 10%; text-align: center;">Image</th>
-                        <th style="width: 45%;">Product Details</th>
+                        <th style="width: 55%;">Product Details</th>
                         <th style="width: 15%; text-align: center;">Qty</th>
                         <th style="width: 15%; text-align: right;">Unit Cost</th>
                         <th style="width: 10%; text-align: right;">Total</th>
@@ -260,18 +259,9 @@
                         @php $totalQty += $detail->qty; @endphp
                         <tr>
                             <td>{{ $index + 1 }}</td>
-                            <td style="text-align: center;">
-                                @if ($detail->product && $detail->product->thumb_image)
-                                    <img src="{{ asset('storage/' . $detail->product->thumb_image) }}"
-                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
-                                @else
-                                    <div
-                                        style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px;">
-                                        N/A</div>
-                                @endif
-                            </td>
                             <td>
-                                <strong>{{ $detail->product->name }}</strong>
+                                <strong>{{ $detail->product->name }}</strong><br>
+                                <span style="font-size: 11px; color: #666;">No: {{ $detail->product->product_number ?? 'N/A' }}</span>
                                 @if ($detail->variant_info)
                                     <div style="margin-top: 5px;">
                                         @foreach ($detail->variant_info as $name => $qty)
@@ -286,7 +276,7 @@
                         </tr>
                     @endforeach
                     <tr class="total-row">
-                        <td colspan="3" style="text-align: right;">GRAND TOTAL (LOCAL)</td>
+                        <td colspan="2" style="text-align: right;">GRAND TOTAL (LOCAL)</td>
                         <td style="text-align: center;">{{ (float) $totalQty }}</td>
                         <td></td>
                         <td style="text-align: right;">{{ $settings->currency_icon }}{{ number_format($purchase->total_amount, 2) }}</td>
@@ -299,7 +289,7 @@
                         @endphp
                         @if($vendorSubtotal > 0)
                             <tr style="background-color: #f0f9f4;">
-                                <td colspan="3" style="text-align: right; color: #28a745; font-weight: bold;">VENDOR TOTAL</td>
+                                <td colspan="2" style="text-align: right; color: #28a745; font-weight: bold;">VENDOR TOTAL</td>
                                 <td style="text-align: center;"></td>
                                 <td></td>
                                 <td style="text-align: right; color: #28a745; font-weight: bold;">{{ $purchase->vendor->currency_icon }}{{ number_format($vendorSubtotal, 2) }}</td>
@@ -307,13 +297,13 @@
                         @endif
                     @endif
                     <tr>
-                        <td colspan="3" style="text-align: right; color: #28a745; font-weight: bold;">PAID</td>
+                        <td colspan="2" style="text-align: right; color: #28a745; font-weight: bold;">PAID</td>
                         <td style="text-align: center;"></td>
                         <td></td>
                         <td style="text-align: right; color: #28a745; font-weight: bold;">{{ $settings->currency_icon }}{{ number_format($purchase->paid_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="text-align: right; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">DUE</td>
+                        <td colspan="2" style="text-align: right; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">DUE</td>
                         <td style="text-align: center;"></td>
                         <td></td>
                         <td style="text-align: right; color: {{ $purchase->due_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">{{ $settings->currency_icon }}{{ number_format($purchase->due_amount, 2) }}</td>

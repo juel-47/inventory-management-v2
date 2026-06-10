@@ -206,8 +206,7 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;">#</th>
-                        <th style="width: 10%; text-align: center;">Image</th>
-                        <th style="width: 45%;">Product Details</th>
+                        <th style="width: 55%;">Product Details</th>
                         @can('Manage Product Requests')
                             <th style="width: 10%; text-align: center;">Shelve No</th>
                         @endcan
@@ -220,15 +219,9 @@
                     @foreach($productRequest->items as $index => $item)
                         <tr>
                             <td>{{ $index + 1 }}</td>
-                            <td style="text-align: center;">
-                                @if($item->product && $item->product->thumb_image)
-                                    <img src="{{ asset('storage/'.$item->product->thumb_image) }}" alt="{{ $item->product->name }}" width="40" style="border-radius: 4px; border: 1px solid #eee;">
-                                @else
-                                    <div style="font-size: 10px; color: #999;">No Image</div>
-                                @endif
-                            </td>
                             <td>
-                                <strong>{{ $item->product->name }}</strong>
+                                <strong>{{ $item->product->name }}</strong><br>
+                                <span style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</span>
                                 @if($item->variant)
                                     <div style="margin-top: 5px;">
                                         <span class="variant-tag">{{ $item->variant->name }} </span>

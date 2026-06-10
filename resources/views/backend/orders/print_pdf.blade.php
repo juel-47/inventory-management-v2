@@ -89,8 +89,7 @@
         <thead>
             <tr>
                 <th width="5%">#</th>
-                <th width="12%">Image</th>
-                <th width="31%">Product</th>
+                <th width="43%">Product</th>
                 <th width="18%">Variant</th>
                 <th width="10%" class="text-right">Qty</th>
                 <th width="12%" class="text-right">Unit</th>
@@ -100,7 +99,7 @@
         <tbody>
             @foreach($sortedGroupedItems as $categoryName => $categoryItems)
                 <tr style="background-color: #f0f0f0;">
-                    <td colspan="7" style="padding: 6px 10px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555;">
+                    <td colspan="6" style="padding: 6px 10px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555;">
                         {{ $categoryName }}
                     </td>
                 </tr>
@@ -108,19 +107,9 @@
                 @php $globalIndex++; @endphp
                 <tr>
                     <td>{{ $globalIndex }}</td>
-                    <td class="image-cell">
-                        @php
-                            $showImages = true;
-                            $base64 = $item->optimized_image ?? null;
-                        @endphp
-                        @if($showImages && $base64)
-                            <img src="{{ $base64 }}" alt="">
-                        @else
-                            <span class="image-empty">No Image</span>
-                        @endif
-                    </td>
                     <td>
                         <div style="font-weight: bold;">{{ $item->product_name }}</div>
+                        <div style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</div>
                         <div style="font-size: 11px; color: #777;">{{ $item->category_name ?: 'General' }}</div>
                     </td>
                     <td>{{ $item->variant_label ?: 'Standard' }}</td>
@@ -138,27 +127,27 @@
             @endphp
 
             <tr class="total-row">
-                <td colspan="6" class="text-right">Subtotal</td>
+                <td colspan="5" class="text-right">Subtotal</td>
                 <td class="text-right">{{ $currency }}{{ number_format($displaySubtotal, 2) }}</td>
             </tr>
             <tr class="total-row">
-                <td colspan="6" class="text-right">Discount</td>
+                <td colspan="5" class="text-right">Discount</td>
                 <td class="text-right">-{{ $currency }}{{ number_format($order->discount_amount, 2) }}</td>
             </tr>
             <tr class="total-row">
-                <td colspan="6" class="text-right">VAT</td>
+                <td colspan="5" class="text-right">VAT</td>
                 <td class="text-right">{{ $currency }}{{ number_format($order->tax_amount, 2) }}</td>
             </tr>
             <tr class="total-row">
-                <td colspan="6" class="text-right">Grand Total</td>
+                <td colspan="5" class="text-right">Grand Total</td>
                 <td class="text-right">{{ $currency }}{{ number_format($displayGrandTotal, 2) }}</td>
             </tr>
             <tr>
-                <td colspan="6" style="text-align: right; border: none; padding: 4px 10px; font-size: 12px;">PAID TOTAL</td>
+                <td colspan="5" style="text-align: right; border: none; padding: 4px 10px; font-size: 12px;">PAID TOTAL</td>
                 <td style="text-align: right; border-bottom: 1px solid #ddd; color: #28a745; font-weight: bold; padding: 4px 10px; font-size: 12px;">{{ $currency }}{{ number_format($displayPaid, 2) }}</td>
             </tr>
             <tr>
-                <td colspan="6" style="text-align: right; border: none; font-weight: bold; padding: 6px 10px; font-size: 14px;">DUE BALANCE</td>
+                <td colspan="5" style="text-align: right; border: none; font-weight: bold; padding: 6px 10px; font-size: 14px;">DUE BALANCE</td>
                 <td style="text-align: right; font-weight: bold; color: {{ $displayDue > 0 ? '#dc3545' : '#28a745' }}; font-size: 14px; padding: 6px 10px;">{{ $currency }}{{ number_format($displayDue, 2) }}</td>
             </tr>
 

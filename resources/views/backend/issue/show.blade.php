@@ -52,7 +52,10 @@
                                     @foreach ($issue->items as $index => $item)
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
-                                            <td>{{ $item->product->name }}</td>
+                                            <td>
+                                                <strong>{{ $item->product->name }}</strong><br>
+                                                <span style="font-size: 11px; color: #666;">Product No: {{ $item->product->product_number ?? 'N/A' }}</span>
+                                            </td>
                                             <td>
                                                 @if($item->variant)
                                                     @php

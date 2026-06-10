@@ -351,7 +351,7 @@
 
         @php
             $itemsForColumns = isset($issuedItems) ? $issuedItems : ($order->items ?? collect());
-            $showImageCol = $itemsForColumns->contains(fn ($row) => !empty($row->product_image));
+            $showImageCol = false; // $itemsForColumns->contains(fn ($row) => !empty($row->product_image));
             $showProductNoCol = $itemsForColumns->contains(fn ($row) => !empty(optional($row->product)->product_number));
             $showCategoryCol = $itemsForColumns->contains(fn ($row) => !empty(optional(optional($row->product)->category)->name) || !empty($row->category_name));
             $showUnitCol = $itemsForColumns->contains(fn ($row) => !empty(optional(optional($row->product)->unit)->name));
