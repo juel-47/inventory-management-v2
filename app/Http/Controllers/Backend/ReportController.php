@@ -82,6 +82,7 @@ class ReportController extends Controller implements HasMiddleware
     public function stockReport(Request $request)
     {
         $query = Product::with(['category', 'unit', 'brand', 'inventoryStocks'])
+            ->withSum('inventoryStocks', 'quantity')
             ->where('status', 1);
 
         // Filters
@@ -93,10 +94,21 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         // Calculate Summary Stats from database aggregates BEFORE pagination
-        $summaryData = (clone $query)->selectRaw('
-            SUM((SELECT SUM(quantity) FROM inventory_stocks WHERE product_id = products.id)) as untyped_total_qty,
-            SUM((SELECT SUM(quantity) FROM inventory_stocks WHERE product_id = products.id) * purchase_price) as untyped_total_value,
-            SUM((SELECT SUM(quantity) FROM inventory_stocks WHERE product_id = products.id) * price) as untyped_potential_revenue
+        $summaryQuery = DB::table('products')
+            ->join('inventory_stocks', 'products.id', '=', 'inventory_stocks.product_id')
+            ->where('products.status', 1);
+
+        if ($request->category_id) {
+            $summaryQuery->where('products.category_id', $request->category_id);
+        }
+        if ($request->brand_id) {
+            $summaryQuery->where('products.brand_id', $request->brand_id);
+        }
+
+        $summaryData = $summaryQuery->selectRaw('
+            SUM(inventory_stocks.quantity) as untyped_total_qty,
+            SUM(inventory_stocks.quantity * products.purchase_price) as untyped_total_value,
+            SUM(inventory_stocks.quantity * products.price) as untyped_potential_revenue
         ')->first();
 
         $totalQty = $summaryData->untyped_total_qty ?? 0;

@@ -46,7 +46,7 @@ class DashboardController extends Controller
             $issueData = $monthlyIssues->pluck('total');
 
             // Chart Data: Request Status Distribution
-            $requestStatus = ProductRequest::select('status', DB::raw('count(*) as total'))
+            $requestStatus = Order::select('status', DB::raw('count(*) as total'))
                 ->groupBy('status')
                 ->pluck('total', 'status');
             
@@ -71,9 +71,9 @@ class DashboardController extends Controller
             ));
         } else {
             // Outlet Specific Stats
-            $myTotalRequests = ProductRequest::where('user_id', $user->id)->count();
-            $myPendingRequests = ProductRequest::where('user_id', $user->id)->where('status', 'pending')->count();
-            $myTotalSpent = ProductRequest::where('user_id', $user->id)
+            $myTotalRequests = Order::where('user_id', $user->id)->count();
+            $myPendingRequests = Order::where('user_id', $user->id)->where('status', 'pending')->count();
+            $myTotalSpent = Order::where('user_id', $user->id)
                 ->whereIn('status', ['approved', 'completed', 'complete']) 
                 ->sum('total_amount');
             

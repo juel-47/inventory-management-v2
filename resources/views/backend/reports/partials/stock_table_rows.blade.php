@@ -1,7 +1,7 @@
 @foreach ($products as $product)
     @php 
         // Use the pre-calculated stock_qty from controller
-        $qty = $product->stock_qty;
+        $qty = $product->inventory_stocks_sum_quantity ?? 0;
         $assetValue = $qty * $product->purchase_price;
         $potentialSale = $qty * $product->price;
         $profit = $potentialSale - $assetValue;

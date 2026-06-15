@@ -313,6 +313,12 @@ private function generateBookingNumber(): string
             // Delete existing group records (to re-sync batch)
             Booking::where('booking_no', $bookingNo)->delete();
 
+            // Delete existing PDF to ensure the next download is fresh
+            $path = 'bookings/booking_' . $bookingNo . '.pdf';
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+            }
+
             // Re-insert new/updated items
             foreach ($request->items as $item) {
                 $booking = new Booking();
