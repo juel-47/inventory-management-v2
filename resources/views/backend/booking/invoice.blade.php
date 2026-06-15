@@ -276,15 +276,22 @@
                         <tr>
                             <td>{{ $index + 1 }}</td>
                             <td>
-                                <strong>{{ $item->product->name }}</strong><br>
-                                <span style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</span>
-                                @if ($item->variant_info)
-                                    <div style="margin-top: 5px;">
-                                        @foreach ($item->variant_info as $name => $qty)
-                                            <span class="variant-tag">{{ $name }}: {{ $qty }}</span>
-                                        @endforeach
+                                <div style="display: flex; align-items: center;">
+                                    @if($item->product && $item->product->thumb_image)
+                                        <img src="{{ asset('storage/' . $item->product->thumb_image) }}" style="width: 50px; height: 50px; margin-right: 10px; border: 1px solid #eee; object-fit: cover;">
+                                    @endif
+                                    <div>
+                                        <strong>{{ $item->product->name }}</strong><br>
+                                        <span style="font-size: 11px; color: #666;">product no: {{ $item->product->product_number ?? 'N/A' }}</span>
+                                        @if ($item->variant_info)
+                                            <div style="margin-top: 5px;">
+                                                @foreach ($item->variant_info as $name => $qty)
+                                                    <span class="variant-tag">{{ $name }}: {{ $qty }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </div>
                             </td>
                             <td style="text-align: center;">{{ (float) $item->qty }}</td>
                             <td style="text-align: center;">{{ $item->unit->name ?? 'N/A' }}</td>

@@ -275,8 +275,10 @@ private function generateBookingNumber(): string
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GenerateBookingPdfJob::dispatchSync($targetBooking->id, \Illuminate\Support\Facades\Auth::id());
-        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
+        \App\Jobs\GenerateBookingPdfJob::dispatch($targetBooking->id, \Illuminate\Support\Facades\Auth::id());
+        
+        Toastr::info('Booking PDF is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 
     /**

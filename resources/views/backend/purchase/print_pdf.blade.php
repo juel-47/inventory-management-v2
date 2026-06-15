@@ -150,8 +150,8 @@
                 <strong>Invoice No:</strong> #{{ $purchase->invoice_no }}<br>
                 <strong>Date:</strong> {{ \Carbon\Carbon::parse($purchase->date)->format('d M, Y') }}<br>
                 <strong>Shipping Method:</strong> {{ $purchase->shipping_method ?? 'N/A' }}<br>
-                <strong>Status:</strong>
-                <span class="badge badge-success">Received</span>
+                {{-- <strong>Status:</strong>
+                <span class="badge badge-success">Received</span> --}}
             </div>
             <div class="clear"></div>
         </div>
@@ -173,13 +173,20 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td>
-                            <div style="font-weight: bold;">{{ $detail->product->name }}</div>
-                            <div style="font-size: 11px; color: #666;">Product No: {{ $detail->product->product_number ?? 'N/A' }}</div>
-                            @if ($detail->variant_info)
-                                @foreach ($detail->variant_info as $name => $qty)
-                                    <span class="variant-item">{{ $name }}: {{ $qty }}</span>
-                                @endforeach
-                            @endif
+                            <div style="display: flex; align-items: center;">
+                                @if($detail->product && $detail->product->optimized_image)
+                                    <img src="{{ $detail->product->optimized_image }}" style="width: 50px; height: 50px; margin-right: 10px; border: 1px solid #eee; object-fit: cover;">
+                                @endif
+                                <div>
+                                    <div style="font-weight: bold;">{{ $detail->product->name }}</div>
+                                    <div style="font-size: 11px; color: #666;">Product No: {{ $detail->product->product_number ?? 'N/A' }}</div>
+                                    @if ($detail->variant_info)
+                                        @foreach ($detail->variant_info as $name => $qty)
+                                            <span class="variant-item">{{ $name }}: {{ $qty }}</span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                         <td class="text-center">{{ (float) $detail->qty }}</td>
                         <td class="text-right">{{ $settings->currency_icon }}{{ number_format($detail->unit_cost, 2) }}</td>
