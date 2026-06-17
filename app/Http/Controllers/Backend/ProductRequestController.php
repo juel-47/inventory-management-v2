@@ -15,6 +15,7 @@ use App\Mail\ProductRequestPiInvoiceReadyMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -571,6 +572,11 @@ class ProductRequestController extends Controller implements HasMiddleware
 
         $productRequest->pi_info = PiInfoSupport::sanitizePayload($validated);
         $productRequest->save();
+
+        $path = 'invoices/pi-invoice-' . $productRequest->request_no . '.pdf';
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
 
         $this->notifyPiReady($productRequest);
 

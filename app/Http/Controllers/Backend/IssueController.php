@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\PdfImageHelper;
 use Illuminate\Support\Facades\Log;
+use Brian2694\Toastr\Facades\Toastr;
 
 class IssueController extends Controller
 {
@@ -358,22 +359,19 @@ class IssueController extends Controller
 
     public function downloadInvoice($id)
     {
-        // Increase resources for PDF generation to prevent 503 errors on live servers
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
+        $issue = Issue::findOrFail($id);
 
-        $issue = Issue::with(['items.product', 'items.variant.color', 'items.variant.size', 'outlet', 'productRequest'])->findOrFail($id);
-        $settings = GeneralSetting::first();
-        
-        // Configure DomPDF wrapper for better performance
-        $pdf = Pdf::setOption([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-            'defaultFont' => 'sans-serif'
-        ])->loadView('backend.pdf.issue-invoice', array_merge(compact('issue', 'settings'), ['is_pdf' => true]));
-
+        // Delete old PDF if exists
         $fileName = 'issue_invoice_' . $issue->issue_no . '.pdf';
-        
-        return $pdf->download($fileName);
+        $path = 'invoices/' . $fileName;
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        // Dispatch job to queue
+        \App\Jobs\GenerateIssuePdfJob::dispatch($issue->id, \Illuminate\Support\Facades\Auth::id());
+
+        Toastr::info('Issue Invoice is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
     }
 }

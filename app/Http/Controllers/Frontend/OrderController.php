@@ -98,8 +98,9 @@ class OrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'pi_invoice');
-        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice', Auth::id());
+
+        return redirect()->back()->with('success', 'PI Invoice generation has been queued. Please refresh the page and download again when ready.');
     }
 
     /**

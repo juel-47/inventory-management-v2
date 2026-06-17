@@ -8,6 +8,7 @@ use App\Models\ProductRequest;
 use App\Support\PiInfoSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductRequestController extends Controller
 {
@@ -74,6 +75,11 @@ class ProductRequestController extends Controller
 
         ini_set('memory_limit', '512M');
         set_time_limit(300);
+
+        $path = 'invoices/pi-invoice-' . $productRequest->request_no . '.pdf';
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
 
         $productRequest->load([
             'user',

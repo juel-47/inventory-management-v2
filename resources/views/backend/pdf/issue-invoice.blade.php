@@ -123,6 +123,16 @@
             border-bottom: 1px solid #ecf0f1;
             vertical-align: middle;
         }
+        .image-cell {
+            text-align: center;
+        }
+        .image-cell img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ecf0f1;
+        }
         .product-name {
             font-weight: bold;
             color: #2c3e50;
@@ -289,7 +299,8 @@
             <thead>
                 <tr>
                     <th style="width: 8%; text-align: center;">SL</th>
-                    <th style="width: 62%;">Product Description</th>
+                    <th style="width: 12%; text-align: center;">Image</th>
+                    <th style="width: 50%;">Product Description</th>
                     <th style="width: 30%; text-align: center;">Qty</th>
                 </tr>
             </thead>
@@ -317,10 +328,19 @@
                         @php $globalIndex++; @endphp
                         <tr>
                             <td style="text-align: center; color: #7f8c8d;">{{ str_pad($globalIndex, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td class="image-cell">
+                                @if($item->product && !empty($item->product->optimized_image))
+                                    <img src="{{ $item->product->optimized_image }}" alt="{{ $item->product->name ?? 'Product Image' }}">
+                                @elseif($item->product && !empty($item->product->thumb_image))
+                                    <img src="{{ str_starts_with((string) $item->product->thumb_image, 'http') ? $item->product->thumb_image : asset('storage/' . ltrim((string) $item->product->thumb_image, '/')) }}" alt="{{ $item->product->name ?? 'Product Image' }}">
+                                @else
+                                    <span style="font-size: 11px; color: #7f8c8d;">No Image</span>
+                                @endif
+                            </td>
                             <td>
                                 <div class="product-name">{{ $item->product->name ?? 'Deleted Product' }}</div>
                                 <div class="variant-info">
-                                    <span style="color: #666;">No: {{ $item->product->product_number ?? 'N/A' }}</span><br>
+                                    <span style="color: #666;">Product No: {{ $item->product->product_number ?? 'N/A' }}</span><br>
                                     @if($item->variant)
                                         Variant: {{ $item->variant->name }}
                                     @else

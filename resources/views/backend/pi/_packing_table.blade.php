@@ -66,7 +66,9 @@
                 $showTotalPcs = $rowsToShow->contains(fn ($row) => $row['total_pcs'] !== null && $row['total_pcs'] !== '');
                 $showNw = $rowsToShow->contains(fn ($row) => $row['nw_kg'] !== null && $row['nw_kg'] !== '');
                 $showGw = $rowsToShow->contains(fn ($row) => $row['gw_kg'] !== null && $row['gw_kg'] !== '');
+                $showImageColumn = !empty($block['optimized_image']) || !empty($block['image']);
                 $visibleColumns = 2
+                    + ($showImageColumn ? 1 : 0)
                     + ($showCtnQty ? 1 : 0)
                     + ($showCtnNo ? 1 : 0)
                     + $variantHeaderCount
@@ -111,6 +113,9 @@
                 <thead>
                     <tr>
                         <th rowspan="2" style="width: 26%; border: 1px solid #222; text-align: center; padding: 6px 4px;">COLOR</th>
+                        @if($showImageColumn)
+                            <th rowspan="2" style="width: 12%; border: 1px solid #222; text-align: center; padding: 6px 4px;">Picture</th>
+                        @endif
                         @if($showCtnQty)
                             <th rowspan="2" style="width: 8%; border: 1px solid #222; text-align: center; padding: 6px 4px;">CTN QTY</th>
                         @endif
@@ -154,6 +159,15 @@
                                         <div style="font-size: 10px; color: #444; margin-top: 6px;">
                                             <strong>CTN MEASUREMENT:</strong> {{ $blockCtnSize }}
                                         </div>
+                                    @endif
+                                </td>
+                            @endif
+                            @if($showImageColumn)
+                                <td rowspan="{{ $rowsToShow->count() + 1 }}" style="text-align: center; vertical-align: middle; border: 1px solid #222;">
+                                    @if($imageBase64)
+                                        <img src="{{ $imageBase64 }}" alt="" style="max-width: 72px; max-height: 72px; object-fit: contain;">
+                                    @else
+                                        <span style="font-size: 11px; color: #888;">No Image</span>
                                     @endif
                                 </td>
                             @endif

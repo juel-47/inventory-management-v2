@@ -74,6 +74,7 @@
             <thead>
                 <tr>
                     <th width="5%" class="text-center">#</th>
+                    <th width="10%" class="text-center">Image</th>
                     <th>Product Description</th>
                     <th width="10%" class="text-center">Qty</th>
                     <th width="15%" class="text-right">Price</th>
@@ -135,16 +136,23 @@
 
                 @foreach($groupedByCategory as $categoryName => $categoryProducts)
                     <tr style="background-color: #f4f4f4;">
-                        <td colspan="5" style="padding: 6px 8px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555; border: 1px solid #ddd;">
+                        <td colspan="6" style="padding: 6px 8px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #555; border: 1px solid #ddd;">
                             {{ $categoryName }}
                         </td>
                     </tr>
                     @foreach($categoryProducts as $productId => $group)
                     <tr style="page-break-inside: avoid;">
                         <td class="text-center">{{ $rowNum++ }}</td>
+                        <td class="image-cell">
+                            @if($group['optimized_image'])
+                                <img src="{{ $group['optimized_image'] }}" alt="{{ $group['product_name'] }}">
+                            @else
+                                <span style="font-size: 10px; color: #999;">No Image</span>
+                            @endif
+                        </td>
                         <td>
                             <div style="font-weight: bold;">{{ $group['product_name'] }}</div>
-                            <div style="font-size: 11px; color: #666;">product no: {{ $group['first_item']->product->product_number ?? 'N/A' }}</div>
+                            {{-- <div style="font-size: 11px; color: #666;">product no: {{ $group['first_item']->product->product_number ?? 'N/A' }}</div> --}}
                             @if(count($group['variants']) > 0)
                                 <div style="font-size: 10px; color: #666; margin-top: 4px;">
                                     @foreach($group['variants'] as $vName => $vQty)

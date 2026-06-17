@@ -138,6 +138,11 @@ class FrontendOrderController extends Controller
         $order->pi_info = PiInfoSupport::sanitizePayload($validated);
         $order->save();
 
+        $path = 'invoices/pi-invoice-' . $order->order_no . '.pdf';
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+        }
+
         $this->notifyPiReady($order);
 
         Toastr::success('PI info saved successfully!');
@@ -175,13 +180,13 @@ class FrontendOrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        // \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice', \Illuminate\Support\Facades\Auth::id());
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'pi_invoice', \Illuminate\Support\Facades\Auth::id());
         
-        // Toastr::info('PI Invoice is generating in the background. Please refresh and click download again after a minute.');
-        // return redirect()->back();
+        Toastr::info('PI Invoice is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
 
-        \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'pi_invoice', \Illuminate\Support\Facades\Auth::id());
-        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
+        // \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'pi_invoice', \Illuminate\Support\Facades\Auth::id());
+        // return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
     }
 
     /**
@@ -195,13 +200,13 @@ class FrontendOrderController extends Controller
             return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
         }
 
-        // \App\Jobs\GeneratePdfJob::dispatch($order->id, 'customer_invoice', \Illuminate\Support\Facades\Auth::id());
+        \App\Jobs\GeneratePdfJob::dispatch($order->id, 'customer_invoice', \Illuminate\Support\Facades\Auth::id());
         
-        // Toastr::info('Customer Invoice is generating in the background. Please refresh and click download again after a minute.');
-        // return redirect()->back();
+        Toastr::info('Customer Invoice is generating in the background. Please refresh and click download again after a minute.');
+        return redirect()->back();
 
-        \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'customer_invoice', \Illuminate\Support\Facades\Auth::id());
-        return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
+        // \App\Jobs\GeneratePdfJob::dispatchSync($order->id, 'customer_invoice', \Illuminate\Support\Facades\Auth::id());
+        // return \Illuminate\Support\Facades\Storage::disk('public')->download($path);
     }
 
     /**
@@ -281,6 +286,7 @@ class FrontendOrderController extends Controller
                 'product_id' => $issueItem->product_id,
                 'variant_id' => $issueItem->variant_id,
                 'product_name' => $product->name ?? 'Deleted Product',
+                'product_number' => $product->product_number ?? 'N/A',
                 'product_image' => $product->thumb_image ?? null,
                 'category_name' => optional($product->category)->name ?? 'General',
                 'variant_label' => $variant->name ?? 'Standard',
