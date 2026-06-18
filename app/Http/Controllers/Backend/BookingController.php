@@ -50,7 +50,7 @@ class BookingController extends Controller
         }
 
         // Pass products with details for JS population
-        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->latest()->get(); 
+        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get(); 
         return view('backend.booking.create', compact('vendors', 'products', 'units', 'categories', 'selectedIds'));
     }
 
@@ -280,7 +280,7 @@ private function generateBookingNumber(): string
         $categories = Category::where('status', 1)->get();
         
         // Match create fields: products for selection
-        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->latest()->get();
+        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get();
 
         return view('backend.booking.edit', compact('orderGroup', 'targetBooking', 'vendors', 'units', 'categories', 'products'));
     }

@@ -108,16 +108,17 @@
                                         <thead class="bg-whitesmoke text-uppercase small font-weight-bold">
                                             <tr>
                                                 <th width="5%" class="text-center">Image</th>
-                                                <th width="30%">Product & SKU</th>
-                                                <th width="15%">Unit</th>
+                                                <th width="25%">Product & SKU</th>
+                                                <th width="8%" class="text-center">Stock</th>
+                                                <th width="12%">Unit</th>
                                                 <th width="10%" class="text-center">Main Qty</th>
-                                                <th width="35%">Variants (Color/Size) & Qtys</th>
+                                                <th width="30%">Variants (Color/Size) & Qtys</th>
                                                 <th width="5%" class="text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody id="basket_body">
                                             <tr id="empty_basket_row">
-                                                <td colspan="6" class="text-center py-5 text-muted">
+                                                <td colspan="7" class="text-center py-5 text-muted">
                                                     <i class="fas fa-shopping-basket fa-3x mb-3 opacity-25"></i>
                                                     <p>Your basket is empty. Use the search filters above to add products.</p>
                                                 </td>
@@ -361,6 +362,11 @@
                             <input type="hidden" name="items[${rowCount}][product_id]" value="${product.id}">
                             <p class="basket-product-name">${product.name}</p>
                             <span class="basket-product-sku">#${product.product_number || 'UNKNOWN'}</span>
+                        </td>
+                        <td class="align-middle text-center" data-label="Stock">
+                            <span class="badge badge-${(product.inventory_stocks_sum_quantity || 0) > 0 ? 'success' : 'danger'}" style="font-size:13px;">
+                                ${product.inventory_stocks_sum_quantity || 0}
+                            </span>
                         </td>
                         <td class="align-middle" data-label="Unit">
                             <select class="form-control select2-basic" name="items[${rowCount}][unit_id]">

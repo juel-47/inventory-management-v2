@@ -130,17 +130,18 @@
                                     <table class="table table-hover mb-0" id="basket_table">
                                         <thead class="bg-light">
                                             <tr>
-                                                <th width="80" class="text-center">IMG</th>
-                                                <th>Product Information</th>
-                                                <th width="150">Unit</th>
-                                                <th width="120" class="text-center">Order Qty</th>
-                                                <th width="320">Variant Breakdown</th>
-                                                <th width="60" class="text-center"><i class="fas fa-trash"></i></th>
+                                                <th width="60" class="text-center">IMG</th>
+                                                <th width="250">Product Information</th>
+                                                <th width="70" class="text-center">Stock</th>
+                                                <th width="120">Unit</th>
+                                                <th width="100" class="text-center">Order Qty</th>
+                                                <th width="280">Variant Breakdown</th>
+                                                <th width="50" class="text-center"><i class="fas fa-trash"></i></th>
                                             </tr>
                                         </thead>
                                         <tbody id="basket_body">
                                             <tr id="empty_basket_row">
-                                                <td colspan="6" class="text-center py-5 text-muted">
+                                                <td colspan="7" class="text-center py-5 text-muted">
                                                     <i class="fas fa-box-open fa-3x mb-3 d-block opacity-25"></i>
                                                     Basket is empty. Select products above to add them.
                                                 </td>
@@ -388,6 +389,11 @@
                             <input type="hidden" name="items[${rowCount}][product_id]" value="${product.id}">
                             <p class="basket-product-name">${product.name}</p>
                             <span class="basket-product-sku">#${product.product_number || 'UNKNOWN'}</span>
+                        </td>
+                        <td class="align-middle text-center" data-label="Stock">
+                            <span class="badge badge-${(product.inventory_stocks_sum_quantity || 0) > 0 ? 'success' : 'danger'}" style="font-size:13px;">
+                                ${product.inventory_stocks_sum_quantity || 0}
+                            </span>
                         </td>
                         <td class="align-middle" data-label="Unit">
                             <select class="form-control" name="items[${rowCount}][unit_id]">
