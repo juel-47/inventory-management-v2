@@ -23,29 +23,18 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Search Form -->
-                            <div class="mb-4">
-                                <div class="row">
-                                    {{-- <div class="col-md-10">
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                            </div>
-                                            <input type="text" class="form-control" id="search-input" 
-                                                   placeholder="Type to search by product name, SKU, barcode, or category..." 
-                                                   value="{{ request('search') }}" autocomplete="off">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary d-none" type="button" id="clear-search-btn">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div> --}}
-                                    <div class="col-md-2 text-center">
-                                        <div class="spinner-border text-primary d-none" id="search-spinner" role="status" style="width: 2rem; height: 2rem;">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                    </div>
+                            <div class="row mb-3 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="font-weight-bold text-dark" style="font-size: 14px;"><i class="fas fa-store mr-1"></i>Filter by Vendor</label>
+                                    <select name="vendor_id" id="vendor_filter" class="form-control select2">
+                                        <option value="">All Vendors</option>
+                                        @foreach ($vendors as $vendor)
+                                            <option value="{{ $vendor->id }}" {{ request('vendor_id') == $vendor->id ? 'selected' : '' }}>{{ $vendor->shop_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ route('admin.reports.low-stock') }}" class="btn btn-danger btn-block" style="margin-top: 30px;"><i class="fas fa-undo mr-1"></i> Reset</a>
                                 </div>
                             </div>
                             
@@ -209,142 +198,18 @@
         });
 
         $(document).ready(function() {
-            // --- Auto Search Logic ---
-            let searchTimeout = null;
-            let currentSearch = "{{ request('search') }}";
+            // Init searchable Select2 on vendor filter
+            $('#vendor_filter').select2({ width: '100%' });
 
-            // Cache selectors (search input may be commented-out in some views)
-            const $searchInput = $('#search-input');
-            const $clearSearchBtn = $('#clear-search-btn');
-            const $searchSpinner = $('#search-spinner');
-
-            // Show/hide clear button (guard when elements are missing)
-            function toggleClearButton() {
-                if ($searchInput.length && $clearSearchBtn.length) {
-                    const val = $searchInput.val();
-                    if (typeof val !== 'undefined' && val !== null && val.toString().length > 0) {
-                        $clearSearchBtn.removeClass('d-none');
-                    } else {
-                        $clearSearchBtn.addClass('d-none');
-                    }
-                }
-            }
-
-            // Initial state (only if button exists)
-            if ($clearSearchBtn.length) toggleClearButton();
-
-            // Auto-search on input (only if input exists)
-            if ($searchInput.length) {
-                $searchInput.on('input', function() {
-                    let searchTerm = $(this).val();
-                    toggleClearButton();
-
-                    // Clear previous timeout
-                    clearTimeout(searchTimeout);
-
-                    // Show spinner (if exists)
-                    if ($searchSpinner.length) $searchSpinner.removeClass('d-none');
-
-                    // Debounce: Wait 500ms after user stops typing
-                    searchTimeout = setTimeout(function() {
-                        performSearch(searchTerm);
-                    }, 500);
-                });
-            }
-
-            // Clear search (only if clear button exists)
-            if ($clearSearchBtn.length) {
-                $clearSearchBtn.on('click', function() {
-                    if ($searchInput.length) $searchInput.val('');
-                    toggleClearButton();
-                    performSearch('');
-                });
-            }
-
-            // Perform search via AJAX
-            function performSearch(searchTerm) {
+            // Auto-submit on change
+            $('#vendor_filter').on('change', function() {
+                let vendorId = $(this).val();
                 let url = "{{ route('admin.reports.low-stock') }}";
-                if (searchTerm) {
-                    url += '?search=' + encodeURIComponent(searchTerm);
+                if (vendorId) {
+                    url += '?vendor_id=' + encodeURIComponent(vendorId);
                 }
-
-                $.ajax({
-                    url: url,
-                    method: 'GET',
-                    beforeSend: function() {
-                        $('#products-container').css('opacity', '0.5');
-                    },
-                    success: function(response) {
-                        // Parse the full HTML response
-                        let $response = $(response);
-                        
-                        // Extract the products container content
-                        let newContent = $response.find('#products-container').html();
-                        
-                        if (!newContent) {
-                            // Fallback: extract alert and table from card body
-                            let cardBody = $response.find('.card-body');
-                            let alertHtml = cardBody.find('.alert').first().parent().html();
-                            let tableHtml = cardBody.find('.table-responsive').parent().html();
-                            
-                            if (alertHtml && tableHtml) {
-                                newContent = alertHtml + tableHtml + cardBody.find('.custom-pagination').parent().html();
-                            } else if (alertHtml) {
-                                newContent = alertHtml;
-                            } else if (tableHtml) {
-                                newContent = tableHtml;
-                            }
-                        }
-
-                        if (newContent) {
-                            $('#products-container').html(newContent);
-                            
-                            // Re-initialize DataTable if table exists
-                            if ($("#table-1").length) {
-                                $("#table-1").dataTable().fnDestroy();
-                                $("#table-1").dataTable({
-                                    "order": [[4, "asc"]],
-                                    paging: false,
-                                    info: false,
-                                    searching: true,
-                                    "language": {
-                                        "search": "Filter:",
-                                        "searchPlaceholder": "Search in table..."
-                                    }
-                                });
-                            }
-
-                            // Re-bind checkbox events
-                            $('#select_all').off('change').on('change', function() {
-                                $('.product-checkbox').prop('checked', $(this).is(':checked'));
-                                updateSelectedProducts();
-                            });
-
-                            $('.product-checkbox').off('change').on('change', function() {
-                                updateSelectedProducts();
-                                $('#select_all').prop('checked', $('.product-checkbox:checked').length === $('.product-checkbox').length);
-                            });
-
-                            // Update basket UI after content loads
-                            setTimeout(function() {
-                                updateBasketUI();
-                            }, 100);
-                        }
-
-                        // Update URL without reload
-                        window.history.pushState({path: url}, '', url);
-
-                        $('#products-container').css('opacity', '1');
-                        $('#search-spinner').addClass('d-none');
-                    },
-                    error: function(xhr) {
-                        console.error('Search error:', xhr);
-                        $('#search-spinner').addClass('d-none');
-                        $('#products-container').css('opacity', '1');
-                        toastr.error('Error performing search. Please try again.');
-                    }
-                });
-            }
+                window.location.href = url;
+            });
 
             // --- Basket Logic Start (Database Cart System) ---
             
@@ -511,6 +376,8 @@
                     toastr.warning('Please select at least one product');
                     return;
                 }
+                // Load existing basket from localStorage
+                let booking_basket = JSON.parse(localStorage.getItem('booking_basket')) || [];
                 // Add all selected to localStorage basket
                 selectedProducts.forEach(id => {
                     if (booking_basket.indexOf(id.toString()) === -1) {

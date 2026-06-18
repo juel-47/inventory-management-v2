@@ -191,7 +191,7 @@ class ReportController extends Controller implements HasMiddleware
             ->havingRaw('inventory_stocks_sum_quantity <= 100 OR inventory_stocks_sum_quantity IS NULL');
 
         // Search functionality
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -204,10 +204,17 @@ class ReportController extends Controller implements HasMiddleware
             });
         }
 
+        // Vendor filter
+        if ($request->filled('vendor_id')) {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+
         $products = $query->orderBy('inventory_stocks_sum_quantity', 'asc')
             ->paginate(30)->withQueryString();
 
-        return view('backend.reports.low_stock', compact('products'));
+        $vendors = Vendor::where('status', 1)->orderBy('shop_name')->get();
+
+        return view('backend.reports.low_stock', compact('products', 'vendors'));
     }
 
     /**
