@@ -228,22 +228,7 @@ class BookingController extends Controller
 
 private function generateBookingNumber(): string
 {
-    $year  = now()->format('Y');
-    $month = now()->format('m');
-    $prefix = "DS-{$year}{$month}-";
-
-    return DB::transaction(function () use ($prefix, $year, $month) {
-
-        $count = Booking::whereYear('created_at', $year)
-                        ->whereMonth('created_at', $month)
-                        ->lockForUpdate()
-                        ->distinct('booking_no')
-                        ->count('booking_no');
-
-        $next = $count + 1;
-
-        return $prefix . str_pad($next, 5, '0', STR_PAD_LEFT);
-    });
+    return \App\Services\OrderNumberService::generate('VO', \App\Models\Booking::class, 'VO');
 }
 
     /**
