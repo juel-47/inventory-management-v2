@@ -125,6 +125,10 @@ class OrderDataTable extends DataTable
             $query->where('status', request()->status);
         }
 
+        if (request()->filled('user_id')) {
+            $query->where('user_id', request()->user_id);
+        }
+
         return $query->orderByDesc('id');
     }
 
@@ -137,7 +141,7 @@ class OrderDataTable extends DataTable
             ->setTableId('order-table')
             ->columns($this->getColumns())
             ->ajax([
-                'data' => 'function(d) { d.status = $("#filter_status").val(); }'
+                'data' => 'function(d) { d.status = $("#filter_status").val(); d.user_id = $("#filter_user").val(); }'
             ])
             ->orderBy(0)
             ->selectStyleSingle()
@@ -155,7 +159,7 @@ class OrderDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
+            // Column::make('id'),
             Column::make('order_no')->title('Order No'),
             Column::computed('customer')->title('Customer'),
             Column::computed('outlet_shop')->title('Outlet/Shop'),

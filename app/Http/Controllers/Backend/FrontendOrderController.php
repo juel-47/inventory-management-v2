@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\OrderPiInvoiceReadyMail;
 use App\Models\GeneralSetting;
 use App\Models\Order;
+use App\Models\User;
 use App\Support\PiInfoSupport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
@@ -23,7 +24,8 @@ class FrontendOrderController extends Controller
      */
     public function index(OrderDataTable $dataTable)
     {
-        return $dataTable->render('backend.orders.index');
+        $users = User::role(['Outlet User', 'User'])->where('status', 1)->orderBy('name')->get(['id', 'name', 'outlet_name']);
+        return $dataTable->render('backend.orders.index', compact('users'));
     }
 
     /**

@@ -89,7 +89,7 @@ class BookingDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
+            // Column::make('id'),
             Column::make('booking_no')->title('Booking No'),
             Column::make('vendor')->title('Vendor'),
             Column::computed('product_count')->title('Products'),
