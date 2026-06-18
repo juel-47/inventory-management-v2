@@ -339,54 +339,84 @@
             // });
             // --- Basket Logic End ---
 
-            // Keep existing checkbox functionality for bulk actions
-            let selectedProducts = [];
+            // --- Cross-page Persisted Selections (localStorage) ---
+            const STORAGE_KEY = 'low_stock_selected_ids';
 
-            // Select All checkbox
-            $('#select_all').on('change', function() {
-                $('.product-checkbox').prop('checked', $(this).is(':checked'));
-                updateSelectedProducts();
-            });
+            function getPersistedIds() {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            }
 
-            // Individual checkbox change
-            $(document).on('change', '.product-checkbox', function() {
-                updateSelectedProducts();
-                $('#select_all').prop('checked', $('.product-checkbox:checked').length === $('.product-checkbox').length);
-            });
+            function savePersistedIds(ids) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+            }
 
-            function updateSelectedProducts() {
-                selectedProducts = [];
-                $('.product-checkbox:checked').each(function() {
-                    selectedProducts.push($(this).val());
-                });
-
-                const count = selectedProducts.length;
-                $('#selected_count').text(count);
-
-                if (count > 0) {
+            function updatePersistedUI() {
+                const ids = getPersistedIds();
+                $('#selected_count').text(ids.length);
+                if (ids.length > 0) {
                     $('#add_to_booking_btn').show();
                 } else {
                     $('#add_to_booking_btn').hide();
                 }
             }
 
-            // Add to Booking (bulk)
+            // Restore checkboxes from persisted selections on page load
+            (function restoreSelections() {
+                const ids = getPersistedIds();
+                if (ids.length === 0) return;
+                $('.product-checkbox').each(function() {
+                    if (ids.indexOf($(this).val()) !== -1) {
+                        $(this).prop('checked', true);
+                    }
+                });
+                $('#select_all').prop('checked', $('.product-checkbox:checked').length === $('.product-checkbox').length);
+                updatePersistedUI();
+            })();
+
+            // Select All checkbox
+            $('#select_all').on('change', function() {
+                const checked = $(this).is(':checked');
+                let ids = getPersistedIds();
+                const visibleIds = [];
+                $('.product-checkbox').each(function() {
+                    const vid = $(this).val();
+                    visibleIds.push(vid);
+                    $(this).prop('checked', checked);
+                });
+                if (checked) {
+                    visibleIds.forEach(function(vid) {
+                        if (ids.indexOf(vid) === -1) ids.push(vid);
+                    });
+                } else {
+                    ids = ids.filter(function(id) { return visibleIds.indexOf(id) === -1; });
+                }
+                savePersistedIds(ids);
+                updatePersistedUI();
+            });
+
+            // Individual checkbox change
+            $(document).on('change', '.product-checkbox', function() {
+                let ids = getPersistedIds();
+                const id = $(this).val();
+                if ($(this).is(':checked')) {
+                    if (ids.indexOf(id) === -1) ids.push(id);
+                } else {
+                    ids = ids.filter(function(i) { return i !== id; });
+                }
+                savePersistedIds(ids);
+                updatePersistedUI();
+                $('#select_all').prop('checked', $('.product-checkbox:checked').length === $('.product-checkbox').length);
+            });
+
+            // Add to Booking (bulk) — uses persisted IDs across all pages
             $('#add_to_booking_btn').on('click', function() {
-                if (selectedProducts.length === 0) {
+                const ids = getPersistedIds();
+                if (ids.length === 0) {
                     toastr.warning('Please select at least one product');
                     return;
                 }
-                // Load existing basket from localStorage
-                let booking_basket = JSON.parse(localStorage.getItem('booking_basket')) || [];
-                // Add all selected to localStorage basket
-                selectedProducts.forEach(id => {
-                    if (booking_basket.indexOf(id.toString()) === -1) {
-                        booking_basket.push(id.toString());
-                    }
-                });
-                localStorage.setItem('booking_basket', JSON.stringify(booking_basket));
-                updateBasketUI();
-                window.location.href = "{{ route('admin.bookings.create') }}?ids=" + selectedProducts.join(',');
+                localStorage.removeItem(STORAGE_KEY);
+                window.location.href = "{{ route('admin.bookings.create') }}?ids=" + ids.join(',');
             });
         });
     </script>
