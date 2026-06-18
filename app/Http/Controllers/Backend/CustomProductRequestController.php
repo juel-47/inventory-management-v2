@@ -75,7 +75,7 @@ class CustomProductRequestController extends Controller implements HasMiddleware
         DB::beginTransaction();
         try {
             $customRequest = new CustomProductRequest();
-            $customRequest->request_no = 'CPR-' . strtoupper(Str::random(10));
+            $customRequest->request_no = \App\Services\OrderNumberService::generate('CPR', \App\Models\CustomProductRequest::class);
             
             // Assign user_id: use input if admin provided it, otherwise use Auth::id()
             if ($user->can('Manage Custom Product Requests') && $request->has('user_id')) {

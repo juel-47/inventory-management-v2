@@ -111,9 +111,8 @@ class ProductRequestController extends Controller implements HasMiddleware
         try {
             $productRequest = new ProductRequest();
 
-            $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ-' : 'REQ-';
-            // $productRequest->request_no = $prefix . strtoupper(Str::random(10));
-            $productRequest->request_no =$this->generateRequestNo($targetUser);
+            $prefix = ($targetUser->hasRole('Outlet User') || $targetUser->hasRole('Outlet')) ? 'DS-REQ' : 'REQ';
+            $productRequest->request_no = \App\Services\OrderNumberService::generate($prefix, \App\Models\ProductRequest::class);
             $productRequest->user_id = (int) $targetUser->id;
             $productRequest->status = 'approved';
             $productRequest->admin_note = 'Created by admin. Stock will be deducted only after Issue is created.';
@@ -242,7 +241,7 @@ class ProductRequestController extends Controller implements HasMiddleware
 
             toastr()->success('Product Request and Order created successfully! Stock can be managed via Issue creation.');
             session()->flash('clear_request_basket', true);
-            return redirect()->route('admin.product-requests.index');
+            return redirect()->route('admin.orders.index');
 
 
         } catch (\Exception $e) {

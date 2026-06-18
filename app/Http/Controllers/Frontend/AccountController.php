@@ -813,12 +813,8 @@ class AccountController extends Controller
     private function generateProductRequestNo($user): string
     {
         $isOutletRole = $user && ($user->hasRole('Outlet User') || $user->hasRole('User'));
-        $prefix = $isOutletRole ? 'DS-REQ-' : 'REQ-';
+        $prefix = $isOutletRole ? 'DS-REQ' : 'REQ';
 
-        do {
-            $requestNo = $prefix . strtoupper(Str::random(10));
-        } while (SavedPurchaseForm::query()->where('request_no', $requestNo)->exists());
-
-        return $requestNo;
+        return \App\Services\OrderNumberService::generate($prefix, \App\Models\ProductRequest::class);
     }
 }

@@ -1014,28 +1014,11 @@ class CartController extends Controller
 
 
     private function generateUniqueOrderNoForUser($user): string
-{
-    $isOutletUser = $user && ($user->hasRole('Outlet User') || $user->hasRole('Outlet'));
-    $prefix = $isOutletUser ? 'DS' : 'ORD';
+    {
+        $isOutletUser = $user && ($user->hasRole('Outlet User') || $user->hasRole('Outlet'));
+        $prefix = $isOutletUser ? 'DS' : 'ORD';
 
-    $year  = now()->format('Y');
-    $month = now()->format('m');
-
-    return DB::transaction(function () use ($prefix, $year, $month) {
-
-        $monthPrefix = $prefix . '-' . $year . $month . '-';
-
-        $count = Order::whereYear('created_at', $year)
-                      ->whereMonth('created_at', $month)
-                      ->where('order_no', 'LIKE', $monthPrefix . '%')
-                      ->lockForUpdate()
-                      ->distinct('order_no')
-                      ->count('order_no');
-
-        $next = $count + 1;
-
-        return $monthPrefix . str_pad($next, 5, '0', STR_PAD_LEFT);
-    });
-}
+        return \App\Services\OrderNumberService::generate($prefix, \App\Models\Order::class);
+    }
 
     }

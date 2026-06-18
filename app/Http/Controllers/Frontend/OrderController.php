@@ -369,10 +369,6 @@ class OrderController extends Controller
         $isOutletUser = $user && ($user->hasRole('Outlet User') || $user->hasRole('Outlet'));
         $prefix = $isOutletUser ? 'DS' : 'ORD';
 
-        do {
-            $orderNo = $prefix . '-' . strtoupper(Str::random(10));
-        } while (Order::query()->where('order_no', $orderNo)->exists());
-
-        return $orderNo;
+        return \App\Services\OrderNumberService::generate($prefix, \App\Models\Order::class);
     }
 }
