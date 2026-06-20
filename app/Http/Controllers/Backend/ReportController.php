@@ -9,10 +9,16 @@ use App\Models\AuditLog;
 use App\Models\GeneralSetting;
 use App\Models\Product;
 use App\Models\ProductRequest;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
+use App\Models\Issue;
+use App\Models\IssueItem;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\User;
 use App\Models\Vendor;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -424,6 +430,322 @@ class ReportController extends Controller implements HasMiddleware
             'profitMargin',
             'totalPurchases'
         ));
+    }
+
+    /**
+     * Order & Issue Report — two modes:
+     *   Global  (user_id empty) → aggregate across all users
+     *   360°    (user_id set)   → deep-dive for one user
+     */
+    public function orderReport(Request $request)
+    {
+        $users = User::role(['Outlet User', 'User'])->get(['id', 'name', 'outlet_name']);
+
+        $query = Order::with(['user', 'items.product'])->where('status', 'completed');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('placed_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('placed_at', '<=', $request->date_to);
+        }
+        if ($request->filled('month')) {
+            $query->whereMonth('placed_at', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('placed_at', $request->year);
+        }
+
+        $orderIds = (clone $query)->pluck('id');
+
+        // ─── Common aggregates ────────────────────────────────────
+        $summary = (clone $query)->selectRaw('
+            COUNT(*) as total_orders,
+            COALESCE(SUM(total_amount),0) as total_value,
+            COALESCE(AVG(total_amount),0) as avg_order_value
+        ')->first();
+
+        // Issue stats (count + qty)
+        $issueStats = Issue::whereIn('order_id', $orderIds)
+            ->selectRaw('
+                COUNT(*) as total_issues,
+                COALESCE(SUM(total_qty),0) as total_issued_qty
+            ')->first();
+
+        // ─── 360° per-user mode ───────────────────────────────────
+        if ($request->filled('user_id')) {
+            $user = User::findOrFail($request->user_id);
+
+            // Payment aggregate
+            $paymentStats = OrderPayment::whereIn('order_id', $orderIds)
+                ->selectRaw('COALESCE(SUM(amount),0) as total_paid')
+                ->first();
+            $totalDue = $summary->total_value - $paymentStats->total_paid;
+
+            // Issue value (monetary) — join issue_items → issues → order_items
+            $issueValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+                ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                ->join('order_items', function ($j) {
+                    $j->on('issues.order_id', '=', 'order_items.order_id')
+                      ->on('issue_items.product_id', '=', 'order_items.product_id');
+                })
+                ->sum(DB::raw('issue_items.quantity * order_items.unit_price'));
+
+            $pendingValue = max(0, $summary->total_value - $issueValue);
+
+            // Full order list
+            $orders = $query->with('items')->orderByDesc('placed_at')->get();
+
+            // Issue list with per-item computed value
+            $issues = Issue::with(['items', 'order'])
+                ->whereIn('order_id', $orderIds)
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($issue) {
+                    $value = 0;
+                    foreach ($issue->items as $item) {
+                        $oi = OrderItem::where('order_id', $issue->order_id)
+                            ->where('product_id', $item->product_id)
+                            ->first();
+                        $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                    }
+                    $issue->computed_value = $value;
+                    return $issue;
+                });
+
+            // Payment list
+            $payments = OrderPayment::with('order')
+                ->whereIn('order_id', $orderIds)
+                ->orderByDesc('created_at')
+                ->get();
+
+            // Product comparison (ordered qty/value vs issued qty)
+            $productComparison = OrderItem::whereIn('order_id', $orderIds)
+                ->selectRaw('
+                    product_id,
+                    product_name,
+                    SUM(quantity) as ordered_qty,
+                    COALESCE(SUM(line_total),0) as ordered_value
+                ')
+                ->groupBy('product_id', 'product_name')
+                ->orderByDesc('ordered_value')
+                ->get()
+                ->map(function ($item) use ($orderIds) {
+                    $issuedQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+                        ->where('product_id', $item->product_id)
+                        ->sum('quantity');
+                    $item->issued_qty = (int) $issuedQty;
+                    $item->pending_qty = max(0, $item->ordered_qty - $item->issued_qty);
+                    return $item;
+                });
+
+            // Monthly trend (with issue value)
+            $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', 'completed')
+                ->selectRaw("
+                    DATE_FORMAT(orders.placed_at, '%Y-%m') as month,
+                    COUNT(DISTINCT orders.id) as orders_count,
+                    COALESCE(SUM(order_items.line_total),0) as total_amount,
+                    COUNT(DISTINCT order_items.product_id) as unique_products
+                ")
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(function ($trend) use ($orderIds) {
+                    $m = $trend->month;
+                    $issueQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                        ->whereYear('created_at', substr($m, 0, 4))
+                        ->whereMonth('created_at', substr($m, 5, 2))
+                    )->sum('quantity');
+                    $trend->issue_qty = (int) $issueQty;
+                    return $trend;
+                });
+
+            return view('backend.reports.orders', compact(
+                'user', 'users', 'summary', 'issueStats', 'orderIds',
+                'paymentStats', 'totalDue', 'issueValue', 'pendingValue',
+                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend'
+            ));
+        }
+
+        // ─── Global mode ──────────────────────────────────────────
+        $productFrequency = OrderItem::whereIn('order_id', $orderIds)
+            ->selectRaw('
+                product_id,
+                product_name,
+                COUNT(*) as times_ordered,
+                SUM(quantity) as total_qty,
+                COALESCE(SUM(line_total),0) as total_value
+            ')
+            ->groupBy('product_id', 'product_name')
+            ->orderByDesc('times_ordered')
+            ->paginate(30)->withQueryString();
+
+        $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.status', 'completed')
+            ->selectRaw("
+                DATE_FORMAT(orders.placed_at, '%Y-%m') as month,
+                COUNT(DISTINCT orders.id) as orders_count,
+                COALESCE(SUM(order_items.line_total),0) as total_amount,
+                COUNT(DISTINCT order_items.product_id) as unique_products
+            ")
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $userSummary = Order::whereIn('id', $orderIds)
+            ->selectRaw('user_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount),0) as total_value')
+            ->groupBy('user_id')
+            ->orderByDesc('total_value')
+            ->get()
+            ->keyBy('user_id');
+
+        return view('backend.reports.orders', compact(
+            'summary', 'issueStats', 'productFrequency', 'monthlyTrend', 'userSummary', 'users', 'orderIds'
+        ));
+    }
+
+    /**
+     * Order & Issue Report — PDF Export
+     */
+    public function orderReportPdf(Request $request)
+    {
+        $query = Order::with(['user', 'items.product'])->where('status', 'completed');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('placed_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('placed_at', '<=', $request->date_to);
+        }
+        if ($request->filled('month')) {
+            $query->whereMonth('placed_at', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('placed_at', $request->year);
+        }
+
+        $orderIds = (clone $query)->pluck('id');
+
+        $summary = (clone $query)->selectRaw('
+            COUNT(*) as total_orders,
+            COALESCE(SUM(total_amount),0) as total_value,
+            COALESCE(AVG(total_amount),0) as avg_order_value
+        ')->first();
+
+        $issueStats = Issue::whereIn('order_id', $orderIds)
+            ->selectRaw('COUNT(*) as total_issues, COALESCE(SUM(total_qty),0) as total_issued_qty')
+            ->first();
+
+        $settings = GeneralSetting::first();
+
+        // ─── 360° per-user PDF ───────────────────────────────────
+        if ($request->filled('user_id')) {
+            $user = User::find($request->user_id);
+
+            $paymentStats = OrderPayment::whereIn('order_id', $orderIds)
+                ->selectRaw('COALESCE(SUM(amount),0) as total_paid')->first();
+            $totalDue = $summary->total_value - $paymentStats->total_paid;
+
+            $issueValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+                ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                ->join('order_items', function ($j) {
+                    $j->on('issues.order_id', '=', 'order_items.order_id')
+                      ->on('issue_items.product_id', '=', 'order_items.product_id');
+                })
+                ->sum(DB::raw('issue_items.quantity * order_items.unit_price'));
+            $pendingValue = max(0, $summary->total_value - $issueValue);
+
+            // Orders
+            $orders = $query->with('items')->orderByDesc('placed_at')->get();
+
+            // Issues with computed value
+            $issues = Issue::with(['items', 'order'])
+                ->whereIn('order_id', $orderIds)
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($issue) {
+                    $value = 0;
+                    foreach ($issue->items as $item) {
+                        $oi = OrderItem::where('order_id', $issue->order_id)
+                            ->where('product_id', $item->product_id)->first();
+                        $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                    }
+                    $issue->computed_value = $value;
+                    return $issue;
+                });
+
+            // Payments
+            $payments = OrderPayment::with('order')
+                ->whereIn('order_id', $orderIds)
+                ->orderByDesc('created_at')
+                ->get();
+
+            // Product comparison
+            $productComparison = OrderItem::whereIn('order_id', $orderIds)
+                ->selectRaw('product_id, product_name, SUM(quantity) as ordered_qty, COALESCE(SUM(line_total),0) as ordered_value')
+                ->groupBy('product_id', 'product_name')
+                ->orderByDesc('ordered_value')
+                ->get()
+                ->map(function ($item) use ($orderIds) {
+                    $issuedQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+                        ->where('product_id', $item->product_id)->sum('quantity');
+                    $item->issued_qty = (int) $issuedQty;
+                    $item->pending_qty = max(0, $item->ordered_qty - $item->issued_qty);
+                    return $item;
+                });
+
+            // Monthly trend
+            $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', 'completed')
+                ->selectRaw("DATE_FORMAT(orders.placed_at, '%Y-%m') as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(order_items.line_total),0) as total_amount, COUNT(DISTINCT order_items.product_id) as unique_products")
+                ->groupBy('month')->orderBy('month')
+                ->get()
+                ->map(function ($trend) use ($orderIds) {
+                    $m = $trend->month;
+                    $issueQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                        ->whereYear('created_at', substr($m, 0, 4))
+                        ->whereMonth('created_at', substr($m, 5, 2))
+                    )->sum('quantity');
+                    $trend->issue_qty = (int) $issueQty;
+                    return $trend;
+                });
+
+            $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
+                'user', 'summary', 'issueStats', 'paymentStats', 'totalDue', 'issueValue', 'pendingValue',
+                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend', 'settings', 'request'
+            ))->setPaper('a4', 'landscape');
+        } else {
+            // ─── Global PDF ───────────────────────────────────────
+            $productFrequency = OrderItem::whereIn('order_id', $orderIds)
+                ->selectRaw('product_id, product_name, COUNT(*) as times_ordered, SUM(quantity) as total_qty, COALESCE(SUM(line_total),0) as total_value')
+                ->groupBy('product_id', 'product_name')
+                ->orderByDesc('times_ordered')
+                ->get();
+
+            $userSummary = Order::whereIn('id', $orderIds)
+                ->selectRaw('user_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount),0) as total_value')
+                ->groupBy('user_id')
+                ->orderByDesc('total_value')
+                ->get()
+                ->keyBy('user_id');
+
+            $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
+                'summary', 'issueStats', 'productFrequency', 'userSummary', 'settings', 'request', 'orderIds'
+            ))->setPaper('a4', 'landscape');
+        }
+
+        $fileName = 'order-issue-report-' . now()->format('Ymd_His') . '.pdf';
+        return $pdf->download($fileName);
     }
 
     /**

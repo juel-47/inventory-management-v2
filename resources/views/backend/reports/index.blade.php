@@ -136,6 +136,11 @@
                                         <i class="fas fa-user-shield"></i> Audit Report
                                     </a>
                                 </div>
+                                <div class="col-md-4 mb-3">
+                                    <a href="{{ route('admin.reports.orders') }}" class="btn btn-secondary btn-lg btn-block">
+                                        <i class="fas fa-shopping-cart"></i> Order & Issue Report
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

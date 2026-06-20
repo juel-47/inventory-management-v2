@@ -268,6 +268,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('reports/low-stock', 'lowStockReport')->name('reports.low-stock');
         Route::get('reports/profit-loss', 'profitLossReport')->name('reports.profit-loss');
         Route::get('reports/audit', 'auditReport')->name('reports.audit');
+        Route::get('reports/orders', 'orderReport')->name('reports.orders');
+        Route::get('reports/orders/pdf', 'orderReportPdf')->name('reports.orders.pdf');
         Route::get('low-stock-check', 'lowStockCheck')->name('low-stock-check'); // AJAX endpoint
         Route::post('low-stock-mark-read', 'markNotificationsRead')->name('low-stock-mark-read');
         Route::get('notifications/all', 'allNotifications')->name('notifications.all');
