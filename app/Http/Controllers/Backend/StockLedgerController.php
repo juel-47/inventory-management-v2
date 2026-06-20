@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockLedger;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class StockLedgerController extends Controller
@@ -12,7 +13,7 @@ class StockLedgerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = StockLedger::with(['product', 'variant'])->select('stock_ledgers.*');
+            $data = StockLedger::with(['product', 'variant', 'outlet'])->select('stock_ledgers.*');
 
             if ($request->filled('product_id')) {
                 $data->where('product_id', $request->integer('product_id'));
@@ -44,6 +45,10 @@ class StockLedgerController extends Controller
 
             if ($request->filled('date_to')) {
                 $data->whereDate('created_at', '<=', $request->date('date_to')->toDateString());
+            }
+
+            if ($request->filled('user_id')) {
+                $data->where('outlet_id', $request->integer('user_id'));
             }
 
             return \Yajra\DataTables\Facades\DataTables::of($data)
@@ -78,13 +83,27 @@ class StockLedgerController extends Controller
                     $query->where('reference_id', 'like', "%{$keyword}%")
                           ->orWhere('reference_type', 'like', "%{$keyword}%");
                 })
+                ->addColumn('outlet', function($row){
+                    if ($row->outlet) {
+                        $name = $row->outlet->name;
+                        $outletName = $row->outlet->outlet_name;
+                        $label = $name . ($outletName ? " ({$outletName})" : '');
+                        return '<span class="badge badge-secondary">' . e($label) . '</span>';
+                    }
+                    return '<span class="badge badge-dark">Main Warehouse</span>';
+                })
+                ->filterColumn('outlet', function($query, $keyword) {
+                    $query->whereHas('outlet', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('type', function($row){
                     if($row->in_qty > 0)
                         return '<div class="badge badge-success">IN</div>';
                     else
                         return '<div class="badge badge-danger">OUT</div>';
                 })
-                ->rawColumns(['image', 'type'])
+                ->rawColumns(['image', 'type', 'outlet'])
                 ->make(true);
         }
 
@@ -115,6 +134,8 @@ class StockLedgerController extends Controller
             ->orderBy('reference_type')
             ->pluck('reference_type');
 
-        return view('backend.stock_ledger.index', compact('products', 'ledgerProducts', 'referenceTypes'));
+        $users = User::role(['Outlet User', 'User'])->get(['id', 'name', 'outlet_name']);
+
+        return view('backend.stock_ledger.index', compact('products', 'ledgerProducts', 'referenceTypes', 'users'));
     }
 }

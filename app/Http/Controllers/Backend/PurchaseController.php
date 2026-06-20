@@ -632,6 +632,7 @@ class PurchaseController extends Controller
                 
                 $stock = \App\Models\InventoryStock::where('product_id', $detail->product_id)
                             ->where('variant_id', $variant_id)
+                            ->where('outlet_id', 1)
                             ->first();
 
                 if ($stock) {

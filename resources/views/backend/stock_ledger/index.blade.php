@@ -71,6 +71,19 @@
                                         <input type="date" id="filter-date-to" class="form-control">
                                     </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="filter-user">User / Outlet</label>
+                                        <select id="filter-user" class="form-control select2" data-placeholder="All Users">
+                                            <option value="">All Users</option>
+                                            @foreach ($users as $user)
+                                                <option value="{{ $user->id }}">
+                                                    {{ $user->name }} {{ $user->outlet_name ? '(' . $user->outlet_name . ')' : '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label>&nbsp;</label>
@@ -97,6 +110,7 @@
                                             <th>Product</th>
                                             <th>Variant</th>
                                             <th>Reference</th>
+                                            <th>Outlet</th>
                                             <th>Type</th>
                                             <th>In Qty</th>
                                             <th>Out Qty</th>
@@ -181,6 +195,7 @@
                     d.movement_type = $('#filter-movement-type').val();
                     d.date_from = $('#filter-date-from').val();
                     d.date_to = $('#filter-date-to').val();
+                    d.user_id = $('#filter-user').val();
                 }
             },
             columns: [
@@ -189,6 +204,7 @@
                 {data: 'product_name', name: 'product_name'},
                 {data: 'variant_name', name: 'variant_name'},
                 {data: 'reference', name: 'reference'},
+                {data: 'outlet', name: 'outlet', orderable: false, searchable: false},
                 {data: 'type', name: 'type', orderable: false, searchable: false},
                 {data: 'in_qty', name: 'in_qty'},
                 {data: 'out_qty', name: 'out_qty'},
@@ -202,7 +218,7 @@
             ledgerTable.ajax.reload();
         });
 
-        $('#filter-reference-type, #filter-movement-type, #filter-date-from, #filter-date-to, #filter-variant').on('change', function () {
+        $('#filter-reference-type, #filter-movement-type, #filter-date-from, #filter-date-to, #filter-variant, #filter-user').on('change', function () {
             ledgerTable.ajax.reload();
         });
 
@@ -212,6 +228,7 @@
             $('#filter-movement-type').val('');
             $('#filter-date-from').val('');
             $('#filter-date-to').val('');
+            $('#filter-user').val('').trigger('change.select2');
             renderVariantOptions('');
             ledgerTable.ajax.reload();
         });

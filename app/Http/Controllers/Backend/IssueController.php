@@ -204,7 +204,8 @@ class IssueController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($request) {
+        try {
+            DB::transaction(function () use ($request) {
             $sourceNote = null;
             if ($request->filled('product_request_id')) {
                 $requestRef = ProductRequest::find($request->product_request_id);
@@ -262,28 +263,33 @@ class IssueController extends Controller
                     'quantity' => $item['quantity'],
                 ]);
 
-                // 2. Update Inventory Stock
-                $stock = InventoryStock::firstOrCreate(
-                    [
-                        'product_id' => $item['product_id'],
-                        'variant_id' => $item['variant_id'] ?: null,
-                        'outlet_id' => 1
-                    ]
-                );
-                $stock->decrement('quantity', $item['quantity']);
+                // 2. Check main warehouse (outlet 1) stock
+                $mainStock = InventoryStock::where([
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'] ?: null,
+                    'outlet_id' => 1
+                ])->first();
 
-                // 3. (REMOVED) Update Product/Variant Master Qty - Relying on InventoryStock instead
-                
-                // 4. Create Stock Ledger Entry
+                $availableQty = $mainStock ? $mainStock->quantity : 0;
+
+                if ($availableQty < $item['quantity']) {
+                    $productName = \App\Models\Product::find($item['product_id'])->name ?? 'Product #'.$item['product_id'];
+                    throw new \Exception("Insufficient stock for '{$productName}'. Available: {$availableQty}, Required: {$item['quantity']}");
+                }
+
+                // 3. Deduct from main warehouse (outlet 1)
+                $mainStock->decrement('quantity', $item['quantity']);
+
+                // 4. Create Stock Ledger Entry (outlet_id = user for filter, balance_qty = main warehouse stock)
                 StockLedger::create([
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'] ?? null,
-                    'outlet_id' => 1,
+                    'outlet_id' => $issue->outlet_id,
                     'reference_type' => 'issue',
                     'reference_id' => $issue->id,
                     'in_qty' => 0,
                     'out_qty' => $item['quantity'],
-                    'balance_qty' => $stock->quantity, // Post-decrement balance
+                    'balance_qty' => $mainStock->quantity,
                     'date' => now()
                 ]);
             }
@@ -302,6 +308,10 @@ class IssueController extends Controller
                Log::error('Failed to send admin issue notification: ' . $e->getMessage());
             }
         });
+        } catch (\Exception $e) {
+            Log::error('Issue creation failed: ' . $e->getMessage());
+            return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        }
 
         return redirect()->route('admin.issues.index')->with('success', 'Stock Issued Successfully!');
     }
