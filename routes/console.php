@@ -35,3 +35,6 @@ Schedule::call(function () {
         }
     }
 })->dailyAt('04:00')->name('clean-old-invoices')->withoutOverlapping();
+
+// Clean up old report PDFs every minute (auto-refresh)
+Schedule::command('reports:clean')->everyMinute()->name('clean-old-reports')->withoutOverlapping();

@@ -270,6 +270,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('reports/audit', 'auditReport')->name('reports.audit');
         Route::get('reports/orders', 'orderReport')->name('reports.orders');
         Route::get('reports/orders/pdf', 'orderReportPdf')->name('reports.orders.pdf');
+        Route::get('reports/orders/pdf/async', 'orderReportPdfAsync')->name('reports.orders.pdf.async');
+        Route::get('reports/orders/pdf/download/{file}', 'downloadReportPdf')->name('reports.orders.pdf.download');
         Route::get('low-stock-check', 'lowStockCheck')->name('low-stock-check'); // AJAX endpoint
         Route::post('low-stock-mark-read', 'markNotificationsRead')->name('low-stock-mark-read');
         Route::get('notifications/all', 'allNotifications')->name('notifications.all');

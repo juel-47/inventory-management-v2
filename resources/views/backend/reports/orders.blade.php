@@ -118,7 +118,7 @@
                     <div class="card-header">
                         <h4><i class="fas fa-filter"></i> Filter</h4>
                         <div class="card-header-action">
-                            <form method="GET" action="{{ route('admin.reports.orders.pdf') }}" style="display:inline">
+                            <form method="GET" action="{{ route('admin.reports.orders.pdf.async') }}" style="display:inline">
                                 @if(request('user_id'))
                                     <input type="hidden" name="user_id" value="{{ request('user_id') }}">
                                 @endif
@@ -452,6 +452,26 @@
                 <div class="card">
                     <div class="card-header">
                         <h4><i class="fas fa-filter"></i> Filter</h4>
+                        <div class="card-header-action">
+                            <form method="GET" action="{{ route('admin.reports.orders.pdf.async') }}" style="display:inline">
+                                @if(request('user_id'))
+                                    <input type="hidden" name="user_id" value="{{ request('user_id') }}">
+                                @endif
+                                @if(request('month'))
+                                    <input type="hidden" name="month" value="{{ request('month') }}">
+                                @endif
+                                @if(request('year'))
+                                    <input type="hidden" name="year" value="{{ request('year') }}">
+                                @endif
+                                @if(request('date_from'))
+                                    <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                                @endif
+                                @if(request('date_to'))
+                                    <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                                @endif
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <form method="GET" id="filter-form-global">
@@ -619,9 +639,13 @@
                                         <tbody>
                                             @forelse($userSummary as $userId => $usr)
                                                 @php
-                                                    $usrIssues = \App\Models\Issue::whereIn('order_id', $orderIds)
+                                                    $usrIssues = \App\Models\Issue::where(function ($q) use ($orderIds) {
+                                                            $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
+                                                        })
                                                         ->where('outlet_id', $userId)->count();
-                                                    $usrIssueQty = \App\Models\Issue::whereIn('order_id', $orderIds)
+                                                    $usrIssueQty = \App\Models\Issue::where(function ($q) use ($orderIds) {
+                                                            $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
+                                                        })
                                                         ->where('outlet_id', $userId)->sum('total_qty');
                                                     $userName = optional(\App\Models\User::find($userId))->name ?? 'User #'.$userId;
                                                 @endphp

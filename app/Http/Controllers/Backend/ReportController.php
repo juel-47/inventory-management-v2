@@ -19,6 +19,7 @@ use App\Models\PurchaseDetail;
 use App\Models\User;
 use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -468,8 +469,18 @@ class ReportController extends Controller implements HasMiddleware
             COALESCE(AVG(total_amount),0) as avg_order_value
         ')->first();
 
-        // Issue stats (count + qty)
-        $issueStats = Issue::whereIn('order_id', $orderIds)
+        // Issue stats (count + qty) — linked + standalone
+        $issueStats = Issue::where(function ($q) use ($orderIds, $request) {
+                $q->whereIn('order_id', $orderIds);
+                $q->orWhere(function ($sq) use ($request) {
+                    $sq->whereNull('order_id');
+                    if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
+                    if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
+                    if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                });
+            })
             ->selectRaw('
                 COUNT(*) as total_issues,
                 COALESCE(SUM(total_qty),0) as total_issued_qty
@@ -499,18 +510,31 @@ class ReportController extends Controller implements HasMiddleware
             // Full order list
             $orders = $query->with('items')->orderByDesc('placed_at')->get();
 
-            // Issue list with per-item computed value
+            // Issue list with per-item computed value (linked + standalone)
             $issues = Issue::with(['items', 'order'])
-                ->whereIn('order_id', $orderIds)
+                ->where(function ($q) use ($orderIds, $request) {
+                    $q->whereIn('order_id', $orderIds);
+                    $q->orWhere(function ($sq) use ($request) {
+                        $sq->whereNull('order_id');
+                        if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
+                        if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
+                        if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
+                        if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
+                        if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                    });
+                })
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(function ($issue) {
                     $value = 0;
-                    foreach ($issue->items as $item) {
-                        $oi = OrderItem::where('order_id', $issue->order_id)
-                            ->where('product_id', $item->product_id)
-                            ->first();
-                        $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                    $oi = null;
+                    if ($issue->order_id) {
+                        foreach ($issue->items as $item) {
+                            $oi = OrderItem::where('order_id', $issue->order_id)
+                                ->where('product_id', $item->product_id)
+                                ->first();
+                            $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                        }
                     }
                     $issue->computed_value = $value;
                     return $issue;
@@ -641,7 +665,17 @@ class ReportController extends Controller implements HasMiddleware
             COALESCE(AVG(total_amount),0) as avg_order_value
         ')->first();
 
-        $issueStats = Issue::whereIn('order_id', $orderIds)
+        $issueStats = Issue::where(function ($q) use ($orderIds, $request) {
+                $q->whereIn('order_id', $orderIds);
+                $q->orWhere(function ($sq) use ($request) {
+                    $sq->whereNull('order_id');
+                    if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
+                    if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
+                    if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                });
+            })
             ->selectRaw('COUNT(*) as total_issues, COALESCE(SUM(total_qty),0) as total_issued_qty')
             ->first();
 
@@ -667,17 +701,30 @@ class ReportController extends Controller implements HasMiddleware
             // Orders
             $orders = $query->with('items')->orderByDesc('placed_at')->get();
 
-            // Issues with computed value
+            // Issues with computed value (linked + standalone)
             $issues = Issue::with(['items', 'order'])
-                ->whereIn('order_id', $orderIds)
+                ->where(function ($q) use ($orderIds, $request) {
+                    $q->whereIn('order_id', $orderIds);
+                    $q->orWhere(function ($sq) use ($request) {
+                        $sq->whereNull('order_id');
+                        if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
+                        if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
+                        if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
+                        if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
+                        if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                    });
+                })
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(function ($issue) {
                     $value = 0;
-                    foreach ($issue->items as $item) {
-                        $oi = OrderItem::where('order_id', $issue->order_id)
-                            ->where('product_id', $item->product_id)->first();
-                        $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                    $oi = null;
+                    if ($issue->order_id) {
+                        foreach ($issue->items as $item) {
+                            $oi = OrderItem::where('order_id', $issue->order_id)
+                                ->where('product_id', $item->product_id)->first();
+                            $value += $oi ? $item->quantity * $oi->unit_price : 0;
+                        }
                     }
                     $issue->computed_value = $value;
                     return $issue;
@@ -746,6 +793,34 @@ class ReportController extends Controller implements HasMiddleware
 
         $fileName = 'order-issue-report-' . now()->format('Ymd_His') . '.pdf';
         return $pdf->download($fileName);
+    }
+
+    /**
+     * Order & Issue Report — Async PDF Generation (Background Job)
+     */
+    public function orderReportPdfAsync(Request $request)
+    {
+        $filters = $request->only(['user_id', 'month', 'year', 'date_from', 'date_to']);
+
+        dispatch(new \App\Jobs\GenerateReportPdfJob($filters, auth()->id()));
+
+        Toastr::info('Order & Issue Report is generating in the background. Check notifications when ready.');
+
+        return redirect()->back();
+    }
+
+    /**
+     * Order & Issue Report — Download Generated PDF
+     */
+    public function downloadReportPdf($file)
+    {
+        $path = storage_path('app/public/reports/' . $file);
+
+        if (!file_exists($path)) {
+            return redirect()->back()->with('error', 'File not found or has expired.');
+        }
+
+        return response()->download($path)->deleteFileAfterSend(true);
     }
 
     /**

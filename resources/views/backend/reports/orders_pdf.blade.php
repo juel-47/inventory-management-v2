@@ -6,35 +6,35 @@
     <title>{{ $settings->site_name ?? 'Inventory' }} — Order & Issue Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9px; color: #222; line-height: 1.5; padding: 15px; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 12px; color: #222; line-height: 1.6; padding: 20px; }
 
-        .header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #1a73e8; padding-bottom: 8px; }
-        .header h1 { margin: 0; color: #1a73e8; font-size: 16px; }
-        .header .sub { font-size: 12px; font-weight: bold; margin-top: 2px; }
-        .header .info { font-size: 8px; color: #666; margin-top: 3px; }
+        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+        .header h1 { margin: 0; color: #1a73e8; font-size: 20px; }
+        .header .sub { font-size: 14px; font-weight: bold; margin-top: 3px; }
+        .header .info { font-size: 10px; color: #666; margin-top: 4px; }
 
-        .profile-box { background: #f5f7fa; border: 1px solid #dde1e6; padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; }
-        .profile-box .name { font-size: 13px; font-weight: bold; color: #1a73e8; }
-        .profile-box .details { font-size: 9px; color: #555; margin-top: 2px; }
+        .profile-box { background: #f5f7fa; border: 1px solid #dde1e6; padding: 10px 14px; margin-bottom: 12px; border-radius: 4px; }
+        .profile-box .name { font-size: 15px; font-weight: bold; color: #1a73e8; }
+        .profile-box .details { font-size: 11px; color: #555; margin-top: 3px; }
 
-        .summary-row { text-align: center; margin-bottom: 10px; }
-        .summary-box { display: inline-block; width: 11.5%; padding: 5px 2px; margin: 0 1px; border: 1px solid #dde1e6; border-radius: 4px; background: #fafbfc; vertical-align: top; }
-        .summary-box .lbl { font-size: 7px; color: #666; text-transform: uppercase; }
-        .summary-box .val { font-size: 12px; font-weight: bold; color: #1a73e8; margin-top: 1px; }
+        .summary-row { text-align: center; margin-bottom: 12px; }
+        .summary-box { display: inline-block; width: 11.5%; padding: 6px 3px; margin: 0 1px; border: 1px solid #dde1e6; border-radius: 4px; background: #fafbfc; vertical-align: top; }
+        .summary-box .lbl { font-size: 8px; color: #666; text-transform: uppercase; }
+        .summary-box .val { font-size: 13px; font-weight: bold; color: #1a73e8; margin-top: 2px; }
 
-        .section-title { font-size: 11px; font-weight: bold; margin: 10px 0 4px; padding: 4px 0; border-bottom: 1px solid #ccc; color: #333; }
+        .section-title { font-size: 13px; font-weight: bold; margin: 12px 0 5px; padding: 5px 0; border-bottom: 1px solid #ccc; color: #333; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-        table th { background: #1a73e8; color: #fff; border: 1px solid #1a73e8; padding: 4px 5px; text-align: left; font-size: 8px; }
-        table td { border: 1px solid #dde1e6; padding: 3px 5px; vertical-align: middle; font-size: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        table th { background: #1a73e8; color: #fff; border: 1px solid #1a73e8; padding: 5px 6px; text-align: left; font-size: 12px; }
+        table td { border: 1px solid #dde1e6; padding: 4px 6px; vertical-align: middle; font-size: 16px; }
         table tr:nth-child(even) td { background: #f8f9fa; }
         .tc { text-align: center; }
         .tr { text-align: right; }
 
-        .pct-bar { display: inline-block; height: 12px; border-radius: 6px; background: #e9ecef; width: 80px; vertical-align: middle; }
-        .pct-fill { height: 12px; border-radius: 6px; background: #28a745; }
+        .pct-bar { display: inline-block; height: 14px; border-radius: 7px; background: #e9ecef; width: 100px; vertical-align: middle; }
+        .pct-fill { height: 14px; border-radius: 7px; background: #28a745; }
 
-        .footer { margin-top: 15px; text-align: center; font-size: 7px; color: #999; border-top: 1px solid #eee; padding-top: 6px; }
+        .footer { margin-top: 20px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #eee; padding-top: 8px; }
         .page-break { page-break-before: always; }
     </style>
 </head>
@@ -46,10 +46,19 @@
         <div class="sub">Order & Issue Report</div>
         <div class="info">
             Generated: {{ date('d M Y, h:i A') }}
-            @if (request('date_from')) | From: {{ request('date_from') }} @endif
-            @if (request('date_to')) | To: {{ request('date_to') }} @endif
-            @if (request('month')) | Month: {{ date('F', mktime(0,0,0,request('month'),1)) }} @endif
-            @if (request('year')) | Year: {{ request('year') }} @endif
+            @php $req = $request ?? []; @endphp
+            @if (is_array($req) ? !empty($req['date_from']) : $req->filled('date_from'))
+                | From: {{ is_array($req) ? $req['date_from'] : $req->date_from }}
+            @endif
+            @if (is_array($req) ? !empty($req['date_to']) : $req->filled('date_to'))
+                | To: {{ is_array($req) ? $req['date_to'] : $req->date_to }}
+            @endif
+            @if (is_array($req) ? !empty($req['month']) : $req->filled('month'))
+                | Month: {{ date('F', mktime(0,0,0, is_array($req) ? $req['month'] : $req->month, 1)) }}
+            @endif
+            @if (is_array($req) ? !empty($req['year']) : $req->filled('year'))
+                | Year: {{ is_array($req) ? $req['year'] : $req->year }}
+            @endif
         </div>
     </div>
 
@@ -232,9 +241,13 @@
             <tbody>
                 @forelse($userSummary as $userId => $usr)
                     @php
-                        $usrIssues = \App\Models\Issue::whereIn('order_id', $orderIds)
+                        $usrIssues = \App\Models\Issue::where(function ($q) use ($orderIds) {
+                                $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
+                            })
                             ->where('outlet_id', $userId)->count();
-                        $usrIssueQty = \App\Models\Issue::whereIn('order_id', $orderIds)
+                        $usrIssueQty = \App\Models\Issue::where(function ($q) use ($orderIds) {
+                                $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
+                            })
                             ->where('outlet_id', $userId)->sum('total_qty');
                         $userName = optional(\App\Models\User::find($userId))->name ?? 'User #'.$userId;
                     @endphp
