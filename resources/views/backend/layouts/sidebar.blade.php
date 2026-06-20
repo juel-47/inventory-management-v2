@@ -132,11 +132,12 @@
 
             @can('Manage Reports')
             <li class="menu-header">Reports</li>
-            <li class="dropdown {{ setActive(['admin.reports.*']) }}">
+            <li class="dropdown {{ setActive(['admin.reports.*', 'admin.reports.orders']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-chart-line"></i>
                     <span>Reports</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.reports.index']) }}"><a class="nav-link" href="{{ route('admin.reports.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="{{ setActive(['admin.reports.orders']) }}"><a class="nav-link" href="{{ route('admin.reports.orders') }}">Order & Issue Report</a></li>
                     <li class="{{ setActive(['admin.reports.stock']) }}"><a class="nav-link" href="{{ route('admin.reports.stock') }}"><i class="fas fa-boxes"></i> Stock Valuation</a></li>
                     <li class="{{ setActive(['admin.reports.purchase']) }}"><a class="nav-link" href="{{ route('admin.reports.purchase') }}"><i class="fas fa-history"></i> Purchase History</a></li>
                     <li class="{{ setActive(['admin.reports.product-purchase-history']) }}"><a class="nav-link" href="{{ route('admin.reports.product-purchase-history') }}"><i class="fas fa-map-marker-alt"></i> Product Tracking</a></li>

@@ -232,10 +232,11 @@
 
              <!-- Reports -->
              @can('Manage Reports')
-             <li class="nav-item dropdown {{ setActive(['admin.reports.*']) }}">
+             <li class="nav-item dropdown {{ setActive(['admin.reports.*', 'admin.reports.orders']) }}">
                  <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-chart-line"></i><span>Reports</span></a>
                  <ul class="dropdown-menu">
                      <li class="{{ setActive(['admin.reports.index']) }}"><a class="nav-link" href="{{ route('admin.reports.index') }}">All Reports</a></li>
+                     <li class="{{ setActive(['admin.reports.orders']) }}"><a class="nav-link" href="{{ route('admin.reports.orders') }}">Order & Issue Report</a></li>
                      <li class="{{ setActive(['admin.reports.stock']) }}"><a class="nav-link" href="{{ route('admin.reports.stock') }}">Stock Reports</a></li>
                      <li class="{{ setActive(['admin.reports.purchase']) }}"><a class="nav-link" href="{{ route('admin.reports.purchase') }}">Purchase History</a></li>
                      <li class="{{ setActive(['admin.reports.product-purchase-history']) }}"><a class="nav-link" href="{{ route('admin.reports.product-purchase-history') }}">Product Tracking</a></li>

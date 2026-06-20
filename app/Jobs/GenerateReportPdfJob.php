@@ -89,13 +89,20 @@ class GenerateReportPdfJob implements ShouldQueue
                 ->selectRaw('COALESCE(SUM(amount),0) as total_paid')->first();
             $totalDue = $summary->total_value - $paymentStats->total_paid;
 
-            $issueValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+            $linkedValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
                 ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
                 ->join('order_items', function ($j) {
                     $j->on('issues.order_id', '=', 'order_items.order_id')
                       ->on('issue_items.product_id', '=', 'order_items.product_id');
                 })
                 ->sum(DB::raw('issue_items.quantity * order_items.unit_price'));
+
+            $standaloneValue = IssueItem::whereHas('issue', fn($q) => $q->whereNull('order_id')->where('outlet_id', $this->filters['user_id']))
+                ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                ->join('products', 'issue_items.product_id', '=', 'products.id')
+                ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+
+            $issueValue = $linkedValue + $standaloneValue;
             $pendingValue = max(0, $summary->total_value - $issueValue);
 
             $orders = $query->with('items')->orderByDesc('placed_at')->get();
