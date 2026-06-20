@@ -179,7 +179,7 @@
                                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control auto-submit">
                                 </div>
                                 <div class="col-md-1 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i></button>
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i></button>
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -514,7 +514,7 @@
                                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control auto-submit">
                                 </div>
                                 <div class="col-md-1 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i></button>
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i></button>
                                 </div>
                             </div>
                             <div class="row mt-2">
