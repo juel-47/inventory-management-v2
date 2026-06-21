@@ -163,11 +163,12 @@
 
             <!-- Inventory Plane -->
             @can('Manage Inventory')
-             <li class="nav-item dropdown {{ setActive(['admin.issues.*', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
+             <li class="nav-item dropdown {{ setActive(['admin.issues.*', 'admin.issue-returns.*', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
                 <a href="#" data-toggle="dropdown" class="nav-link has-dropdown"><i class="fas fa-warehouse"></i><span>Inventory</span></a>
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.inventory-reports.index']) }}"><a class="nav-link" href="{{ route('admin.inventory-reports.index') }}">Current Stock</a></li>
                     <li class="{{ setActive(['admin.issues.index']) }}"><a class="nav-link" href="{{ route('admin.issues.index') }}">Stock Issues</a></li>
+                    <li class="{{ setActive(['admin.issue-returns.*']) }}"><a class="nav-link" href="{{ route('admin.issue-returns.index') }}">Stock Returns</a></li>
                     <li class="{{ setActive(['admin.stock-ledger.index']) }}"><a class="nav-link" href="{{ route('admin.stock-ledger.index') }}">Stock Ledger</a></li>
                 </ul>
             </li>

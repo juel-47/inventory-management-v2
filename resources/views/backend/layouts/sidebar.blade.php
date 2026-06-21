@@ -54,12 +54,13 @@
 
              @can('Manage Inventory')
             <li class="menu-header">Inventory System</li>
-            <li class="dropdown {{ setActive(['admin.issues.*', 'admin.reports.stock', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
+            <li class="dropdown {{ setActive(['admin.issues.*', 'admin.issue-returns.*', 'admin.reports.stock', 'admin.stock-ledger.index', 'admin.inventory-reports.index']) }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-warehouse"></i>
                     <span>Inventory</span></a>
                 <ul class="dropdown-menu">
                      <li class="{{ setActive(['admin.inventory-reports.index']) }}"><a class="nav-link" href="{{ route('admin.inventory-reports.index') }}"><i class="fas fa-boxes"></i> Current Stock</a></li>
                      <li class="{{ setActive(['admin.issues.index']) }}"><a class="nav-link" href="{{ route('admin.issues.index') }}"><i class="fas fa-dolly"></i> Stock Issues</a></li>
+                     <li class="{{ setActive(['admin.issue-returns.*']) }}"><a class="nav-link" href="{{ route('admin.issue-returns.index') }}"><i class="fas fa-undo"></i> Stock Returns</a></li>
                      <li class="{{ setActive(['admin.stock-ledger.index']) }}"><a class="nav-link" href="{{ route('admin.stock-ledger.index') }}"><i class="fas fa-history"></i> Stock Ledger</a></li>
                 </ul>
             </li>

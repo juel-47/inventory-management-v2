@@ -15,6 +15,7 @@ use App\Http\Controllers\Backend\DiscountController;
 use App\Http\Controllers\Backend\FrontendOrderController;
 use App\Http\Controllers\Backend\InventoryReportController;
 use App\Http\Controllers\Backend\IssueController;
+use App\Http\Controllers\Backend\IssueReturnController;
 use App\Http\Controllers\Backend\PermissionController;
 use App\Http\Controllers\Backend\ProductController;
 use App\Http\Controllers\Backend\ProductRequestController;
@@ -318,6 +319,14 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('issues/{id}/invoice', 'downloadInvoice')->name('issues.download-invoice');
     });
     Route::resource('issues', IssueController::class);
+
+    Route::controller(IssueReturnController::class)->group(function () {
+        Route::get('issue-returns/get-issue-items', 'getIssueItems')->name('issue-returns.get-issue-items');
+        Route::post('issue-returns/{id}/approve', 'approve')->name('issue-returns.approve');
+        Route::post('issue-returns/{id}/cancel', 'cancel')->name('issue-returns.cancel');
+    });
+    Route::resource('issue-returns', IssueReturnController::class);
+
     Route::get('stock-ledger', [StockLedgerController::class, 'index'])->name('stock-ledger.index');
     Route::controller(InventoryReportController::class)->group(function () {
         Route::get('inventory-reports/export-pdf', 'exportPdf')->name('inventory-reports.export-pdf');

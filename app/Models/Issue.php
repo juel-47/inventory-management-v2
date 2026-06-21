@@ -36,4 +36,9 @@ class Issue extends Model
     {
         return $this->hasMany(IssueItem::class);
     }
+
+    public function returns()
+    {
+        return $this->hasMany(IssueReturn::class);
+    }
 }

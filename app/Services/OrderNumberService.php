@@ -24,7 +24,18 @@ class OrderNumberService
             if ($current === null) {
                 $maxSerial = 0;
 
-                if ($sequenceKey) {
+                if ($sequenceKey === 'issue_returns') {
+                    // Separate sequence — check issue_returns table
+                    $rows = DB::table('issue_returns')
+                        ->where('return_no', 'LIKE', $prefix . '-_____-' . $dateSuffix)
+                        ->orderBy('return_no', 'desc')
+                        ->get(['return_no']);
+                    foreach ($rows as $row) {
+                        $parts = explode('-', $row->return_no);
+                        $sn = (int) ($parts[count($parts) - 2] ?? 0);
+                        if ($sn > $maxSerial) $maxSerial = $sn;
+                    }
+                } elseif ($sequenceKey) {
                     // Separate sequence — check bookings table
                     $rows = DB::table('bookings')
                         ->where('booking_no', 'LIKE', $prefix . '-_____-' . $dateSuffix)
