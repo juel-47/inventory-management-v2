@@ -687,6 +687,10 @@ class AccountController extends Controller
             ], 404);
         }
 
+        // Reconcile totals in database dynamically
+        $order->reconcileTotals();
+        $order->refresh();
+
         return response()->json([
             'success' => true,
             'order' => [
@@ -741,6 +745,10 @@ class AccountController extends Controller
      */
     public function storePayment(Request $request, Order $order)
     {
+        // Reconcile totals in database dynamically
+        $order->reconcileTotals();
+        $order->refresh();
+
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string',

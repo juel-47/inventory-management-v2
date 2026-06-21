@@ -293,6 +293,13 @@ class IssueController extends Controller
                     'date' => now()
                 ]);
             }
+
+            if ($request->order_id) {
+                $order = Order::find($request->order_id);
+                if ($order) {
+                    $order->reconcileTotals();
+                }
+            }
             
             // try {
             //     $this->generateInvoice($issue);

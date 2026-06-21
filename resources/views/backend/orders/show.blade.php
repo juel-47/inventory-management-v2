@@ -2,6 +2,14 @@
 @section('title', 'Frontend Order Details')
 
 @section('content')
+    @php
+        // Calculate display values dynamically based on displayed items (original or issued)
+        $displayItems = isset($items) ? $items : $order->items;
+        $displaySubtotal = $displayItems->sum('line_total');
+        $displayGrandTotal = isset($items) ? ($displaySubtotal - $order->discount_amount + $order->tax_amount) : $order->total_amount;
+        $displayPaid = (float) $order->paid_amount;
+        $displayDue = max(0, round($displayGrandTotal - $displayPaid, 2));
+    @endphp
     <section class="section">
         <div class="section-header">
             <div class="section-header-back">
@@ -44,9 +52,6 @@
                                         </tr>
                                     </thead>
                                     @php
-                                        // Use issued items if provided by controller, otherwise fallback to order items
-                                        $displayItems = isset($items) ? $items : $order->items;
-
                                         // Group items by category and sort alphabetically
                                         $groupedItems = $displayItems->groupBy(function($item) {
                                             return $item->category_name ?: 'General';
@@ -123,7 +128,7 @@
                                     <tfoot class="bg-whitesmoke">
                                         <tr>
                                             <td colspan="6" class="text-right font-weight-bold text-muted text-uppercase small">Grand Total</td>
-                                            <td class="text-right font-weight-bold h6 text-primary mb-0">{{ formatConverted($order->total_amount, 2) }}</td>
+                                            <td class="text-right font-weight-bold h6 text-primary mb-0">{{ formatConverted($displayGrandTotal, 2) }}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -294,10 +299,10 @@
                             <p class="mb-3"><strong>Source:</strong> {{ $order->shipping_method ?: 'frontend_checkout' }}</p>
 
                             <hr>
-                            <p class="mb-1 d-flex justify-content-between"><span>Subtotal</span><strong>{{ number_format($order->subtotal_amount ?: $order->total_amount, 2) }}</strong></p>
+                            <p class="mb-1 d-flex justify-content-between"><span>Subtotal</span><strong>{{ number_format($displaySubtotal, 2) }}</strong></p>
                             <p class="mb-1 d-flex justify-content-between"><span>Discount</span><strong>-{{ number_format($order->discount_amount, 2) }}</strong></p>
                             <p class="mb-1 d-flex justify-content-between"><span>VAT</span><strong>{{ number_format($order->tax_amount, 2) }}</strong></p>
-                            <p class="mb-0 d-flex justify-content-between"><span class="font-weight-bold">Total</span><strong class="text-primary">{{ number_format($order->total_amount, 2) }}</strong></p>
+                            <p class="mb-0 d-flex justify-content-between"><span class="font-weight-bold">Total</span><strong class="text-primary">{{ number_format($displayGrandTotal, 2) }}</strong></p>
                         </div>
                     </div>
 
@@ -306,7 +311,7 @@
                     <div class="card card-success mb-3">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4><i class="fas fa-money-bill-wave mr-2"></i>Payment Summary</h4>
-                            @if($order->due_amount > 0)
+                            @if($displayDue > 0)
                                 <a href="{{ route('admin.accounts.record-payment', ['order_no' => $order->order_no]) }}" class="btn btn-sm btn-outline-white">
                                     <i class="fas fa-plus mr-1"></i> Record via Account Module
                                 </a>
@@ -316,19 +321,19 @@
                             <div class="row text-center">
                                 <div class="col-6 border-right">
                                     <div class="text-muted small text-uppercase font-weight-bold">Paid</div>
-                                    <div class="h5 font-weight-bold text-success mb-0">{{ number_format($order->paid_amount, 2) }}</div>
+                                    <div class="h5 font-weight-bold text-success mb-0">{{ number_format($displayPaid, 2) }}</div>
                                 </div>
                                 <div class="col-6">
                                     <div class="text-muted small text-uppercase font-weight-bold">Due</div>
-                                    <div class="h5 font-weight-bold text-danger mb-0">{{ number_format($order->due_amount, 2) }}</div>
+                                    <div class="h5 font-weight-bold text-danger mb-0">{{ number_format($displayDue, 2) }}</div>
                                 </div>
                             </div>
 
-                            @if($order->due_amount <= 0 && $order->total_amount > 0)
+                            @if($displayDue <= 0 && $displayGrandTotal > 0)
                                 <div class="alert alert-success text-center py-2 mb-0 mt-3">
                                     <i class="fas fa-check-circle mr-1"></i> Full Paid
                                 </div>
-                            @elseif($order->due_amount > 0)
+                            @elseif($displayDue > 0)
                                 <div class="text-center mt-3">
                                     <span class="badge badge-warning">Partial Payment Pending</span>
                                 </div>

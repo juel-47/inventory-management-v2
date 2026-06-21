@@ -33,6 +33,8 @@ class FrontendOrderController extends Controller
      */
     public function show(Order $order)
     {
+        $order->reconcileTotals();
+        $order->refresh();
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.vendor', 'user', 'payments.receipts']);
         
         // Use issued items if any exist for this order, otherwise use original order items
@@ -50,6 +52,8 @@ class FrontendOrderController extends Controller
      */
     public function viewInvoice(Order $order)
     {
+        $order->reconcileTotals();
+        $order->refresh();
         $order->load(['items.product', 'items.variant.color', 'items.variant.size', 'user']);
         $settings = GeneralSetting::first();
 
@@ -67,6 +71,8 @@ class FrontendOrderController extends Controller
      */
     public function piInvoice(Order $order)
     {
+        $order->reconcileTotals();
+        $order->refresh();
         $order->load([
             'items.product.category',
             'items.product.subCategory',
