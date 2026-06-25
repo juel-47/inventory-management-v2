@@ -168,7 +168,7 @@
                 <ul class="dropdown-menu">
                     <li class="{{ setActive(['admin.inventory-reports.index']) }}"><a class="nav-link" href="{{ route('admin.inventory-reports.index') }}">Current Stock</a></li>
                     <li class="{{ setActive(['admin.issues.index']) }}"><a class="nav-link" href="{{ route('admin.issues.index') }}">Stock Issues</a></li>
-                    <li class="{{ setActive(['admin.issue-returns.*']) }}"><a class="nav-link" href="{{ route('admin.issue-returns.index') }}">Stock Returns</a></li>
+                    {{-- <li class="{{ setActive(['admin.issue-returns.*']) }}"><a class="nav-link" href="{{ route('admin.issue-returns.index') }}">Stock Returns</a></li> --}}
                     <li class="{{ setActive(['admin.stock-ledger.index']) }}"><a class="nav-link" href="{{ route('admin.stock-ledger.index') }}">Stock Ledger</a></li>
                 </ul>
             </li>
