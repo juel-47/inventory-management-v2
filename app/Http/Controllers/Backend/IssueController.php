@@ -309,7 +309,7 @@ class IssueController extends Controller
 
             // Send Admin Notification Email
             try {
-                \Illuminate\Support\Facades\Mail::to('tofayelhossaintuhin79@gmail.com')
+                \Illuminate\Support\Facades\Mail::to('ctpwh2026@gmail.com')
                     ->send(new AdminIssueNotificationMail($issue));
             } catch (\Exception $e) {
                Log::error('Failed to send admin issue notification: ' . $e->getMessage());

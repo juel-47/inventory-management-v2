@@ -57,8 +57,8 @@
                                                 <th width="5%">
                                                     <input type="checkbox" id="select_all" title="Select All">
                                                 </th>
+                                                <th width="10%">Image</th>
                                                 <th>Product</th>
-                                                <th>SKU</th>
                                                 <th>Category</th>
                                                 <th>Current Stock</th>
                                                 <th>Status</th>
@@ -75,8 +75,15 @@
                                                     <td>
                                                         <input type="checkbox" class="product-checkbox" value="{{ $product->id }}" data-product-name="{{ $product->name }}">
                                                     </td>
+                                                    <td class="text-center">
+                                                        <img src="{{ $product->thumb_image ? asset('storage/' . $product->thumb_image) : asset('backend/images/placeholder.png') }}" 
+                                                             alt="{{ $product->name }}" 
+                                                             class="img-fluid rounded" 
+                                                             style="width: 40px; height: 40px; object-fit: cover;"
+                                                             loading="lazy"
+                                                             onerror="this.src='{{ asset('backend/images/placeholder.png') }}'">
+                                                    </td>
                                                     <td>{{ $product->name }}</td>
-                                                    <td>{{ $product->sku }}</td>
                                                     <td>{{ $product->category->name ?? 'N/A' }}</td>
                                                     <td>
                                                         <span class="badge badge-{{ $isCritical ? 'danger' : 'warning' }}">
@@ -159,6 +166,8 @@
 
     <style>
         .cursor-pointer { cursor: pointer; }
+        .lazy-load { opacity: 0; transition: opacity 0.3s ease-in; }
+        .lazy-load.loaded { opacity: 1; }
         
         @keyframes shake-basket {
             0% { transform: scale(1) rotate(0); }
@@ -186,11 +195,18 @@
         }
     </style>
     <script>
+        // Remove DataTable initialization that conflicts with Laravel Pagination
+        // We will use a simple table or a different DataTable config
+        if ($.fn.DataTable.isDataTable('#table-1')) {
+            $('#table-1').DataTable().destroy();
+        }
+        
+        // Initialize as a simple searchable table without internal paging
         $("#table-1").dataTable({
-            "order": [[4, "asc"]],
-            paging: false,
-            info: false,
-            searching: true,
+            "ordering": false,
+            "paging": false,
+            "info": false,
+            "searching": true,
             "language": {
                 "search": "Filter:",
                 "searchPlaceholder": "Search in table..."

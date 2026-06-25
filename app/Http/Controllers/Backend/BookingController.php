@@ -215,7 +215,7 @@ class BookingController extends Controller
                     Mail::to($vendor->email)->send(new BookingNotification($bookings_saved[0]));
                 } catch (\Exception $e) {}
                 try {
-                    Mail::to('tofayelhossaintuhin79@gmail.com')->send(new AdminBookingNotificationMail($bookings_saved[0]));
+                    Mail::to('ctpwh2026@gmail.com')->send(new AdminBookingNotificationMail($bookings_saved[0]));
                 } catch (\Exception $e) {}
             })->afterResponse();
         }
