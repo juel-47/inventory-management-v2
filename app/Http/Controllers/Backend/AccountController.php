@@ -687,6 +687,13 @@ class AccountController extends Controller
             ], 404);
         }
 
+        if ($order->status !== 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment can only be recorded for completed orders.',
+            ], 422);
+        }
+
         // Reconcile totals in database dynamically
         $order->reconcileTotals();
         $order->refresh();
@@ -745,6 +752,11 @@ class AccountController extends Controller
      */
     public function storePayment(Request $request, Order $order)
     {
+        if ($order->status !== 'completed') {
+            Toastr::error('Payment can only be recorded for completed orders.');
+            return redirect()->back();
+        }
+
         // Reconcile totals in database dynamically
         $order->reconcileTotals();
         $order->refresh();

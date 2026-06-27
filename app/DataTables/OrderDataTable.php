@@ -99,7 +99,7 @@ class OrderDataTable extends DataTable
                 }
 
                 $pay = '';
-                if (Auth::user()->hasRole('Admin') && (float)$query->due_amount > 0) {
+                if (Auth::user()->hasRole('Admin') && (float)$query->due_amount > 0 && $query->status === 'completed') {
                     $pay = "<a href='" . route('admin.accounts.record-payment', ['order_no' => $query->order_no]) . "' class='btn btn-dark btn-sm mr-1' title='Record Payment'><i class='fas fa-money-bill-wave'></i></a>";
                 }
 

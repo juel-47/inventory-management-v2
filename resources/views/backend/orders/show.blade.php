@@ -311,7 +311,7 @@
                     <div class="card card-success mb-3">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4><i class="fas fa-money-bill-wave mr-2"></i>Payment Summary</h4>
-                            @if($displayDue > 0)
+                            @if($displayDue > 0 && $order->status === 'completed')
                                 <a href="{{ route('admin.accounts.record-payment', ['order_no' => $order->order_no]) }}" class="btn btn-sm btn-outline-white">
                                     <i class="fas fa-plus mr-1"></i> Record via Account Module
                                 </a>
