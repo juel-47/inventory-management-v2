@@ -43,7 +43,7 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-info"><i class="fas fa-shopping-cart"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Orders</h4></div>
+                                <div class="card-header"><h4>Completed Orders (Issued)</h4></div>
                                 <div class="card-body">{{ number_format($summary->total_orders) }}</div>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Order Value</h4></div>
+                                <div class="card-header"><h4>Actual Sales Value</h4></div>
                                 <div class="card-body">{!! formatConverted($summary->total_value) !!}</div>
                             </div>
                         </div>
@@ -61,7 +61,7 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-warning"><i class="fas fa-truck-loading"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Issues</h4></div>
+                                <div class="card-header"><h4>Issues Created</h4></div>
                                 <div class="card-body">{{ number_format($issueStats->total_issues) }}</div>
                             </div>
                         </div>
@@ -70,7 +70,7 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-secondary"><i class="fas fa-boxes"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Issued Qty</h4></div>
+                                <div class="card-header"><h4>Total Issued Qty</h4></div>
                                 <div class="card-body">{{ number_format($issueStats->total_issued_qty) }}</div>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-dark"><i class="fas fa-file-invoice-dollar"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Issue Value</h4></div>
+                                <div class="card-header"><h4>Actual Issue Value</h4></div>
                                 <div class="card-body">{!! formatConverted($issueValue) !!}</div>
                             </div>
                         </div>
@@ -423,8 +423,8 @@
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Total Order Value</h4></div>
-                                <div class="card-body">{!! formatConverted($summary->total_value) !!}</div>
+                                <div class="card-header"><h4>Total Issue Value</h4></div>
+                                <div class="card-body">{!! formatConverted($issueValue) !!}</div>
                             </div>
                         </div>
                     </div>
@@ -602,17 +602,34 @@
                                         <tbody>
                                             @forelse($monthlyTrend as $trend)
                                                 @php
-                                                    $monthIssueQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                                                    $monthStart = substr($trend->month, 0, 4) . '-' . substr($trend->month, 5, 2);
+                                                    $linkedQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
                                                         ->whereYear('created_at', substr($trend->month, 0, 4))
                                                         ->whereMonth('created_at', substr($trend->month, 5, 2))
                                                     )->sum('quantity');
+                                                    $standaloneQty = \App\Models\IssueItem::whereHas('issue', function($q) use ($trend) {
+                                                        $q->whereNull('order_id');
+                                                        $q->whereYear('created_at', substr($trend->month, 0, 4));
+                                                        $q->whereMonth('created_at', substr($trend->month, 5, 2));
+                                                    })->sum('quantity');
+                                                    $monthIssueQty = (int) $linkedQty + (int) $standaloneQty;
+                                                    $monthIssueValue = \App\Models\IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                                                        ->join('products', 'issue_items.product_id', '=', 'products.id')
+                                                        ->whereYear('issues.created_at', substr($trend->month, 0, 4))
+                                                        ->whereMonth('issues.created_at', substr($trend->month, 5, 2))
+                                                        ->sum(\Illuminate\Support\Facades\DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+                                                    $monthUniqueProducts = \App\Models\IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                                                        ->whereYear('issues.created_at', substr($trend->month, 0, 4))
+                                                        ->whereMonth('issues.created_at', substr($trend->month, 5, 2))
+                                                        ->distinct('issue_items.product_id')
+                                                        ->count('issue_items.product_id');
                                                 @endphp
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('F Y') }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($trend->orders_count) }}</span></td>
-                                                    <td class="text-right">{!! formatConverted($trend->total_amount) !!}</td>
+                                                    <td class="text-right">{!! formatConverted($monthIssueValue) !!}</td>
                                                     <td class="text-center">{{ number_format($monthIssueQty) }}</td>
-                                                    <td class="text-center">{{ number_format($trend->unique_products) }}</td>
+                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td>
                                                 </tr>
                                             @empty
                                                 <tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>

@@ -41,12 +41,13 @@ class ReportController extends Controller implements HasMiddleware
      */
     public function index()
     {
-        // 1. Total Stock Value: Sum (Stock Qty * Purchase Price)
-        // We join with inventory_stocks to get the actual quantity
+        // 1. Total Stock Value: Using Weighted Average Cost from PurchaseDetails
+        // We calculate the average purchase price per product and multiply by current stock
         $totalStockValue = DB::table('inventory_stocks')
             ->join('products', 'inventory_stocks.product_id', '=', 'products.id')
+            ->join(DB::raw('(SELECT product_id, AVG(unit_cost) as avg_cost FROM purchase_details GROUP BY product_id) as costs'), 'products.id', '=', 'costs.product_id')
             ->where('products.status', 1)
-            ->sum(DB::raw('inventory_stocks.quantity * products.purchase_price'));
+            ->sum(DB::raw('inventory_stocks.quantity * costs.avg_cost'));
         
         $totalProducts = Product::where('status', 1)->count();
         
@@ -56,15 +57,17 @@ class ReportController extends Controller implements HasMiddleware
             ->get()
             ->count();
         
-        // 2. Total Revenue: From completed Product Requests
-        $totalRevenue = ProductRequest::where('status', 'completed')->sum('total_amount');
+        // 2. Total Revenue: From Issues (Actual Sales/Outgoings)
+        // We sum the total value of items issued. Since IssueItem might not have a 'price', 
+        // we use the product's selling price or the order's unit price.
+        $totalRevenue = DB::table('issue_items')
+            ->join('products', 'issue_items.product_id', '=', 'products.id')
+            ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
         
-        // 3. COGS: Estimated from ProductRequestItems for completed requests
-        $totalCost = DB::table('product_request_items')
-            ->join('product_requests', 'product_request_items.product_request_id', '=', 'product_requests.id')
-            ->join('products', 'product_request_items.product_id', '=', 'products.id')
-            ->where('product_requests.status', 'completed')
-            ->sum(DB::raw('product_request_items.qty * products.purchase_price'));
+        // 3. COGS (Cost of Goods Sold): Based on actual issued quantity * average purchase cost
+        $totalCost = DB::table('issue_items')
+            ->join(DB::raw('(SELECT product_id, AVG(unit_cost) as avg_cost FROM purchase_details GROUP BY product_id) as costs'), 'issue_items.product_id', '=', 'costs.product_id')
+            ->sum(DB::raw('issue_items.quantity * costs.avg_cost'));
 
         $grossProfit = $totalRevenue - $totalCost;
 
@@ -103,6 +106,7 @@ class ReportController extends Controller implements HasMiddleware
         // Calculate Summary Stats from database aggregates BEFORE pagination
         $summaryQuery = DB::table('products')
             ->join('inventory_stocks', 'products.id', '=', 'inventory_stocks.product_id')
+            ->join(DB::raw('(SELECT product_id, AVG(unit_cost) as avg_cost FROM purchase_details GROUP BY product_id) as costs'), 'products.id', '=', 'costs.product_id')
             ->where('products.status', 1);
 
         if ($request->category_id) {
@@ -114,7 +118,7 @@ class ReportController extends Controller implements HasMiddleware
 
         $summaryData = $summaryQuery->selectRaw('
             SUM(inventory_stocks.quantity) as untyped_total_qty,
-            SUM(inventory_stocks.quantity * products.purchase_price) as untyped_total_value,
+            SUM(inventory_stocks.quantity * costs.avg_cost) as untyped_total_value,
             SUM(inventory_stocks.quantity * products.price) as untyped_potential_revenue
         ')->first();
 
@@ -395,28 +399,36 @@ class ReportController extends Controller implements HasMiddleware
      */
     public function profitLossReport(Request $request)
     {
-        $revenueQuery = ProductRequest::where('status', 'completed');
+        // Use IssueItems for actual revenue and cost, not ProductRequests
+        $revenueQuery = DB::table('issue_items')
+            ->join('products', 'issue_items.product_id', '=', 'products.id')
+            ->join('issues', 'issue_items.issue_id', '=', 'issues.id');
+        
         $purchasesQuery = Purchase::query();
         
         if ($request->start_date) {
-            $revenueQuery->where('created_at', '>=', $request->start_date . ' 00:00:00');
+            $revenueQuery->whereDate('issues.created_at', '>=', $request->start_date);
             $purchasesQuery->where('date', '>=', $request->start_date);
         }
         if ($request->end_date) {
-            $revenueQuery->where('created_at', '<=', $request->end_date . ' 23:59:59');
+            $revenueQuery->whereDate('issues.created_at', '<=', $request->end_date);
             $purchasesQuery->where('date', '<=', $request->end_date);
         }
 
-        // Calculate Revenue
-        $totalRevenue = $revenueQuery->sum('total_amount');
+        // Calculate Actual Revenue: Sum of (Issued Qty * Product Price)
+        $totalRevenue = $revenueQuery->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
 
-        // Calculate COGS for those completed requests
-        $completedRequestIds = $revenueQuery->pluck('id');
-        
-        $totalCost = DB::table('product_request_items')
-            ->join('products', 'product_request_items.product_id', '=', 'products.id')
-            ->whereIn('product_request_items.product_request_id', $completedRequestIds)
-            ->sum(DB::raw('product_request_items.qty * products.purchase_price'));
+        // Calculate Actual COGS: Sum of (Issued Qty * Average Purchase Cost)
+        $totalCost = DB::table('issue_items')
+            ->join(DB::raw('(SELECT product_id, AVG(unit_cost) as avg_cost FROM purchase_details GROUP BY product_id) as costs'), 'issue_items.product_id', '=', 'costs.product_id')
+            ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
+            ->when($request->start_date, function($q) use ($request) {
+                return $q->whereDate('issues.created_at', '>=', $request->start_date);
+            })
+            ->when($request->end_date, function($q) use ($request) {
+                return $q->whereDate('issues.created_at', '<=', $request->end_date);
+            })
+            ->sum(DB::raw('issue_items.quantity * costs.avg_cost'));
 
         // Calculate Profit
         $grossProfit = $totalRevenue - $totalCost;
@@ -442,7 +454,7 @@ class ReportController extends Controller implements HasMiddleware
     {
         $users = User::role(['Outlet User', 'User'])->get(['id', 'name', 'outlet_name']);
 
-        $query = Order::with(['user', 'items.product'])->where('status', 'completed');
+        $query = Order::where('status', 'completed');
 
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
@@ -462,137 +474,130 @@ class ReportController extends Controller implements HasMiddleware
 
         $orderIds = (clone $query)->pluck('id');
 
-        // ─── Common aggregates ────────────────────────────────────
         $summary = (clone $query)->selectRaw('
             COUNT(*) as total_orders,
             COALESCE(SUM(total_amount),0) as total_value,
             COALESCE(AVG(total_amount),0) as avg_order_value
         ')->first();
 
-        // Issue stats (count + qty) — linked + standalone
-        $issueStats = Issue::where(function ($q) use ($orderIds, $request) {
+        $issueStats = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
+            ->where(function ($q) use ($orderIds, $request) {
                 $q->whereIn('order_id', $orderIds);
                 $q->orWhere(function ($sq) use ($request) {
                     $sq->whereNull('order_id');
                     if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
-                    if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
-                    if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
-                    if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
-                    if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                    if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                    if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
                 });
             })
-            ->selectRaw('
-                COUNT(*) as total_issues,
-                COALESCE(SUM(total_qty),0) as total_issued_qty
-            ')->first();
+            ->selectRaw('COUNT(DISTINCT issues.id) as total_issues, COALESCE(SUM(issue_items.quantity),0) as total_issued_qty')
+            ->first();
 
-        // ─── 360° per-user mode ───────────────────────────────────
         if ($request->filled('user_id')) {
             $user = User::findOrFail($request->user_id);
 
-            // Payment aggregate
             $paymentStats = OrderPayment::whereIn('order_id', $orderIds)
-                ->selectRaw('COALESCE(SUM(amount),0) as total_paid')
-                ->first();
+                ->selectRaw('COALESCE(SUM(amount),0) as total_paid')->first();
             $totalDue = $summary->total_value - $paymentStats->total_paid;
 
-            // Issue value (monetary) — linked issues use order price, standalone use product price
             $linkedValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
                 ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
-                ->join('order_items', function ($j) {
-                    $j->on('issues.order_id', '=', 'order_items.order_id')
-                      ->on('issue_items.product_id', '=', 'order_items.product_id');
-                })
-                ->sum(DB::raw('issue_items.quantity * order_items.unit_price'));
+                ->join('products', 'issue_items.product_id', '=', 'products.id')
+                ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
 
-            $standaloneValue = IssueItem::whereHas('issue', fn($q) => $q->whereNull('order_id')->where('outlet_id', $request->user_id))
+            $standaloneValue = IssueItem::whereHas('issue', function ($q) use ($request) {
+                    $q->whereNull('order_id')->where('outlet_id', $request->user_id);
+                    if ($request->filled('date_from')) $q->whereDate('issues.created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $q->whereDate('issues.created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $q->whereMonth('issues.created_at', $request->month);
+                    if ($request->filled('year')) $q->whereYear('issues.created_at', $request->year);
+                })
                 ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
                 ->join('products', 'issue_items.product_id', '=', 'products.id')
                 ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
 
             $issueValue = $linkedValue + $standaloneValue;
+            $pendingValue = max(0, $summary->total_value - $linkedValue);
 
-            $pendingValue = max(0, $summary->total_value - $issueValue);
-
-            // Full order list
             $orders = $query->with('items')->orderByDesc('placed_at')->get();
 
-            // Issue list with per-item computed value (linked + standalone)
-            $issues = Issue::with(['items', 'order'])
+            $issues = Issue::with(['items.product', 'order'])
                 ->where(function ($q) use ($orderIds, $request) {
                     $q->whereIn('order_id', $orderIds);
                     $q->orWhere(function ($sq) use ($request) {
                         $sq->whereNull('order_id');
                         if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
-                        if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
-                        if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
-                        if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
-                        if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                        if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                        if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                        if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                        if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
                     });
                 })
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(function ($issue) {
                     $value = 0;
-                    $oi = null;
-                    if ($issue->order_id) {
-                        foreach ($issue->items as $item) {
-                            $oi = OrderItem::where('order_id', $issue->order_id)
-                                ->where('product_id', $item->product_id)
-                                ->first();
-                            $value += $oi ? $item->quantity * $oi->unit_price : 0;
-                        }
+                    foreach ($issue->items as $item) {
+                        $price = $item->product->price ?? $item->product->purchase_price ?? 0;
+                        $value += $item->quantity * (float) $price;
                     }
                     $issue->computed_value = $value;
                     return $issue;
                 });
 
-            // Payment list
             $payments = OrderPayment::with('order')
                 ->whereIn('order_id', $orderIds)
                 ->orderByDesc('created_at')
                 ->get();
 
-            // Product comparison (ordered qty/value vs issued qty)
             $productComparison = OrderItem::whereIn('order_id', $orderIds)
-                ->selectRaw('
-                    product_id,
-                    product_name,
-                    SUM(quantity) as ordered_qty,
-                    COALESCE(SUM(line_total),0) as ordered_value
-                ')
+                ->selectRaw('product_id, product_name, SUM(quantity) as ordered_qty, COALESCE(SUM(line_total),0) as ordered_value')
                 ->groupBy('product_id', 'product_name')
                 ->orderByDesc('ordered_value')
                 ->get()
                 ->map(function ($item) use ($orderIds) {
                     $issuedQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
-                        ->where('product_id', $item->product_id)
-                        ->sum('quantity');
+                        ->where('product_id', $item->product_id)->sum('quantity');
                     $item->issued_qty = (int) $issuedQty;
                     $item->pending_qty = max(0, $item->ordered_qty - $item->issued_qty);
                     return $item;
                 });
 
-            // Monthly trend (with issue value)
             $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->where('orders.status', 'completed')
-                ->selectRaw("
-                    DATE_FORMAT(orders.placed_at, '%Y-%m') as month,
-                    COUNT(DISTINCT orders.id) as orders_count,
-                    COALESCE(SUM(order_items.line_total),0) as total_amount,
-                    COUNT(DISTINCT order_items.product_id) as unique_products
-                ")
-                ->groupBy('month')
-                ->orderBy('month')
+                ->selectRaw("DATE_FORMAT(orders.placed_at, '%Y-%m') as month, COUNT(DISTINCT orders.id) as orders_count")
+                ->groupBy('month')->orderBy('month')
                 ->get()
-                ->map(function ($trend) use ($orderIds) {
+                ->map(function ($trend) use ($orderIds, $request) {
                     $m = $trend->month;
-                    $issueQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                    $linkedQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
                         ->whereYear('created_at', substr($m, 0, 4))
                         ->whereMonth('created_at', substr($m, 5, 2))
                     )->sum('quantity');
-                    $trend->issue_qty = (int) $issueQty;
+                    $standaloneQty = IssueItem::whereHas('issue', function($q) use ($request, $m) {
+                        $q->whereNull('order_id');
+                        if ($request->filled('user_id')) $q->where('outlet_id', $request->user_id);
+                        $q->whereYear('created_at', substr($m, 0, 4));
+                        $q->whereMonth('created_at', substr($m, 5, 2));
+                    })->sum('quantity');
+                    $trend->issue_qty = (int) $linkedQty + (int) $standaloneQty;
+
+                    $issueQuery = IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                        ->join('products', 'issue_items.product_id', '=', 'products.id')
+                        ->whereYear('issues.created_at', substr($m, 0, 4))
+                        ->whereMonth('issues.created_at', substr($m, 5, 2))
+                        ->where(function ($q) use ($orderIds, $request) {
+                            $q->whereIn('issues.order_id', $orderIds);
+                            $q->orWhere(function ($sq) use ($request) {
+                                $sq->whereNull('issues.order_id');
+                                if ($request->filled('user_id')) $sq->where('issues.outlet_id', $request->user_id);
+                            });
+                        });
+                    $trend->total_amount = $issueQuery->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+                    $trend->unique_products = (clone $issueQuery)->distinct('issue_items.product_id')->count('issue_items.product_id');
                     return $trend;
                 });
 
@@ -603,15 +608,24 @@ class ReportController extends Controller implements HasMiddleware
             ));
         }
 
-        // ─── Global mode ──────────────────────────────────────────
+        $issueValue = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
+            ->join('products', 'issue_items.product_id', '=', 'products.id')
+            ->where(function ($q) use ($orderIds, $request) {
+                $q->whereIn('order_id', $orderIds);
+                $q->orWhere(function ($sq) use ($request) {
+                    $sq->whereNull('order_id');
+                    if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                    if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
+                });
+            })
+            ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+
+        $orders = $query->with(['user', 'items.product'])->orderByDesc('placed_at')->paginate(30)->withQueryString();
+
         $productFrequency = OrderItem::whereIn('order_id', $orderIds)
-            ->selectRaw('
-                product_id,
-                product_name,
-                COUNT(*) as times_ordered,
-                SUM(quantity) as total_qty,
-                COALESCE(SUM(line_total),0) as total_value
-            ')
+            ->selectRaw('product_id, product_name, COUNT(*) as times_ordered, SUM(quantity) as total_qty, COALESCE(SUM(line_total),0) as total_value')
             ->groupBy('product_id', 'product_name')
             ->orderByDesc('times_ordered')
             ->paginate(30)->withQueryString();
@@ -619,14 +633,8 @@ class ReportController extends Controller implements HasMiddleware
         $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('orders.status', 'completed')
-            ->selectRaw("
-                DATE_FORMAT(orders.placed_at, '%Y-%m') as month,
-                COUNT(DISTINCT orders.id) as orders_count,
-                COALESCE(SUM(order_items.line_total),0) as total_amount,
-                COUNT(DISTINCT order_items.product_id) as unique_products
-            ")
-            ->groupBy('month')
-            ->orderBy('month')
+            ->selectRaw("DATE_FORMAT(orders.placed_at, '%Y-%m') as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(order_items.line_total),0) as total_amount, COUNT(DISTINCT order_items.product_id) as unique_products")
+            ->groupBy('month')->orderBy('month')
             ->get();
 
         $userSummary = Order::whereIn('id', $orderIds)
@@ -637,7 +645,7 @@ class ReportController extends Controller implements HasMiddleware
             ->keyBy('user_id');
 
         return view('backend.reports.orders', compact(
-            'summary', 'issueStats', 'productFrequency', 'monthlyTrend', 'userSummary', 'users', 'orderIds'
+            'summary', 'issueStats', 'productFrequency', 'monthlyTrend', 'userSummary', 'users', 'orderIds', 'orders', 'issueValue'
         ));
     }
 
@@ -672,18 +680,19 @@ class ReportController extends Controller implements HasMiddleware
             COALESCE(AVG(total_amount),0) as avg_order_value
         ')->first();
 
-        $issueStats = Issue::where(function ($q) use ($orderIds, $request) {
+        $issueStats = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
+            ->where(function ($q) use ($orderIds, $request) {
                 $q->whereIn('order_id', $orderIds);
                 $q->orWhere(function ($sq) use ($request) {
                     $sq->whereNull('order_id');
                     if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
-                    if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
-                    if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
-                    if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
-                    if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                    if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                    if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
                 });
             })
-            ->selectRaw('COUNT(*) as total_issues, COALESCE(SUM(total_qty),0) as total_issued_qty')
+            ->selectRaw('COUNT(DISTINCT issues.id) as total_issues, COALESCE(SUM(issue_items.quantity),0) as total_issued_qty')
             ->first();
 
         $settings = GeneralSetting::first();
@@ -696,42 +705,48 @@ class ReportController extends Controller implements HasMiddleware
                 ->selectRaw('COALESCE(SUM(amount),0) as total_paid')->first();
             $totalDue = $summary->total_value - $paymentStats->total_paid;
 
-            $issueValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
+            $linkedValue = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
                 ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
-                ->join('order_items', function ($j) {
-                    $j->on('issues.order_id', '=', 'order_items.order_id')
-                      ->on('issue_items.product_id', '=', 'order_items.product_id');
+                ->join('products', 'issue_items.product_id', '=', 'products.id')
+                ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+
+            $standaloneValue = IssueItem::whereHas('issue', function ($q) use ($request) {
+                    $q->whereNull('order_id')->where('outlet_id', $request->user_id);
+                    if ($request->filled('date_from')) $q->whereDate('issues.created_at', '>=', $request->date_from);
+                    if ($request->filled('date_to')) $q->whereDate('issues.created_at', '<=', $request->date_to);
+                    if ($request->filled('month')) $q->whereMonth('issues.created_at', $request->month);
+                    if ($request->filled('year')) $q->whereYear('issues.created_at', $request->year);
                 })
-                ->sum(DB::raw('issue_items.quantity * order_items.unit_price'));
-            $pendingValue = max(0, $summary->total_value - $issueValue);
+                ->join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                ->join('products', 'issue_items.product_id', '=', 'products.id')
+                ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+
+            $issueValue = $linkedValue + $standaloneValue;
+            $pendingValue = max(0, $summary->total_value - $linkedValue);
 
             // Orders
             $orders = $query->with('items')->orderByDesc('placed_at')->get();
 
             // Issues with computed value (linked + standalone)
-            $issues = Issue::with(['items', 'order'])
+            $issues = Issue::with(['items.product', 'order'])
                 ->where(function ($q) use ($orderIds, $request) {
                     $q->whereIn('order_id', $orderIds);
                     $q->orWhere(function ($sq) use ($request) {
                         $sq->whereNull('order_id');
                         if ($request->filled('user_id')) $sq->where('outlet_id', $request->user_id);
-                        if ($request->filled('date_from')) $sq->whereDate('created_at', '>=', $request->date_from);
-                        if ($request->filled('date_to')) $sq->whereDate('created_at', '<=', $request->date_to);
-                        if ($request->filled('month')) $sq->whereMonth('created_at', $request->month);
-                        if ($request->filled('year')) $sq->whereYear('created_at', $request->year);
+                        if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                        if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                        if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                        if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
                     });
                 })
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(function ($issue) {
                     $value = 0;
-                    $oi = null;
-                    if ($issue->order_id) {
-                        foreach ($issue->items as $item) {
-                            $oi = OrderItem::where('order_id', $issue->order_id)
-                                ->where('product_id', $item->product_id)->first();
-                            $value += $oi ? $item->quantity * $oi->unit_price : 0;
-                        }
+                    foreach ($issue->items as $item) {
+                        $price = $item->product->price ?? $item->product->purchase_price ?? 0;
+                        $value += $item->quantity * (float) $price;
                     }
                     $issue->computed_value = $value;
                     return $issue;
@@ -761,16 +776,36 @@ class ReportController extends Controller implements HasMiddleware
             $monthlyTrend = OrderItem::whereIn('order_id', $orderIds)
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->where('orders.status', 'completed')
-                ->selectRaw("DATE_FORMAT(orders.placed_at, '%Y-%m') as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(order_items.line_total),0) as total_amount, COUNT(DISTINCT order_items.product_id) as unique_products")
+                ->selectRaw("DATE_FORMAT(orders.placed_at, '%Y-%m') as month, COUNT(DISTINCT orders.id) as orders_count")
                 ->groupBy('month')->orderBy('month')
                 ->get()
-                ->map(function ($trend) use ($orderIds) {
+                ->map(function ($trend) use ($orderIds, $request) {
                     $m = $trend->month;
-                    $issueQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                    $linkedQty = IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
                         ->whereYear('created_at', substr($m, 0, 4))
                         ->whereMonth('created_at', substr($m, 5, 2))
                     )->sum('quantity');
-                    $trend->issue_qty = (int) $issueQty;
+                    $standaloneQty = IssueItem::whereHas('issue', function($q) use ($request, $m) {
+                        $q->whereNull('order_id');
+                        if ($request->filled('user_id')) $q->where('outlet_id', $request->user_id);
+                        $q->whereYear('created_at', substr($m, 0, 4));
+                        $q->whereMonth('created_at', substr($m, 5, 2));
+                    })->sum('quantity');
+                    $trend->issue_qty = (int) $linkedQty + (int) $standaloneQty;
+
+                    $issueQuery = IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                        ->join('products', 'issue_items.product_id', '=', 'products.id')
+                        ->whereYear('issues.created_at', substr($m, 0, 4))
+                        ->whereMonth('issues.created_at', substr($m, 5, 2))
+                        ->where(function ($q) use ($orderIds, $request) {
+                            $q->whereIn('issues.order_id', $orderIds);
+                            $q->orWhere(function ($sq) use ($request) {
+                                $sq->whereNull('issues.order_id');
+                                if ($request->filled('user_id')) $sq->where('issues.outlet_id', $request->user_id);
+                            });
+                        });
+                    $trend->total_amount = $issueQuery->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+                    $trend->unique_products = (clone $issueQuery)->distinct('issue_items.product_id')->count('issue_items.product_id');
                     return $trend;
                 });
 
@@ -780,6 +815,20 @@ class ReportController extends Controller implements HasMiddleware
             ))->setPaper('a4', 'landscape');
         } else {
             // ─── Global PDF ───────────────────────────────────────
+            $issueValue = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
+                ->join('products', 'issue_items.product_id', '=', 'products.id')
+                ->where(function ($q) use ($orderIds, $request) {
+                    $q->whereIn('order_id', $orderIds);
+                    $q->orWhere(function ($sq) use ($request) {
+                        $sq->whereNull('order_id');
+                        if ($request->filled('date_from')) $sq->whereDate('issues.created_at', '>=', $request->date_from);
+                        if ($request->filled('date_to')) $sq->whereDate('issues.created_at', '<=', $request->date_to);
+                        if ($request->filled('month')) $sq->whereMonth('issues.created_at', $request->month);
+                        if ($request->filled('year')) $sq->whereYear('issues.created_at', $request->year);
+                    });
+                })
+                ->sum(DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
+
             $productFrequency = OrderItem::whereIn('order_id', $orderIds)
                 ->selectRaw('product_id, product_name, COUNT(*) as times_ordered, SUM(quantity) as total_qty, COALESCE(SUM(line_total),0) as total_value')
                 ->groupBy('product_id', 'product_name')
@@ -794,7 +843,7 @@ class ReportController extends Controller implements HasMiddleware
                 ->keyBy('user_id');
 
             $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
-                'summary', 'issueStats', 'productFrequency', 'userSummary', 'settings', 'request', 'orderIds'
+                'summary', 'issueStats', 'productFrequency', 'userSummary', 'settings', 'request', 'orderIds', 'issueValue'
             ))->setPaper('a4', 'landscape');
         }
 

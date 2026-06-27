@@ -67,6 +67,11 @@ class Order extends Model
         return $this->hasMany(OrderPayment::class);
     }
 
+    public function issues()
+    {
+        return $this->hasMany(Issue::class);
+    }
+
     public function reconcileTotals(): bool
     {
         // Check if there are any issues linked to this order

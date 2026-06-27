@@ -208,7 +208,7 @@
         {{-- ═══════ GLOBAL PDF ═══════ --}}
         <div class="summary-row">
             <div class="summary-box"><div class="lbl">Orders</div><div class="val">{{ number_format($summary->total_orders) }}</div></div>
-            <div class="summary-box"><div class="lbl">Order Value</div><div class="val" style="color:#28a745">{!! formatConverted($summary->total_value) !!}</div></div>
+            <div class="summary-box"><div class="lbl">Issue Value</div><div class="val" style="color:#28a745">{!! formatConverted($issueValue) !!}</div></div>
             <div class="summary-box"><div class="lbl">Issues</div><div class="val" style="color:#e67e22">{{ number_format($issueStats->total_issues) }}</div></div>
             <div class="summary-box"><div class="lbl">Issue Qty</div><div class="val" style="color:#3498db">{{ number_format($issueStats->total_issued_qty) }}</div></div>
         </div>
