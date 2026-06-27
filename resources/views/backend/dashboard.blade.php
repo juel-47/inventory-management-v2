@@ -7,8 +7,8 @@
         </div>
 
         <div class="row">
-            @if(Auth::user()->can('Manage Reports'))
-                {{-- Admin Stats --}}
+            {{-- Admin Stats --}}
+            @can('Manage Reports')
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-primary">
@@ -99,8 +99,10 @@
                         </div>
                     </div>
                 </div>
-            @else
-                {{-- Outlet Stats --}}
+            @endcan
+
+            {{-- User/Outlet Stats - Now based on permissions instead of just "else" --}}
+            @can('Accountants')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-success">
@@ -116,6 +118,9 @@
                         </div>
                     </div>
                 </div>
+            @endcan
+
+            @can('Manage Product Requests')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-info">
@@ -131,6 +136,9 @@
                         </div>
                     </div>
                 </div>
+            @endcan
+
+            @can('Manage Order Place')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-warning">
@@ -146,7 +154,7 @@
                         </div>
                     </div>
                 </div>
-            @endif
+            @endcan
         </div>
 
         @if(Auth::user()->can('Manage Reports'))
