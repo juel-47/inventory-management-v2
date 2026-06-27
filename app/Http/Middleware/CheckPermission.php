@@ -22,9 +22,9 @@ class CheckPermission
 
         // Check if user is trying to access /admin routes
         if ($request->is('admin/*')) {
-            // Only Admin role can access /admin routes
-            if (!$user->hasRole('Admin')) {
-                abort(403, 'Access Denied. Only administrators can access this area.');
+            // Prevent 'Outlet User' and 'User' roles from accessing /admin routes
+            if ($user->hasAnyRole(['Outlet User', 'User'])) {
+                abort(403, 'Access Denied. Your account does not have permission to access the backend dashboard.');
             }
         }
 

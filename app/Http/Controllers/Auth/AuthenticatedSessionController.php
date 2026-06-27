@@ -30,10 +30,10 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // Check if user is Admin
-        if (! $user->hasRole('Admin')) {
+        // Prevent 'Outlet User' and 'User' roles from logging into the admin portal
+        if ($user->hasAnyRole(['Outlet User', 'User'])) {
             Auth::logout();
-            return redirect('/')->with('error', 'Only admins can login via this portal.');
+            return redirect('/')->with('error', 'Your account does not have permission to access the admin portal.');
         }
 
         $intended = $request->session()->get('url.intended');
