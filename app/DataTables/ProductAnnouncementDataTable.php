@@ -119,7 +119,7 @@ class ProductAnnouncementDataTable extends DataTable
         } elseif ($sort === 'z-a') {
             $query->orderBy('name', 'desc');
         } elseif ($sort === 'active') {
-            $query->where('status', 1)->latest();
+            $query->active()->latest();
         } elseif ($sort === 'inactive') {
             $query->where('status', 0)->latest();
         } else {

@@ -36,6 +36,11 @@ class Purchase extends Model
         'due_amount' => 'float',
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);

@@ -14,4 +14,9 @@ class Unit extends Model
         'slug',
         'status'
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\TaxDataTable;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tax\TaxStoreRequest;
+use App\Http\Requests\Tax\TaxUpdateRequest;
 use App\Models\Tax;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -30,15 +32,9 @@ class TaxController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(TaxStoreRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255|unique:taxes,name',
-            'type' => 'required|in:flat,percent',
-            'value' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         if ($data['type'] === 'percent' && (float) $data['value'] > 100) {
             return back()->withErrors(['value' => 'Percent tax cannot be greater than 100.'])->withInput();
@@ -88,17 +84,11 @@ class TaxController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(TaxUpdateRequest $request, string $id)
     {
         $tax = Tax::findOrFail($id);
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255|unique:taxes,name,' . $tax->id,
-            'type' => 'required|in:flat,percent',
-            'value' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         if ($data['type'] === 'percent' && (float) $data['value'] > 100) {
             return back()->withErrors(['value' => 'Percent tax cannot be greater than 100.'])->withInput();

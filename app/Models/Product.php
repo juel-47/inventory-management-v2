@@ -42,6 +42,11 @@ class Product extends Model
         'vat_value',
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -100,7 +105,7 @@ class Product extends Model
 
     public function stockLedgers()
     {
-        return $this->hasMany(StockLedger::class, 'variant_id');
+        return $this->hasMany(StockLedger::class, 'product_id');
     }
 
     public function getInventoryStockAttribute()

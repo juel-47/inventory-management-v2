@@ -14,6 +14,11 @@ class Size extends Model
         'status'
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function variants()
     {
         return $this->hasMany(ProductVariant::class);

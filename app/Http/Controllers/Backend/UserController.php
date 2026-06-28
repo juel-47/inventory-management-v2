@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\DataTables\UsersDataTable;
+use App\Http\Requests\User\UserStoreRequest;
+use App\Http\Requests\User\UserUpdateRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -32,21 +34,8 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
-        $request->validate([
-            'image' => ['nullable', 'image', 'max:2048'],
-            'name' => ['required', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'phone' => ['nullable', 'max:255'],
-            'password' => ['required', 'min:8'],
-            'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id'],
-            'discount_type' => ['nullable', 'in:flat,percent'],
-            'discount_value' => ['nullable', 'numeric', 'min:0'],
-            'min_order_amount' => ['nullable', 'numeric', 'min:0']
-        ]);
-
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -89,20 +78,8 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UserUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'image' => ['nullable', 'image', 'max:2048'],
-            'name' => ['required', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,' . $id],
-            'phone' => ['nullable', 'max:255'],
-            'status' => ['required', 'boolean'],
-            'user_role' => ['required', 'exists:roles,id'],
-            'discount_type' => ['nullable', 'in:flat,percent'],
-            'discount_value' => ['nullable', 'numeric', 'min:0'],
-            'min_order_amount' => ['nullable', 'numeric', 'min:0']
-        ]);
-
         $user = User::findOrFail($id);
 
         if ($request->hasFile('image')) {

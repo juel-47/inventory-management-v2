@@ -31,24 +31,24 @@ class HomeController extends Controller
 
         $sliders = Schema::hasTable('sliders')
             ? Slider::query()
-            ->where('status', 1)
+            ->active()
             ->orderBy('serial')
             ->get()
             : collect();
         $latestCategories = Category::query()
-            ->where('status', 1)
+            ->active()
             ->where('frontend_show', 1)
             ->whereHas('products', function ($query) {
-                $query->where('status', 1);
+                $query->active();
             })
             ->withMax([
                 'products as latest_product_created_at' => function ($query) {
-                    $query->where('status', 1);
+                    $query->active();
                 }
             ], 'created_at')
             ->with([
                 'products' => function ($query) use ($roleContext, $isOutletCustomer, $outletId) {
-                    $query->where('status', 1)
+                    $query->active()
                         ->latest()
                         ->take(4)
                         ->with([
@@ -106,19 +106,19 @@ class HomeController extends Controller
         $page = max(1, (int) $request->get('page', 1));
 
         $latestCategories = Category::query()
-            ->where('status', 1)
+            ->active()
             ->where('frontend_show', 1)
             ->whereHas('products', function ($query) {
-                $query->where('status', 1);
+                $query->active();
             })
             ->withMax([
                 'products as latest_product_created_at' => function ($query) {
-                    $query->where('status', 1);
+                    $query->active();
                 }
             ], 'created_at')
             ->with([
                 'products' => function ($query) use ($roleContext, $isOutletCustomer, $outletId) {
-                    $query->where('status', 1)
+                    $query->active()
                         ->latest()
                         ->take(4)
                         ->with([
@@ -185,9 +185,9 @@ class HomeController extends Controller
                     $this->configureVariantQuery($query, $roleContext);
                 },
             ])
-            ->where('status', 1)
+            ->active()
             ->whereHas('category', function ($q) {
-                $q->where('status', 1);
+                $q->active();
             });
 
         if ($isOutletCustomer) {
@@ -269,27 +269,27 @@ class HomeController extends Controller
             ->values();
 
         $categories = Category::with(['subCategories' => function ($q) {
-            $q->where('status', 1);
+            $q->active();
         }, 'subCategories.childCategories' => function ($q) {
-            $q->where('status', 1);
+            $q->active();
         }])
-            ->where('status', 1)
+            ->active()
             ->get();
 
         $productTypes = ProductType::query()
-            ->where('status', 1)
+            ->active()
             ->orderBy('name')
             ->get(['id', 'name']);
 
         // Get absolute price range for slider
-        $min_range = Product::where('status', 1)
+        $min_range = Product::active()
             ->whereHas('category', function ($q) {
-                $q->where('status', 1);
+                $q->active();
             })
             ->min('price') ?? 0;
-        $max_range = Product::where('status', 1)
+        $max_range = Product::active()
             ->whereHas('category', function ($q) {
-                $q->where('status', 1);
+                $q->active();
             })
             ->max('price') ?? 1000;
 
@@ -333,16 +333,9 @@ class HomeController extends Controller
     /**
      * Handle contact form submissions.
      */
-    public function submitContact(Request $request)
+    public function submitContact(\App\Http\Requests\Frontend\Home\ContactSubmitRequest $request)
     {
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'subject' => ['required', 'string', 'max:150'],
-            'message' => ['required', 'string', 'max:3000'],
-        ]);
+        $validated = $request->validated();
 
         $settings = GeneralSetting::first();
         $adminEmail = $settings?->contact_email ?? config('mail.from.address');
@@ -417,9 +410,9 @@ class HomeController extends Controller
         $products = Product::query()
             ->select(['id', 'name', 'slug', 'thumb_image', 'price', 'outlet_price', 'product_number', 'sku', 'category_id'])
             ->with('category:id,name')
-            ->where('status', 1)
+            ->active()
             ->whereHas('category', function ($query) {
-                $query->where('status', 1);
+                $query->active();
             })
             ->where(function ($builder) use ($query) {
                 $builder->where('name', 'like', "%{$query}%")
@@ -470,7 +463,7 @@ class HomeController extends Controller
                 },
             ])
             ->where('slug', $slug)
-            ->where('status', 1);
+            ->active();
 
         if ($canViewInventory) {
             $productQuery->withSum([
@@ -492,7 +485,7 @@ class HomeController extends Controller
             ])
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->where('status', 1);
+            ->active();
 
         if ($canViewInventory) {
             $relatedQuery->withSum([
@@ -613,7 +606,7 @@ class HomeController extends Controller
     private function configureVariantQuery($query, array $roleContext): void
     {
         $query
-            ->where('status', 1)
+            ->active()
             ->with(['color:id,name', 'size:id,name']);
 
         if (!empty($roleContext['canViewInventory']) && !empty($roleContext['outletId'])) {

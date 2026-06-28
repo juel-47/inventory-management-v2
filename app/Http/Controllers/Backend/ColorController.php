@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\ColorDataTable;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Color\ColorStoreRequest;
+use App\Http\Requests\Color\ColorUpdateRequest;
 use App\Models\Color;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -29,14 +31,8 @@ class ColorController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ColorStoreRequest $request)
     {
-        $request->validate([
-            'name' => 'required|unique:colors,name|max:255',
-            'hex_code' => 'nullable|string|max:7',
-            'status' => 'required|boolean'
-        ]);
-
         Color::create([
             'name' => $request->name,
             'hex_code' => $request->hex_code,
@@ -67,14 +63,8 @@ class ColorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(ColorUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'name' => 'required|max:255|unique:colors,name,' . $id,
-            'hex_code' => 'nullable|string|max:7',
-            'status' => 'required|boolean'
-        ]);
-
         $color = Color::findOrFail($id);
         $color->update([
             'name' => $request->name,

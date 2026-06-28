@@ -76,7 +76,7 @@ class IssueController extends Controller
 
     public function create(Request $request)
     {
-        $products = Product::where('status', 1)
+        $products = Product::active()
         ->with(['variants.color', 'variants.size', 'variants.inventoryStocks', 'inventoryStocks'])
         ->get();
         //when no need to check status: 
@@ -192,17 +192,8 @@ class IssueController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\Issue\IssueStoreRequest $request)
     {
-        $request->validate([
-            'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'outlet_id' => 'required|exists:users,id',
-            'product_request_id' => 'nullable|exists:product_requests,id',
-            'order_id' => 'nullable|exists:orders,id',
-            'note' => 'nullable|string',
-        ]);
 
         try {
             DB::transaction(function () use ($request) {

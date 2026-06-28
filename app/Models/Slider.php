@@ -21,4 +21,9 @@ class Slider extends Model
         'serial' => 'integer',
         'status' => 'boolean',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

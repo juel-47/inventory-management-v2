@@ -38,7 +38,7 @@ class ChildCategoryController extends Controller
     public function getSubCategories(Request $request)
     {
         $subCategories = SubCategory::where('category_id', $request->id)
-            ->where('status', 1)
+            ->active()
             ->select(['id', 'name'])
             ->get();
         return $subCategories;
@@ -50,7 +50,7 @@ class ChildCategoryController extends Controller
     public function getChildCategories(Request $request)
     {
         $childCategories = ChildCategory::where('sub_category_id', $request->id)
-            ->where('status', 1)
+            ->active()
             ->select(['id', 'name'])
             ->get();
         return $childCategories;

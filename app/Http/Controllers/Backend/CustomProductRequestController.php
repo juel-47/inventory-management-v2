@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\DataTables\CustomProductRequestDataTable;
+use App\Http\Requests\CustomProductRequest\CustomProductRequestStoreRequest;
+use App\Http\Requests\CustomProductRequest\CustomProductRequestUpdateStatusRequest;
 use App\Models\CustomProductRequest;
 use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
@@ -46,7 +48,7 @@ class CustomProductRequestController extends Controller implements HasMiddleware
 
         $users = [];
         if ($user->can('Manage Custom Product Requests')) {
-            $users = \App\Models\User::where('status', 1)->orderBy('name', 'asc')->get();
+            $users = \App\Models\User::active()->orderBy('name', 'asc')->get();
         }
 
         return view('backend.custom-product-request.create', compact('users'));
@@ -55,22 +57,13 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(CustomProductRequestStoreRequest $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
         if (!$user->can('Create Custom Product Requests') && !$user->can('Manage Custom Product Requests')) {
             abort(403);
         }
-
-        $request->validate([
-            'product_description' => 'required|string|min:10',
-            'product_name' => 'nullable|string|max:255',
-            'example_image' => 'nullable|array',
-            'example_image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'quantity_needed' => 'required|integer|min:1',
-            'expected_price' => 'nullable|numeric|min:0',
-        ]);
 
         DB::beginTransaction();
         try {
@@ -160,21 +153,15 @@ class CustomProductRequestController extends Controller implements HasMiddleware
     /**
      * Update the status of the request.
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(CustomProductRequestUpdateStatusRequest $request, $id)
     {
         $customRequest = CustomProductRequest::findOrFail($id);
         
-        // Only Admin/Manager can update status
         /** @var \App\Models\User $user */
         $user = Auth::user();
         if (!$user->can('Manage Custom Product Requests')) {
             abort(403);
         }
-
-        $request->validate([
-            'status' => 'required|in:pending,approved,rejected',
-            'admin_note' => 'nullable|string'
-        ]);
 
         DB::beginTransaction();
         try {

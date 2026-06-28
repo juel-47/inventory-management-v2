@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\DiscountDataTable;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Discount\DiscountStoreRequest;
+use App\Http\Requests\Discount\DiscountUpdateRequest;
 use App\Models\Discount;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -30,15 +32,9 @@ class DiscountController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(DiscountStoreRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255|unique:discounts,name',
-            'type' => 'required|in:flat,percent',
-            'value' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         if ($data['type'] === 'percent' && (float) $data['value'] > 100) {
             return back()->withErrors(['value' => 'Percent discount cannot be greater than 100.'])->withInput();
@@ -88,17 +84,11 @@ class DiscountController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(DiscountUpdateRequest $request, string $id)
     {
         $discount = Discount::findOrFail($id);
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255|unique:discounts,name,' . $discount->id,
-            'type' => 'required|in:flat,percent',
-            'value' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         if ($data['type'] === 'percent' && (float) $data['value'] > 100) {
             return back()->withErrors(['value' => 'Percent discount cannot be greater than 100.'])->withInput();

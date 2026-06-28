@@ -22,6 +22,11 @@ class ProductVariant extends Model
         'outlet_price'
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

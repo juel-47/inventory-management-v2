@@ -19,5 +19,10 @@ class Tax extends Model
         'is_default' => 'boolean',
         'status' => 'boolean',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }
 

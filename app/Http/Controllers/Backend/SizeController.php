@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\DataTables\SizeDataTable;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Size\SizeStoreRequest;
+use App\Http\Requests\Size\SizeUpdateRequest;
 use App\Models\Size;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -29,13 +31,8 @@ class SizeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(SizeStoreRequest $request)
     {
-        $request->validate([
-            'name' => 'required|unique:sizes,name|max:255',
-            'status' => 'required|boolean'
-        ]);
-
         Size::create([
             'name' => $request->name,
             'status' => $request->status
@@ -65,13 +62,8 @@ class SizeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(SizeUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'name' => 'required|max:255|unique:sizes,name,' . $id,
-            'status' => 'required|boolean'
-        ]);
-
         $size = Size::findOrFail($id);
         $size->update([
             'name' => $request->name,

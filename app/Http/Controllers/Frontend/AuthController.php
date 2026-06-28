@@ -21,7 +21,7 @@ class AuthController extends Controller
     {
         $sliders = Schema::hasTable('sliders')
             ? Slider::query()
-                ->where('status', 1)
+                ->active()
                 ->orderBy('serial')
                 ->get()
             : collect();

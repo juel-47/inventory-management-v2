@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Unit\UnitStoreRequest;
+use App\Http\Requests\Unit\UnitUpdateRequest;
 use App\DataTables\UnitDataTable;
 use App\Models\Unit;
 use Brian2694\Toastr\Facades\Toastr;
@@ -30,13 +31,8 @@ class UnitController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(UnitStoreRequest $request)
     {
-        $request->validate([
-            'name' => 'required|max:200|unique:units,name',
-            'status' => 'required'
-        ]);
-
         $unit = new Unit();
         $unit->name = $request->name;
         $unit->slug = Str::slug($request->name);
@@ -67,13 +63,8 @@ class UnitController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UnitUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'name' => 'required|max:200|unique:units,name,'.$id,
-            'status' => 'required'
-        ]);
-
         $unit = Unit::findOrFail($id);
         $unit->name = $request->name;
         $unit->slug = Str::slug($request->name);

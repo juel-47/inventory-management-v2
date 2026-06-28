@@ -28,7 +28,7 @@ class DashboardController extends Controller
 
         if ($user->can('Manage Reports')) {
             // Admin Global Stats
-            $totalActiveProducts = Product::where('status', 1)->count();
+            $totalActiveProducts = Product::active()->count();
             $totalInactiveProducts = Product::where('status', 0)->count();
             $totalProducts = Product::count();
             $totalIssues = Issue::count();

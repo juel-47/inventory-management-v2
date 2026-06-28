@@ -8,6 +8,11 @@ class SubCategory extends Model
 {
     protected $fillable = ['category_id', 'name', 'slug', 'status'];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

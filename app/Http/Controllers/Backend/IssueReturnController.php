@@ -83,11 +83,8 @@ class IssueReturnController extends Controller
         return view('backend.issue_return.create', compact('issues'));
     }
 
-    public function getIssueItems(Request $request)
+    public function getIssueItems(\App\Http\Requests\IssueReturn\IssueReturnGetItemsRequest $request)
     {
-        $request->validate([
-            'issue_id' => 'required|exists:issues,id'
-        ]);
 
         $issue = Issue::with(['items.product', 'items.variant.color', 'items.variant.size'])->findOrFail($request->issue_id);
 
@@ -133,17 +130,8 @@ class IssueReturnController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\IssueReturn\IssueReturnStoreRequest $request)
     {
-        $request->validate([
-            'issue_id' => 'required|exists:issues,id',
-            'note' => 'nullable|string',
-            'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.condition' => 'required|in:good,damaged',
-        ]);
 
         $issue = Issue::findOrFail($request->issue_id);
 

@@ -78,11 +78,9 @@ class WishlistController extends Controller
     /**
      * Toggle a product in the wishlist (add/remove)
      */
-    public function toggle(Request $request)
+    public function toggle(\App\Http\Requests\Frontend\Wishlist\WishlistToggleRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-        ]);
+        $validated = $request->validated();
 
         $productId = $validated['product_id'];
 

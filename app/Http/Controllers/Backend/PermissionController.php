@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\DataTables\PermissionsDataTable;
+use App\Http\Requests\Permission\PermissionStoreRequest;
+use App\Http\Requests\Permission\PermissionUpdateRequest;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 
@@ -25,12 +27,8 @@ class PermissionController extends Controller
         return view('backend.authorization.permission.create');
     }
 
-    public function store(Request $request)
+    public function store(PermissionStoreRequest $request)
     {
-        $request->validate([
-            'name' => ['required', 'max:255']
-        ]);
-
         Permission::findOrCreate($request->name);
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -49,12 +47,8 @@ class PermissionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(PermissionUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'name' => ['required', 'max:255', 'unique:permissions,name,' . $id]
-        ]);
-
         $permission = Permission::findOrFail($id);
         $permission->update(['name' => $request->name]);
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();

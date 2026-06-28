@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Frontend\Account\FrontendStoreCustomProductRequest;
+use App\Http\Requests\Frontend\Account\FrontendAddOrderFormToCartRequest;
+use App\Http\Requests\Frontend\Account\FrontendSaveOrderFormRequest;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
@@ -138,7 +141,7 @@ class AccountController extends Controller
             };
 
         $productsForOrderForm = Product::query()
-            ->where('status', 1)
+            ->active()
             ->with([
                 'variants:id,product_id,name,color,size,color_id,size_id,price,outlet_price',
                 'variants.color:id,name',
@@ -250,21 +253,14 @@ class AccountController extends Controller
         ));
     }
 
-    public function storeCustomProductRequest(Request $request)
+    public function storeCustomProductRequest(FrontendStoreCustomProductRequest $request)
     {
         $user = Auth::user();
         if (!$user || !($user->hasRole('Outlet User') || $user->hasRole('User'))) {
             abort(403, 'Unauthorized access.');
         }
 
-        $validated = $request->validate([
-            'product_description' => 'required|string|min:10',
-            'product_name' => 'nullable|string|max:255',
-            'example_image' => 'nullable|array',
-            'example_image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'quantity_needed' => 'required|integer|min:1',
-            'expected_price' => 'nullable|numeric|min:0',
-        ]);
+        $validated = $request->validated();
 
         try {
             $customRequest = new CustomProductRequest();
@@ -365,14 +361,9 @@ class AccountController extends Controller
         return $response;
     }
 
-    public function addOrderFormToCart(Request $request)
+    public function addOrderFormToCart(FrontendAddOrderFormToCartRequest $request)
     {
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'items.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'items.*.qty' => ['required', 'integer', 'min:1'],
-        ]);
+        $validated = $request->validated();
 
         $items = collect($validated['items'])
             ->map(function ($item) {
@@ -486,15 +477,9 @@ class AccountController extends Controller
         ]);
     }
 
-    public function saveOrderForm(Request $request)
+    public function saveOrderForm(FrontendSaveOrderFormRequest $request)
     {
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'items.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'items.*.qty' => ['required', 'integer', 'min:1'],
-            'note' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $request->validated();
 
         $rows = collect($validated['items'])
             ->map(function ($item) {

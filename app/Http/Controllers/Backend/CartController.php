@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cart\CartAddRequest;
+use App\Http\Requests\Cart\CartRemoveRequest;
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -57,12 +59,9 @@ class CartController extends Controller
     /**
      * Add or Remove product to/from cart (Toggle)
      */
-    public function add(Request $request)
+    public function add(CartAddRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'cart_type' => 'required|in:booking,request'
-        ]);
+        $validated = $request->validated();
 
         $cartType = $validated['cart_type'];
         $productId = $validated['product_id'];
@@ -150,12 +149,9 @@ class CartController extends Controller
     /**
      * Remove product from cart
      */
-    public function remove(Request $request)
+    public function remove(CartRemoveRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'cart_type' => 'required|in:booking,request'
-        ]);
+        $validated = $request->validated();
 
         Cart::where('user_id', Auth::id())
            ->where('product_id', $validated['product_id'])

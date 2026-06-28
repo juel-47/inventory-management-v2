@@ -38,17 +38,13 @@ class ReviewController extends Controller
     /**
      * Store a new review/rating
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\Review\ReviewStoreRequest $request)
     {
         if (!$this->reviewsTableExists()) {
             return response()->json(['status' => 'error', 'message' => 'Reviews system not initialized. Please run migration.'], 503);
         }
 
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $userId = Auth::id();
 
@@ -193,7 +189,7 @@ class ReviewController extends Controller
         }
 
         try {
-            $products = Product::where('status', 1)
+            $products = Product::active()
                 ->with(['reviews' => function ($query) {
                     $query->select('product_id', 'rating');
                 }])

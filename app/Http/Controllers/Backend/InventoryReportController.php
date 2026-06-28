@@ -67,7 +67,7 @@ class InventoryReportController extends Controller
 public function index(Request $request)
 {
     // Fetch all active categories for the filter dropdown
-    $categories = Category::where('status', 1)->get();
+    $categories = Category::active()->get();
 
     // 🔹 Step 1 — Build grouped subquery
     $groupedQuery = InventoryStock::query()

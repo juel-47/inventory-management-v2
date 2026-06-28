@@ -53,7 +53,7 @@ class ProductRequestController extends Controller implements HasMiddleware
              abort(403, 'Only admin can create product requests for outlets/users.');
         }
 
-        $products = Product::where('status', 1)
+        $products = Product::active()
             ->with(['variants.inventoryStocks', 'inventoryStocks'])
             ->get();
         
@@ -62,7 +62,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             $selectedIds = explode(',', $request->ids);
         }
 
-        $users = User::role(['Outlet User', 'User'])->where('status', 1)->orderBy('name', 'asc')->get();
+        $users = User::role(['Outlet User', 'User'])->active()->orderBy('name', 'asc')->get();
 
         return view('backend.product-request.create', compact('products', 'users', 'selectedIds'));
     }
@@ -70,7 +70,7 @@ class ProductRequestController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\ProductRequest\ProductRequestStoreRequest $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -78,17 +78,8 @@ class ProductRequestController extends Controller implements HasMiddleware
             abort(403);
         }
 
-        $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
-            'items.*.qty' => 'required|integer|min:1',
-            'required_days' => 'nullable|integer|min:1',
-            'user_id' => 'required|integer|exists:users,id',
-        ]);
-
         $targetUser = User::role(['Outlet User', 'User'])
-            ->where('status', 1)
+            ->active()
             ->whereKey((int) $request->input('user_id'))
             ->first();
 
@@ -519,7 +510,7 @@ class ProductRequestController extends Controller implements HasMiddleware
     /**
      * Save manual PI/CTN information for a request.
      */
-    public function savePiInfo(Request $request, $id)
+    public function savePiInfo(\App\Http\Requests\ProductRequest\ProductRequestSavePiInfoRequest $request, $id)
     {
         $productRequest = ProductRequest::with('items')->findOrFail($id);
 
@@ -529,45 +520,7 @@ class ProductRequestController extends Controller implements HasMiddleware
             abort(403);
         }
 
-        $validated = $request->validate([
-            'pi_type' => 'required|in:simple,advanced',
-            'shipment_qty' => 'required|integer|min:0',
-            'shipment_date' => 'nullable|date',
-            'packing_note' => 'nullable|string|max:2000',
-            'pi_rows' => 'nullable|array',
-            'pi_rows.*.ordered_qty' => 'nullable|integer|min:0',
-            'pi_rows.*.ctn_no' => 'nullable|string|max:100',
-            'pi_rows.*.ctn_size' => 'nullable|string|max:100',
-            'pi_rows.*.pcs_per_ctn' => 'nullable|integer|min:0',
-            'pi_rows.*.ctn_qty' => 'nullable|integer|min:0',
-            'pi_rows.*.total_pcs' => 'nullable|integer|min:0',
-            'pi_rows.*.nw_kg' => 'nullable|numeric|min:0',
-            'pi_rows.*.gw_kg' => 'nullable|numeric|min:0',
-            'pi_rows.*.note' => 'nullable|string|max:500',
-            'advanced_blocks' => 'nullable|array',
-            'advanced_blocks.*.block_key' => 'nullable|string|max:100',
-            'advanced_blocks.*.product_id' => 'nullable|integer',
-            'advanced_blocks.*.title' => 'nullable|string|max:255',
-            'advanced_blocks.*.color_label' => 'nullable|string|max:255',
-            'advanced_blocks.*.image' => 'nullable|string|max:500',
-            'advanced_blocks.*.variant_headers_csv' => 'nullable|string|max:1000',
-            'advanced_blocks.*.color_headers_csv' => 'nullable|string|max:500',
-            'advanced_blocks.*.size_headers_csv' => 'nullable|string|max:500',
-            'advanced_blocks.*.rows' => 'nullable|array',
-            'advanced_blocks.*.ctn_size' => 'nullable|string|max:100',
-            'advanced_blocks.*.rows.*.ctn_qty' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.ctn_no' => 'nullable|string|max:100',
-            'advanced_blocks.*.rows.*.variants' => 'nullable|array',
-            'advanced_blocks.*.rows.*.variants.*' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.colors' => 'nullable|array',
-            'advanced_blocks.*.rows.*.colors.*' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.sizes' => 'nullable|array',
-            'advanced_blocks.*.rows.*.sizes.*' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.pcs' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.total_pcs' => 'nullable|integer|min:0',
-            'advanced_blocks.*.rows.*.nw_kg' => 'nullable|numeric|min:0',
-            'advanced_blocks.*.rows.*.gw_kg' => 'nullable|numeric|min:0',
-        ]);
+        $validated = $request->validated();
 
         $productRequest->pi_info = PiInfoSupport::sanitizePayload($validated);
         $productRequest->save();
@@ -589,21 +542,15 @@ class ProductRequestController extends Controller implements HasMiddleware
     /**
      * Update the status of the request.
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(\App\Http\Requests\ProductRequest\ProductRequestUpdateStatusRequest $request, $id)
     {
         $productRequest = ProductRequest::findOrFail($id);
         
-        // Only Admin/Manager can update status
         /** @var \App\Models\User $user */
         $user = Auth::user();
         if (!$user->can('Manage Product Requests')) {
             abort(403);
         }
-
-        $request->validate([
-            'status' => 'required|in:pending,approved,rejected,shipped,completed',
-            'admin_note' => 'nullable|string'
-        ]);
 
         DB::beginTransaction();
         try {

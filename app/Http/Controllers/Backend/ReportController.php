@@ -49,9 +49,9 @@ class ReportController extends Controller implements HasMiddleware
             ->where('products.status', 1)
             ->sum(DB::raw('inventory_stocks.quantity * costs.avg_cost'));
         
-        $totalProducts = Product::where('status', 1)->count();
+        $totalProducts = Product::active()->count();
         
-        $lowStockCount = Product::where('status', 1)
+        $lowStockCount = Product::active()
             ->withSum('inventoryStocks', 'quantity')
             ->havingRaw('inventory_stocks_sum_quantity <= 100 OR inventory_stocks_sum_quantity IS NULL')
             ->get()
@@ -93,7 +93,7 @@ class ReportController extends Controller implements HasMiddleware
     {
         $query = Product::with(['category', 'unit', 'brand', 'inventoryStocks'])
             ->withSum('inventoryStocks', 'quantity')
-            ->where('status', 1);
+            ->active();
 
         // Filters
         if ($request->category_id) {
@@ -129,8 +129,8 @@ class ReportController extends Controller implements HasMiddleware
 
         $products = $query->paginate(30)->withQueryString();
         
-        $categories = Category::where('status', 1)->get();
-        $brands = Brand::where('status', 1)->get();
+        $categories = Category::active()->get();
+        $brands = Brand::active()->get();
         $settings = GeneralSetting::first();
 
         if ($request->ajax()) {
@@ -168,7 +168,7 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         $purchases = $query->orderBy('date', 'desc')->paginate(30)->withQueryString();
-        $vendors = Vendor::where('status', 1)->get();
+        $vendors = Vendor::active()->get();
 
         return view('backend.reports.purchase', compact('purchases', 'vendors'));
     }
@@ -186,7 +186,7 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         $details = $query->orderBy('id', 'desc')->paginate(30)->withQueryString();
-        $products = Product::where('status', 1)->get();
+        $products = Product::active()->get();
 
         return view('backend.reports.product_purchase_history', compact('details', 'products'));
     }
@@ -198,7 +198,7 @@ class ReportController extends Controller implements HasMiddleware
     {
         $query = Product::with(['category', 'unit'])
             ->withSum('inventoryStocks', 'quantity')
-            ->where('status', 1)
+            ->active()
             ->havingRaw('inventory_stocks_sum_quantity <= 100 OR inventory_stocks_sum_quantity IS NULL');
 
         // Search functionality
@@ -223,7 +223,7 @@ class ReportController extends Controller implements HasMiddleware
         $products = $query->orderBy('inventory_stocks_sum_quantity', 'asc')
             ->paginate(30)->withQueryString();
 
-        $vendors = Vendor::where('status', 1)->orderBy('shop_name')->get();
+        $vendors = Vendor::active()->orderBy('shop_name')->get();
 
         return view('backend.reports.low_stock', compact('products', 'vendors'));
     }
@@ -269,7 +269,7 @@ class ReportController extends Controller implements HasMiddleware
         $unreadCount = 0;
         
         // 1. Fetch Low Stock Products (Threshold 100)
-        $lowStockProducts = Product::where('status', 1)
+        $lowStockProducts = Product::active()
             ->withSum('inventoryStocks', 'quantity')
             ->havingRaw('inventory_stocks_sum_quantity <= 100 OR inventory_stocks_sum_quantity IS NULL')
             ->orderBy('updated_at', 'desc') // Fetch by recent update

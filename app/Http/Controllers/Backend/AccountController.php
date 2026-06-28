@@ -3,25 +3,27 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\GeneralSetting;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\OrderPaymentReceipt;
 use App\Models\Purchase;
 use App\Models\PurchasePayment;
 use App\Models\PurchasePaymentReceipt;
-use App\Models\GeneralSetting;
 use App\Models\Vendor;
+use App\Services\PaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
-use App\Support\AuditLogSupport;
-use App\Support\StoredFileSupport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Support\PdfImageHelper;
-use Illuminate\Support\Facades\DB;
 
 class AccountController extends Controller
 {
+    public function __construct(
+        private PaymentService $paymentService
+    ) {}
+
     /**
      * Display a listing of all transactions (Ledger).
      */
@@ -43,7 +45,7 @@ class AccountController extends Controller
      */
     public function vendorPaymentIndex(Request $request)
     {
-        $vendors = Vendor::where('status', 1)->orderBy('shop_name')->get();
+        $vendors = Vendor::active()->orderBy('shop_name')->get();
         $query = $this->vendorPaymentQuery($request);
 
         $payments = $query->orderByDesc('id')->paginate(30)->withQueryString();
@@ -195,7 +197,7 @@ class AccountController extends Controller
      */
     public function vendorDuePurchases(Request $request)
     {
-        $vendors = Vendor::where('status', 1)->orderBy('shop_name')->get();
+        $vendors = Vendor::active()->orderBy('shop_name')->get();
 
         $query = Purchase::query()->with('vendor')->where('due_amount', '>', 0);
 
@@ -672,174 +674,55 @@ class AccountController extends Controller
     /**
      * Search for an order by number for manual payment.
      */
-    public function searchOrder(Request $request)
+    public function searchOrder(\App\Http\Requests\Account\AccountSearchOrderRequest $request)
     {
-        $request->validate([
-            'order_no' => 'required|string',
-        ]);
+        $result = $this->paymentService->findOrderForPayment($request->order_no);
 
-        $order = Order::with('user')->where('order_no', $request->order_no)->first();
-
-        if (!$order) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found!',
-            ], 404);
+        if ($result === null) {
+            return response()->json(['success' => false, 'message' => 'Order not found!'], 404);
         }
 
-        if ($order->status !== 'completed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment can only be recorded for completed orders.',
-            ], 422);
+        if (isset($result['error'])) {
+            return response()->json(['success' => false, 'message' => $result['error']], $result['code']);
         }
 
-        // Reconcile totals in database dynamically
-        $order->reconcileTotals();
-        $order->refresh();
-
-        return response()->json([
-            'success' => true,
-            'order' => [
-                'id' => $order->id,
-                'order_no' => $order->order_no,
-                'customer_name' => $order->billing_name,
-                'total_amount' => number_format($order->total_amount, 2),
-                'paid_amount' => number_format($order->paid_amount, 2),
-                'due_amount' => number_format($order->due_amount, 2),
-                'due_raw' => $order->due_amount,
-                'status' => ucfirst($order->status),
-            ]
-        ]);
+        return response()->json(['success' => true, 'order' => $result]);
     }
 
     /**
      * Search for a purchase invoice for vendor payment.
      */
-    public function searchPurchase(Request $request)
+    public function searchPurchase(\App\Http\Requests\Account\AccountSearchPurchaseRequest $request)
     {
-        $request->validate([
-            'invoice_no' => 'required|string',
-        ]);
+        $result = $this->paymentService->findPurchaseForPayment($request->invoice_no);
 
-        $purchase = Purchase::with('vendor')->where('invoice_no', $request->invoice_no)->first();
-
-        if (!$purchase) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Purchase invoice not found!',
-            ], 404);
+        if ($result === null) {
+            return response()->json(['success' => false, 'message' => 'Purchase invoice not found!'], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'purchase' => [
-                'id' => $purchase->id,
-                'invoice_no' => $purchase->invoice_no,
-                'vendor_name' => $purchase->vendor->shop_name ?? 'N/A',
-                'purchase_date' => (string) $purchase->date,
-                'total_amount' => number_format((float) $purchase->total_amount, 2),
-                'paid_amount' => number_format((float) $purchase->paid_amount, 2),
-                'due_amount' => number_format((float) $purchase->due_amount, 2),
-                'due_raw' => (float) $purchase->due_amount,
-                'payment_status' => ucfirst((string) ($purchase->payment_status ?: 'pending')),
-            ],
-        ]);
+        return response()->json(['success' => true, 'purchase' => $result]);
     }
 
     /**
      * Store a new payment for an order.
      */
-    public function storePayment(Request $request, Order $order)
+    public function storePayment(\App\Http\Requests\Account\AccountStorePaymentRequest $request, Order $order)
     {
-        if ($order->status !== 'completed') {
-            Toastr::error('Payment can only be recorded for completed orders.');
+        $validated = $request->validated();
+
+        $result = $this->paymentService->recordOrderPayment(
+            $order,
+            (float) $validated['amount'],
+            $validated['payment_method'],
+            $validated['transaction_id'] ?? null,
+            $validated['note'] ?? null,
+            $request->file('receipts', [])
+        );
+
+        if (!$result['success']) {
+            Toastr::error($result['error']);
             return redirect()->back();
         }
-
-        // Reconcile totals in database dynamically
-        $order->reconcileTotals();
-        $order->refresh();
-
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string',
-            'transaction_id' => 'nullable|string',
-            'note' => 'nullable|string',
-            'receipts' => 'nullable|array',
-            'receipts.*' => 'file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
-        ]);
-
-        $amount = (float) $request->amount;
-
-        if ($amount > $order->due_amount) {
-            Toastr::error('Payment amount cannot be greater than the due amount!');
-            return redirect()->back();
-        }
-
-        $before = [
-            'paid_amount' => (float) $order->paid_amount,
-            'due_amount' => (float) $order->due_amount,
-            'payment_status' => (string) $order->payment_status,
-        ];
-
-        $payment = OrderPayment::create([
-            'order_id' => $order->id,
-            'amount' => $amount,
-            'payment_method' => $request->payment_method,
-            'transaction_id' => $request->transaction_id,
-            'note' => $request->note,
-        ]);
-
-        if ($request->hasFile('receipts')) {
-            foreach ($request->file('receipts') as $file) {
-                if (!$file || !$file->isValid()) {
-                    continue;
-                }
-
-                $filename = 'receipt_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $storedPath = StoredFileSupport::storePrivateFile($file, "order-payments/{$payment->id}", $filename);
-                OrderPaymentReceipt::create([
-                    'order_payment_id' => $payment->id,
-                    'file_path' => $storedPath,
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getClientMimeType(),
-                    'file_size' => $file->getSize(),
-                ]);
-            }
-        }
-
-        // Update the order totals
-        $order->paid_amount += $amount;
-        $order->due_amount -= $amount;
-
-        if ($order->due_amount <= 0) {
-            $order->payment_status = 'paid';
-        } else {
-            $order->payment_status = 'partial';
-        }
-
-        $order->save();
-
-        AuditLogSupport::log([
-            'module' => 'accounts',
-            'action' => 'customer_payment_created',
-            'entity_type' => 'order_payment',
-            'entity_id' => $payment->id,
-            'reference_no' => $order->order_no,
-            'description' => 'Customer payment recorded.',
-            'old_values' => $before,
-            'new_values' => [
-                'payment_id' => $payment->id,
-                'amount' => $amount,
-                'payment_method' => $payment->payment_method,
-                'transaction_id' => $payment->transaction_id,
-                'receipt_count' => $payment->receipts()->count(),
-                'paid_amount' => (float) $order->paid_amount,
-                'due_amount' => (float) $order->due_amount,
-                'payment_status' => (string) $order->payment_status,
-            ],
-        ]);
 
         Toastr::success('Payment recorded successfully!');
 
@@ -853,93 +736,21 @@ class AccountController extends Controller
     /**
      * Store a vendor payment for a purchase invoice.
      */
-    public function storePurchasePayment(Request $request, Purchase $purchase)
+    public function storePurchasePayment(\App\Http\Requests\Account\AccountStorePurchasePaymentRequest $request, Purchase $purchase)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string',
-            'transaction_id' => 'nullable|string',
-            'note' => 'nullable|string',
-            'receipts' => 'nullable|array',
-            'receipts.*' => 'file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
-        ]);
+        $validated = $request->validated();
 
-        $amount = round((float) $request->amount, 2);
+        $result = $this->paymentService->recordVendorPayment(
+            $purchase,
+            round((float) $validated['amount'], 2),
+            $validated['payment_method'],
+            $validated['transaction_id'] ?? null,
+            $validated['note'] ?? null,
+            $request->file('receipts', [])
+        );
 
-        if ($amount > (float) $purchase->due_amount) {
-            Toastr::error('Payment amount cannot be greater than the due amount!');
-            return redirect()->back();
-        }
-
-        $before = [
-            'paid_amount' => (float) $purchase->paid_amount,
-            'due_amount' => (float) $purchase->due_amount,
-            'payment_status' => (string) $purchase->payment_status,
-        ];
-
-        DB::beginTransaction();
-
-        try {
-            $payment = PurchasePayment::create([
-                'purchase_id' => $purchase->id,
-                'vendor_id' => $purchase->vendor_id,
-                'amount' => $amount,
-                'payment_method' => $request->payment_method,
-                'transaction_id' => $request->transaction_id,
-                'note' => $request->note,
-            ]);
-
-            if ($request->hasFile('receipts')) {
-                foreach ($request->file('receipts') as $file) {
-                    if (!$file || !$file->isValid()) {
-                        continue;
-                    }
-
-                    $filename = 'receipt_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $storedPath = StoredFileSupport::storePrivateFile($file, "purchase-payments/{$payment->id}", $filename);
-
-                    PurchasePaymentReceipt::create([
-                        'purchase_payment_id' => $payment->id,
-                        'file_path' => $storedPath,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getClientMimeType(),
-                        'file_size' => $file->getSize(),
-                    ]);
-                }
-            }
-
-            $purchase->paid_amount = round((float) $purchase->paid_amount + $amount, 2);
-            $purchase->due_amount = max(0, round((float) $purchase->due_amount - $amount, 2));
-            $purchase->payment_status = $purchase->due_amount <= 0 ? 'paid' : 'partial';
-            $purchase->save();
-
-            AuditLogSupport::log([
-                'user_id' => auth()->id(),
-                'vendor_id' => $purchase->vendor_id,
-                'module' => 'accounts',
-                'action' => 'vendor_payment_created',
-                'entity_type' => 'purchase_payment',
-                'entity_id' => $payment->id,
-                'reference_no' => $purchase->invoice_no,
-                'description' => 'Vendor payment recorded.',
-                'old_values' => $before,
-                'new_values' => [
-                    'payment_id' => $payment->id,
-                    'purchase_id' => $purchase->id,
-                    'amount' => $amount,
-                    'payment_method' => $payment->payment_method,
-                    'transaction_id' => $payment->transaction_id,
-                    'receipt_count' => $payment->receipts()->count(),
-                    'paid_amount' => (float) $purchase->paid_amount,
-                    'due_amount' => (float) $purchase->due_amount,
-                    'payment_status' => (string) $purchase->payment_status,
-                ],
-            ]);
-
-            DB::commit();
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Toastr::error('Payment failed: ' . $e->getMessage());
+        if (!$result['success']) {
+            Toastr::error($result['error']);
             return redirect()->back();
         }
 
@@ -967,33 +778,11 @@ class AccountController extends Controller
 
     public function destroyReceipt(OrderPaymentReceipt $receipt)
     {
-        $payment = $receipt->payment()->with('order')->first();
-
-        AuditLogSupport::log([
-            'module' => 'accounts',
-            'action' => 'customer_payment_receipt_deleted',
-            'entity_type' => 'order_payment_receipt',
-            'entity_id' => $receipt->id,
-            'reference_no' => $payment?->order?->order_no,
-            'description' => 'Customer payment receipt deleted.',
-            'old_values' => [
-                'receipt_id' => $receipt->id,
-                'payment_id' => $payment?->id,
-                'original_name' => $receipt->original_name,
-                'file_path' => $receipt->file_path,
-            ],
-        ]);
-
-        StoredFileSupport::delete($receipt->file_path);
-
-        $receipt->delete();
+        $this->paymentService->deleteReceipt($receipt, 'order');
         $message = 'Receipt deleted successfully.';
 
         if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-            ]);
+            return response()->json(['status' => 'success', 'message' => $message]);
         }
 
         Toastr::success($message);
@@ -1015,34 +804,11 @@ class AccountController extends Controller
 
     public function destroyPurchaseReceipt(PurchasePaymentReceipt $receipt)
     {
-        $payment = $receipt->payment()->with('purchase')->first();
-
-        AuditLogSupport::log([
-            'vendor_id' => $payment?->vendor_id,
-            'module' => 'accounts',
-            'action' => 'vendor_payment_receipt_deleted',
-            'entity_type' => 'purchase_payment_receipt',
-            'entity_id' => $receipt->id,
-            'reference_no' => $payment?->purchase?->invoice_no,
-            'description' => 'Vendor payment receipt deleted.',
-            'old_values' => [
-                'receipt_id' => $receipt->id,
-                'payment_id' => $payment?->id,
-                'original_name' => $receipt->original_name,
-                'file_path' => $receipt->file_path,
-            ],
-        ]);
-
-        StoredFileSupport::delete($receipt->file_path);
-        $receipt->delete();
-
+        $this->paymentService->deleteReceipt($receipt, 'purchase');
         $message = 'Receipt deleted successfully.';
 
         if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-            ]);
+            return response()->json(['status' => 'success', 'message' => $message]);
         }
 
         Toastr::success($message);

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Setting\SettingGeneralUpdateRequest;
+use App\Http\Requests\Setting\SettingCurrencyUpdateRequest;
+use App\Http\Requests\Setting\SettingEmailUpdateRequest;
+use App\Http\Requests\Setting\SettingTestEmailRequest;
 use App\Models\GeneralSetting;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -23,14 +27,8 @@ class SettingController extends Controller
         return view('backend.settings.general', compact('setting'));
     }
 
-    public function updateGeneral(Request $request)
+    public function updateGeneral(SettingGeneralUpdateRequest $request)
     {
-        $request->validate([
-            'site_name' => ['nullable', 'string', 'max:255'],
-            'contact_email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string'],
-            'site_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
-        ]);
 
         $setting = GeneralSetting::first();
         $logoPath = $setting?->site_logo;
@@ -69,12 +67,8 @@ class SettingController extends Controller
         return view('backend.settings.currency', compact('setting'));
     }
 
-    public function updateCurrency(Request $request)
+    public function updateCurrency(SettingCurrencyUpdateRequest $request)
     {
-        $request->validate([
-            'currency_name' => ['required', 'string', 'max:20'],
-            'currency_icon' => ['required', 'string', 'max:10'],
-        ]);
 
         GeneralSetting::updateOrCreate(
             ['id' => 1],
@@ -98,18 +92,8 @@ class SettingController extends Controller
         return view('backend.settings.email', compact('setting'));
     }
 
-    public function updateEmail(Request $request)
+    public function updateEmail(SettingEmailUpdateRequest $request)
     {
-        $request->validate([
-            'mail_mailer' => ['required', 'string', 'max:50'],
-            'mail_host' => ['required', 'string', 'max:255'],
-            'mail_port' => ['required', 'integer', 'min:1', 'max:65535'],
-            'mail_username' => ['nullable', 'string', 'max:255'],
-            'mail_password' => ['nullable', 'string', 'max:255'],
-            'mail_encryption' => ['nullable', 'string', 'max:20'],
-            'mail_from_address' => ['required', 'email', 'max:255'],
-            'mail_from_name' => ['required', 'string', 'max:255'],
-        ]);
 
         $setting = GeneralSetting::first();
 
@@ -132,11 +116,8 @@ class SettingController extends Controller
         return redirect()->route('admin.settings.email');
     }
 
-    public function sendTestEmail(Request $request)
+    public function sendTestEmail(SettingTestEmailRequest $request)
     {
-        $request->validate([
-            'test_email' => ['required', 'email', 'max:255'],
-        ]);
 
         try {
             $toEmail = $request->test_email;

@@ -21,4 +21,9 @@ class Vendor extends Model
         'description',
         'status'
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

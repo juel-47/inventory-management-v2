@@ -40,9 +40,9 @@ class BookingController extends Controller
      */
     public function create(Request $request)
     {
-        $vendors = Vendor::where('status', 1)->latest()->get();
-        $units = Unit::where('status', 1)->get();
-        $categories = Category::where('status', 1)->get();
+        $vendors = Vendor::active()->latest()->get();
+        $units = Unit::active()->get();
+        $categories = Category::active()->get();
         
         $selectedIds = [];
         if ($request->has('ids')) {
@@ -50,7 +50,7 @@ class BookingController extends Controller
         }
 
         // Pass products with details for JS population
-        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get(); 
+        $products = Product::active()->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get(); 
         return view('backend.booking.create', compact('vendors', 'products', 'units', 'categories', 'selectedIds'));
     }
 
@@ -59,7 +59,7 @@ class BookingController extends Controller
      */
     public function getSubCategories(Request $request)
     {
-        $subCategories = SubCategory::where('category_id', $request->id)->where('status', 1)->get();
+        $subCategories = SubCategory::where('category_id', $request->id)->active()->get();
         return response()->json($subCategories);
     }
 
@@ -68,7 +68,7 @@ class BookingController extends Controller
      */
     public function getChildCategories(Request $request)
     {
-        $childCategories = ChildCategory::where('sub_category_id', $request->id)->where('status', 1)->get();
+        $childCategories = ChildCategory::where('sub_category_id', $request->id)->active()->get();
         return response()->json($childCategories);
     }
 
@@ -275,12 +275,12 @@ private function generateBookingNumber(): string
         // Fetch all bookings with the same booking_no
         $orderGroup = Booking::where('booking_no', $targetBooking->booking_no)->with(['product.variants.color', 'product.variants.size'])->get();
         
-        $vendors = Vendor::where('status', 1)->latest()->get();
-        $units = Unit::where('status', 1)->get();
-        $categories = Category::where('status', 1)->get();
+        $vendors = Vendor::active()->latest()->get();
+        $units = Unit::active()->get();
+        $categories = Category::active()->get();
         
         // Match create fields: products for selection
-        $products = Product::where('status', 1)->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get();
+        $products = Product::active()->with(['variants.color', 'variants.size', 'category', 'subCategory', 'childCategory', 'unit'])->withSum('inventoryStocks', 'quantity')->latest()->get();
 
         return view('backend.booking.edit', compact('orderGroup', 'targetBooking', 'vendors', 'units', 'categories', 'products'));
     }

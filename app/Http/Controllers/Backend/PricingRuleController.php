@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PricingRule\PricingRuleStoreRequest;
+use App\Http\Requests\PricingRule\PricingRuleUpdateRequest;
 use App\Models\PricingRule;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
@@ -23,15 +25,9 @@ class PricingRuleController extends Controller
         return view('backend.pricing-rules.create');
     }
 
-    public function store(Request $request)
+    public function store(PricingRuleStoreRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255|unique:pricing_rules,name',
-            'sale_multiplier' => 'required|numeric|min:0',
-            'outlet_multiplier' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         $isDefault = (bool)($data['is_default'] ?? false);
         if ($isDefault) {
@@ -56,17 +52,11 @@ class PricingRuleController extends Controller
         return view('backend.pricing-rules.edit', compact('pricingRule'));
     }
 
-    public function update(Request $request, string $id)
+    public function update(PricingRuleUpdateRequest $request, string $id)
     {
         $pricingRule = PricingRule::findOrFail($id);
 
-        $data = $request->validate([
-            'name' => 'required|max:255|unique:pricing_rules,name,' . $pricingRule->id,
-            'sale_multiplier' => 'required|numeric|min:0',
-            'outlet_multiplier' => 'required|numeric|min:0',
-            'is_default' => 'nullable|boolean',
-            'status' => 'required|boolean',
-        ]);
+        $data = $request->validated();
 
         $isDefault = (bool)($data['is_default'] ?? false);
         if ($isDefault) {

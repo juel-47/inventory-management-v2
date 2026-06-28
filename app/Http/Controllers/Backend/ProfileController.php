@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Profile\Backend\ProfilePasswordUpdateRequest;
+use App\Http\Requests\Profile\Backend\ProfileUpdateRequest;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,16 +16,8 @@ class ProfileController extends Controller
     {
         return view('backend.profile.index');
     }
-    public function updateProfile(Request $request)
+    public function updateProfile(ProfileUpdateRequest $request)
     {
-        $request->validate([
-            'name' => ['required', 'max:100'],
-            'email' => ['required', 'email', 'unique:users,email,' . Auth::user()->id],
-            'image' => ['nullable', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:2048'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'outlet_name' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string'],
-        ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -52,12 +46,8 @@ class ProfileController extends Controller
         $user->save();
         return redirect()->back()->with('success', 'Profile updated successfully');
     }
-    public function updatePassword(Request $request)
+    public function updatePassword(ProfilePasswordUpdateRequest $request)
     {
-        $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', 'min:8']
-        ]);
         $request->user()->update([
             'password' => bcrypt($request->password)
         ]);

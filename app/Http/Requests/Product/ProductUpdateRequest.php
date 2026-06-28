@@ -51,6 +51,12 @@ class ProductUpdateRequest extends FormRequest
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.outlet_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.current_stock' => ['nullable', 'numeric'],
+            'vendor_id' => ['nullable', 'integer', 'exists:vendors,id'],
+            'product_number' => ['nullable', 'string', 'max:200'],
+            'self_number' => ['nullable', 'string', 'max:200'],
+            'custom_label' => ['nullable', 'string', 'max:200'],
+            'product_type' => ['nullable', 'string', 'max:200'],
+            'product_type_id' => ['nullable', 'integer', 'exists:product_types,id'],
             // qty removed from product update form
         ];
     }

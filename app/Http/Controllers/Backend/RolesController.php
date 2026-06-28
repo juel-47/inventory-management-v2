@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\DataTables\RolesDataTable;
+use App\Http\Requests\Roles\RolesStoreRequest;
+use App\Http\Requests\Roles\RolesUpdateRequest;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -30,14 +32,8 @@ class RolesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(RolesStoreRequest $request)
     {
-        $request->validate([
-            'name' => ['required', 'max:255', 'unique:roles,name'],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['exists:permissions,id']
-        ]);
-
         $role = Role::create(['name' => $request->name]);
 
         if ($request->has('permissions')) {
@@ -63,14 +59,8 @@ class RolesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(RolesUpdateRequest $request, string $id)
     {
-        $request->validate([
-            'name' => ['required', 'max:255', 'unique:roles,name,' . $id],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['exists:permissions,id']
-        ]);
-
         $role = Role::findOrFail($id);
         $role->update(['name' => $request->name]);
 

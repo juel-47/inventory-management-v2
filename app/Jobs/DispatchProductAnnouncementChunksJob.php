@@ -63,7 +63,7 @@ class DispatchProductAnnouncementChunksJob implements ShouldQueue, ShouldBeUniqu
 
         User::query()
             ->select('id')
-            ->where('status', 1)
+            ->active()
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->orderBy('id')

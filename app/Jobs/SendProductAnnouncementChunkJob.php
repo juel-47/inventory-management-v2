@@ -102,7 +102,7 @@ class SendProductAnnouncementChunkJob implements ShouldQueue, ShouldBeUnique
         $recipients = User::query()
             ->select(['id', 'name', 'email'])
             ->whereIn('id', $this->recipientIds)
-            ->where('status', 1)
+            ->active()
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->orderBy('id')
