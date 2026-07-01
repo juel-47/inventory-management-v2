@@ -145,7 +145,7 @@ class CheckoutService
             DB::commit();
 
             try {
-                Mail::to('tofayelhossaintuhin79@gmail.com')->send(new AdminOrderNotificationMail($order));
+                Mail::to('ctpwh2026@gmail.com')->send(new AdminOrderNotificationMail($order));
             } catch (\Exception $e) {
                 Log::error('Failed to send admin order notification: ' . $e->getMessage());
             }
