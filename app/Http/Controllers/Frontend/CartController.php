@@ -501,7 +501,7 @@ class CartController extends Controller
 
             // Send Admin Notification Email
             try {
-                Mail::to('tofayelhossaintuhin79@gmail.com')
+                Mail::to('ctpwh2026@gmail.com')
                     ->send(new AdminOrderNotificationMail($order));
             } catch (\Exception $e) {
                 Log::error('Failed to send admin order notification: ' . $e->getMessage());
