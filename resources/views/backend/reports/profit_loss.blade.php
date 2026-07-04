@@ -101,21 +101,21 @@
                                                 <tbody>
                                                      <tr>
                                                         <td class="font-weight-bold">Revenue</td>
-                                                         <td class="text-right text-success">{!! formatConverted($totalRevenue) !!}</td>
+                                                         <td class="text-right text-black"><strong>{!! formatConverted($totalRevenue) !!}</strong></td>
                                                      </tr>
                                                      <tr>
                                                          <td class="font-weight-bold">Cost of Goods Sold (Purchases)</td>
-                                                         <td class="text-right text-danger">-{!! formatConverted($totalCost) !!}</td>
+                                                         <td class="text-right text-danger"><strong>-{!! formatConverted($totalCost) !!}</strong></td>
                                                      </tr>
                                                      <tr class="table-active">
                                                          <td class="font-weight-bold">Gross Profit</td>
-                                                         <td class="text-right font-weight-bold {{ $grossProfit >= 0 ? 'text-success' : 'text-danger' }}">
-                                                             {!! formatConverted($grossProfit) !!}
+                                                         <td class="text-right font-weight-bold {{ $grossProfit >= 0 ? 'text-black' : 'text-danger' }}">
+                                                            <strong> {!! formatConverted($grossProfit) !!}</strong>
                                                          </td>
                                                      </tr>
                                                     <tr>
                                                         <td class="font-weight-bold">Profit Margin</td>
-                                                        <td class="text-right">{{ number_format($profitMargin, 2) }}%</td>
+                                                        <td class="text-right font-weight-bold text-black "><strong>{{ number_format($profitMargin, 2) }}%</strong></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
