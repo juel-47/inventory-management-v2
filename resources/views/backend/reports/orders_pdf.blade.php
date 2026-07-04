@@ -76,9 +76,9 @@
         <div class="summary-row">
             <div class="summary-box"><div class="lbl">Orders</div><div class="val">{{ number_format($summary->total_orders) }}</div></div>
             <div class="summary-box"><div class="lbl">Order Value</div><div class="val" style="color:#28a745">{!! formatConverted($summary->total_value) !!}</div></div>
-            <div class="summary-box"><div class="lbl">Issues</div><div class="val" style="color:#e67e22">{{ number_format($issueStats->total_issues) }}</div></div>
+            {{-- <div class="summary-box"><div class="lbl">Issues</div><div class="val" style="color:#e67e22">{{ number_format($issueStats->total_issues) }}</div></div>
             <div class="summary-box"><div class="lbl">Issue Qty</div><div class="val" style="color:#3498db">{{ number_format($issueStats->total_issued_qty) }}</div></div>
-            <div class="summary-box"><div class="lbl">Issue Value</div><div class="val" style="color:#2c3e50">{!! formatConverted($issueValue) !!}</div></div>
+            <div class="summary-box"><div class="lbl">Issue Value</div><div class="val" style="color:#2c3e50">{!! formatConverted($issueValue) !!}</div></div> --}}
             <div class="summary-box"><div class="lbl">Paid</div><div class="val" style="color:#7f8c8d">{!! formatConverted($paymentStats->total_paid) !!}</div></div>
             <div class="summary-box"><div class="lbl">Due</div><div class="val" style="color:#e74c3c">{!! formatConverted($totalDue) !!}</div></div>
             <div class="summary-box"><div class="lbl">Pending</div><div class="val" style="color:#8e44ad">{!! formatConverted($pendingValue) !!}</div></div>
@@ -108,7 +108,7 @@
             </tbody>
         </table>
 
-        {{-- Issues --}}
+        {{-- Issues --}}{{-- 
         <div class="section-title">Issues ({{ $issues->count() }})</div>
         <table>
             <thead><tr>
@@ -129,7 +129,7 @@
                     <tr><td colspan="7" class="tc" style="color:#999">No issues.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </table> --}}
 
         {{-- Payments --}}
         <div class="section-title">Payments ({{ $payments->count() }})</div>
@@ -155,7 +155,7 @@
 
         <div class="page-break"></div>
 
-        {{-- Product Comparison --}}
+        {{-- Product Comparison --}}{{-- 
         <div class="section-title">Product Comparison — Ordered vs Issued</div>
         <table>
             <thead><tr>
@@ -181,13 +181,13 @@
                     <tr><td colspan="7" class="tc" style="color:#999">No products.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </table> --}}
 
         {{-- Monthly Trend --}}
         <div class="section-title">Monthly Trend</div>
         <table>
             <thead><tr>
-                <th>Month</th><th class="tc">Orders</th><th class="tr">Value</th><th class="tc">Issue Qty</th><th class="tc">Products</th>
+                <th>Month</th><th class="tc">Orders</th><th class="tr">Value</th>{{-- <th class="tc">Issue Qty</th><th class="tc">Products</th> --}}
             </tr></thead>
             <tbody>
                 @forelse($monthlyTrend as $t)
@@ -195,11 +195,11 @@
                         <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $t->month)->format('M Y') }}</td>
                         <td class="tc">{{ number_format($t->orders_count) }}</td>
                         <td class="tr">{!! formatConverted($t->total_amount) !!}</td>
-                        <td class="tc">{{ number_format($t->issue_qty) }}</td>
-                        <td class="tc">{{ number_format($t->unique_products) }}</td>
+                        {{-- <td class="tc">{{ number_format($t->issue_qty) }}</td>
+                        <td class="tc">{{ number_format($t->unique_products) }}</td> --}}
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="tc" style="color:#999">No data.</td></tr>
+                    <tr><td colspan="3" class="tc" style="color:#999">No data.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -208,9 +208,10 @@
         {{-- ═══════ GLOBAL PDF ═══════ --}}
         <div class="summary-row">
             <div class="summary-box"><div class="lbl">Orders</div><div class="val">{{ number_format($summary->total_orders) }}</div></div>
-            <div class="summary-box"><div class="lbl">Issue Value</div><div class="val" style="color:#28a745">{!! formatConverted($issueValue) !!}</div></div>
+            <div class="summary-box"><div class="lbl">Total Amount</div><div class="val" style="color:#28a745">{!! formatConverted($totalRevenue) !!}</div></div>
+            {{-- <div class="summary-box"><div class="lbl">Issue Value</div><div class="val" style="color:#28a745">{!! formatConverted($issueValue) !!}</div></div>
             <div class="summary-box"><div class="lbl">Issues</div><div class="val" style="color:#e67e22">{{ number_format($issueStats->total_issues) }}</div></div>
-            <div class="summary-box"><div class="lbl">Issue Qty</div><div class="val" style="color:#3498db">{{ number_format($issueStats->total_issued_qty) }}</div></div>
+            <div class="summary-box"><div class="lbl">Issue Qty</div><div class="val" style="color:#3498db">{{ number_format($issueStats->total_issued_qty) }}</div></div> --}}
         </div>
 
         <div class="section-title">Product Frequency</div>
@@ -233,22 +234,15 @@
             </tbody>
         </table>
 
+        {{-- User Summary --}}{{-- 
         <div class="section-title">User Summary</div>
         <table>
             <thead><tr>
-                <th>#</th><th>User / Outlet</th><th class="tc">Orders</th><th class="tr">Total Value</th><th class="tc">Issues</th><th class="tc">Issue Qty</th>
+                <th>#</th><th>User / Outlet</th><th class="tc">Issues</th><th class="tr">Issue Value</th><th class="tc">Issue Qty</th>
             </tr></thead>
             <tbody>
                 @forelse($userSummary as $userId => $usr)
                     @php
-                        $usrIssues = \App\Models\Issue::where(function ($q) use ($orderIds) {
-                                $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
-                            })
-                            ->where('outlet_id', $userId)->count();
-                        $usrIssueQty = \App\Models\Issue::where(function ($q) use ($orderIds) {
-                                $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
-                            })
-                            ->where('outlet_id', $userId)->sum('total_qty');
                         $userName = optional(\App\Models\User::find($userId))->name ?? 'User #'.$userId;
                     @endphp
                     <tr>
@@ -256,14 +250,13 @@
                         <td>{{ $userName }}</td>
                         <td class="tc">{{ number_format($usr->total_orders) }}</td>
                         <td class="tr">{!! formatConverted($usr->total_value) !!}</td>
-                        <td class="tc">{{ number_format($usrIssues) }}</td>
-                        <td class="tc">{{ number_format($usrIssueQty) }}</td>
+                        <td class="tc">{{ number_format($usr->total_qty ?? 0) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="tc" style="color:#999">No data.</td></tr>
+                    <tr><td colspan="5" class="tc" style="color:#999">No data.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </table> --}}
     @endisset
 
     <div class="footer">

@@ -13,7 +13,8 @@ class IssueItem extends Model
         'issue_id',
         'product_id',
         'variant_id',
-        'quantity'
+        'quantity',
+        'unit_price'
     ];
 
     public function issue()

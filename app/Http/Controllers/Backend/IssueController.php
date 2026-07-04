@@ -255,12 +255,28 @@ class IssueController extends Controller
             }
 
             foreach ($request->items as $item) {
+                // Resolve unit_price: linked order → order_items.unit_price, standalone → products.price
+                $product = Product::find($item['product_id']);
+                if ($request->filled('order_id') && $request->order_id) {
+                    $orderItem = \App\Models\OrderItem::where('order_id', $request->order_id)
+                        ->where('product_id', $item['product_id'])
+                        ->where(function ($q) use ($item) {
+                            $q->where('variant_id', $item['variant_id'] ?? null)
+                              ->orWhereNull('variant_id');
+                        })
+                        ->first();
+                    $unitPrice = $orderItem ? $orderItem->unit_price : ($product->price ?? $product->purchase_price ?? 0);
+                } else {
+                    $unitPrice = $product->price ?? $product->purchase_price ?? 0;
+                }
+
                 // 1. Create Issue Item
                 IssueItem::create([
                     'issue_id' => $issue->id,
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'] ?: null,
                     'quantity' => $item['quantity'],
+                    'unit_price' => $unitPrice,
                 ]);
 
                 // 2. Check main warehouse (outlet 1) stock

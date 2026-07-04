@@ -57,6 +57,7 @@
                             </div>
                         </div>
                     </div>
+                    {{-- ISSUES COMMENTED OUT --}}{{-- 
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-warning"><i class="fas fa-truck-loading"></i></div>
@@ -84,6 +85,7 @@
                             </div>
                         </div>
                     </div>
+                    --}}{{-- END ISSUES COMMENTED OUT --}}
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></div>
@@ -200,21 +202,21 @@
                                     <i class="fas fa-shopping-cart"></i> Orders <span class="badge badge-primary">{{ $orders->count() }}</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+                            {{-- <li class="nav-item">
                                 <a class="nav-link" id="issues-tab" data-toggle="tab" href="#issuesTab">
                                     <i class="fas fa-truck-loading"></i> Issues <span class="badge badge-warning">{{ $issues->count() }}</span>
                                 </a>
-                            </li>
+                            </li> --}}
                             <li class="nav-item">
                                 <a class="nav-link" id="payments-tab" data-toggle="tab" href="#paymentsTab">
                                     <i class="fas fa-credit-card"></i> Payments <span class="badge badge-info">{{ $payments->count() }}</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+                            {{-- <li class="nav-item">
                                 <a class="nav-link" id="products-tab" data-toggle="tab" href="#productsTab">
                                     <i class="fas fa-box"></i> Product Comparison
                                 </a>
-                            </li>
+                            </li> --}}
                             <li class="nav-item">
                                 <a class="nav-link" id="monthly-tab" data-toggle="tab" href="#monthlyTab">
                                     <i class="fas fa-calendar-alt"></i> Monthly Trend
@@ -264,7 +266,7 @@
                         </div>
                     </div>
 
-                    <div class="tab-pane fade" id="issuesTab">
+                    {{-- <div class="tab-pane fade" id="issuesTab">
                         <div class="card">
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -295,7 +297,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="tab-pane fade" id="paymentsTab">
                         <div class="card">
@@ -328,7 +330,7 @@
                         </div>
                     </div>
 
-                    <div class="tab-pane fade" id="productsTab">
+                    {{-- <div class="tab-pane fade" id="productsTab">
                         <div class="card">
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -373,7 +375,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="tab-pane fade" id="monthlyTab">
                         <div class="card">
@@ -384,8 +386,8 @@
                                             <th>Month</th>
                                             <th class="text-center">Orders</th>
                                             <th class="text-right">Order Value</th>
-                                            <th class="text-center">Issue Qty</th>
-                                            <th class="text-center">Products</th>
+                                            {{-- <th class="text-center">Issue Qty</th>
+                                            <th class="text-center">Products</th> --}}
                                         </tr></thead>
                                         <tbody>
                                             @forelse($monthlyTrend as $trend)
@@ -393,11 +395,11 @@
                                                     <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('F Y') }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($trend->orders_count) }}</span></td>
                                                     <td class="text-right">{!! formatConverted($trend->total_amount) !!}</td>
-                                                    <td class="text-center">{{ number_format($trend->issue_qty) }}</td>
-                                                    <td class="text-center">{{ number_format($trend->unique_products) }}</td>
+                                                    {{-- <td class="text-center">{{ number_format($trend->issue_qty) }}</td>
+                                                    <td class="text-center">{{ number_format($trend->unique_products) }}</td> --}}
                                                 </tr>
                                             @empty
-                                                <tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>
+                                                <tr><td colspan="3" class="text-center text-muted py-4">No data.</td></tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -407,7 +409,7 @@
                     </div>
                 </div>
 
-            {{-- ─── GLOBAL MODE: 4 Summary Cards + 3 Tabs ─── --}}
+            {{-- ─── GLOBAL MODE: 2 Summary Cards + 3 Tabs ─── --}}
             @else
                 <div class="row">
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
@@ -420,6 +422,15 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <div class="card card-statistic-1">
+                            <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
+                            <div class="card-wrap">
+                                <div class="card-header"><h4>Total Amount</h4></div>
+                                <div class="card-body">{!! formatConverted($totalRevenue) !!}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
                             <div class="card-wrap">
@@ -445,7 +456,7 @@
                                 <div class="card-body">{{ number_format($issueStats->total_issued_qty) }}</div>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
 
                 {{-- ─── GLOBAL: Filter ────────────────────────── --}}
@@ -540,11 +551,11 @@
                                     <i class="fas fa-calendar-alt"></i> Monthly Trend
                                 </a>
                             </li>
-                            <li class="nav-item">
+                            {{-- <li class="nav-item">
                                 <a class="nav-link" id="users-tab" data-toggle="tab" href="#users">
                                     <i class="fas fa-users"></i> User Summary
                                 </a>
-                            </li>
+                            </li> --}}
                         </ul>
                     </div>
                 </div>
@@ -560,24 +571,24 @@
                                             <th class="text-center">Times Ordered</th>
                                             <th class="text-center">Total Qty</th>
                                             <th class="text-right">Total Value</th>
-                                            <th class="text-center">Times Issued</th>
+                                            {{-- <th class="text-center">Times Issued</th> --}}
                                         </tr></thead>
                                         <tbody>
                                             @forelse($productFrequency as $index => $item)
-                                                @php
+                                                {{-- @php
                                                     $issueCount = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds))
                                                         ->where('product_id', $item->product_id)->count();
-                                                @endphp
+                                                @endphp --}}
                                                 <tr>
                                                     <td>{{ $productFrequency->firstItem() + $index }}</td>
                                                     <td>{{ $item->product_name }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($item->times_ordered) }}</span></td>
                                                     <td class="text-center">{{ number_format($item->total_qty) }}</td>
                                                     <td class="text-right">{!! formatConverted($item->total_value) !!}</td>
-                                                    <td class="text-center"><span class="badge badge-info">{{ number_format($issueCount) }}</span></td>
+                                                    {{-- <td class="text-center"><span class="badge badge-info">{{ number_format($issueCount) }}</span></td> --}}
                                                 </tr>
                                             @empty
-                                                <tr><td colspan="6" class="text-center text-muted py-4">No data.</td></tr>
+                                                <tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -596,12 +607,12 @@
                                             <th>Month</th>
                                             <th class="text-center">Orders</th>
                                             <th class="text-right">Amount</th>
-                                            <th class="text-center">Issue Qty</th>
-                                            <th class="text-center">Products</th>
+                                            {{-- <th class="text-center">Issue Qty</th>
+                                            <th class="text-center">Products</th> --}}
                                         </tr></thead>
                                         <tbody>
                                             @forelse($monthlyTrend as $trend)
-                                                @php
+                                                {{-- @php
                                                     $monthStart = substr($trend->month, 0, 4) . '-' . substr($trend->month, 5, 2);
                                                     $linkedQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
                                                         ->whereYear('created_at', substr($trend->month, 0, 4))
@@ -623,13 +634,46 @@
                                                         ->whereMonth('issues.created_at', substr($trend->month, 5, 2))
                                                         ->distinct('issue_items.product_id')
                                                         ->count('issue_items.product_id');
-                                                @endphp
+                                                @endphp --}}
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('F Y') }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($trend->orders_count) }}</span></td>
-                                                    <td class="text-right">{!! formatConverted($monthIssueValue) !!}</td>
-                                                    <td class="text-center">{{ number_format($monthIssueQty) }}</td>
-                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td>
+                                                    <td class="text-right">{!! formatConverted($trend->total_amount) !!}</td>
+                                                    {{-- <td class="text-center">{{ number_format($monthIssueQty) }}</td>
+                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td> --}}
+                                                </tr>
+                                            @empty
+                                                <tr><td colspan="3" class="text-center text-muted py-4">No data.</td></tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- <div class="tab-pane fade" id="users">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-md mb-0">
+                                        <thead><tr>
+                                            <th>#</th><th>User / Outlet</th>
+                                            <th class="text-center">Issues</th>
+                                            <th class="text-right">Issue Value</th>
+                                            <th class="text-center">Issue Qty</th>
+                                        </tr></thead>
+                                        <tbody>
+                                            @forelse($userSummary as $userId => $usr)
+                                                @php
+                                                    $userName = optional(\App\Models\User::find($userId))->name ?? 'User #'.$userId;
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td><a href="{{ route('admin.reports.orders', ['user_id' => $userId]) }}">{{ $userName }}</a></td>
+                                                    <td class="text-center"><span class="badge badge-primary">{{ number_format($usr->total_orders) }}</span></td>
+                                                    <td class="text-right">{!! formatConverted($usr->total_value) !!}</td>
+                                                    <td class="text-center">{{ number_format($usr->total_qty ?? 0) }}</td>
                                                 </tr>
                                             @empty
                                                 <tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>
@@ -639,50 +683,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="users">
-                        <div class="card">
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-md mb-0">
-                                        <thead><tr>
-                                            <th>#</th><th>User / Outlet</th>
-                                            <th class="text-center">Orders</th>
-                                            <th class="text-right">Value</th>
-                                            <th class="text-center">Issues</th>
-                                            <th class="text-center">Issue Qty</th>
-                                        </tr></thead>
-                                        <tbody>
-                                            @forelse($userSummary as $userId => $usr)
-                                                @php
-                                                    $usrIssues = \App\Models\Issue::where(function ($q) use ($orderIds) {
-                                                            $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
-                                                        })
-                                                        ->where('outlet_id', $userId)->count();
-                                                    $usrIssueQty = \App\Models\Issue::where(function ($q) use ($orderIds) {
-                                                            $q->whereIn('order_id', $orderIds)->orWhereNull('order_id');
-                                                        })
-                                                        ->where('outlet_id', $userId)->sum('total_qty');
-                                                    $userName = optional(\App\Models\User::find($userId))->name ?? 'User #'.$userId;
-                                                @endphp
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td><a href="{{ route('admin.reports.orders', ['user_id' => $userId]) }}">{{ $userName }}</a></td>
-                                                    <td class="text-center"><span class="badge badge-primary">{{ number_format($usr->total_orders) }}</span></td>
-                                                    <td class="text-right">{!! formatConverted($usr->total_value) !!}</td>
-                                                    <td class="text-center">{{ number_format($usrIssues) }}</td>
-                                                    <td class="text-center">{{ number_format($usrIssueQty) }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr><td colspan="6" class="text-center text-muted py-4">No data.</td></tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </div> --}}
                 </div>
 
             @endisset
