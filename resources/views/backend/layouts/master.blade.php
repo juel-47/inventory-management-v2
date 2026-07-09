@@ -267,13 +267,12 @@
                 dataType: 'json',
                 success: function(data) {
                     if (data.count > 0) {
-                        // Update Navbar Badge
                         $('#low-stock-count-badge').text(data.count).show();
-                        
-                        // Add Shake Animation to the Bell ICON only
+                        $('#low-stock-count-toggle').addClass('has-count');
                         $('#low-stock-count-toggle i').addClass('shake');
                     } else {
                         $('#low-stock-count-badge').hide();
+                        $('#low-stock-count-toggle').removeClass('has-count');
                         $('#low-stock-count-toggle i').removeClass('shake');
                     }
 
@@ -281,26 +280,26 @@
                     let listHtml = '';
                     if (data.notifications && data.notifications.length > 0) {
                         data.notifications.forEach(function(item) {
-                            let unreadStyle = item.is_unread ? 'background-color: #f0f3ff; border-left: 4px solid #6777ef;' : '';
+                            let unreadStyle = item.is_unread ? 'background: rgba(99,102,241,0.08); border-left: 3px solid #6366f1;' : 'background: transparent;';
                             if (item.is_out_of_stock && item.is_unread) {
-                                unreadStyle = 'background-color: #fff5f5; border-left: 4px solid #fc544b;';
+                                unreadStyle = 'background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444;';
                             }
 
                             listHtml += `
-                                <a href="${item.url}" class="dropdown-item" style="padding: 12px 15px; display: flex; align-items: flex-start; border-bottom: 1px solid #f9f9f9; ${unreadStyle}">
-                                    <div class="dropdown-item-icon ${item.class} text-white" style="width: 40px; height: 40px; min-width: 40px; line-height: 40px; font-size: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <a href="${item.url}" class="dropdown-item" style="padding: 12px 14px; display: flex; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.04); border-radius: 0; ${unreadStyle}">
+                                    <div class="dropdown-item-icon ${item.class} text-white" style="width: 36px; height: 36px; min-width: 36px; line-height: 36px; font-size: 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                                         <i class="${item.icon}"></i>
                                     </div>
-                                    <div class="dropdown-item-desc" style="padding-left: 15px; flex-grow: 1;">
-                                        <div style="font-weight: 700; font-size: 14px; color: #34395e; line-height: 1.2;">${item.title}</div>
-                                        <div class="text-muted" style="font-size: 12px; margin-top: 2px;">${item.desc}</div>
-                                        <div class="time text-primary" style="font-size: 11px; margin-top: 4px; font-weight: 600;">${item.time}</div>
+                                    <div class="dropdown-item-desc" style="padding-left: 12px; flex-grow: 1;">
+                                        <div style="font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.2;">${item.title}</div>
+                                        <div style="font-size: 11px; margin-top: 2px; color: rgba(255,255,255,0.45);">${item.desc}</div>
+                                        <div style="font-size: 10px; margin-top: 4px; font-weight: 600; color: var(--nb-primary);">${item.time}</div>
                                     </div>
                                 </a>
                             `;
                         });
                     } else {
-                        listHtml = '<div class="dropdown-item text-center py-4 text-muted">No new notifications</div>';
+                        listHtml = '<div class="dropdown-item text-center py-4" style="color: rgba(255,255,255,0.4); background: transparent;">No new notifications</div>';
                     }
                     $('#low-stock-list').html(listHtml);
                 },
@@ -319,6 +318,7 @@
                 },
                 success: function() {
                     $('#low-stock-count-badge').hide();
+                    $('#low-stock-count-toggle').removeClass('has-count');
                     $('#low-stock-count-toggle i').removeClass('shake');
                     // Refresh the list to show them as "read"
                     checkLowStock();
