@@ -1,7 +1,11 @@
 /* Custom CSS */
 
-body.layout-3 .navbar {
-    margin: 0px !important;
+/* =============================================
+   NAVBAR LAYOUT FIX — overrides any custom.css
+   margin that breaks the fixed top navbar
+   ============================================= */
+body.layout-3 .navbar.main-navbar {
+    margin: 0 !important;
 }
 
 input[type="number"] {
