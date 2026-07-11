@@ -2825,3 +2825,11 @@ span.select2.select2-container.select2-container--default {
 div.dt-container .dt-paging .dt-paging-button {
     padding: 0px !important;
 }
+
+/* =============================================
+   NAVBAR LAYOUT FIX — overrides any custom.css
+   margin that breaks the fixed top navbar
+   ============================================= */
+body.layout-3 .navbar.main-navbar {
+    margin: 0 !important;
+}
