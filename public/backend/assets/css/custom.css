@@ -8,7 +8,7 @@ input[type="number"] {
     -moz-appearance: textfield !important;
     /* Firefox */
     -webkit-appearance: none !important;
-    /* Chrome, Safari */
+
     appearance: none !important;
 }
 
@@ -34,8 +34,7 @@ input[type="number"]::-webkit-outer-spin-button {
         border-radius: 4px !important;
     }
 
-    /* Hide some elements on very small screens if needed, 
-       but for now just wrapping and sizing should fix the overlay */
+   
 }
 
 /* Table Pagination Fix */
