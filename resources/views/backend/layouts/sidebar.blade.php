@@ -363,7 +363,7 @@
 
 .sidebar-menu li.active>a {
   background: var(--sb-primary-soft);
-  color: #fff !important;
+  color: #8b96d2!important;
   box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
@@ -380,9 +380,9 @@
   box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-.sidebar-menu li.active>a i {
+/* .sidebar-menu li.active>a i {
   color: var(--sb-primary);
-}
+} */
 
 .sidebar-menu li .has-dropdown {
   position: relative;
