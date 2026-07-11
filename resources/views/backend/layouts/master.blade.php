@@ -170,8 +170,8 @@
   <script src="{{ asset('backend/assets/js/custom.js') }}"></script>
   {!! Toastr::message() !!}
   <script>
-  @if($errors - > any())
-  @foreach($errors - > all() as $error)
+  @if($errors->any())
+  @foreach($errors->all() as $error)
   toastr.error("{{ $error }}")
   @endforeach
   @endif
