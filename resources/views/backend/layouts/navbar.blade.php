@@ -790,7 +790,7 @@
     <li class="nav-item dropdown">
       <a href="#" data-toggle="dropdown" class="nav-link has-dropdown">
         <i class="fas fa-chart-bar"></i>
-        <span>Reports <i class="fas fa-chevron-down dropdown-arrow"></i></span>
+        <span>Reportss <i class="fas fa-chevron-down dropdown-arrow"></i></span>
       </a>
       <ul class="dropdown-menu">
         <li class="dropdown-header">Analytics</li>
