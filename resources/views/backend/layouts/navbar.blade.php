@@ -1,51 +1,35 @@
 <style>
 :root {
-  --nb-bg: #0b1120;
-  --nb-surface: #131c31;
+  --nb-bg: #0f172a;
+  --nb-surface: #1e293b;
   --nb-border: rgba(255, 255, 255, 0.06);
-  --nb-primary: #6366f1;
-  --nb-primary-soft: rgba(99, 102, 241, 0.12);
-  --nb-text: rgba(255, 255, 255, 0.9);
-  --nb-muted: rgba(255, 255, 255, 0.45);
-  --nb-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
-  --nb-radius: 10px;
+  --nb-primary: #60a5fa;
+  --nb-primary-soft: rgba(96, 165, 250, 0.1);
+  --nb-text: rgba(255, 255, 255, 0.92);
+  --nb-muted: rgba(255, 255, 255, 0.38);
+  --nb-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
 .navbar.main-navbar {
-  background: linear-gradient(135deg, #0b1120 0%, #111b2e 100%);
-  padding: 0 32px;
-  min-height: 70px;
+  background: #0f172a;
+  padding: 0 48px;
+  min-height: 68px;
   border-bottom: 1px solid var(--nb-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  position: sticky;
+  box-shadow: var(--nb-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1030;
-}
-
-.navbar.main-navbar .navbar-brand {
-  color: #fff !important;
-  font-weight: 700;
-  font-size: 18px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.navbar.main-navbar .navbar-brand .brand-text {
-  background: linear-gradient(90deg, #fff 65%, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.navbar.main-navbar .navbar-brand .brand-badge {
-  display: none;
+  margin: 0;
+  border-radius: 0;
 }
 
 .navbar.main-navbar .navbar-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   height: 100%;
 }
 
@@ -61,45 +45,43 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
-  height: 70px;
+  padding: 0 14px;
+  height: 68px;
   color: var(--nb-muted) !important;
   font-weight: 500;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.6px;
+  transition: all 0.2s ease;
   position: relative;
-  border-radius: 8px;
-  gap: 2px;
-  min-width: 58px;
+  border-radius: 6px;
+  gap: 1px;
+  min-width: 50px;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link i {
-  font-size: 18px;
+  font-size: 17px;
   color: var(--nb-muted);
-  margin-bottom: 2px;
-  transition: all 0.3s ease;
+  margin-bottom: 1px;
+  transition: all 0.2s ease;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-  font-size: 9.5px;
+  font-size: 8.5px;
   line-height: 1.2;
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   white-space: nowrap;
-  opacity: 0.75;
+  opacity: 0.65;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link:hover {
   color: #fff !important;
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link:hover i {
   color: var(--nb-primary);
-  transform: scale(1.1);
 }
 
 .navbar.main-navbar .navbar-nav .nav-item.active .nav-link {
@@ -117,11 +99,11 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.45);
+  width: 18px;
+  height: 2.5px;
+  background: var(--nb-primary);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 10px rgba(96, 165, 250, 0.4);
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link.has-dropdown::after {
@@ -129,10 +111,10 @@
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link.has-dropdown .dropdown-arrow {
-  font-size: 7px;
-  margin-left: 4px;
-  opacity: 0.5;
-  transition: all 0.3s ease;
+  font-size: 6px;
+  margin-left: 3px;
+  opacity: 0.35;
+  transition: all 0.2s ease;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link.has-dropdown:hover .dropdown-arrow {
@@ -141,21 +123,21 @@
 }
 
 .navbar.main-navbar .dropdown-menu {
-  background: rgba(19, 28, 49, 0.97);
-  backdrop-filter: blur(16px);
+  background: rgba(30, 41, 59, 0.98);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--nb-border);
-  border-radius: 12px;
-  padding: 6px;
-  margin-top: 6px !important;
-  min-width: 220px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-  animation: nbFade 0.2s ease;
+  border-radius: 10px;
+  padding: 5px;
+  margin-top: 4px !important;
+  min-width: 200px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: nbFade 0.15s ease;
 }
 
 @keyframes nbFade {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.96);
+    transform: translateY(-4px) scale(0.97);
   }
 
   to {
@@ -165,28 +147,27 @@
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-item {
-  padding: 9px 14px;
-  color: rgba(255, 255, 255, 0.75) !important;
-  font-size: 12.5px;
+  padding: 7px 12px;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 11.5px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  gap: 9px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-item i {
-  font-size: 14px;
-  width: 18px;
+  font-size: 13px;
+  width: 16px;
   color: var(--nb-muted);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-item:hover {
   background: var(--nb-primary-soft) !important;
   color: #fff !important;
-  transform: translateX(3px);
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-item:hover i {
@@ -194,23 +175,23 @@
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-divider {
-  margin: 4px 6px;
+  margin: 3px 8px;
   border-color: var(--nb-border);
 }
 
 .navbar.main-navbar .dropdown-menu .dropdown-header {
   color: var(--nb-muted);
-  font-size: 9px;
+  font-size: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 6px 12px 2px;
+  letter-spacing: 0.7px;
+  padding: 5px 10px 1px;
   font-weight: 700;
 }
 
 .navbar.main-navbar .navbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-left: auto;
   height: 100%;
 }
@@ -269,12 +250,12 @@
 .navbar.main-navbar .navbar-right .notification-toggle {
   position: relative;
   padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 22px;
   transition: all 0.3s ease;
   color: var(--nb-muted) !important;
   background: rgba(255, 255, 255, 0.03);
@@ -312,7 +293,7 @@
   font-size: 8px;
   font-weight: 700;
   min-width: 17px;
-  height: 17px;
+  height: 20px;
   padding: 0 4px;
   border-radius: 50%;
   display: flex;
@@ -348,14 +329,14 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(99, 102, 241, 0.3);
+  border: 2px solid rgba(96, 165, 250, 0.3);
   object-fit: cover;
   transition: all 0.3s ease;
 }
 
 .navbar.main-navbar .navbar-right .profile-toggle:hover .avatar {
   border-color: var(--nb-primary);
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.2);
 }
 
 .navbar.main-navbar .navbar-right .profile-toggle .profile-info {
@@ -423,7 +404,7 @@
 }
 
 .navbar.main-navbar .dropdown-list-content::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(96, 165, 250, 0.3);
   border-radius: 10px;
 }
 
@@ -446,7 +427,12 @@
 /* Desktop / medium – keep dropdowns visible */
 @media (max-width: 1399.98px) and (min-width: 992px) {
   .navbar.main-navbar {
-    padding: 0 16px;
+    padding: 0 20px;
+    min-height: 60px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 
   .navbar.main-navbar .navbar-nav.mx-auto {
@@ -463,12 +449,12 @@
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-    font-size: 7.5px;
-    letter-spacing: 0.2px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link i {
-    font-size: 14px;
+    font-size: 16px;
     margin-bottom: 1px;
   }
 }
@@ -481,7 +467,7 @@
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-    font-size: 7px;
+    font-size: 10 px;
   }
 }
 
@@ -956,23 +942,25 @@
         </div>
       </div>
     </li>
-
     <li class="dropdown">
-      <a href="#" data-toggle="dropdown" class="profile-toggle" aria-label="Profile">
-        <img class="avatar" src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff&size=32"
-          alt="Admin">
-        <div class="profile-info">
-          <span class="name">Admin</span>
-          <span class="role">Administrator</span>
-        </div>
-        <i class="fas fa-chevron-down chevron"></i>
+      <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
+        <img alt="image" height="30px" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}"
+          class="rounded-circle mr-1">
+        {{-- <div class="d-sm-none d-lg-inline-block">Hi, {{ Auth::user()->name }} </div> --}}
       </a>
-      <div class="dropdown-menu dropdown-menu-right" style="min-width: 190px; padding: 6px;">
-        <a href="#" class="dropdown-item"><i class="fas fa-user"></i> My Profile</a>
-        <a href="#" class="dropdown-item"><i class="fas fa-cog"></i> Settings</a>
+      <div class="dropdown-menu dropdown-menu-right">
+        <a href="{{ route('admin.profile') }}" class="dropdown-item has-icon">
+          <i class="far fa-user"></i> Profile
+        </a>
         <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item" style="color: #f87171 !important;"><i class="fas fa-sign-out-alt"></i>
-          Logout</a>
+        <!-- Authentication -->
+        <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <a href="{{ route('logout') }}" onclick="event.preventDefault();
+            this.closest('form').submit();" class="dropdown-item has-icon text-danger">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </form>
       </div>
     </li>
 

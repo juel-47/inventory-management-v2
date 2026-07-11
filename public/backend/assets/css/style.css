@@ -1515,14 +1515,8 @@ h6 .badge {
     box-shadow: rgba(103, 119, 239, 0.2) rgba(0, 0, 0, 0.03); }
 
 .navbar-bg {
-  content: ' ';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 115px;
-  background-color: #033550;
-  z-index: -1; }
+  display: none;
+}
 
 .navbar {
   align-items: center; }
@@ -2492,7 +2486,7 @@ body.layout-3 .navbar {
 body.layout-3 .navbar.navbar-secondary {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
   background-color: #fff;
-  top: 70px;
+  top: 68px;
   padding: 0;
   z-index: 889; }
   body.layout-3 .navbar.navbar-secondary .navbar-nav > .nav-item.active > .nav-link {
@@ -2578,7 +2572,7 @@ body.layout-3 .navbar.navbar-secondary {
 body.layout-3 .main-content {
   padding-left: 0;
   padding-right: 0;
-  padding-top: 70px;
+  padding-top: 118px;
 }
 body.layout-3 .main-footer {
   padding-left: 0;
