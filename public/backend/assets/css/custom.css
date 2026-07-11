@@ -1,7 +1,7 @@
 /* Custom CSS */
 
 body.layout-3 .navbar {
-    margin: 0px;
+    margin: 0px !important;
 }
 
 input[type="number"] {
