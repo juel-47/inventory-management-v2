@@ -11,25 +11,35 @@ use Maatwebsite\Excel\Events\BeforeWriting;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSize, WithEvents
 {
     protected string $bookingNo;
+    private array $darkHeader = [
+        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1F3864']],
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+    ];
+    private array $sectionHeader = [
+        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D6E4F0']],
+        'font' => ['bold' => true, 'color' => ['rgb' => '1F3864'], 'size' => 11],
+    ];
+    private array $tableHeader = [
+        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2E75B6']],
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+    ];
+    private array $cellBorder = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
 
     public function __construct(string $bookingNo)
     {
         $this->bookingNo = $bookingNo;
     }
 
-    public function array(): array
-    {
-        return [];
-    }
-
-    public function startCell(): string
-    {
-        return 'Z100';
-    }
+    public function array(): array { return []; }
+    public function startCell(): string { return 'Z100'; }
 
     public function registerEvents(): array
     {
@@ -38,7 +48,6 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 $items = Booking::where('booking_no', $this->bookingNo)
                     ->with(['product', 'vendor', 'unit'])
                     ->get();
-
                 if ($items->isEmpty()) return;
 
                 $first = $items->first();
@@ -46,60 +55,57 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 $sheet = $event->writer->getDelegate()->getActiveSheet();
                 $row = 1;
 
-                // ─── TITLE ───
+                // ── HEADER BAR ──
                 $sheet->mergeCells("A{$row}:E{$row}");
                 $sheet->setCellValue("A{$row}", 'ORDER PLACE');
-                $sheet->getStyle("A{$row}")->getFont()->setBold(true)->setSize(16);
-                $sheet->getStyle("A{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getRowDimension($row)->setRowHeight(30);
+                $sheet->getStyle("A{$row}")->applyFromArray($this->darkHeader);
+                $sheet->getStyle("A{$row}")->getFont()->setSize(14);
+                $sheet->getRowDimension($row)->setRowHeight(36);
                 $row += 2;
 
-                // ─── LEFT: ORDER INFO / RIGHT: VENDOR DETAILS ───
+                // ── INFO SECTION (Left: Order / Right: Vendor) ──
                 $infoRow = $row;
-
-                // Left section header
                 $sheet->setCellValue("A{$infoRow}", 'ORDER INFORMATION');
-                $sheet->getStyle("A{$infoRow}")->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle("A{$infoRow}")->applyFromArray($this->sectionHeader);
                 $sheet->mergeCells("A{$infoRow}:B{$infoRow}");
                 $infoRow++;
-
-                $leftData = [
-                    'Order No:' => $this->bookingNo,
-                    'Status:' => ucfirst($first->status),
-                    'Shipping:' => $first->shipping_method ?? 'N/A',
+                $leftInfo = [
+                    ['Order No:', $this->bookingNo],
+                    ['Status:', ucfirst($first->status)],
+                    ['Shipping:', $first->shipping_method ?? 'N/A'],
                 ];
-                foreach ($leftData as $label => $value) {
-                    $sheet->setCellValue("A{$infoRow}", $label);
+                foreach ($leftInfo as $d) {
+                    $sheet->setCellValue("A{$infoRow}", $d[0]);
                     $sheet->getStyle("A{$infoRow}")->getFont()->setBold(true);
-                    $sheet->setCellValue("B{$infoRow}", $value);
+                    $sheet->getStyle("A{$infoRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setCellValue("B{$infoRow}", $d[1]);
                     $infoRow++;
                 }
 
-                // Right section header
                 $rightRow = $row;
                 $sheet->setCellValue("D{$rightRow}", 'VENDOR DETAILS');
-                $sheet->getStyle("D{$rightRow}")->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle("D{$rightRow}")->applyFromArray($this->sectionHeader);
                 $sheet->mergeCells("D{$rightRow}:E{$rightRow}");
                 $rightRow++;
-
-                $vendorData = [
-                    'Name:' => $vendor?->shop_name ?? 'N/A',
-                    'Email:' => $vendor?->email ?? 'N/A',
-                    'Phone:' => $vendor?->phone ?? 'N/A',
-                    'Address:' => $vendor?->address ?? 'N/A',
+                $vData = [
+                    ['Name:', $vendor?->shop_name ?? 'N/A'],
+                    ['Email:', $vendor?->email ?? 'N/A'],
+                    ['Phone:', $vendor?->phone ?? 'N/A'],
+                    ['Address:', $vendor?->address ?? 'N/A'],
                 ];
-                foreach ($vendorData as $label => $value) {
-                    $sheet->setCellValue("D{$rightRow}", $label);
+                foreach ($vData as $d) {
+                    $sheet->setCellValue("D{$rightRow}", $d[0]);
                     $sheet->getStyle("D{$rightRow}")->getFont()->setBold(true);
-                    $sheet->setCellValue("E{$rightRow}", $value);
+                    $sheet->getStyle("D{$rightRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setCellValue("E{$rightRow}", $d[1]);
                     $rightRow++;
                 }
 
                 $row = max($infoRow, $rightRow) + 1;
 
-                // ─── TABLE ───
+                // ── PRODUCT TABLE ──
                 $sheet->setCellValue("A{$row}", 'ORDER DETAILS');
-                $sheet->getStyle("A{$row}")->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle("A{$row}")->applyFromArray($this->sectionHeader);
                 $sheet->mergeCells("A{$row}:E{$row}");
                 $row++;
 
@@ -107,84 +113,88 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 $col = 'A';
                 foreach ($headers as $header) {
                     $sheet->setCellValue($col . $row, $header);
-                    $sheet->getStyle($col . $row)->getFont()->setBold(true);
-                    $sheet->getStyle($col . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle($col . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                    $sheet->getStyle($col . $row)->applyFromArray($this->tableHeader);
                     $col++;
                 }
                 $headerRow = $row;
                 $row++;
 
+                $evenRow = ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F2F2F2']]];
                 $totalQty = 0;
+                $isEven = false;
+
                 foreach ($items as $item) {
                     $totalQty += $item->qty;
                     $col = 'A';
-
-                    $imagePath = $item->product?->thumb_image;
-                    $fullPath = null;
                     $hasImage = false;
 
+                    $imagePath = $item->product?->thumb_image;
                     if ($imagePath) {
-                        $fullPath = public_path($imagePath);
-                        if (!file_exists($fullPath)) {
-                            $fullPath = storage_path('app/public/' . ltrim($imagePath, '/'));
+                        $fp = public_path($imagePath);
+                        if (!file_exists($fp)) {
+                            $fp = storage_path('app/public/' . ltrim($imagePath, '/'));
                         }
-                        if (file_exists($fullPath)) {
+                        if (file_exists($fp)) {
                             $hasImage = true;
-                            $drawing = new Drawing();
-                            $drawing->setPath($fullPath);
-                            $drawing->setHeight(50);
-                            $drawing->setCoordinates('A' . $row);
-                            $drawing->setOffsetX(3);
-                            $drawing->setOffsetY(3);
-                            $drawing->setWorksheet($sheet);
-                            $sheet->getRowDimension($row)->setRowHeight(55);
+                            $dwg = new Drawing();
+                            $dwg->setPath($fp);
+                            $dwg->setHeight(45);
+                            $dwg->setCoordinates('A' . $row);
+                            $dwg->setOffsetX(3);
+                            $dwg->setOffsetY(3);
+                            $dwg->setWorksheet($sheet);
+                            $sheet->getRowDimension($row)->setRowHeight(50);
                         }
                     }
-                    $sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                    $sheet->getStyle('A' . $row)->applyFromArray($this->cellBorder);
+                    if ($isEven) $sheet->getStyle('A' . $row)->applyFromArray($evenRow);
                     $col = 'B';
 
-                    $sheet->setCellValue($col . $row, $item->product?->name ?? 'N/A');
-                    $sheet->getStyle($col . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                    $col++;
-
-                    $sheet->setCellValue($col . $row, $item->product?->product_number ?? 'N/A');
-                    $sheet->getStyle($col . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle($col . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                    $col++;
-
-                    $sheet->setCellValue($col . $row, $item->qty);
-                    $sheet->getStyle($col . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle($col . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                    $col++;
-
-                    $sheet->setCellValue($col . $row, $item->unit?->name ?? 'N/A');
-                    $sheet->getStyle($col . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle($col . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
-                    if (!$hasImage) {
-                        $sheet->getRowDimension($row)->setRowHeight(18);
+                    $data = [
+                        $item->product?->name ?? 'N/A',
+                        $item->product?->product_number ?? 'N/A',
+                        $item->qty,
+                        $item->unit?->name ?? 'N/A',
+                    ];
+                    $alignments = [
+                        Alignment::HORIZONTAL_LEFT,
+                        Alignment::HORIZONTAL_CENTER,
+                        Alignment::HORIZONTAL_CENTER,
+                        Alignment::HORIZONTAL_CENTER,
+                    ];
+                    foreach ($data as $idx => $val) {
+                        $sheet->setCellValue($col . $row, $val);
+                        $sheet->getStyle($col . $row)->applyFromArray($this->cellBorder);
+                        $sheet->getStyle($col . $row)->getAlignment()->setHorizontal($alignments[$idx]);
+                        if ($isEven) $sheet->getStyle($col . $row)->applyFromArray($evenRow);
+                        $col++;
                     }
+
+                    if (!$hasImage) $sheet->getRowDimension($row)->setRowHeight(18);
+                    $isEven = !$isEven;
                     $row++;
                 }
 
-                // ─── GRAND TOTAL ───
-                $sheet->setCellValue('A' . $row, '');
-                $sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->setCellValue('B' . $row, '');
-                $sheet->getStyle('B' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->setCellValue('C' . $row, 'Grand Total');
-                $sheet->getStyle('C' . $row)->getFont()->setBold(true);
-                $sheet->getStyle('C' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle('C' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->setCellValue('D' . $row, $totalQty);
-                $sheet->getStyle('D' . $row)->getFont()->setBold(true);
-                $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('D' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->setCellValue('E' . $row, '');
-                $sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                // ── GRAND TOTAL ──
+                $sheet->mergeCells("A{$row}:B{$row}");
+                $sheet->setCellValue("C{$row}", 'Grand Total');
+                $sheet->getStyle("C{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("C{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
+                $sheet->setCellValue("D{$row}", $totalQty);
+                $sheet->getStyle("D{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("D{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("D{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
+                $sheet->setCellValue("E{$row}", '');
+                $sheet->getStyle("E{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
+                $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
                 $row++;
 
+                // borders
                 for ($r = $headerRow; $r < $row; $r++) {
                     for ($c = 'A'; $c <= 'E'; $c++) {
                         $sheet->getStyle($c . $r)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
