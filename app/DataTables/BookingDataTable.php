@@ -18,7 +18,19 @@ class BookingDataTable extends DataTable
             ->addColumn('action', function ($query) {
             $edit = '<a href="' . route('admin.bookings.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
             $invoice = '<a href="' . route('admin.bookings.view-invoice', $query->id) . '" target="_blank" class="btn btn-warning ml-2" title="View Invoice"><i class="fas fa-file-invoice"></i></a>';
-            $download = '<a href="' . route('admin.bookings.download-pdf', $query->id) . '" class="btn btn-secondary ml-2" title="Download PDF"><i class="fas fa-download"></i></a>';
+            $download = '<div class="btn-group ml-2">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-download"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="' . route('admin.bookings.download-pdf', $query->id) . '" class="dropdown-item">
+                        <i class="fas fa-file-pdf text-danger"></i> PDF
+                    </a>
+                    <a href="' . route('admin.bookings.download-excel', $query->id) . '" class="dropdown-item">
+                        <i class="fas fa-file-excel text-success"></i> Excel
+                    </a>
+                </div>
+            </div>';
             $delete = '<a href="' . route('admin.bookings.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2" data-booking-no="' . $query->booking_no . '"><i class="fas fa-trash"></i></a>';
             return $edit . $invoice . $download . $delete;
             })

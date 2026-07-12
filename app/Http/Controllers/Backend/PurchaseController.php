@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Brian2694\Toastr\Facades\Toastr;
 use App\Support\PdfImageHelper;
+use App\Exports\PurchasesExport;
+use App\Exports\PurchaseOrderExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseController extends Controller
 {
@@ -30,6 +33,19 @@ class PurchaseController extends Controller
     {
         $purchases = Purchase::with(['vendor', 'user', 'details', 'attachments'])->orderBy('id', 'desc')->get(); // Using get() for simple list first, or DataTable later if requested in plan
         return view('backend.purchase.index', compact('purchases'));
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new PurchasesExport, 'purchases-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function downloadExcel(string $id)
+    {
+        return Excel::download(
+            new PurchaseOrderExport((int) $id),
+            'purchase-invoice-' . $id . '.xlsx'
+        );
     }
 
     /**

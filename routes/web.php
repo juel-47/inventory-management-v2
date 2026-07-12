@@ -211,6 +211,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('bookings/get-childcategories', 'getChildCategories')->name('bookings.get-childcategories');
         Route::get('bookings/view-invoice/{id}', 'viewInvoice')->name('bookings.view-invoice');
         Route::get('bookings/download-pdf/{id}', 'downloadPdf')->name('bookings.download-pdf');
+        Route::get('bookings/download-excel/{id}', 'downloadExcel')->name('bookings.download-excel');
+        Route::get('bookings/export-excel', 'exportExcel')->name('bookings.export-excel');
     });
     // New route (Primary)
     Route::controller(BookingController::class)->group(function () {
@@ -226,6 +228,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('purchases/get-booking-details', 'getBookingDetails')->name('purchases.get-booking-details');
         Route::get('purchases/{id}/invoice', 'viewInvoice')->name('purchases.view-invoice');
         Route::get('purchases/{id}/download-pdf', 'downloadPdf')->name('purchases.download-pdf');
+        Route::get('purchases/{id}/download-excel', 'downloadExcel')->name('purchases.download-excel');
+        Route::get('purchases/export-excel', 'exportExcel')->name('purchases.export-excel');
         Route::get('purchases/{id}/attachment/download', 'downloadLegacyAttachment')->name('purchases.download-legacy-attachment');
         Route::get('purchases/{id}/attachments/{attachmentId}/download', 'downloadAttachment')->name('purchases.download-attachment');
         Route::post('purchases/{id}/attachments', 'uploadAttachments')->name('purchases.upload-attachments');
