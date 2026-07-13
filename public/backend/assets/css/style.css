@@ -2575,8 +2575,10 @@ body.layout-3 .main-content {
   padding-top: 88px;
 }
 body.layout-3 .main-footer {
-  padding-left: 0;
-  padding-right: 0; }
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.5); }
 
 .main-sidebar .sidebar-brand {
   display: inline-block;
@@ -2701,20 +2703,35 @@ body.layout-3 .main-footer {
 
 .main-footer {
   padding: 20px 30px 20px 280px;
-  margin-top: 40px;
-  color: #98a6ad;
-  border-top: 1px solid #e3eaef;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   justify-content: space-between;
-  width: 100%; }
+  align-items: center;
+  width: 100%;
+  font-size: 12.5px;
+  font-weight: 400;
+  background: transparent; }
+
+.main-footer a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.main-footer a:hover {
+  color: var(--nb-primary, #60a5fa);
+}
 
 
-  
 @media (max-width: 600px) {
   .main-footer {
       flex-direction: column;
       text-align: center;
+      gap: 4px;
   } 
+}
 }
   
 

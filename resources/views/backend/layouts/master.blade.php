@@ -114,13 +114,13 @@
         @yield('content')
       </div>
       <footer class="main-footer">
-        <div class="footer-left items-center">
-          <div class="bullet text-center"></div> <a target="_blank" class="text-center"
-            href="https://inoodex.com/">Concept and designed by shahadat</a>
+        <div class="footer-left">
+          <a target="_blank" href="https://inoodex.com/">Concept &amp; Design by shahadat</a>
         </div>
-        <span>Copyright &copy; {{ now()->year }}</span>
         <div class="footer-right">
-          <div class="bullet"></div> <a target="_blank" href="https://inoodex.com/">Developed By Inoodex</a>
+          <span>Copyright &copy; {{ now()->year }}</span>
+          <span class="mx-2">&middot;</span>
+          <a target="_blank" href="https://inoodex.com/">Developed by Inoodex</a>
         </div>
       </footer>
     </div>
@@ -306,29 +306,26 @@
         let listHtml = '';
         if (data.notifications && data.notifications.length > 0) {
           data.notifications.forEach(function(item) {
-            let unreadStyle = item.is_unread ?
-              'background: rgba(99,102,241,0.08); border-left: 3px solid #6366f1;' :
-              'background: transparent;';
-            if (item.is_out_of_stock && item.is_unread) {
-              unreadStyle = 'background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444;';
-            }
+            let cls = 'notif-item';
+            if (item.is_unread) cls += ' unread';
+            if (item.is_out_of_stock && item.is_unread) cls += ' out-of-stock';
 
             listHtml += `
-                                <a href="${item.url}" class="dropdown-item" style="padding: 12px 14px; display: flex; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.04); border-radius: 0; ${unreadStyle}">
-                                    <div class="dropdown-item-icon ${item.class} text-white" style="width: 36px; height: 36px; min-width: 36px; line-height: 36px; font-size: 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="${item.icon}"></i>
-                                    </div>
-                                    <div class="dropdown-item-desc" style="padding-left: 12px; flex-grow: 1;">
-                                        <div style="font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.2;">${item.title}</div>
-                                        <div style="font-size: 11px; margin-top: 2px; color: rgba(255,255,255,0.45);">${item.desc}</div>
-                                        <div style="font-size: 10px; margin-top: 4px; font-weight: 600; color: var(--nb-primary);">${item.time}</div>
-                                    </div>
-                                </a>
-                            `;
+              <a href="${item.url}" class="${cls}">
+                <div class="notif-icon ${item.class}">
+                  <i class="${item.icon}"></i>
+                </div>
+                <div class="notif-content">
+                  <div class="notif-title">${item.title}</div>
+                  <div class="notif-desc">${item.desc}</div>
+                  <div class="notif-time">${item.time}</div>
+                </div>
+              </a>
+            `;
           });
         } else {
           listHtml =
-            '<div class="dropdown-item text-center py-4" style="color: rgba(255,255,255,0.4); background: transparent;">No new notifications</div>';
+            '<div class="notif-empty"><i class="fas fa-inbox"></i>No new notifications</div>';
         }
         $('#low-stock-list').html(listHtml);
       },

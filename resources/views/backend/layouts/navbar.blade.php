@@ -47,9 +47,9 @@
   justify-content: center;
   padding: 0 14px;
   height: 68px;
-  color: var(--nb-muted) !important;
+  color: #fff !important;
   font-weight: 500;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   transition: all 0.2s ease;
@@ -60,19 +60,19 @@
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link i {
-  font-size: 17px;
-  color: var(--nb-muted);
+  font-size: 18px;
+  color: #fff;
   margin-bottom: 1px;
   transition: all 0.2s ease;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-  font-size: 8.5px;
+  font-size: 12px;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  opacity: 0.65;
+  opacity: 0.8;
 }
 
 .navbar.main-navbar .navbar-nav .nav-item .nav-link:hover {
@@ -196,6 +196,163 @@
   height: 100%;
 }
 
+/* Notification Dropdown */
+.notif-dropdown {
+  width: 360px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.notif-dropdown .notif-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--nb-border);
+}
+
+.notif-dropdown .notif-header .notif-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.notif-dropdown .notif-header .notif-mark-read {
+  font-size: 11px;
+  color: var(--nb-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.notif-dropdown .notif-header .notif-mark-read:hover {
+  opacity: 0.8;
+}
+
+.notif-dropdown .notif-body {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.notif-dropdown .notif-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notif-dropdown .notif-body::-webkit-scrollbar-thumb {
+  background: rgba(96, 165, 250, 0.3);
+  border-radius: 10px;
+}
+
+.notif-dropdown .notif-body .notif-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+}
+
+.notif-dropdown .notif-body .notif-empty i {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+  opacity: 0.25;
+}
+
+.notif-dropdown .notif-footer {
+  padding: 12px 20px;
+  text-align: center;
+  border-top: 1px solid var(--nb-border);
+}
+
+.notif-dropdown .notif-footer a {
+  color: var(--nb-primary);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.notif-dropdown .notif-footer a:hover {
+  opacity: 0.8;
+}
+
+/* Notification list items (populated by JS) */
+.notif-dropdown .notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.notif-dropdown .notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-dropdown .notif-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.notif-dropdown .notif-item .notif-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.notif-dropdown .notif-item .notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-dropdown .notif-item .notif-content .notif-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-dropdown .notif-item .notif-content .notif-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 2px;
+}
+
+.notif-dropdown .notif-item .notif-content .notif-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--nb-primary);
+  margin-top: 4px;
+}
+
+.notif-dropdown .notif-item.unread {
+  background: rgba(96, 165, 250, 0.06);
+  border-left: 3px solid var(--nb-primary);
+}
+
+.notif-dropdown .notif-item.out-of-stock.unread {
+  background: rgba(239, 68, 68, 0.06);
+  border-left: 3px solid #ef4444;
+}
+
 @keyframes nbBellRing {
 
   0%,
@@ -257,7 +414,7 @@
   justify-content: center;
   border-radius: 22px;
   transition: all 0.3s ease;
-  color: var(--nb-muted) !important;
+  color: #fff !important;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--nb-border);
   overflow: visible;
@@ -449,12 +606,12 @@
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.3px;
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link i {
-    font-size: 16px;
+    font-size: 17px;
     margin-bottom: 1px;
   }
 }
@@ -467,7 +624,7 @@
   }
 
   .navbar.main-navbar .navbar-nav .nav-item .nav-link span {
-    font-size: 10 px;
+    font-size: 10px;
   }
 }
 
@@ -790,7 +947,7 @@
     <li class="nav-item dropdown">
       <a href="#" data-toggle="dropdown" class="nav-link has-dropdown">
         <i class="fas fa-chart-bar"></i>
-        <span>Reportss <i class="fas fa-chevron-down dropdown-arrow"></i></span>
+        <span>Reports <i class="fas fa-chevron-down dropdown-arrow"></i></span>
       </a>
       <ul class="dropdown-menu">
         <li class="dropdown-header">Analytics</li>
@@ -922,22 +1079,22 @@
         <i class="fas fa-bell"></i>
         <span id="low-stock-count-badge" class="badge" style="display: none;">0</span>
       </a>
-      <div class="dropdown-menu dropdown-menu-right dropdown-list" style="width: 340px; padding: 0;">
-        <div class="dropdown-header" style="padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-          <span style="font-size: 13px; font-weight: 600; color: #fff;">Notifications</span>
+      <div class="dropdown-menu dropdown-menu-right dropdown-list notif-dropdown">
+        <div class="notif-header">
+          <span class="notif-title">Notifications</span>
+          <a href="#" onclick="markAllAsRead(); return false;" class="notif-mark-read">
+            <i class="fas fa-check-double"></i> Mark All Read
+          </a>
         </div>
-        <div id="low-stock-list" class="dropdown-list-content"
-          style="max-height: 320px; overflow-y: auto; padding: 6px;">
-          <div class="text-center py-4" style="color: rgba(255,255,255,0.4); font-size: 12px;">
-            <i class="fas fa-inbox" style="font-size: 22px; display: block; margin-bottom: 6px; opacity: 0.3;"></i>
+        <div id="low-stock-list" class="notif-body">
+          <div class="notif-empty">
+            <i class="fas fa-inbox"></i>
             No new notifications
           </div>
         </div>
-        <div class="dropdown-footer"
-          style="padding: 10px 18px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
-          <a href="{{ route('admin.notifications.all') }}"
-            style="color: var(--nb-primary); text-decoration: none; font-size: 12px; font-weight: 500;">
-            View All <i class="fas fa-arrow-right ml-1"></i>
+        <div class="notif-footer">
+          <a href="{{ route('admin.notifications.all') }}">
+            View All <i class="fas fa-arrow-right"></i>
           </a>
         </div>
       </div>
