@@ -76,14 +76,11 @@ class ProductController extends Controller implements HasMiddleware
             $query->orderBy('name', 'desc');
         } elseif ($sort == 'a-z') {
             $query->orderBy('name', 'asc');
-        }elseif ($sort == 'active') {
+        } elseif ($sort == 'active') {
             $query->where('status', 1)->latest();
-
         } elseif ($sort == 'inactive') {
             $query->where('status', 0)->latest();
-
-        } 
-        else {
+        } else {
             $query->latest();
         }
 
@@ -133,6 +130,7 @@ class ProductController extends Controller implements HasMiddleware
         $categories = Category::where('status', 1)->get();
         $productTypes = ProductType::where('status', 1)->get();
         $vendors = Vendor::where('status', 1)->get();
+        
         if ($request->ajax()) {
             return view('backend.product.product_grid', compact('products'))->render();
         }
@@ -152,6 +150,7 @@ class ProductController extends Controller implements HasMiddleware
         $colors = Color::where('status', 1)->get();
         $sizes = Size::where('status', 1)->get();
         $productTypes = ProductType::where('status', 1)->get();
+        
         return view('backend.product.create', compact('categories', 'brands', 'units', 'vendors', 'colors', 'sizes', 'productTypes'));
     }
 
@@ -260,8 +259,6 @@ class ProductController extends Controller implements HasMiddleware
             }
 
             DB::commit();
-            // Manual announcement only: auto product-create announcement is intentionally disabled.
-            // $this->dispatchProductsPublishedEvent([$product->id], 'created');
             Toastr::success('Product Created Successfully!');
             return redirect()->route('admin.products.index');
 
@@ -298,6 +295,7 @@ class ProductController extends Controller implements HasMiddleware
         $colors = Color::where('status', 1)->get();
         $sizes = Size::where('status', 1)->get();
         $productTypes = ProductType::where('status', 1)->get();
+        
         return view('backend.product.edit', compact('product', 'categories', 'subCategories', 'childCategories', 'brands', 'units', 'vendors', 'colors', 'sizes', 'productTypes'));
     }
 
@@ -346,6 +344,7 @@ class ProductController extends Controller implements HasMiddleware
             $product->discount = $discountConfig['value'];
             $product->vat_type = $vatConfig['type'];
             $product->vat_value = $vatConfig['value'];
+            
             if ($hasVariantRows) {
                 $product->qty = 0;
             }
@@ -409,7 +408,7 @@ class ProductController extends Controller implements HasMiddleware
 
                 // Variant Manual Stock Adjustment
                 $vAdjustment = 0;
-                $vCurrentDbStock = $variant->inventory_stock ?? 0; // New variant starts at 0
+                $vCurrentDbStock = $variant->inventory_stock ?? 0;
                 $vSubmittedVal = (float) ($vData['current_stock'] ?? 0);
                 if ($vSubmittedVal != $vCurrentDbStock) {
                     $vAdjustment = $vSubmittedVal - $vCurrentDbStock;
@@ -468,22 +467,17 @@ class ProductController extends Controller implements HasMiddleware
     {
         $product = Product::findOrFail($id);
 
-        // Allowing deletion even if related records exist because the database has cascade delete enabled.
-        // This allows users to recover from mistakes like duplication.
-        /*
-        if ($product->purchaseDetails()->count() > 0 || $product->bookings()->count() > 0 || $product->productRequestItems()->count() > 0) {
-            return response(['status' => 'error', 'message' => 'Cannot delete product! It has related bookings, purchases, or requests.']);
-        }
-        */
-
         $this->delete_image($product->thumb_image);
-        $product->delete(); // Cascade delete variants
+        $product->delete();
+        
         return response(['status' => 'success', 'message' => 'Deleted Successfully!']);
     }
 
+    /**
+     * Change product status.
+     */
     public function changeStatus(Request $request)
     {
-        // dd($request->all());
         $product = Product::findOrFail($request->id);
         $product->status = $request->status == 'true' ? 1 : 0;
         $product->save();
@@ -504,9 +498,6 @@ class ProductController extends Controller implements HasMiddleware
      */
     public function importPreview(Request $request)
     {
-        // Log::info('ProductController@importPreview hit');
-        // Log::info('Request data: ' . json_encode($request->except('import_file')));
-        
         $request->validate([
             'import_file' => 'required|mimes:csv,xlsx,xls|max:204800'
         ]);
@@ -515,7 +506,6 @@ class ProductController extends Controller implements HasMiddleware
             $file = $request->file('import_file');
             $originalName = $file->getClientOriginalName();
             
-            // Save file temporarily in public storage so it can be accessed in next step
             $tempName = 'temp_import_' . time() . '_' . $originalName;
             $path = $file->storeAs('temp', $tempName, 'public');
             $fullPath = Storage::disk('public')->path($path);
@@ -542,10 +532,6 @@ class ProductController extends Controller implements HasMiddleware
      */
     public function importStore(Request $request)
     {
-        // Log::info('ProductController@importStore hit');
-        // Log::info('Request data: ' . json_encode($request->except('import_file')));
-
-        // Support both direct file upload and temp_path from preview
         if ($request->has('temp_path')) {
             $request->validate([
                 'temp_path' => 'required',
@@ -569,15 +555,10 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         try {
-            // Debug info
-            // Log::info('File processing: ' . $originalName);
-            // Log::info('Path: ' . $fullPath);
-            
             if (!file_exists($fullPath)) {
                 throw new \Exception('Could not access file');
             }
             
-            // Import using CSV/Excel processor
             $importer = new ProductsImport();
             $results = $importer->import($fullPath, $originalName);
 
@@ -588,12 +569,6 @@ class ProductController extends Controller implements HasMiddleware
                 ->values()
                 ->all();
 
-            // Manual announcement only: auto import announcement is intentionally disabled.
-            // if (!empty($createdProductIds)) {
-            //     $this->dispatchProductsPublishedEvent($createdProductIds, 'imported');
-            // }
-            
-            // Delete temp file if it exists
             if ($tempPath) {
                 Storage::disk('public')->delete($tempPath);
             }
@@ -745,6 +720,9 @@ class ProductController extends Controller implements HasMiddleware
         return $rows;
     }
 
+    /**
+     * Resolve variant display name from color and size IDs.
+     */
     private function resolveVariantDisplayName(?int $colorId, ?int $sizeId): string
     {
         $colorName = '';
@@ -761,6 +739,9 @@ class ProductController extends Controller implements HasMiddleware
         return $name !== '' ? $name : 'Default';
     }
 
+    /**
+     * Normalize discount input.
+     */
     private function normalizeDiscountInput(Request $request): array
     {
         $type = strtolower(trim((string) $request->input('discount_type', '')));
@@ -783,6 +764,9 @@ class ProductController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Normalize VAT input.
+     */
     private function normalizeVatInput(Request $request): array
     {
         $type = strtolower(trim((string) $request->input('vat_type', '')));
@@ -823,7 +807,6 @@ class ProductController extends Controller implements HasMiddleware
         $source = in_array($source, ['created', 'imported'], true) ? $source : 'created';
         $dispatchLockKey = 'product-announcement:dispatch:' . $source . ':' . sha1(json_encode($ids));
 
-        // Guard against accidental double-submit / duplicate request replay.
         if (!Cache::add($dispatchLockKey, 1, now()->addMinutes(10))) {
             return;
         }
