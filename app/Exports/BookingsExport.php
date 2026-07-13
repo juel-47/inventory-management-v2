@@ -3,18 +3,17 @@
 namespace App\Exports;
 
 use App\Models\Booking;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class BookingsExport implements FromCollection, WithHeadings, WithMapping
+class BookingsExport implements FromQuery, WithHeadings, WithMapping
 {
-    public function collection()
+    public function query()
     {
+        set_time_limit(300);
         return Booking::with(['vendor', 'product', 'unit'])
-            ->orderBy('id', 'desc')
-            ->get()
-            ->groupBy('booking_no');
+            ->orderBy('id', 'desc');
     }
 
     public function headings(): array
@@ -22,25 +21,35 @@ class BookingsExport implements FromCollection, WithHeadings, WithMapping
         return [
             'Booking No',
             'Vendor',
-            'Products',
-            'Total Qty',
+            'Product Name',
+            'Variants',
+            'Qty',
             'Shipping Method',
             'Status',
             'Date',
         ];
     }
 
-    public function map($group): array
+    public function map($booking): array
     {
-        $first = $group->first();
+        $variantStr = '';
+        if ($booking->variant_info) {
+            $parts = [];
+            foreach ($booking->variant_info as $name => $qty) {
+                $parts[] = $name . ': ' . $qty;
+            }
+            $variantStr = implode(', ', $parts);
+        }
+
         return [
-            $group->first()->booking_no,
-            $first->vendor?->shop_name ?? 'N/A',
-            $group->count() . ' Items',
-            $group->sum('qty'),
-            $first->shipping_method ?? 'N/A',
-            ucfirst($first->status),
-            $first->created_at->format('Y-m-d'),
+            $booking->booking_no,
+            $booking->vendor?->shop_name ?? 'N/A',
+            $booking->product?->name ?? 'N/A',
+            $variantStr ?: '—',
+            $booking->qty,
+            $booking->shipping_method ?? 'N/A',
+            ucfirst($booking->status),
+            $booking->created_at->format('Y-m-d'),
         ];
     }
 }

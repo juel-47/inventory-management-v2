@@ -104,7 +104,25 @@ class BookingDataTable extends DataTable
             // Column::make('id'),
             Column::make('booking_no')->title('Booking No'),
             Column::make('vendor')->title('Vendor'),
-            Column::computed('product_count')->title('Products'),
+            Column::computed('product_count')->title('Products')
+                ->exportRender(function ($row, $value) {
+                    $bookingNo = is_array($row) ? ($row['booking_no'] ?? '') : ($row->booking_no ?? '');
+                    $bookings = \App\Models\Booking::where('booking_no', $bookingNo)
+                        ->with('product')->get();
+                    $items = [];
+                    foreach ($bookings as $b) {
+                        $name = $b->product?->name ?? 'Unknown';
+                        if ($b->variant_info) {
+                            $variants = [];
+                            foreach ($b->variant_info as $vName => $vQty) {
+                                $variants[] = "$vName: $vQty";
+                            }
+                            $name .= ' (' . implode(', ', $variants) . ')';
+                        }
+                        $items[] = $name;
+                    }
+                    return implode(', ', $items);
+                }),
             Column::computed('total_qty')->title('Total Qty'),
             Column::make('shipping_method')->title('Shipping'),
             Column::make('status'),

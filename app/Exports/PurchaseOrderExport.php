@@ -65,7 +65,7 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
                 $row = 1;
 
                 // ── HEADER BAR ──
-                $sheet->mergeCells("A{$row}:F{$row}");
+                $sheet->mergeCells("A{$row}:G{$row}");
                 $sheet->setCellValue("A{$row}", 'PURCHASE ORDER');
                 $sheet->getStyle("A{$row}")->applyFromArray($this->darkHeader);
                 $sheet->getStyle("A{$row}")->getFont()->setSize(14);
@@ -118,7 +118,7 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
                 // ── VENDOR DETAILS ──
                 $sheet->setCellValue("A{$row}", 'VENDOR DETAILS');
                 $sheet->getStyle("A{$row}")->applyFromArray($this->sectionHeader);
-                $sheet->mergeCells("A{$row}:F{$row}");
+                $sheet->mergeCells("A{$row}:G{$row}");
                 $row++;
                 $vData = [
                     ['Name:', $vendor?->shop_name ?? 'N/A'],
@@ -130,7 +130,7 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
                     $sheet->setCellValue("A{$row}", $d[0]);
                     $sheet->getStyle("A{$row}")->getFont()->setBold(true);
                     $sheet->getStyle("A{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                    $sheet->mergeCells("B{$row}:F{$row}");
+                    $sheet->mergeCells("B{$row}:G{$row}");
                     $sheet->setCellValue("B{$row}", $d[1]);
                     $row++;
                 }
@@ -139,10 +139,10 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
                 // ── PRODUCT TABLE ──
                 $sheet->setCellValue("A{$row}", 'PRODUCT DETAILS');
                 $sheet->getStyle("A{$row}")->applyFromArray($this->sectionHeader);
-                $sheet->mergeCells("A{$row}:F{$row}");
+                $sheet->mergeCells("A{$row}:G{$row}");
                 $row++;
-
-                $headers = ['Image', 'Product Name', 'Product No', 'Qty', 'Unit Cost', 'Total'];
+ 
+                $headers = ['Image', 'Product Name', 'Variants', 'Product No', 'Qty', 'Unit Cost', 'Total'];
                 $col = 'A';
                 foreach ($headers as $header) {
                     $sheet->setCellValue($col . $row, $header);
@@ -184,14 +184,24 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
                     $col = 'B';
 
                     $rowStyle = $isEven ? $evenRow : [];
+                    $variantStr = '';
+                    if ($detail->variant_info) {
+                        $parts = [];
+                        foreach ($detail->variant_info as $vName => $vQty) {
+                            $parts[] = $vName . ': ' . $vQty;
+                        }
+                        $variantStr = implode(', ', $parts);
+                    }
                     $data = [
                         $detail->product?->name ?? 'N/A',
+                        $variantStr ?: '—',
                         $detail->product?->product_number ?? 'N/A',
                         $detail->qty,
                         $currency . number_format($detail->unit_cost ?? 0, 2),
                         $currency . number_format($detail->total ?? 0, 2),
                     ];
                     $alignments = [
+                        Alignment::HORIZONTAL_LEFT,
                         Alignment::HORIZONTAL_LEFT,
                         Alignment::HORIZONTAL_CENTER,
                         Alignment::HORIZONTAL_CENTER,
@@ -213,61 +223,61 @@ class PurchaseOrderExport implements FromArray, WithCustomStartCell, ShouldAutoS
 
                 // ── SUMMARY ──
                 $summaryRow = $row;
-                $sheet->mergeCells("A{$row}:C{$row}");
-                $sheet->setCellValue("D{$row}", 'GRAND TOTAL (LOCAL)');
-                $sheet->setCellValue("E{$row}", $totalQty);
-                $sheet->setCellValue("F{$row}", $currency . number_format($purchase->total_amount ?? 0, 2));
-                $sheet->getStyle("A{$row}:C{$row}")->applyFromArray($this->cellBorder);
-                foreach (['D', 'E', 'F'] as $c) {
+                $sheet->mergeCells("A{$row}:D{$row}");
+                $sheet->setCellValue("E{$row}", 'GRAND TOTAL (LOCAL)');
+                $sheet->setCellValue("F{$row}", $totalQty);
+                $sheet->setCellValue("G{$row}", $currency . number_format($purchase->total_amount ?? 0, 2));
+                $sheet->getStyle("A{$row}:D{$row}")->applyFromArray($this->cellBorder);
+                foreach (['E', 'F', 'G'] as $c) {
                     $sheet->getStyle($c . $row)->applyFromArray($this->summaryLabel);
                     $sheet->getStyle($c . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
                 }
-                $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle('F' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $row++;
 
-                $sheet->mergeCells("A{$row}:C{$row}");
-                $sheet->setCellValue("D{$row}", 'Paid');
-                $sheet->getStyle("D{$row}")->applyFromArray($this->summaryLabel);
-                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->setCellValue("E{$row}", '');
-                $sheet->setCellValue("F{$row}", $currency . number_format($purchase->paid_amount ?? 0, 2));
-                $sheet->getStyle("F{$row}")->applyFromArray($this->summaryValue);
-                foreach (['A', 'B', 'C', 'E'] as $c) {
+                $sheet->mergeCells("A{$row}:D{$row}");
+                $sheet->setCellValue("E{$row}", 'Paid');
+                $sheet->getStyle("E{$row}")->applyFromArray($this->summaryLabel);
+                $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->setCellValue("F{$row}", '');
+                $sheet->setCellValue("G{$row}", $currency . number_format($purchase->paid_amount ?? 0, 2));
+                $sheet->getStyle("G{$row}")->applyFromArray($this->summaryValue);
+                foreach (['A', 'B', 'C', 'D', 'F'] as $c) {
                     $sheet->getStyle($c . $row)->applyFromArray($this->cellBorder);
                 }
                 $row++;
 
-                $sheet->mergeCells("A{$row}:C{$row}");
-                $sheet->setCellValue("D{$row}", 'Due');
-                $sheet->getStyle("D{$row}")->applyFromArray($this->summaryLabel);
-                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle("D{$row}")->getFont()->setColor(new Color('CC0000'));
-                $sheet->setCellValue("E{$row}", '');
-                $sheet->setCellValue("F{$row}", $currency . number_format($purchase->due_amount ?? 0, 2));
-                $sheet->getStyle("F{$row}")->applyFromArray($this->summaryValue);
-                $sheet->getStyle("F{$row}")->getFont()->setColor(new Color('CC0000'));
-                foreach (['A', 'B', 'C', 'E'] as $c) {
+                $sheet->mergeCells("A{$row}:D{$row}");
+                $sheet->setCellValue("E{$row}", 'Due');
+                $sheet->getStyle("E{$row}")->applyFromArray($this->summaryLabel);
+                $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("E{$row}")->getFont()->setColor(new Color('CC0000'));
+                $sheet->setCellValue("F{$row}", '');
+                $sheet->setCellValue("G{$row}", $currency . number_format($purchase->due_amount ?? 0, 2));
+                $sheet->getStyle("G{$row}")->applyFromArray($this->summaryValue);
+                $sheet->getStyle("G{$row}")->getFont()->setColor(new Color('CC0000'));
+                foreach (['A', 'B', 'C', 'D', 'F'] as $c) {
                     $sheet->getStyle($c . $row)->applyFromArray($this->cellBorder);
                 }
                 $row++;
 
                 // borders for summary
                 for ($r = $summaryRow; $r < $row; $r++) {
-                    for ($c = 'D'; $c <= 'F'; $c++) {
+                    for ($c = 'E'; $c <= 'G'; $c++) {
                         $sheet->getStyle($c . $r)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                     }
                 }
                 // table borders
                 for ($r = $headerRow; $r < $summaryRow; $r++) {
-                    for ($c = 'A'; $c <= 'F'; $c++) {
+                    for ($c = 'A'; $c <= 'G'; $c++) {
                         $sheet->getStyle($c . $r)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                     }
                 }
 
                 // info section borders
                 for ($r = $row - 5; $r < $row; $r++) {
-                    $sheet->getStyle("A{$r}:F{$r}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                    $sheet->getStyle("A{$r}:G{$r}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 }
             },
         ];

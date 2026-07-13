@@ -56,7 +56,7 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 $row = 1;
 
                 // ── HEADER BAR ──
-                $sheet->mergeCells("A{$row}:E{$row}");
+                $sheet->mergeCells("A{$row}:F{$row}");
                 $sheet->setCellValue("A{$row}", 'ORDER PLACE');
                 $sheet->getStyle("A{$row}")->applyFromArray($this->darkHeader);
                 $sheet->getStyle("A{$row}")->getFont()->setSize(14);
@@ -106,10 +106,10 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 // ── PRODUCT TABLE ──
                 $sheet->setCellValue("A{$row}", 'ORDER DETAILS');
                 $sheet->getStyle("A{$row}")->applyFromArray($this->sectionHeader);
-                $sheet->mergeCells("A{$row}:E{$row}");
+                $sheet->mergeCells("A{$row}:F{$row}");
                 $row++;
-
-                $headers = ['Image', 'Product Name', 'Product Number', 'Quantity', 'Unit'];
+ 
+                $headers = ['Image', 'Product Name', 'Variants', 'Product Number', 'Quantity', 'Unit'];
                 $col = 'A';
                 foreach ($headers as $header) {
                     $sheet->setCellValue($col . $row, $header);
@@ -150,13 +150,23 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                     if ($isEven) $sheet->getStyle('A' . $row)->applyFromArray($evenRow);
                     $col = 'B';
 
+                    $variantStr = '';
+                    if ($item->variant_info) {
+                        $parts = [];
+                        foreach ($item->variant_info as $vName => $vQty) {
+                            $parts[] = $vName . ': ' . $vQty;
+                        }
+                        $variantStr = implode(', ', $parts);
+                    }
                     $data = [
                         $item->product?->name ?? 'N/A',
+                        $variantStr ?: '—',
                         $item->product?->product_number ?? 'N/A',
                         $item->qty,
                         $item->unit?->name ?? 'N/A',
                     ];
                     $alignments = [
+                        Alignment::HORIZONTAL_LEFT,
                         Alignment::HORIZONTAL_LEFT,
                         Alignment::HORIZONTAL_CENTER,
                         Alignment::HORIZONTAL_CENTER,
@@ -176,27 +186,27 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 }
 
                 // ── GRAND TOTAL ──
-                $sheet->mergeCells("A{$row}:B{$row}");
-                $sheet->setCellValue("C{$row}", 'Grand Total');
-                $sheet->getStyle("C{$row}")->getFont()->setBold(true);
-                $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle("C{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->getStyle("C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
-                $sheet->setCellValue("D{$row}", $totalQty);
+                $sheet->mergeCells("A{$row}:C{$row}");
+                $sheet->setCellValue("D{$row}", 'Grand Total');
                 $sheet->getStyle("D{$row}")->getFont()->setBold(true);
-                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
                 $sheet->getStyle("D{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getStyle("D{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
-                $sheet->setCellValue("E{$row}", '');
+                $sheet->setCellValue("E{$row}", $totalQty);
+                $sheet->getStyle("E{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle("E{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getStyle("E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
-                $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
+                $sheet->setCellValue("F{$row}", '');
+                $sheet->getStyle("F{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("F{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
+                $sheet->getStyle("A{$row}:C{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("A{$row}:C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D6E4F0');
                 $row++;
 
                 // borders
                 for ($r = $headerRow; $r < $row; $r++) {
-                    for ($c = 'A'; $c <= 'E'; $c++) {
+                    for ($c = 'A'; $c <= 'F'; $c++) {
                         $sheet->getStyle($c . $r)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                     }
                 }
