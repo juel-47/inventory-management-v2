@@ -7,8 +7,8 @@
         {{-- Header --}}
         <div class="section-header">
             <div class="d-flex align-items-center flex-wrap w-100">
-                <h1 class="mb-2 mb-sm-0 d-flex align-items-center">
-                    <i class="fas fa-file-invoice mr-2 text-primary"></i>
+                <h1 class="mb-2 mb-sm-0 d-flex align-items-center" style="font-size: 1.1rem;">
+                    <i class="fas fa-file-invoice mr-2" style="color: #2563eb;"></i>
                     Create Order Receive Invoice
                 </h1>
                 <div class="ml-auto d-flex align-items-center flex-wrap">
@@ -23,7 +23,7 @@
                         </div>
                         <div class="breadcrumb-item active">Create</div>
                     </div>
-                    <button class="btn btn-primary btn-sm ml-2 shadow-sm" type="button" data-toggle="modal" data-target="#importModal">
+                    <button class="btn btn-primary btn-sm ml-2 shadow-sm" type="button" data-toggle="modal" data-target="#importModal" style="background: #2563eb; border: none; border-radius: 10px; min-height: 36px; font-size: 0.8rem;">
                         <i class="fas fa-file-import mr-1"></i>
                         <span class="d-none d-sm-inline">Import from Order Place</span>
                         <span class="d-sm-none">Import</span>
@@ -36,52 +36,54 @@
         <div class="section-body">
             <div class="row">
                 <div class="col-12">
-                    <div class="card shadow-sm border-0">
+                    <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden;">
                         {{-- Card Header --}}
                         <div class="card-header bg-white py-3 border-0">
                             <div class="d-flex align-items-center">
-                                <div class="mr-3 p-2 bg-primary rounded-circle text-white d-none d-sm-flex">
+                                <div class="mr-3 p-2 rounded-circle text-white d-none d-sm-flex" style="background: #2563eb;">
                                     <i class="fas fa-plus-circle"></i>
                                 </div>
                                 <div>
-                                    <h5 class="mb-0 font-weight-bold text-dark">New Order Receive</h5>
-                                    <small class="text-muted">Create a new purchase invoice</small>
+                                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 1rem;">New Order Receive</h5>
+                                    <small class="text-muted" style="font-size: 0.8rem;">Create a new purchase invoice</small>
                                 </div>
                             </div>
                         </div>
 
                         {{-- Card Body --}}
-                        <div class="card-body p-4">
+                        <div class="card-body p-3 p-sm-4">
                             <form action="{{ route('admin.purchases.store') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 
                                 {{-- Section 1: General Information --}}
-                                <div class="section-title mb-4">
-                                    <span class="font-weight-bold text-primary">
+                                <div class="section-title mb-3">
+                                    <span class="font-weight-bold" style="color: #2563eb; font-size: 0.95rem;">
                                         <i class="fas fa-info-circle mr-2"></i>General Information
                                     </span>
-                                    <hr>
+                                    <hr style="border-top: 2px solid #e2e8f0; opacity: 0.5; margin-top: 0.3rem;">
                                 </div>
 
                                 <div class="row">
-                                    <div class="form-group col-md-4">
-                                        <label class="font-weight-bold text-dark">
+                                    <div class="form-group col-12 col-md-4">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">
                                             Vendor <span class="text-danger">*</span>
                                         </label>
-                                        <select class="form-control form-control-lg select2 @error('vendor_id') is-invalid @enderror" 
-                                                name="vendor_id" id="vendor_select" required>
+                                        <select class="form-control select2 @error('vendor_id') is-invalid @enderror" 
+                                                name="vendor_id" id="vendor_select" required
+                                                style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%;">
                                             <option value="">Select Vendor</option>
                                             @foreach ($vendors as $vendor)
                                                 <option value="{{ $vendor->id }}">{{ $vendor->shop_name }}</option>
                                             @endforeach
                                         </select>
-                                        <small class="text-muted">System Rate: <strong id="current_rate_display">1.00</strong></small>
+                                        <small class="text-muted" style="font-size: 0.7rem;">System Rate: <strong id="current_rate_display">1.00</strong></small>
                                     </div>
 
-                                    <div class="form-group col-md-4">
-                                        <label class="font-weight-bold text-dark">Shipping Method</label>
-                                        <select class="form-control form-control-lg @error('shipping_method') is-invalid @enderror" 
-                                                name="shipping_method" id="shipping_method_select">
+                                    <div class="form-group col-12 col-md-4">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">Shipping Method</label>
+                                        <select class="form-control @error('shipping_method') is-invalid @enderror" 
+                                                name="shipping_method" id="shipping_method_select"
+                                                style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%;">
                                             <option value="">Select Shipping</option>
                                             <option value="Air">Air</option>
                                             <option value="Train">Train</option>
@@ -89,30 +91,34 @@
                                         </select>
                                     </div>
 
-                                    <div class="form-group col-md-4">
-                                        <label class="font-weight-bold text-dark">
+                                    <div class="form-group col-12 col-md-4">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">
                                             Purchase Date <span class="text-danger">*</span>
                                         </label>
-                                        <input type="date" class="form-control form-control-lg @error('date') is-invalid @enderror" 
-                                               name="date" value="{{ date('Y-m-d') }}" required>
+                                        <input type="date" class="form-control @error('date') is-invalid @enderror" 
+                                               name="date" value="{{ date('Y-m-d') }}" required
+                                               style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%;">
                                     </div>
 
-                                    <div class="form-group col-md-6">
-                                        <label class="font-weight-bold text-dark">Reference / Note</label>
-                                        <input type="text" class="form-control form-control-lg @error('note') is-invalid @enderror" 
-                                               name="note" placeholder="Optional reference...">
+                                    <div class="form-group col-12 col-md-6">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">Reference / Note</label>
+                                        <input type="text" class="form-control @error('note') is-invalid @enderror" 
+                                               name="note" placeholder="Optional reference..."
+                                               style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%;">
                                     </div>
 
-                                    <div class="form-group col-md-6">
-                                        <label class="font-weight-bold text-dark">Invoice Attachment <span class="text-muted">(PDF, Excel, Image)</span></label>
-                                        <input type="file" class="form-control form-control-lg @error('invoice_attachment') is-invalid @enderror" 
-                                               name="invoice_attachment">
+                                    <div class="form-group col-12 col-md-6">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">Invoice Attachment <span class="text-muted" style="font-size: 0.7rem;">(PDF, Excel, Image)</span></label>
+                                        <input type="file" class="form-control @error('invoice_attachment') is-invalid @enderror" 
+                                               name="invoice_attachment"
+                                               style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%; padding: 0.3rem 0.7rem;">
                                     </div>
 
-                                    <div class="form-group col-md-4">
-                                        <label class="font-weight-bold text-dark">Pricing Rule (Multiplier)</label>
-                                        <select class="form-control form-control-lg select2 @error('pricing_rule_id') is-invalid @enderror" 
-                                                name="pricing_rule_id" id="pricing_rule_select">
+                                    <div class="form-group col-12 col-md-4">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">Pricing Rule (Multiplier)</label>
+                                        <select class="form-control select2 @error('pricing_rule_id') is-invalid @enderror" 
+                                                name="pricing_rule_id" id="pricing_rule_select"
+                                                style="height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0; width: 100%;">
                                             <option value="">Manual Prices</option>
                                             @if(isset($pricingRules))
                                                 @foreach($pricingRules as $rule)
@@ -122,36 +128,36 @@
                                                 @endforeach
                                             @endif
                                         </select>
-                                        <small class="text-muted">When selected, Sale/Outlet price auto-calculates from Local Unit Cost.</small>
+                                        <small class="text-muted" style="font-size: 0.7rem;">When selected, Sale/Outlet price auto-calculates from Local Unit Cost.</small>
                                     </div>
 
                                     <input type="hidden" name="booking_id" id="booking_id_hidden">
                                 </div>
 
                                 {{-- Section 2: Invoice Items --}}
-                                <div class="section-title mb-4 mt-4">
-                                    <span class="font-weight-bold text-primary">
+                                <div class="section-title mb-3 mt-3">
+                                    <span class="font-weight-bold" style="color: #2563eb; font-size: 0.95rem;">
                                         <i class="fas fa-list-ul mr-2"></i>Invoice Items
                                     </span>
-                                    <hr>
+                                    <hr style="border-top: 2px solid #e2e8f0; opacity: 0.5; margin-top: 0.3rem;">
                                 </div>
 
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm" id="product_table">
+                                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                                    <table class="table table-bordered table-sm" id="product_table" style="min-width: 800px; font-size: 0.8rem;">
                                         <thead class="bg-light text-center">
                                             <tr>
-                                                <th width="4%">Image</th>
-                                                <th width="22%">Product Details</th>
-                                                <th width="8%" id="vendor_unit_cost_header">Cost (Vendor)</th>
-                                                <th width="6%">Qty</th>
-                                                <th width="10%" id="vendor_subtotal_header">Total (Vendor)</th>
-                                                <th width="8%">Raw Cost</th>
-                                                <th width="8%">Tax</th>
-                                                <th width="8%">Transport</th>
-                                                <th width="9%">Local Unit Cost</th>
-                                                <th width="7%">Sale Price</th>
-                                                <th width="7%">Outlet Price</th>
-                                                <th width="3%"></th>
+                                                <th style="width: 4%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Image</th>
+                                                <th style="width: 22%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Product Details</th>
+                                                <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;" id="vendor_unit_cost_header">Cost (Vendor)</th>
+                                                <th style="width: 6%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Qty</th>
+                                                <th style="width: 10%; font-size: 0.65rem; padding: 0.4rem 0.3rem;" id="vendor_subtotal_header">Total (Vendor)</th>
+                                                <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Raw Cost</th>
+                                                <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Tax</th>
+                                                <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Transport</th>
+                                                <th style="width: 9%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Local Unit Cost</th>
+                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Sale Price</th>
+                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Outlet Price</th>
+                                                <th style="width: 3%; font-size: 0.65rem; padding: 0.4rem 0.3rem;"></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -159,7 +165,7 @@
                                         <tfoot>
                                             <tr>
                                                 <td colspan="12" class="p-0">
-                                                    <button type="button" class="btn btn-block btn-outline-primary border-dashed py-3" id="add_row_btn">
+                                                    <button type="button" class="btn btn-block btn-outline-primary border-dashed py-2" id="add_row_btn" style="border-radius: 0; font-size: 0.85rem; border-style: dashed !important;">
                                                         <i class="fas fa-plus-circle mr-2"></i> Add Another Product Line
                                                     </button>
                                                 </td>
@@ -169,26 +175,26 @@
                                 </div>
 
                                 {{-- Section 3: Payment Summary --}}
-                                <div class="section-title mb-4 mt-4">
-                                    <span class="font-weight-bold text-primary">
+                                <div class="section-title mb-3 mt-3">
+                                    <span class="font-weight-bold" style="color: #2563eb; font-size: 0.95rem;">
                                         <i class="fas fa-calculator mr-2"></i>Payment Summary
                                     </span>
-                                    <hr>
+                                    <hr style="border-top: 2px solid #e2e8f0; opacity: 0.5; margin-top: 0.3rem;">
                                 </div>
 
                                 <div class="row justify-content-end">
-                                    <div class="col-md-6 col-lg-5">
-                                        <div class="form-group row mb-3">
-                                            <label class="col-sm-6 col-form-label text-right font-weight-bold">Product Total (Vendor):</label>
+                                    <div class="col-12 col-md-6 col-lg-5">
+                                        <div class="form-group row mb-2">
+                                            <label class="col-sm-6 col-form-label text-right font-weight-bold" style="font-size: 0.85rem;">Product Total (Vendor):</label>
                                             <div class="col-sm-6">
-                                                <div class="form-control-plaintext font-weight-bold text-primary" id="vendor_grand_total">0.00</div>
+                                                <div class="form-control-plaintext font-weight-bold" style="color: #2563eb; font-size: 0.9rem;" id="vendor_grand_total">0.00</div>
                                             </div>
                                         </div>
-                                        <hr>
+                                        <hr style="border-top: 1px solid #e2e8f0;">
                                         <div class="form-group row">
-                                            <label class="col-sm-6 col-form-label text-right h5 mb-0 font-weight-bold">Grand Total (System):</label>
+                                            <label class="col-sm-6 col-form-label text-right h5 mb-0 font-weight-bold" style="font-size: 0.95rem;">Grand Total (System):</label>
                                             <div class="col-sm-6">
-                                                <div class="h4 text-primary mb-0 font-weight-bold" id="grand_total_display">{{ $settings->currency_icon }}0.00</div>
+                                                <div class="h4 mb-0 font-weight-bold" style="color: #2563eb; font-size: 1.2rem;" id="grand_total_display">{{ $settings->currency_icon }}0.00</div>
                                                 <input type="hidden" name="total_amount" id="total_amount_hidden">
                                             </div>
                                         </div>
@@ -196,14 +202,18 @@
                                 </div>
 
                                 {{-- Submit Buttons --}}
-                                <div class="row mt-4 pt-3 border-top">
-                                    <div class="col-12 text-right">
-                                        <a href="{{ route('admin.purchases.index') }}" class="btn btn-outline-secondary px-4 mr-2">
-                                            <i class="fas fa-times mr-1"></i> Cancel
-                                        </a>
-                                        <button type="submit" class="btn btn-primary px-5 shadow-sm">
-                                            <i class="fas fa-check-circle mr-2"></i> Confirm & Save
-                                        </button>
+                                <div class="row mt-3 pt-3 border-top">
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column flex-sm-row justify-content-sm-end gap-2 gap-sm-2">
+                                            <a href="{{ route('admin.purchases.index') }}" class="btn btn-outline-secondary px-4 order-2 order-sm-1" 
+                                               style="border-radius: 10px; min-height: 40px; font-size: 0.85rem; width: 100%; width: auto;">
+                                                <i class="fas fa-times mr-1"></i> Cancel
+                                            </a>
+                                            <button type="submit" class="btn px-5 shadow-sm order-1 order-sm-2" 
+                                                    style="background: #2563eb; border: none; border-radius: 10px; min-height: 40px; font-size: 0.85rem; width: 100%; width: auto; color: #ffffff;">
+                                                <i class="fas fa-check-circle mr-2"></i> Confirm & Save
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -218,30 +228,30 @@
     {{-- Import Modal --}}
     <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="importModalLabel">
-                        <i class="fas fa-file-import text-primary mr-2"></i>
+            <div class="modal-content" style="border-radius: 16px; border: none;">
+                <div class="modal-header" style="border-bottom: 2px solid #f0f0f0; padding: 1rem 1.5rem;">
+                    <h5 class="modal-title" id="importModalLabel" style="font-size: 1rem;">
+                        <i class="fas fa-file-import mr-2" style="color: #2563eb;"></i>
                         Import from Order Place
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="padding: 1.5rem;">
                     <div class="form-group">
-                        <label class="font-weight-bold text-dark">Select Pending Order Place</label>
-                        <select class="form-control form-control-lg select2" id="booking_select" style="width: 100%;">
+                        <label class="font-weight-bold text-dark" style="font-size: 0.85rem;">Select Pending Order Place</label>
+                        <select class="form-control select2" id="booking_select" style="width: 100%; height: 44px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #e2e8f0;">
                             <option value="">Manual / None</option>
                             @foreach ($bookings as $booking)
                                 <option value="{{ $booking->id }}">#{{ $booking->booking_no }} | {{ $booking->vendor->shop_name }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted mt-2 d-block">Selecting a booking will auto-import items, vendor, and shipping method.</small>
+                        <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">Selecting a booking will auto-import items, vendor, and shipping method.</small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <div class="modal-footer" style="border-top: 2px solid #f0f0f0; padding: 1rem 1.5rem;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 10px; min-height: 40px; font-size: 0.85rem;">
                         <i class="fas fa-times mr-1"></i> Close
                     </button>
                 </div>
@@ -252,91 +262,120 @@
 
 @push('styles')
 <style>
+    /* =============================================
+       CREATE ORDER RECEIVE - FIXED SCROLL ISSUE
+       ============================================= */
+
+    /* Remove any fixed positioning that causes scroll issues */
     .border-dashed {
         border-style: dashed !important;
+        border-color: #d1d3e2 !important;
     }
 
     .border-dashed:hover {
         background: #f8f9fc !important;
-        border-color: #4e73df !important;
-        color: #4e73df !important;
+        border-color: #2563eb !important;
+        color: #2563eb !important;
     }
 
     .form-group label {
-        font-size: 0.85rem;
-        margin-bottom: 0.5rem;
+        font-size: 0.8rem !important;
+        margin-bottom: 0.4rem !important;
+        letter-spacing: 0.3px;
     }
 
     .form-control {
         border-radius: 10px !important;
         border: 2px solid #e2e8f0;
-        padding: 0.7rem 1rem;
+        padding: 0.5rem 0.8rem;
         transition: all 0.3s ease;
-        font-size: 0.95rem;
+        font-size: 0.9rem !important;
         background: #fafbfc;
+        height: 44px !important;
+        width: 100% !important;
     }
 
     .form-control:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+        border-color: #2563eb;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
         background: #ffffff;
     }
 
-    .form-control-lg {
-        height: 50px !important;
-        font-size: 0.95rem !important;
+    .form-control-sm {
+        height: 34px !important;
+        font-size: 0.8rem !important;
+        padding: 0.2rem 0.4rem !important;
     }
 
-    .form-control-sm {
-        height: 36px !important;
-        font-size: 0.85rem !important;
-        padding: 0.3rem 0.5rem !important;
+    .form-control-plaintext {
+        font-size: 0.9rem !important;
+        font-weight: 700;
+        padding: 0.2rem 0;
     }
 
     .section-title span {
-        font-size: 1.05rem;
+        font-size: 0.95rem !important;
         letter-spacing: 0.5px;
     }
 
     .section-title hr {
         border-top: 2px solid #e2e8f0;
         opacity: 0.5;
-        margin-top: 0.5rem;
+        margin-top: 0.3rem;
     }
 
     .table th {
-        font-size: 0.7rem;
+        font-size: 0.65rem !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         background: #f8f9fc !important;
         color: #1a1a2e !important;
         font-weight: 700 !important;
         border-bottom: 2px solid #e2e8f0 !important;
-        padding: 0.6rem 0.5rem !important;
+        padding: 0.4rem 0.3rem !important;
     }
 
     .table td {
         vertical-align: middle !important;
-        font-size: 0.85rem;
-        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.3rem !important;
+    }
+
+    /* Fix for image container - no fixed positioning */
+    .table td:first-child {
+        vertical-align: middle !important;
+        position: relative !important;
+    }
+
+    .table td:first-child img {
+        display: inline-block !important;
+        max-width: 35px !important;
+        max-height: 35px !important;
+        object-fit: cover !important;
+    }
+
+    .table td:first-child .bg-light {
+        display: inline-flex !important;
+        width: 35px !important;
+        height: 35px !important;
     }
 
     .btn {
         border-radius: 10px !important;
         font-weight: 600 !important;
         transition: all 0.3s ease !important;
-        min-height: 44px !important;
+        min-height: 40px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 0 1.5rem !important;
-        font-size: 0.9rem !important;
+        padding: 0 1.2rem !important;
+        font-size: 0.85rem !important;
     }
 
     .btn-sm {
         min-height: 36px !important;
         font-size: 0.8rem !important;
-        padding: 0 1rem !important;
+        padding: 0 0.8rem !important;
     }
 
     .btn:hover {
@@ -344,40 +383,48 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     }
 
+    .btn:active {
+        transform: scale(0.97);
+    }
+
     .btn-primary {
-        background: #4e73df !important;
+        background: #2563eb !important;
         border: none !important;
         color: #ffffff !important;
     }
 
     .btn-primary:hover {
-        background: #224abe !important;
-        box-shadow: 0 6px 20px rgba(78, 115, 223, 0.35) !important;
+        background: #1d4ed8 !important;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35) !important;
     }
 
     .btn-outline-primary {
-        color: #4e73df !important;
-        border-color: #4e73df !important;
+        color: #2563eb !important;
+        border-color: #2563eb !important;
+        background: transparent !important;
     }
 
     .btn-outline-primary:hover {
-        background: #4e73df !important;
+        background: #2563eb !important;
         color: #fff !important;
     }
 
     .btn-outline-secondary {
         color: #858796 !important;
         border-color: #858796 !important;
+        background: transparent !important;
     }
 
     .btn-outline-secondary:hover {
         background: #858796 !important;
         color: #fff !important;
+        border-color: #858796 !important;
     }
 
     .btn-outline-danger {
         color: #e74a3b !important;
         border-color: #e74a3b !important;
+        background: transparent !important;
     }
 
     .btn-outline-danger:hover {
@@ -387,6 +434,15 @@
 
     .card {
         border-radius: 16px !important;
+        overflow: hidden !important;
+    }
+
+    .card-header:first-child {
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-footer:last-child {
+        border-radius: 0 0 16px 16px !important;
     }
 
     .modal-content {
@@ -394,22 +450,32 @@
         border: none !important;
     }
 
+    .modal-header {
+        border-bottom: 2px solid #f0f0f0 !important;
+    }
+
+    .modal-footer {
+        border-top: 2px solid #f0f0f0 !important;
+    }
+
+    /* Select2 */
     .select2-container--default .select2-selection--single {
         border-radius: 10px !important;
         border: 2px solid #e2e8f0 !important;
-        height: 50px !important;
+        height: 44px !important;
         padding: 0 12px;
         background: #fafbfc !important;
+        width: 100% !important;
     }
 
     .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 44px !important;
-        font-size: 0.95rem;
+        line-height: 38px !important;
+        font-size: 0.9rem;
         color: #495057;
     }
 
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 48px !important;
+        height: 42px !important;
     }
 
     .select2-dropdown {
@@ -417,6 +483,19 @@
         border-color: #e2e8f0 !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background: #2563eb !important;
+    }
+
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    }
+
+    /* =============================================
+       RESPONSIVE BREAKPOINTS
+       ============================================= */
 
     @media (max-width: 575.98px) {
         .section-header {
@@ -428,50 +507,55 @@
         .card-body {
             padding: 15px !important;
         }
-        .form-control-lg {
-            height: 44px !important;
+        .card-header {
+            padding: 10px 15px !important;
+        }
+        .card-header h5 {
+            font-size: 0.95rem !important;
+        }
+        .form-group {
+            margin-bottom: 1rem !important;
+        }
+        .form-control {
+            height: 40px !important;
             font-size: 0.85rem !important;
+        }
+        .form-control-sm {
+            height: 30px !important;
+            font-size: 0.75rem !important;
         }
         .btn {
             font-size: 0.8rem !important;
             min-height: 38px !important;
-            padding: 0 1rem !important;
+            padding: 0 0.8rem !important;
+            width: 100% !important;
         }
         .btn-sm {
             min-height: 34px !important;
             font-size: 0.75rem !important;
-            padding: 0 0.8rem !important;
+            padding: 0 0.6rem !important;
         }
         .table td {
-            font-size: 0.75rem !important;
-            padding: 0.4rem !important;
+            font-size: 0.7rem !important;
+            padding: 0.3rem !important;
         }
         .table th {
-            font-size: 0.6rem !important;
-            padding: 0.4rem !important;
+            font-size: 0.55rem !important;
+            padding: 0.3rem !important;
         }
-        .text-right {
-            text-align: center !important;
-        }
-        .text-right .btn {
-            width: 100% !important;
-            margin-bottom: 8px !important;
-        }
-        .select2-container--default .select2-selection--single {
-            height: 44px !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 38px !important;
-        }
-        .modal-dialog {
-            margin: 10px !important;
-        }
-    }
-
-    @media (max-width: 767.98px) {
         .section-header .ml-auto {
             width: 100% !important;
             justify-content: space-between !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .section-header .btn {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
+        .section-header .breadcrumb {
+            font-size: 0.65rem !important;
+            width: 100% !important;
         }
         .card-header .d-flex {
             flex-direction: column !important;
@@ -489,17 +573,183 @@
             margin-top: 8px !important;
             width: 100% !important;
         }
+        .text-right {
+            text-align: center !important;
+        }
+        .text-right .btn {
+            width: 100% !important;
+            margin-bottom: 8px !important;
+        }
+        .select2-container--default .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 34px !important;
+            font-size: 0.85rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 38px !important;
+        }
+        .modal-dialog {
+            margin: 10px !important;
+        }
+        .modal-content {
+            border-radius: 12px !important;
+        }
+        .modal-header {
+            padding: 0.8rem 1rem !important;
+        }
+        .modal-footer {
+            padding: 0.8rem 1rem !important;
+        }
+        .modal-body {
+            padding: 0.8rem 1rem !important;
+        }
+        .modal-title {
+            font-size: 0.9rem !important;
+        }
+
+        /* Mobile Button Fix */
+        .d-flex.flex-column.flex-sm-row {
+            gap: 10px !important;
+        }
+        .d-flex.flex-column.flex-sm-row .btn {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+        .d-flex.flex-column.flex-sm-row .order-1,
+        .d-flex.flex-column.flex-sm-row .order-2 {
+            order: unset !important;
+        }
+        .gap-2 {
+            gap: 10px !important;
+        }
+
+        .section-header .ml-auto .section-header-breadcrumb {
+            width: 100% !important;
+        }
+        .section-header .ml-auto .btn {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
+
+        .table-responsive {
+            margin: 0 -10px !important;
+            padding: 0 10px !important;
+            width: calc(100% + 20px) !important;
+        }
+
+        .row .col-12 {
+            padding: 0 5px !important;
+        }
+    }
+
+    @media (min-width: 576px) and (max-width: 767.98px) {
+        .card-body {
+            padding: 20px !important;
+        }
+        .form-control {
+            height: 42px !important;
+        }
+        .btn {
+            min-height: 40px !important;
+            font-size: 0.85rem !important;
+        }
+        .section-header .ml-auto {
+            flex-wrap: wrap !important;
+            gap: 5px !important;
+        }
+        .card-header .d-flex {
+            flex-wrap: wrap !important;
+        }
+        .d-flex.flex-column.flex-sm-row .btn {
+            width: auto !important;
+        }
+        .d-flex.flex-column.flex-sm-row {
+            gap: 10px !important;
+        }
+        .select2-container--default .select2-selection--single {
+            height: 42px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .section-header .ml-auto {
+            width: 100% !important;
+            justify-content: space-between !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .card-header .d-flex {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
+        .card-header .ml-auto {
+            margin-left: 0 !important;
+            margin-top: 8px !important;
+            width: 100% !important;
+        }
+        .section-header .breadcrumb {
+            font-size: 0.7rem !important;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) {
+        .card-body {
+            padding: 25px !important;
+        }
+        .form-control {
+            height: 44px !important;
+        }
+        .btn {
+            min-height: 44px !important;
+        }
+        .d-flex.flex-column.flex-sm-row .btn {
+            width: auto !important;
+        }
+        .select2-container--default .select2-selection--single {
+            height: 44px !important;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .card-body {
+            padding: 30px !important;
+        }
+        .form-control {
+            height: 44px !important;
+        }
+        .d-flex.flex-column.flex-sm-row .btn {
+            width: auto !important;
+        }
+        .d-flex.flex-column.flex-sm-row {
+            gap: 12px !important;
+        }
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .card {
         animation: fadeInUp 0.4s ease-out;
     }
 
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
+    /* Scrollbar */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -511,14 +761,63 @@
     }
 
     ::-webkit-scrollbar-thumb {
-        background: #4e73df;
+        background: #2563eb;
         border-radius: 10px;
     }
 
-    .form-control-plaintext {
+    ::-webkit-scrollbar-thumb:hover {
+        background: #1d4ed8;
+    }
+
+    /* Validation */
+    .invalid-feedback {
+        font-size: 0.75rem !important;
+        font-weight: 500;
+        margin-top: 0.2rem;
+    }
+
+    .was-validated .form-control:valid,
+    .form-control.is-valid {
+        border-color: #1cc88a !important;
+    }
+
+    .was-validated .form-control:invalid,
+    .form-control.is-invalid {
+        border-color: #e74a3b !important;
+    }
+
+    .text-danger {
+        font-weight: 700 !important;
         font-size: 1rem;
-        font-weight: 700;
-        padding: 0.3rem 0;
+    }
+
+    .form-group label i {
+        width: 18px !important;
+        text-align: center !important;
+    }
+
+    /* Border Top */
+    .border-top {
+        border-top: 2px solid #e2e8f0 !important;
+    }
+
+    /* Focus glow effect */
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    }
+
+    /* Modal backdrop */
+    .modal-backdrop {
+        background: rgba(26, 26, 46, 0.6) !important;
+    }
+
+    /* Add Row Button */
+    .btn-block {
+        border-radius: 0 0 16px 16px !important;
+    }
+
+    .btn-block:hover {
+        background: #f8f9fc !important;
     }
 </style>
 @endpush
@@ -647,14 +946,14 @@
                 
                 let imgContainer = row.find('td:first-child');
                 if(product.thumb_image) {
-                    imgContainer.html(`<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">`);
+                    imgContainer.html(`<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded" style="width: 35px; height: 35px; object-fit: cover;">`);
                 } else {
-                    imgContainer.html(`<div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 40px; height: 40px;"><i class="fas fa-box"></i></div>`);
+                    imgContainer.html(`<div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 35px; height: 35px;"><i class="fas fa-box"></i></div>`);
                 }
 
-                let productInfo = `<strong>${product.name}</strong>`;
-                if(product.product_number) productInfo += `<br><small class="text-muted">Item #: ${product.product_number}</small>`;
-                if(product.category && product.category.name) productInfo += `<br><small class="text-muted">Category: ${product.category.name}</small>`;
+                let productInfo = `<strong style="font-size: 0.8rem;">${product.name}</strong>`;
+                if(product.product_number) productInfo += `<br><small class="text-muted" style="font-size: 0.65rem;">Item #: ${product.product_number}</small>`;
+                if(product.category && product.category.name) productInfo += `<br><small class="text-muted" style="font-size: 0.65rem;">Category: ${product.category.name}</small>`;
                 row.find('.product-info').html(productInfo);
                 
                 row.find('.raw_material_cost').val(product.raw_material_cost || 0);
@@ -665,12 +964,12 @@
                 
                 let variantHtml = '';
                 if(product.variants && product.variants.length > 0) {
-                    variantHtml += '<div class="mt-2"><table class="table table-sm table-bordered mb-0" style="font-size: 12px; background: white;"><tbody>';
+                    variantHtml += '<div class="mt-1"><table class="table table-sm table-bordered mb-0" style="font-size: 11px; background: white;"><tbody>';
                     product.variants.forEach(v => {
                         let colorName = v.color ? v.color.name : '';
                         let sizeName = v.size ? v.size.name : '';
                         let name = (colorName + ' ' + sizeName).trim() || 'Default';
-                        variantHtml += `<tr><td class="p-1">${name}</td><td class="p-1" width="60"><input type="number" class="form-control form-control-sm variant-qty-input p-0 text-center" data-key="${name}" value="0" min="0" style="height: 22px; font-size: 11px;"></td></tr>`;
+                        variantHtml += `<tr><td class="p-1" style="font-size: 11px;">${name}</td><td class="p-1" width="60"><input type="number" class="form-control form-control-sm variant-qty-input p-0 text-center" data-key="${name}" value="0" min="0" style="height: 20px; font-size: 10px;"></td></tr>`;
                     });
                     variantHtml += '</tbody></table></div>';
                 }
@@ -741,16 +1040,16 @@
         if(booking.variant_info) {
             variantInput = JSON.stringify(booking.variant_info);
             let variants = booking.variant_info['variant'] ? {[booking.variant_info['variant']]: booking.qty} : booking.variant_info;
-            variantHtml += '<div class="mt-2 bg-light rounded p-2" style="font-size: 11px;">';
+            variantHtml += '<div class="mt-1 bg-light rounded p-1" style="font-size: 10px;">';
             for (const [key, qty] of Object.entries(variants)) {
                 hasVariants = true;
                 let cleanKey = key.replace(/Color:\s*/gi, '').replace(/Size:\s*/gi, '').replace(/\s*-\s*/g, ' ').trim();
                 variantHtml += `
                     <div class="d-flex justify-content-between align-items-center mb-1 last:mb-0">
-                        <span class="text-dark font-weight-500">${cleanKey}</span>
+                        <span class="text-dark font-weight-500" style="font-size: 10px;">${cleanKey}</span>
                         <input type="number" class="form-control form-control-sm variant-qty-input p-0 text-center" 
                                data-key="${cleanKey}" value="${qty}" min="0" 
-                               style="height: 20px; width: 50px; font-size: 11px; border: 1px solid #ced4da;">
+                               style="height: 18px; width: 45px; font-size: 10px; border: 1px solid #ced4da;">
                     </div>`;
             }
             variantHtml += '</div>';
@@ -758,11 +1057,11 @@
         if(!hasVariants) { variantHtml = ''; variantInput = ''; }
 
         let imageHtml = product.thumb_image 
-            ? `<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">`
-            : `<div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 40px; height: 40px;"><i class="fas fa-box"></i></div>`;
+            ? `<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded" style="width: 35px; height: 35px; object-fit: cover;">`
+            : `<div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 35px; height: 35px;"><i class="fas fa-box"></i></div>`;
 
-        let productInfo = `<strong>${product.name}</strong>`;
-        if(product.product_number) productInfo += `<br><small class="text-muted">Item #: ${product.product_number}</small>`;
+        let productInfo = `<strong style="font-size: 0.8rem;">${product.name}</strong>`;
+        if(product.product_number) productInfo += `<br><small class="text-muted" style="font-size: 0.65rem;">Item #: ${product.product_number}</small>`;
 
         if(booking.vendor && booking.vendor.currency_rate) {
             currentVendorRate = booking.vendor.currency_rate;
@@ -779,39 +1078,39 @@
                         <option value="${product.id}" selected>${product.name}</option>
                         ${products.map(p => p.id != product.id ? `<option value="${p.id}">${p.name}</option>` : '').join('')}
                     </select>
-                    <div class="product-info mt-1" style="font-size: 12px; line-height: 1.3; color: #666;">${productInfo}</div>
+                    <div class="product-info mt-1" style="font-size: 11px; line-height: 1.3; color: #666;">${productInfo}</div>
                     <div class="variant-container">${variantHtml}</div>
                     <input type="hidden" class="variant_info_hidden" name="items[${rowCount}][variant_info]" value='${variantInput}'>
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm unit_cost text-center" name="items[${rowCount}][unit_cost]" step="any" value="${booking.unit_price}" required>
+                    <input type="number" class="form-control form-control-sm unit_cost text-center" name="items[${rowCount}][unit_cost]" step="any" value="${booking.unit_price}" required style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm qty text-center" name="items[${rowCount}][qty]" value="${booking.qty}" min="1" required style="font-weight: bold;">
+                    <input type="number" class="form-control form-control-sm qty text-center" name="items[${rowCount}][qty]" value="${booking.qty}" min="1" required style="font-weight: bold; font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-right">
-                    <input type="text" class="form-control-plaintext form-control-sm subtotal mb-0 text-dark text-right font-weight-bold pr-2" readonly value="0.00">
+                    <input type="text" class="form-control-plaintext form-control-sm subtotal mb-0 text-dark text-right font-weight-bold pr-2" readonly value="0.00" style="font-size: 0.8rem;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm raw_material_cost text-center" name="items[${rowCount}][raw_material_cost]" value="${product.raw_material_cost || 0}" step="any">
+                    <input type="number" class="form-control form-control-sm raw_material_cost text-center" name="items[${rowCount}][raw_material_cost]" value="${product.raw_material_cost || 0}" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm tax_cost text-center" name="items[${rowCount}][tax_cost]" value="${product.tax || 0}" step="any">
+                    <input type="number" class="form-control form-control-sm tax_cost text-center" name="items[${rowCount}][tax_cost]" value="${product.tax || 0}" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm transport_cost text-center" name="items[${rowCount}][transport_cost]" value="${product.transport_cost || 0}" step="any">
+                    <input type="number" class="form-control form-control-sm transport_cost text-center" name="items[${rowCount}][transport_cost]" value="${product.transport_cost || 0}" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <div class="form-control-plaintext form-control-sm local_unit_cost mb-0 text-primary text-center font-weight-bold pr-2">0.00</div>
+                    <div class="form-control-plaintext form-control-sm local_unit_cost mb-0 text-primary text-center font-weight-bold pr-2" style="font-size: 0.8rem;">0.00</div>
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm sale_price text-center" name="items[${rowCount}][sale_price]" value="${product.price || 0}" step="any">
+                    <input type="number" class="form-control form-control-sm sale_price text-center" name="items[${rowCount}][sale_price]" value="${product.price || 0}" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm outlet_price text-center" name="items[${rowCount}][outlet_price]" value="${product.outlet_price || 0}" step="any">
+                    <input type="number" class="form-control form-control-sm outlet_price text-center" name="items[${rowCount}][outlet_price]" value="${product.outlet_price || 0}" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove_row" style="padding: 2px 7px;"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove_row" style="padding: 1px 5px; font-size: 0.7rem; min-height: 28px;"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -828,46 +1127,46 @@
         let html = `
             <tr class="main-row">
                 <td class="align-middle text-center">
-                    <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 40px; height: 40px;"><i class="fas fa-box"></i></div>
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width: 35px; height: 35px;"><i class="fas fa-box"></i></div>
                 </td>
                 <td class="align-middle product_select_col">
-                    <select class="form-control form-control-sm product_select select2" name="items[${rowCount}][product_id]" required>
+                    <select class="form-control form-control-sm product_select select2" name="items[${rowCount}][product_id]" required style="font-size: 0.8rem; height: 32px;">
                         <option value="">Select Product...</option>
                         ${products.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                     </select>
-                    <div class="product-info mt-2" style="font-size: 12px; line-height: 1.4; color: #666;"></div>
+                    <div class="product-info mt-1" style="font-size: 11px; line-height: 1.4; color: #666;"></div>
                     <div class="variant-container"></div>
                     <input type="hidden" class="variant_info_hidden" name="items[${rowCount}][variant_info]">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm unit_cost text-center" name="items[${rowCount}][unit_cost]" step="any" required placeholder="0.00">
+                    <input type="number" class="form-control form-control-sm unit_cost text-center" name="items[${rowCount}][unit_cost]" step="any" required placeholder="0.00" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm qty text-center" name="items[${rowCount}][qty]" value="1" min="1" required style="font-weight: bold;">
+                    <input type="number" class="form-control form-control-sm qty text-center" name="items[${rowCount}][qty]" value="1" min="1" required style="font-weight: bold; font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-right">
-                    <input type="text" class="form-control-plaintext form-control-sm subtotal mb-0 text-dark text-right font-weight-bold pr-2" readonly value="0.00">
+                    <input type="text" class="form-control-plaintext form-control-sm subtotal mb-0 text-dark text-right font-weight-bold pr-2" readonly value="0.00" style="font-size: 0.8rem;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm raw_material_cost text-center" name="items[${rowCount}][raw_material_cost]" placeholder="0.00" step="any" value="0">
+                    <input type="number" class="form-control form-control-sm raw_material_cost text-center" name="items[${rowCount}][raw_material_cost]" placeholder="0.00" step="any" value="0" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm tax_cost text-center" name="items[${rowCount}][tax_cost]" placeholder="0.00" step="any" value="0">
+                    <input type="number" class="form-control form-control-sm tax_cost text-center" name="items[${rowCount}][tax_cost]" placeholder="0.00" step="any" value="0" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm transport_cost text-center" name="items[${rowCount}][transport_cost]" placeholder="0.00" step="any" value="0">
+                    <input type="number" class="form-control form-control-sm transport_cost text-center" name="items[${rowCount}][transport_cost]" placeholder="0.00" step="any" value="0" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <div class="form-control-plaintext form-control-sm local_unit_cost mb-0 text-primary text-center font-weight-bold pr-2">0.00</div>
+                    <div class="form-control-plaintext form-control-sm local_unit_cost mb-0 text-primary text-center font-weight-bold pr-2" style="font-size: 0.8rem;">0.00</div>
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm sale_price text-center" name="items[${rowCount}][sale_price]" placeholder="0.00" step="any">
+                    <input type="number" class="form-control form-control-sm sale_price text-center" name="items[${rowCount}][sale_price]" placeholder="0.00" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <input type="number" class="form-control form-control-sm outlet_price text-center" name="items[${rowCount}][outlet_price]" placeholder="0.00" step="any">
+                    <input type="number" class="form-control form-control-sm outlet_price text-center" name="items[${rowCount}][outlet_price]" placeholder="0.00" step="any" style="font-size: 0.8rem; height: 32px;">
                 </td>
                 <td class="align-middle text-center">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove_row" style="padding: 2px 7px;"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove_row" style="padding: 1px 5px; font-size: 0.7rem; min-height: 28px;"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
