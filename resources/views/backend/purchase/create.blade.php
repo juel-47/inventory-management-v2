@@ -204,7 +204,7 @@
                                 {{-- Submit Buttons --}}
                                 <div class="row mt-3 pt-3 border-top">
                                     <div class="col-12">
-                                        <div class="d-flex flex-column flex-sm-row justify-content-sm-end gap-2 gap-sm-2">
+                                        <div class="d-flex flex-column flex-sm-row justify-content-sm-end" style="gap: 15px;">
                                             <a href="{{ route('admin.purchases.index') }}" class="btn btn-outline-secondary px-4 order-2 order-sm-1" 
                                                style="border-radius: 10px; min-height: 40px; font-size: 0.85rem; width: 100%; width: auto;">
                                                 <i class="fas fa-times mr-1"></i> Cancel
@@ -263,10 +263,9 @@
 @push('styles')
 <style>
     /* =============================================
-       CREATE ORDER RECEIVE - FIXED SCROLL ISSUE
+       CREATE ORDER RECEIVE - FIXED DESIGN
        ============================================= */
 
-    /* Remove any fixed positioning that causes scroll issues */
     .border-dashed {
         border-style: dashed !important;
         border-color: #d1d3e2 !important;
@@ -339,25 +338,6 @@
         vertical-align: middle !important;
         font-size: 0.8rem !important;
         padding: 0.4rem 0.3rem !important;
-    }
-
-    /* Fix for image container - no fixed positioning */
-    .table td:first-child {
-        vertical-align: middle !important;
-        position: relative !important;
-    }
-
-    .table td:first-child img {
-        display: inline-block !important;
-        max-width: 35px !important;
-        max-height: 35px !important;
-        object-fit: cover !important;
-    }
-
-    .table td:first-child .bg-light {
-        display: inline-flex !important;
-        width: 35px !important;
-        height: 35px !important;
     }
 
     .btn {
@@ -609,9 +589,9 @@
             font-size: 0.9rem !important;
         }
 
-        /* Mobile Button Fix */
+        /* Mobile Button Fix - Increased gap */
         .d-flex.flex-column.flex-sm-row {
-            gap: 10px !important;
+            gap: 12px !important;
         }
         .d-flex.flex-column.flex-sm-row .btn {
             width: 100% !important;
@@ -620,9 +600,6 @@
         .d-flex.flex-column.flex-sm-row .order-1,
         .d-flex.flex-column.flex-sm-row .order-2 {
             order: unset !important;
-        }
-        .gap-2 {
-            gap: 10px !important;
         }
 
         .section-header .ml-auto .section-header-breadcrumb {
@@ -666,7 +643,7 @@
             width: auto !important;
         }
         .d-flex.flex-column.flex-sm-row {
-            gap: 10px !important;
+            gap: 12px !important;
         }
         .select2-container--default .select2-selection--single {
             height: 42px !important;
@@ -713,6 +690,9 @@
         .d-flex.flex-column.flex-sm-row .btn {
             width: auto !important;
         }
+        .d-flex.flex-column.flex-sm-row {
+            gap: 15px !important;
+        }
         .select2-container--default .select2-selection--single {
             height: 44px !important;
         }
@@ -729,7 +709,7 @@
             width: auto !important;
         }
         .d-flex.flex-column.flex-sm-row {
-            gap: 12px !important;
+            gap: 15px !important;
         }
     }
 
