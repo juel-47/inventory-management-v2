@@ -1,14 +1,18 @@
 /* Custom CSS */
 
-body.layout-3 .navbar {
-    margin: 16px;
+/* =============================================
+   NAVBAR LAYOUT FIX — overrides any custom.css
+   margin that breaks the fixed top navbar
+   ============================================= */
+body.layout-3 .navbar.main-navbar {
+    margin: 0 !important;
 }
 
 input[type="number"] {
     -moz-appearance: textfield !important;
     /* Firefox */
     -webkit-appearance: none !important;
-    /* Chrome, Safari */
+
     appearance: none !important;
 }
 
@@ -34,8 +38,7 @@ input[type="number"]::-webkit-outer-spin-button {
         border-radius: 4px !important;
     }
 
-    /* Hide some elements on very small screens if needed, 
-       but for now just wrapping and sizing should fix the overlay */
+   
 }
 
 /* Table Pagination Fix */
