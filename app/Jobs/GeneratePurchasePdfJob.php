@@ -40,11 +40,13 @@ class GeneratePurchasePdfJob implements ShouldQueue
         $settings = GeneralSetting::first();
         
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
 
         foreach ($purchase->details as $detail) {
             if ($detail->product && $detail->product->thumb_image) {
-                $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 60, 60);
+                // $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 60, 60);
+                $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 400, 400, 95);
             }
         }
 

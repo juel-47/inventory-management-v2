@@ -44,11 +44,13 @@ class GenerateBookingPdfJob implements ShouldQueue
         $settings = GeneralSetting::first();
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
 
         foreach ($orderGroup as $item) {
             if ($item->product && $item->product->thumb_image) {
-                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+                // $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 400, 400, 95);
             }
         }
 

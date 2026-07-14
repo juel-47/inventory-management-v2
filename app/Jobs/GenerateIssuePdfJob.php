@@ -48,12 +48,14 @@ class GenerateIssuePdfJob implements ShouldQueue
 
         // Optimize logo
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
+        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 38);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 114, 95);
 
         // Optimize product images
         foreach ($issue->items as $item) {
             if ($item->product && $item->product->thumb_image) {
-                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+                // $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 400, 400, 95);
             }
         }
 
