@@ -242,8 +242,8 @@
                                     <tr>
                                         <th class="pl-4" style="width:40px">#</th>
                                         <th>User / Outlet</th>
-                                        <th class="text-center">Orders</th>
                                         <th class="text-right pr-4">Value</th>
+                                        <th class="text-center">Orders</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -255,10 +255,10 @@
                                                     {{ optional($customer->user)->outlet_name ?: (optional($customer->user)->name ?? 'N/A') }}
                                                 </a>
                                             </td>
+                                            <td class="text-right pr-4 font-weight-bold text-dark">{!! formatWithCurrency($customer->total_value) !!}</td>
                                             <td class="text-center">
                                                 <span class="badge badge-info px-2">{{ number_format($customer->total_orders) }}</span>
                                             </td>
-                                            <td class="text-right pr-4 font-weight-bold text-dark">{!! formatWithCurrency($customer->total_value) !!}</td>
                                         </tr>
                                     @empty
                                         <tr>

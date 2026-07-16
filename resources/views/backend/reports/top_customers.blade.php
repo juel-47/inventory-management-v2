@@ -56,7 +56,7 @@
                 <div class="col-12">
                     <div class="card border shadow-sm">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">
-                            <h4 class="mb-0"><i class="fas fa-crown mr-2 text-warning"></i>All Customers by Order Count</h4>
+                            <h4 class="mb-0"><i class="fas fa-crown mr-2 text-warning"></i>All Customers by Order Value</h4>
                             <div class="d-flex align-items-center" style="gap:8px;">
                                 <form method="GET" action="{{ route('admin.reports.top-customers') }}" class="d-flex" style="gap:6px;">
                                     <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name / outlet / email..." value="{{ request('search') }}" style="min-width:240px;">
@@ -77,8 +77,8 @@
                                                 <th class="pl-4" style="width:50px;">#</th>
                                                 <th>User / Outlet</th>
                                                 <th>Email</th>
-                                                <th class="text-center">Orders</th>
                                                 <th class="text-right pr-4">Value</th>
+                                                <th class="text-center">Orders</th>
                                                 <th class="text-center">Action</th>
                                             </tr>
                                         </thead>
@@ -102,10 +102,10 @@
                                                     </td>
                                                     <td class="font-weight-bold">{{ $displayName }}</td>
                                                     <td class="text-muted" style="font-size:13px;">{{ $email }}</td>
+                                                    <td class="text-right pr-4 font-weight-bold text-dark">{!! formatWithCurrency($customer->total_value) !!}</td>
                                                     <td class="text-center">
                                                         <span class="badge badge-info px-2" style="font-size:13px;">{{ number_format($customer->total_orders) }}</span>
                                                     </td>
-                                                    <td class="text-right pr-4 font-weight-bold text-dark">{!! formatWithCurrency($customer->total_value) !!}</td>
                                                     <td class="text-center">
                                                         <a href="{{ route('admin.reports.orders', ['user_id' => $customer->user_id]) }}"
                                                            class="btn btn-outline-primary btn-sm rounded-pill px-3"

@@ -81,7 +81,7 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            // Top Customers (top 5 by order count)
+            // Top Customers (top 5 by total value)
             $topCustomers = Order::where('status', 'completed')
                 ->has('user')
                 ->selectRaw('
@@ -91,7 +91,7 @@ class DashboardController extends Controller
                 ')
                 ->with('user:id,name,outlet_name')
                 ->groupBy('user_id')
-                ->orderByDesc('total_orders')
+                ->orderByDesc('total_value')
                 ->take(5)
                 ->get();
         } 

@@ -168,8 +168,8 @@ class GeneratePdfJob implements ShouldQueue
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
+       // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
+       $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 400, 95);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
         $processed = 0;

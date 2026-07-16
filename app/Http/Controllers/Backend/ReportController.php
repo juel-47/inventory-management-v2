@@ -92,42 +92,69 @@ class ReportController extends Controller implements HasMiddleware
      */
     public function bestSellers(Request $request)
     {
-        // Get all completed order IDs (same as orderReport)
         $completedOrderIds = Order::where('status', 'completed')->pluck('id');
 
         $query = OrderItem::whereIn('order_id', $completedOrderIds)
+            ->leftJoin('products', 'order_items.product_id', '=', 'products.id')
             ->selectRaw('
-                product_id,
-                product_name,
+                order_items.product_id,
+                order_items.product_name,
                 COUNT(*) as times_ordered,
-                SUM(quantity) as total_qty,
-                COALESCE(SUM(line_total), 0) as total_value
+                SUM(order_items.quantity) as total_qty,
+                COALESCE(SUM(order_items.line_total), 0) as total_value
             ')
-            ->groupBy('product_id', 'product_name');
+            ->groupBy('order_items.product_id', 'order_items.product_name');
 
-        // Optional search by product name
         if ($request->filled('search')) {
-            $query->where('product_name', 'like', '%' . $request->search . '%');
+            $query->where('order_items.product_name', 'like', '%' . $request->search . '%');
         }
-
-        // Grand totals (without pagination)
-        $grandTotals = OrderItem::whereIn('order_id', $completedOrderIds)
-            ->selectRaw('
-                SUM(quantity) as grand_total_qty,
-                COALESCE(SUM(line_total), 0) as grand_total_value
-            ')
-            ->when($request->filled('search'), fn($q) => $q->where('product_name', 'like', '%' . $request->search . '%'))
-            ->first();
+        if ($request->filled('category_id')) {
+            $query->where('products.category_id', $request->category_id);
+        }
+        if ($request->filled('sub_category_id')) {
+            $query->where('products.sub_category_id', $request->sub_category_id);
+        }
+        if ($request->filled('child_category_id')) {
+            $query->where('products.child_category_id', $request->child_category_id);
+        }
 
         $products = $query->orderByDesc('times_ordered')->paginate(30)->withQueryString();
 
+        $grandTotals = OrderItem::whereIn('order_id', $completedOrderIds)
+            ->leftJoin('products', 'order_items.product_id', '=', 'products.id')
+            ->selectRaw('
+                SUM(order_items.quantity) as grand_total_qty,
+                COALESCE(SUM(order_items.line_total), 0) as grand_total_value
+            ')
+            ->when($request->filled('search'), fn($q) => $q->where('order_items.product_name', 'like', '%' . $request->search . '%'))
+            ->when($request->filled('category_id'), fn($q) => $q->where('products.category_id', $request->category_id))
+            ->when($request->filled('sub_category_id'), fn($q) => $q->where('products.sub_category_id', $request->sub_category_id))
+            ->when($request->filled('child_category_id'), fn($q) => $q->where('products.child_category_id', $request->child_category_id))
+            ->first();
+
+        $categories = Category::where('status', 1)->get();
         $settings = GeneralSetting::first();
 
-        return view('backend.reports.best_sellers', compact('products', 'grandTotals', 'settings'));
+        if ($request->ajax()) {
+            $html = view('backend.reports.partials.best_sellers_table', compact('products', 'grandTotals', 'settings'))->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $products->links()->render(),
+                'grand_total_qty' => number_format($grandTotals->grand_total_qty ?? 0),
+                'grand_total_value' => formatWithCurrency($grandTotals->grand_total_value ?? 0),
+                'total_products' => number_format($products->total()),
+                'first_item' => $products->firstItem(),
+                'last_item' => $products->lastItem(),
+                'total' => $products->total(),
+                'has_more' => $products->hasMorePages(),
+            ]);
+        }
+
+        return view('backend.reports.best_sellers', compact('products', 'grandTotals', 'categories', 'settings'));
     }
 
     /**
-     * Top Customers — Full paginated list ordered by order count
+     * Top Customers — Full paginated list ordered by total value
      */
     public function topCustomers(Request $request)
     {
@@ -141,7 +168,6 @@ class ReportController extends Controller implements HasMiddleware
             ->with('user:id,name,outlet_name,email')
             ->groupBy('user_id');
 
-        // Optional search by user name/outlet
         if ($request->filled('search')) {
             $query->whereHas('user', fn($q) => $q
                 ->where('name', 'like', '%' . $request->search . '%')
@@ -150,7 +176,6 @@ class ReportController extends Controller implements HasMiddleware
             );
         }
 
-        // Grand totals
         $grandTotals = Order::where('status', 'completed')
             ->has('user')
             ->selectRaw('
@@ -159,7 +184,7 @@ class ReportController extends Controller implements HasMiddleware
                 COALESCE(SUM(total_amount), 0) as grand_total_value
             ')->first();
 
-        $customers = $query->orderByDesc('total_orders')->paginate(30)->withQueryString();
+        $customers = $query->orderByDesc('total_value')->paginate(30)->withQueryString();
 
         $settings = GeneralSetting::first();
 
