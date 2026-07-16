@@ -115,7 +115,7 @@ class GeneratePdfJob implements ShouldQueue
         $processed = 0;
         foreach ($issuedItems as $item) {
             // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
-             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {
                 // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Invoice Order #{$order->order_no}");
@@ -174,7 +174,8 @@ class GeneratePdfJob implements ShouldQueue
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($issuedItems as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {
                 // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for PI Invoice Order #{$order->order_no}");
@@ -202,12 +203,12 @@ class GeneratePdfJob implements ShouldQueue
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
         // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 400, 120, 95);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($issuedItems as $item) {
-            //$item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+            // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
             $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {

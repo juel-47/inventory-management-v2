@@ -55,7 +55,7 @@ class GenerateIssuePdfJob implements ShouldQueue
         foreach ($issue->items as $item) {
             if ($item->product && $item->product->thumb_image) {
                 // $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 60, 60);
-                 $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 400, 400, 95);
+                $item->product->optimized_image = PdfImageHelper::optimize($item->product->thumb_image, 400, 400, 95);
             }
         }
 
