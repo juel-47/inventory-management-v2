@@ -140,7 +140,19 @@
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                     <a href="{{ route('admin.purchases.view-invoice', $purchase->id) }}" target="_blank" class="btn btn-warning btn-sm" title="View Invoice"><i class="fas fa-file-invoice"></i></a>
-                                                    <a href="{{ route('admin.purchases.download-pdf', $purchase->id) }}" class="btn btn-secondary btn-sm ml-1" title="Download PDF"><i class="fas fa-download"></i></a>
+                                                    <div class="btn-group ml-1">
+                                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Download">
+                                                            <i class="fas fa-download"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu">
+                                                            <a href="{{ route('admin.purchases.download-pdf', $purchase->id) }}" class="dropdown-item">
+                                                                <i class="fas fa-file-pdf text-danger"></i> PDF
+                                                            </a>
+                                                            <a href="{{ route('admin.purchases.download-excel', $purchase->id) }}" class="dropdown-item">
+                                                                <i class="fas fa-file-excel text-success"></i> Excel
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                     <button type="button"
                                                             class="btn btn-primary btn-sm ml-1 upload-attachment-btn"
                                                             data-toggle="modal"

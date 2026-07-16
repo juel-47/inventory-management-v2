@@ -101,8 +101,8 @@
                 </div>
             @endcan
 
-            {{-- User/Outlet Stats - Now based on permissions instead of just "else" --}}
-            @can('Accountants')
+            {{-- User/Outlet Stats - shown for any non-admin user --}}
+            @cannot('Manage Reports')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-success">
@@ -118,9 +118,9 @@
                         </div>
                     </div>
                 </div>
-            @endcan
+            @endcannot
 
-            @can('Manage Product Requests')
+            @cannot('Manage Reports')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-info">
@@ -136,9 +136,9 @@
                         </div>
                     </div>
                 </div>
-            @endcan
+            @endcannot
 
-            @can('Manage Order Place')
+            @cannot('Manage Reports')
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <div class="card card-statistic-1 shadow-sm">
                         <div class="card-icon bg-warning">
@@ -154,7 +154,7 @@
                         </div>
                     </div>
                 </div>
-            @endcan
+            @endcannot
         </div>
 
         @if(Auth::user()->can('Manage Reports'))
@@ -179,6 +179,95 @@
                     </div>
                     <div class="card-body" style="min-height: 300px;">
                         <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Best Seller Products & Top Customers (Admin only) --}}
+        @if(Auth::user()->can('Manage Reports'))
+        <div class="row">
+            {{-- Best Seller Products --}}
+            <div class="col-lg-6 col-12">
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h4 class="text-dark mb-0"><i class="fas fa-fire mr-2 text-danger"></i>Best Seller Products</h4>
+                        <a href="{{ route('admin.reports.best-sellers') }}" class="btn btn-outline-danger btn-sm rounded-pill">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-whitesmoke">
+                                    <tr>
+                                        <th class="pl-4" style="width:40px">#</th>
+                                        <th>Product Name</th>
+                                        <th class="text-center">Times Ordered</th>
+                                        <th class="text-center pr-4">Total Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($bestSellerProducts as $i => $product)
+                                        <tr>
+                                            <td class="pl-4 text-muted">{{ $i + 1 }}</td>
+                                            <td class="font-weight-bold">{{ $product->product_name }}</td>
+                                            <td class="text-center">
+                                                <span class="badge badge-danger px-2">{{ number_format($product->times_ordered) }}</span>
+                                            </td>
+                                            <td class="text-center pr-4 font-weight-bold">{{ number_format($product->total_qty) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4 text-muted font-italic">No order data yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Top Customers --}}
+            <div class="col-lg-6 col-12">
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h4 class="text-dark mb-0"><i class="fas fa-crown mr-2 text-warning"></i>Top Customers</h4>
+                        <a href="{{ route('admin.reports.top-customers') }}" class="btn btn-outline-warning btn-sm rounded-pill">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-whitesmoke">
+                                    <tr>
+                                        <th class="pl-4" style="width:40px">#</th>
+                                        <th>User / Outlet</th>
+                                        <th class="text-right pr-4">Value</th>
+                                        <th class="text-center">Orders</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($topCustomers as $i => $customer)
+                                        <tr>
+                                            <td class="pl-4 text-muted">{{ $i + 1 }}</td>
+                                            <td>
+                                                <a href="{{ route('admin.reports.orders', ['user_id' => $customer->user_id]) }}" class="font-weight-bold text-dark">
+                                                    {{ optional($customer->user)->outlet_name ?: (optional($customer->user)->name ?? 'N/A') }}
+                                                </a>
+                                            </td>
+                                            <td class="text-right pr-4 font-weight-bold text-dark">{!! formatWithCurrency($customer->total_value) !!}</td>
+                                            <td class="text-center">
+                                                <span class="badge badge-info px-2">{{ number_format($customer->total_orders) }}</span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4 text-muted font-italic">No order data yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

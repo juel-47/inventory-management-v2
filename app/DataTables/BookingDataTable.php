@@ -18,7 +18,19 @@ class BookingDataTable extends DataTable
             ->addColumn('action', function ($query) {
             $edit = '<a href="' . route('admin.bookings.edit', $query->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>';
             $invoice = '<a href="' . route('admin.bookings.view-invoice', $query->id) . '" target="_blank" class="btn btn-warning ml-2" title="View Invoice"><i class="fas fa-file-invoice"></i></a>';
-            $download = '<a href="' . route('admin.bookings.download-pdf', $query->id) . '" class="btn btn-secondary ml-2" title="Download PDF"><i class="fas fa-download"></i></a>';
+            $download = '<div class="btn-group ml-2">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-download"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="' . route('admin.bookings.download-pdf', $query->id) . '" class="dropdown-item">
+                        <i class="fas fa-file-pdf text-danger"></i> PDF
+                    </a>
+                    <a href="' . route('admin.bookings.download-excel', $query->id) . '" class="dropdown-item">
+                        <i class="fas fa-file-excel text-success"></i> Excel
+                    </a>
+                </div>
+            </div>';
             $delete = '<a href="' . route('admin.bookings.destroy', $query->id) . '" class="btn btn-danger delete-item ml-2" data-booking-no="' . $query->booking_no . '"><i class="fas fa-trash"></i></a>';
             return $edit . $invoice . $download . $delete;
             })
@@ -92,7 +104,25 @@ class BookingDataTable extends DataTable
             // Column::make('id'),
             Column::make('booking_no')->title('Booking No'),
             Column::make('vendor')->title('Vendor'),
-            Column::computed('product_count')->title('Products'),
+            Column::computed('product_count')->title('Products')
+                ->exportRender(function ($row, $value) {
+                    $bookingNo = is_array($row) ? ($row['booking_no'] ?? '') : ($row->booking_no ?? '');
+                    $bookings = \App\Models\Booking::where('booking_no', $bookingNo)
+                        ->with('product')->get();
+                    $items = [];
+                    foreach ($bookings as $b) {
+                        $name = $b->product?->name ?? 'Unknown';
+                        if ($b->variant_info) {
+                            $variants = [];
+                            foreach ($b->variant_info as $vName => $vQty) {
+                                $variants[] = "$vName: $vQty";
+                            }
+                            $name .= ' (' . implode(', ', $variants) . ')';
+                        }
+                        $items[] = $name;
+                    }
+                    return implode(', ', $items);
+                }),
             Column::computed('total_qty')->title('Total Qty'),
             Column::make('shipping_method')->title('Shipping'),
             Column::make('status'),
