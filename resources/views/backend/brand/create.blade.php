@@ -18,10 +18,7 @@
                                 <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
                             </a>
                         </div>
-                        <div class="breadcrumb-item">
-                            <a href="{{ route('admin.brand.index') }}">Brands</a>
-                        </div>
-                        <div class="breadcrumb-item active">Create</div>
+                       
                     </div>
                     <a href="{{ route('admin.brand.index') }}" class="btn btn-primary btn-sm ml-2 shadow-sm">
                         <i class="fas fa-arrow-left mr-1"></i>
@@ -120,17 +117,7 @@
                                 {{-- Preview Card --}}
                                 <div class="row mt-3">
                                     <div class="col-12">
-                                        <div class="bg-light p-3 rounded border border-dashed" style="border-color: #d1d3e2 !important; border-style: dashed !important;">
-                                            <div class="d-flex align-items-center flex-wrap">
-                                                <i class="fas fa-eye" style="color: #2563eb;"></i>
-                                                <span class="font-weight-bold ml-2 mr-2">Preview:</span>
-                                                <span id="brand-preview" class="text-muted" style="font-size: 0.95rem; padding: 8px 15px; background: white; border-radius: 6px; border: 1px solid #e9ecef; display: inline-block;">
-                                                    <i class="fas fa-tag mr-1" style="color: #2563eb;"></i>
-                                                    <span id="brand-name-preview" class="font-weight-bold text-dark">New Brand</span>
-                                                    <span id="brand-status-preview" class="badge ml-2" style="background: #1cc88a; color: #ffffff;">Active</span>
-                                                </span>
-                                            </div>
-                                        </div>
+                                        
                                     </div>
                                 </div>
 
@@ -138,10 +125,7 @@
                                 <div class="row mt-4 pt-3 border-top">
                                     <div class="col-12">
                                         <div class="d-flex flex-column flex-sm-row justify-content-sm-end" style="gap: 12px;">
-                                            <button type="reset" class="btn btn-secondary px-4 order-2 order-sm-1" 
-                                                    style="border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease; color: #ffffff; background: #6c757d; border: none;">
-                                                <i class="fas fa-undo mr-1"></i> Reset
-                                            </button>
+                                        
                                             <button type="submit" class="btn px-5 shadow-sm order-1 order-sm-2" 
                                                     style="background: #2563eb; color: #ffffff; border: none; border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease;">
                                                 <i class="fas fa-save mr-2"></i> Create Brand

@@ -51,7 +51,7 @@
 
                         {{-- Card Body --}}
                         <div class="card-body p-3 p-sm-4">
-                            <form action="{{ route('admin.vendor.store') }}" method="POST">
+                            <form action="{{ route('admin.vendor.store') }}" method="POST" id="vendorForm">
                                 @csrf
                                 
                                 {{-- Basic Information --}}
@@ -72,7 +72,7 @@
                                         </label>
                                         <input type="text" class="form-control @error('shop_name') is-invalid @enderror" 
                                                style="height: 44px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0;"
-                                               name="shop_name" value="{{ old('shop_name') }}"
+                                               name="shop_name" id="shop_name" value="{{ old('shop_name') }}"
                                                placeholder="Enter company name">
                                         @error('shop_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -88,7 +88,7 @@
                                         </label>
                                         <input type="text" class="form-control @error('phone') is-invalid @enderror" 
                                                style="height: 44px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0;"
-                                               name="phone" value="{{ old('phone') }}"
+                                               name="phone" id="phone" value="{{ old('phone') }}"
                                                placeholder="Enter phone number">
                                         @error('phone')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -104,7 +104,7 @@
                                         </label>
                                         <input type="email" class="form-control @error('email') is-invalid @enderror" 
                                                style="height: 44px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0;"
-                                               name="email" value="{{ old('email') }}"
+                                               name="email" id="email" value="{{ old('email') }}"
                                                placeholder="Enter email address">
                                         @error('email')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -120,7 +120,7 @@
                                         </label>
                                         <input type="text" class="form-control @error('address') is-invalid @enderror" 
                                                style="height: 44px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0;"
-                                               name="address" value="{{ old('address') }}"
+                                               name="address" id="address" value="{{ old('address') }}"
                                                placeholder="Enter address">
                                         @error('address')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -144,7 +144,7 @@
                                             <span class="ml-1">Country</span>
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <select name="country" class="form-control select2 @error('country') is-invalid @enderror" 
+                                        <select name="country" id="country" class="form-control select2 @error('country') is-invalid @enderror" 
                                                 style="height: 44px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0;">
                                             <option value="">Select Country</option>
                                             @foreach (config('settings.country_list') as $country)
@@ -212,7 +212,7 @@
                                             </div>
                                             <input type="number" step="0.0001" class="form-control @error('currency_rate') is-invalid @enderror" 
                                                    style="height: 44px; font-size: 0.95rem; border-radius: 0 10px 10px 0; border: 2px solid #e2e8f0; border-left: none;"
-                                                   name="currency_rate" value="{{ old('currency_rate', 1.0000) }}">
+                                                   name="currency_rate" id="currency_rate" value="{{ old('currency_rate', 1.0000) }}">
                                         </div>
                                         @error('currency_rate')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -237,7 +237,7 @@
                                         </label>
                                         <textarea class="form-control @error('description') is-invalid @enderror" 
                                                   style="min-height: 100px; font-size: 0.95rem; border-radius: 10px; border: 2px solid #e2e8f0; resize: vertical; padding: 0.7rem 1rem;"
-                                                  name="description" rows="4"
+                                                  name="description" id="description" rows="4"
                                                   placeholder="Enter vendor description (optional)">{{ old('description') }}</textarea>
                                         @error('description')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -251,11 +251,11 @@
                                     <div class="col-12">
                                         <div class="d-flex flex-column flex-sm-row justify-content-sm-end" style="gap: 12px;">
                                             <button type="reset" class="btn btn-secondary px-4 order-2 order-sm-1" 
-                                                    style="border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease; color: #ffffff; background: #6c757d; border: none;">
+                                                    style="border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease; color: #ffffff; background: #6c757d; border: none;" id="resetBtn">
                                                 <i class="fas fa-undo mr-1"></i> Reset
                                             </button>
                                             <button type="submit" class="btn btn-primary px-5 shadow-sm order-1 order-sm-2" 
-                                                    style="background: #2563eb; border: none; border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease;">
+                                                    style="background: #2563eb; border: none; border-radius: 10px; min-height: 44px; font-weight: 600; transition: all 0.3s ease;" id="submitBtn">
                                                 <i class="fas fa-save mr-2"></i> Create Vendor
                                             </button>
                                         </div>
@@ -824,36 +824,45 @@
             dropdownAutoWidth: true
         });
 
-        // Reset button
-        $('button[type="reset"]').on('click', function(e) {
+        // Reset button - FIXED
+        $('#resetBtn').on('click', function(e) {
             e.preventDefault();
             
-            // Reset form
-            $('form')[0].reset();
+            // Reset all form inputs using native reset
+            const form = document.getElementById('vendorForm');
+            form.reset();
             
-            // Reset select2
-            $('.select2').val('').trigger('change');
+            // Reset Select2 elements properly
+            $('.select2').each(function() {
+                $(this).val('').trigger('change');
+            });
             
             // Reset currency display
             $('#currency_icon_display').text('—');
             $('#currency_name').val('');
             $('#currency_icon').val('');
             
+            // Set default currency rate
+            $('#currency_rate').val('1.0000');
+            
             // Remove validation states
             $('.is-invalid').removeClass('is-invalid');
             $('.is-valid').removeClass('is-valid');
-            $('form').removeClass('was-validated');
+            $('#vendorForm').removeClass('was-validated');
+            
+            // Reset border colors
+            $('.form-control').css('border-color', '#e2e8f0');
         });
 
         // Form validation
-        $('form').on('submit', function(e) {
+        $('#vendorForm').on('submit', function(e) {
             if (!this.checkValidity()) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).addClass('was-validated');
             } else {
                 // Add loading state to submit button
-                let btn = $(this).find('button[type="submit"]');
+                let btn = $('#submitBtn');
                 btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Creating...');
                 btn.prop('disabled', true);
             }
