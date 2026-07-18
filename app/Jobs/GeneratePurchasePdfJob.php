@@ -38,13 +38,15 @@ class GeneratePurchasePdfJob implements ShouldQueue
         }
 
         $settings = GeneralSetting::first();
-        
+
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 180, 46);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
 
         foreach ($purchase->details as $detail) {
             if ($detail->product && $detail->product->thumb_image) {
-                $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 60, 60);
+                // $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 60, 60);
+                $detail->product->optimized_image = PdfImageHelper::optimize($detail->product->thumb_image, 400, 400, 95);
             }
         }
 
@@ -54,7 +56,7 @@ class GeneratePurchasePdfJob implements ShouldQueue
             'defaultFont' => 'sans-serif',
             'enable_remote' => false,
         ])->loadView('backend.purchase.print_pdf', compact('purchase', 'settings'));
-        
+
         $path = 'purchases/purchase_' . $purchase->invoice_no . '.pdf';
         Storage::disk('public')->put($path, $pdf->output());
 
@@ -76,14 +78,14 @@ class GeneratePurchasePdfJob implements ShouldQueue
     {
         $key = 'user_pdf_notifications_' . $userId;
         $notifications = \Illuminate\Support\Facades\Cache::get($key, []);
-        
+
         $data['time'] = now()->diffForHumans();
         $data['is_unread'] = true;
         $data['is_out_of_stock'] = false;
-        
+
         $notifications[] = $data;
         $notifications = array_slice($notifications, -20);
-        
+
         \Illuminate\Support\Facades\Cache::put($key, $notifications, now()->addDays(7));
     }
 }

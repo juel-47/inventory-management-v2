@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\BookingNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\PdfImageHelper;
+use App\Exports\BookingsExport;
+use App\Exports\BookingOrderExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BookingController extends Controller
 {
@@ -264,6 +267,20 @@ private function generateBookingNumber(): string
         
         Toastr::info('Booking PDF is generating in the background. Please refresh and click download again after a minute.');
         return redirect()->back();
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new BookingsExport, 'bookings-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function downloadExcel(string $id)
+    {
+        $booking = Booking::findOrFail($id);
+        return Excel::download(
+            new BookingOrderExport($booking->booking_no),
+            'booking-' . $booking->booking_no . '.xlsx'
+        );
     }
 
     /**

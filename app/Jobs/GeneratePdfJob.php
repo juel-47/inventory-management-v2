@@ -103,7 +103,8 @@ class GeneratePdfJob implements ShouldQueue
         if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
             foreach ($piInfo['blocks'] as &$block) {
                 if (!empty($block['image'])) {
-                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                    // $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 400, 400, 95);
                 }
             }
         }
@@ -113,7 +114,8 @@ class GeneratePdfJob implements ShouldQueue
 
         $processed = 0;
         foreach ($issuedItems as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {
                 // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Invoice Order #{$order->order_no}");
@@ -156,7 +158,8 @@ class GeneratePdfJob implements ShouldQueue
         if (isset($piInfo['blocks']) && is_array($piInfo['blocks'])) {
             foreach ($piInfo['blocks'] as &$block) {
                 if (!empty($block['image'])) {
-                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                    // $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 80, 80);
+                    $block['optimized_image'] = PdfImageHelper::optimize($block['image'], 400, 400, 95);
                 }
             }
         }
@@ -165,12 +168,14 @@ class GeneratePdfJob implements ShouldQueue
         $hasSavedPiInfo = PiInfoSupport::hasContent($order->pi_info);
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
+       // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 160, 40);
+       $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 400, 95);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for PI Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($issuedItems as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 80, 80);
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {
                 // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for PI Invoice Order #{$order->order_no}");
@@ -197,12 +202,14 @@ class GeneratePdfJob implements ShouldQueue
         $itemCount = $issuedItems->count();
 
         $logoPath = optional($settings)->site_logo ?: 'uploads/logo.png';
-        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
+        // $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 120, 30);
+        $settings->optimized_logo = PdfImageHelper::optimize($logoPath, 480, 120, 95);
 
         // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processing {$itemCount} items for Customer Invoice Order #{$order->order_no}");
         $processed = 0;
         foreach ($issuedItems as $item) {
-            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+            // $item->optimized_image = PdfImageHelper::optimize($item->product_image, 60, 60);
+            $item->optimized_image = PdfImageHelper::optimize($item->product_image, 400, 400, 95);
             $processed++;
             if ($processed % 500 === 0) {
                 // \Illuminate\Support\Facades\Log::info("GeneratePdfJob: Processed {$processed}/{$itemCount} items for Customer Invoice Order #{$order->order_no}");
