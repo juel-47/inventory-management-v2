@@ -35,20 +35,7 @@ body {
   padding-left: var(--sb-width);
   padding-top: var(--tb-height);
   transition: padding-left 0.25s ease;
-  background: #f4f6f9;
-  overflow-x: hidden;
-}
-
-body.layout-3 .main-content {
-  background: #fff;
-  min-height: calc(100vh - var(--tb-height) - 32px);
-  padding: 24px !important;
-  border-radius: 8px;
-  margin: 16px;
-}
-
-.main-footer {
-  padding-left: calc(var(--sb-width) + 24px);
+  background: #0f172a;
 }
 
 body.sidebar-collapsed {
@@ -117,13 +104,6 @@ body.sidebar-collapsed .topbar {
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  height: 100%;
-  padding-right: 16px;
-}
-
-.navbar-right > li {
-  display: flex;
-  align-items: center;
   height: 100%;
 }
 
@@ -305,12 +285,6 @@ body.sidebar-collapsed .topbar {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--nb-border);
   overflow: visible;
-  line-height: 1;
-}
-
-.navbar-right .notification-toggle i {
-  line-height: 1;
-  vertical-align: middle;
 }
 
 .navbar-right .notification-toggle:hover {

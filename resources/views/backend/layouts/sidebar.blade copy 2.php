@@ -1,4 +1,4 @@
-<!-- <div class="main-sidebar sidebar-style-2">
+<div class="main-sidebar sidebar-style-2">
   <aside id="sidebar-wrapper">
     <div class="sidebar-brand">
       <a href="{{ route('admin.dashboard') }}">{{ Auth::user()->name }}</a>
@@ -458,4 +458,4 @@
     box-shadow: 4px 0 60px rgba(0, 0, 0, 0.6);
   }
 }
-</style> -->
+</style>
