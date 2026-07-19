@@ -966,6 +966,11 @@
         <li>
           <div class="dropdown-divider"></div>
         </li>
+        <li class="dropdown-header">Current Stock Report</li>
+        <li><a class="dropdown-item" href="{{ route('admin.reports.current-stock') }}"><i class="fas fa-cubes"></i> Current Stock Report</a></li>
+        <li>
+          <div class="dropdown-divider"></div>
+        </li>
         <li class="dropdown-header">Financial</li>
         <li><a class="dropdown-item" href="{{ route('admin.reports.profit-loss') }}"><i class="fas fa-coins"></i> Profit
             & Loss</a></li>
