@@ -35,7 +35,20 @@ body {
   padding-left: var(--sb-width);
   padding-top: var(--tb-height);
   transition: padding-left 0.25s ease;
-  background: #0f172a;
+  background: #f4f6f9;
+  overflow-x: hidden;
+}
+
+body.layout-3 .main-content {
+  background: #fff;
+  min-height: calc(100vh - var(--tb-height) - 32px);
+  padding: 24px !important;
+  border-radius: 8px;
+  margin: 16px;
+}
+
+.main-footer {
+  padding-left: calc(var(--sb-width) + 24px);
 }
 
 body.sidebar-collapsed {
@@ -104,6 +117,13 @@ body.sidebar-collapsed .topbar {
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  height: 100%;
+  padding-right: 16px;
+}
+
+.navbar-right > li {
+  display: flex;
+  align-items: center;
   height: 100%;
 }
 
@@ -275,7 +295,7 @@ body.sidebar-collapsed .topbar {
   position: relative;
   padding: 0;
   width: 44px;
-  height: 44px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -285,12 +305,18 @@ body.sidebar-collapsed .topbar {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--nb-border);
   overflow: visible;
+  line-height: 1;
+}
+
+.navbar-right .notification-toggle i {
+  line-height: 1;
+  font-size: 18px;
 }
 
 .navbar-right .notification-toggle:hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .navbar-right .notification-toggle i { font-size: 16px; }
@@ -653,7 +679,7 @@ body.sidebar-collapsed .sb-item .sb-flyout-title {
   <button class="hamburger-toggle" id="sidebarToggle" aria-label="Toggle menu">
     <i class="fas fa-bars"></i>
   </button>
-  <span class="topbar-title d-none d-sm-inline">{{ Auth::user()->name }}</span>
+  
 
   <ul class="navbar-right" style="list-style:none;">
     <li class="divider-vertical d-none d-md-block"></li>

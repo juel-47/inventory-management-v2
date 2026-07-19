@@ -2,21 +2,7 @@
 
 @push('css')
 <style>
-    :root {
-        --pp-obsidian: #0b1120;
-        --pp-obsidian-2: #060a14;
-        --pp-amber: #d4a24e;
-        --pp-amber-bright: #ecc78b;
-        --pp-amber-soft: rgba(212, 162, 78, 0.10);
-        --pp-amber-glow: rgba(212, 162, 78, 0.30);
-        --pp-border: rgba(11, 17, 32, 0.07);
-        --pp-ink: #161e2e;
-        --pp-muted: #6b788e;
-        --pp-danger: #dc5a52;
-        --pp-surface: #f8f9fc;
-        --pp-font: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    }
-
+    /* Modal Initially Hidden - Fixed for proper modal functionality */
     #ratingModal {
         display: none;
         opacity: 0;
@@ -30,558 +16,119 @@
         opacity: 1;
         visibility: visible;
     }
+    
+    /* Modal Backdrop - Fixed to show properly */
     .modal-backdrop {
         opacity: 0.5;
         z-index: 1040;
     }
-    .modal-backdrop.fade { opacity: 0; }
-    .modal-backdrop.fade.show { opacity: 0.55; }
-
+    
+    .modal-backdrop.fade {
+        opacity: 0;
+    }
+    
+    .modal-backdrop.fade.show {
+        opacity: 0.5;
+    }
+    
+    /* Critical CSS to prevent FOUC on product page load */
     #product-grid-container {
         min-height: 400px;
-    }
-
-    /* ===== Section Header ===== */
-    .pp-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 14px;
-    }
-    .pp-header h1 {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-family: var(--pp-font);
-        font-weight: 800;
-        font-size: 18px;
-        color: var(--pp-ink);
-        letter-spacing: -0.3px;
-        margin: 0;
-    }
-    .pp-header h1 .pp-icon {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        font-size: 13px;
-        color: #1a1306;
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber));
-        box-shadow: 0 4px 12px rgba(212, 162, 78, 0.3);
-    }
-    .pp-breadcrumb {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12.5px;
-        font-weight: 600;
-    }
-    .pp-breadcrumb-item {
-        color: var(--pp-muted);
-        padding-right: 14px;
-        position: relative;
-    }
-    .pp-breadcrumb-item + .pp-breadcrumb-item { padding-left: 14px; }
-    .pp-breadcrumb-item + .pp-breadcrumb-item::before {
-        content: '/';
-        position: absolute;
-        left: 0;
-        color: rgba(107, 120, 142, 0.35);
-    }
-    .pp-breadcrumb-item a {
-        color: var(--pp-muted);
-        text-decoration: none;
-        transition: color 0.2s;
-    }
-    .pp-breadcrumb-item a:hover { color: var(--pp-amber); }
-    .pp-breadcrumb-item.active { color: var(--pp-amber); }
-
-    /* ===== Filter Card ===== */
-    .pp-filter-card {
-        position: relative;
-        border-radius: 14px !important;
-        border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: 0 1px 2px rgba(11,17,32,0.02), 0 12px 32px -16px rgba(11,17,32,0.14) !important;
-        overflow: hidden;
-    }
-    .pp-filter-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2.5px;
-        background: linear-gradient(90deg, var(--pp-amber-bright), var(--pp-amber) 50%, transparent 96%);
-    }
-    .pp-filter-card .card-body { padding: 12px 14px 10px !important; }
-
-    .pp-search-wrap {
-        border-radius: 20px !important;
-        background: var(--pp-surface) !important;
-        border: 1.5px solid var(--pp-border) !important;
-        transition: all 0.2s ease;
-        overflow: hidden;
-    }
-    .pp-search-wrap:focus-within {
-        border-color: var(--pp-amber) !important;
-        box-shadow: 0 0 0 3px var(--pp-amber-soft) !important;
-        background: #fff !important;
-    }
-    .pp-search-wrap .form-control {
-        font-size: 12.5px;
-        height: 34px !important;
-        background: transparent !important;
-    }
-    .pp-search-wrap .form-control::placeholder { color: #aab2c0; }
-    .pp-search-wrap .input-group-text { font-size: 12px; }
-
-    .pp-select2 .select2-selection--single {
-        height: 34px !important;
-        border-radius: 20px !important;
-        border: 1.5px solid var(--pp-border) !important;
-        background: var(--pp-surface) !important;
-        display: flex !important;
-        align-items: center;
-        transition: all 0.2s ease;
-    }
-    .pp-select2 .select2-selection--single .select2-selection__rendered {
-        color: var(--pp-ink);
-        font-size: 12px;
-        font-weight: 500;
-        padding-left: 14px;
-        line-height: 32px;
-    }
-    .pp-select2 .select2-selection--single .select2-selection__arrow {
-        height: 32px;
-        right: 10px;
-    }
-    .pp-select2 .select2-selection--single .select2-selection__arrow b {
-        border-color: var(--pp-amber) transparent transparent transparent !important;
-        border-width: 4px 4px 0 !important;
-    }
-    .pp-select2.select2-container--open .select2-selection--single,
-    .pp-select2.select2-container--focus .select2-selection--single {
-        border-color: var(--pp-amber) !important;
-        box-shadow: 0 0 0 3px var(--pp-amber-soft) !important;
-        background: #fff !important;
-    }
-    .pp-select2 .select2-dropdown {
-        border-radius: 12px !important;
-        border: 1px solid var(--pp-border) !important;
-        box-shadow: 0 16px 40px -14px rgba(11,17,32,0.26) !important;
-        overflow: hidden;
-        margin-top: 4px;
-    }
-    .pp-select2 .select2-results__option {
-        font-size: 12px !important;
-        padding: 7px 12px !important;
-    }
-    .pp-select2 .select2-results__option--highlighted[aria-selected] {
-        background: linear-gradient(135deg, var(--pp-amber-bright), var(--pp-amber)) !important;
-        color: #1a1306 !important;
-    }
-    .pp-select2 .select2-results__option[aria-selected=true] {
-        background: var(--pp-amber-soft) !important;
-        color: var(--pp-ink) !important;
-    }
-    .pp-select2 .select2-search--dropdown .select2-search__field {
-        border-radius: 8px !important;
-        border: 1px solid var(--pp-border) !important;
-        padding: 5px 10px !important;
-        font-size: 12px !important;
-    }
-
-    .pp-btn {
-        border: none !important;
-        font-weight: 700 !important;
-        font-size: 11.5px !important;
-        letter-spacing: 0.2px;
-        border-radius: 20px !important;
-        padding: 6px 14px !important;
-        transition: all 0.2s ease;
-    }
-    .pp-btn:hover { transform: translateY(-1px); }
-    .pp-btn-amber {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber)) !important;
-        color: #1a1306 !important;
-        box-shadow: 0 4px 14px -4px rgba(212, 162, 78, 0.45);
-    }
-    .pp-btn-amber:hover { filter: brightness(1.05); box-shadow: 0 6px 18px -6px rgba(212, 162, 78, 0.5); }
-    .pp-btn-emerald {
-        background: linear-gradient(145deg, #34d399, #16a34a) !important;
-        color: #fff !important;
-        box-shadow: 0 4px 14px -4px rgba(22, 163, 74, 0.34);
-    }
-    .pp-btn-emerald:hover { filter: brightness(1.05); box-shadow: 0 6px 18px -6px rgba(22, 163, 74, 0.4); }
-    .pp-btn-reset {
-        background: #fff !important;
-        color: var(--pp-danger) !important;
-        border: 1.5px solid rgba(220, 90, 82, 0.25) !important;
-        box-shadow: 0 2px 6px rgba(220, 90, 82, 0.06);
-    }
-    .pp-btn-reset:hover {
-        background: rgba(220, 90, 82, 0.05) !important;
-        border-color: var(--pp-danger) !important;
-    }
-
-    /* ===== Modals ===== */
-    .pp-modal .modal-content {
-        border: none;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 30px 60px -20px rgba(11,17,32,0.4);
-    }
-    .pp-modal .modal-header {
-        background: linear-gradient(145deg, var(--pp-obsidian), var(--pp-obsidian-2));
-        border-bottom: none;
-        padding: 12px 18px;
-        position: relative;
-    }
-    .pp-modal .modal-header::after {
-        content: '';
-        position: absolute;
-        left: 0; right: 0; bottom: -1px;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--pp-amber-bright), transparent);
-        opacity: 0.6;
-    }
-    .pp-modal .modal-title {
-        color: #fff;
-        font-family: var(--pp-font);
-        font-weight: 700;
-        font-size: 14px;
-    }
-    .pp-modal .modal-title i { color: var(--pp-amber-bright) !important; }
-    .pp-modal .close {
-        color: #fff;
-        opacity: 0.7;
-        text-shadow: none;
-        font-size: 20px;
-        transition: opacity 0.2s;
-    }
-    .pp-modal .close:hover { opacity: 1; color: var(--pp-amber-bright); }
-    .pp-modal .modal-body { padding: 16px 18px !important; }
-    .pp-modal .modal-footer {
-        background: #f8f9fc;
-        border-top: 1px solid var(--pp-border);
-        padding: 10px 18px;
-    }
-    .pp-modal .modal-footer .btn {
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 11.5px;
-        padding: 6px 16px;
-    }
-    .pp-modal .btn-amber {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber));
-        border: none;
-        color: #1a1306;
-        box-shadow: 0 4px 12px -3px rgba(212, 162, 78, 0.4);
-    }
-    .pp-modal .btn-amber:hover { filter: brightness(1.05); }
-    .pp-modal .btn-secondary {
-        background: #e8ebf0;
-        border: 1px solid var(--pp-border);
-        color: var(--pp-ink);
-    }
-    .pp-modal .btn-secondary:hover { background: #dee2e9; }
-
-    .pp-star-rating .rating-star { transition: all 0.2s ease; }
-    .pp-star-rating .rating-star:hover { transform: scale(1.2); color: #f59e0b !important; }
-
-    /* ===== Product Card ===== */
-    .pp-card {
-        border-radius: 12px !important;
-        border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        transition: all 0.25s ease !important;
-        overflow: hidden;
-    }
-    .pp-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 16px 40px -14px rgba(11, 17, 32, 0.16) !important;
-        border-color: rgba(212, 162, 78, 0.2) !important;
-    }
-    .pp-card-img-wrap {
-        height: 140px;
-        background: linear-gradient(180deg, #fafbfc 0%, #f4f5f8 100%);
-        position: relative;
-        overflow: hidden;
-    }
-    .pp-card-img-wrap img {
-        transition: transform 0.4s ease;
-    }
-    .pp-card:hover .pp-card-img-wrap img {
-        transform: scale(1.05);
-    }
-    .pp-card-body {
-        padding: 8px 10px 10px;
-    }
-    .pp-card-title {
-        font-weight: 700;
-        font-size: 13px;
-        color: var(--pp-ink);
-        line-height: 1.3;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin-bottom: 4px !important;
-    }
-    .pp-badge-category {
-        background: var(--pp-surface);
-        color: var(--pp-muted);
-        font-size: 9px;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 12px;
-        border: 1px solid var(--pp-border);
-    }
-    .pp-badge-stock {
-        font-size: 9px;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 12px;
-    }
-    .pp-badge-stock.in-stock {
-        background: rgba(22, 163, 74, 0.1);
-        color: #16a34a;
-        border: 1px solid rgba(22, 163, 74, 0.2);
-    }
-    .pp-badge-stock.out-of-stock {
-        background: rgba(220, 90, 82, 0.1);
-        color: #dc5a52;
-        border: 1px solid rgba(220, 90, 82, 0.2);
-    }
-    .pp-badge-type {
-        font-size: 8px;
-        font-weight: 700;
-        padding: 2px 7px;
-        border-radius: 6px;
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-    }
-    .pp-variant-scroll {
-        max-height: 110px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--pp-amber) transparent;
-    }
-    .pp-variant-scroll::-webkit-scrollbar { width: 3px; }
-    .pp-variant-scroll::-webkit-scrollbar-thumb {
-        background: var(--pp-amber);
-        border-radius: 10px;
-    }
-    .pp-variant-scroll::-webkit-scrollbar-track { background: transparent; }
-
-    .pp-price-box {
-        background: var(--pp-surface);
-        border-radius: 8px;
-        padding: 6px 10px;
-        border: 1px solid var(--pp-border);
-    }
-    .pp-price-label {
-        font-size: 10px;
-        color: var(--pp-muted);
-        font-weight: 500;
-    }
-    .pp-price-value {
-        font-weight: 700;
-        font-size: 12px;
-        color: var(--pp-ink);
-    }
-    .pp-btn-card {
-        border-radius: 20px !important;
-        font-weight: 600 !important;
-        font-size: 10.5px !important;
-        padding: 4px 12px !important;
-        transition: all 0.2s ease !important;
-    }
-    .pp-btn-card:hover { transform: translateY(-1px); }
-    .pp-btn-outline {
-        border: 1.5px solid var(--pp-border) !important;
-        color: var(--pp-ink) !important;
-        background: transparent !important;
-    }
-    .pp-btn-outline:hover {
-        border-color: var(--pp-amber) !important;
-        background: var(--pp-amber-soft) !important;
-        color: var(--pp-ink) !important;
-    }
-    .pp-edit-btn {
-        border-radius: 20px !important;
-        font-weight: 600 !important;
-        font-size: 10px !important;
-        padding: 4px 10px !important;
-    }
-    .pp-status-switch .custom-switch-indicator {
-        border-radius: 16px !important;
-        width: 30px !important;
-        height: 16px !important;
-    }
-    .pp-status-switch .custom-switch-indicator::after {
-        width: 12px !important;
-        height: 12px !important;
-        top: 2px !important;
-        left: 2px !important;
-    }
-    .pp-status-switch .custom-switch-input:checked ~ .custom-switch-indicator {
-        background: #16a34a !important;
-    }
-    .pp-count-badge {
-        background: #fff;
-        border: 1px solid var(--pp-border);
-        color: var(--pp-muted);
-        font-size: 11px;
-        font-weight: 600;
-        padding: 5px 14px;
-        border-radius: 20px;
-    }
-    .pp-pagination .pagination .page-link {
-        border-radius: 8px !important;
-        border: 1px solid var(--pp-border) !important;
-        margin: 0 2px;
-        font-weight: 600;
-        font-size: 11px;
-        color: var(--pp-muted);
-        padding: 5px 10px;
-        transition: all 0.2s;
-    }
-    .pp-pagination .pagination .page-link:hover {
-        border-color: var(--pp-amber) !important;
-        background: var(--pp-amber-soft) !important;
-        color: var(--pp-ink) !important;
-    }
-    .pp-pagination .pagination .page-item.active .page-link {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber)) !important;
-        border-color: var(--pp-amber) !important;
-        color: #1a1306 !important;
-        box-shadow: 0 4px 12px rgba(212, 162, 78, 0.3);
-    }
-    .pp-pagination .pagination .page-item.disabled .page-link {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    .pp-rating-star-small {
-        font-size: 11px;
-    }
-    .pp-card-badges {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 11;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    .pp-card-actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
     }
 </style>
 @endpush
 
 @section('content')
     <section class="section">
-        <div class="pp-header">
-            <h1>
-                <span class="pp-icon"><i class="fas fa-box"></i></span>
-                Products
-            </h1>
-            <div class="pp-breadcrumb">
-                <span class="pp-breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></span>
-                <span class="pp-breadcrumb-item active">Products</span>
+        <div class="section-header">
+            <h1>Product</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item active"><a href="{{ route('admin.dashboard') }}">Dashboard</a></div>
+                <div class="breadcrumb-item">Product</div>
             </div>
         </div>
 
         <div class="section-body">
-            <div class="row mb-3">
+            <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-0 pp-filter-card">
-                        <div class="card-body">
+                    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                        <div class="card-body p-3">
                             <form id="filter-form">
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-12 col-md-3">
-                                        <div class="input-group pp-search-wrap shadow-sm">
+                                <div class="row align-items-center">
+                                    <div class="col-12 col-md-3 mb-3">
+                                        <div class="input-group shadow-sm" style="border-radius: 25px; overflow: hidden; background-color: #f4f6f9; border: 1px solid #e0e0e0;">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text border-0 pl-3 pr-1 bg-transparent">
-                                                    <i class="fas fa-search" style="color: #aab2c0;"></i>
+                                                <span class="input-group-text border-0 pl-3 pr-2" style="background-color: transparent;">
+                                                    <i class="fas fa-search text-secondary"></i>
                                                 </span>
                                             </div>
-                                            <input type="text" class="form-control search-input border-0 pl-1" name="search" placeholder="Search..." value="{{ request('search') }}" autocomplete="off">
+                                            <input type="text" class="form-control search-input border-0 pl-1" name="search" placeholder="Search..." value="{{ request('search') }}" style="height: 40px; background-color: transparent;" autocomplete="off">
                                         </div>
                                     </div>
-                                    <div class="col-12 col-md-3">
-                                        <select name="category" id="category" class="form-control select2 pp-select2">
+                                    <div class="col-12 col-md-3 mb-3">
+                                        <select name="category" id="category" class="form-control select2" style="border-radius: 25px;">
                                             <option value="">All Categories</option>
                                             @foreach ($categories as $category)
                                                 <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-12 col-md-2">
-                                        <select name="sub_category" id="sub_category" class="form-control select2 pp-select2">
+                                    <div class="col-12 col-md-2 mb-3">
+                                        <select name="sub_category" id="sub_category" class="form-control select2" style="border-radius: 25px;">
                                             <option value="">Sub Category</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-md-2">
-                                        <select name="child_category" id="child_category" class="form-control select2 pp-select2">
+                                    <div class="col-12 col-md-2 mb-3">
+                                        <select name="child_category" id="child_category" class="form-control select2" style="border-radius: 25px;">
                                             <option value="">Child Category</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-md-2">
+                                    <div class="col-12 col-md-2 mb-3 text-right">
                                         @can('Manage Products')
-                                            <a href="{{ route('admin.products.import.view') }}" class="btn pp-btn pp-btn-emerald shadow-sm d-block mb-1">
-                                                <i class="fas fa-file-import mr-1"></i> Import
+                                            <a href="{{ route('admin.products.import.view') }}" class="btn btn-success shadow-sm rounded-pill px-4 btn-block mb-2">
+                                                <i class="fas fa-file-import"></i> Import
                                             </a>
-                                            <a href="{{ route('admin.products.create') }}" class="btn pp-btn pp-btn-amber shadow-sm d-block">
-                                                <i class="fas fa-plus mr-1"></i> Create
+                                            <a href="{{ route('admin.products.create') }}" class="btn btn-primary shadow-sm rounded-pill px-4 btn-block">
+                                                <i class="fas fa-plus"></i> Create
                                             </a>
                                         @endcan
                                     </div>
                                 </div>
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-12 col-md-3">
-                                        <select name="sort" id="sort" class="form-control select2 pp-select2">
-                                            <option value="">Sort by</option>
-                                            <option value="latest" {{ request('sort') == 'latest' || !request('sort') ? 'selected' : '' }}>Latest</option>
-                                            <option value="a-z" {{ request('sort') == 'a-z' ? 'selected' : '' }}>A-Z</option>
-                                            <option value="z-a" {{ request('sort') == 'z-a' ? 'selected' : '' }}>Z-A</option>
+                                <div class="row align-items-center">
+                                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                                        <select name="sort" id="sort" class="form-control select2">
+                                            <option value="">Filter by</option>
+                                            <option value="latest" {{ request('sort') == 'latest' || !request('sort') ? 'selected' : '' }}>Latest Products</option>
+                                            <option value="a-z" {{ request('sort') == 'a-z' ? 'selected' : '' }}>A-Z way (Alphabetical)</option>
+                                            <option value="z-a" {{ request('sort') == 'z-a' ? 'selected' : '' }}>Z-A way (Reverse)</option>
                                             <option value="active" {{ request('sort') == 'active' ? 'selected' : '' }}>Active</option>
                                             <option value="inactive" {{ request('sort') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-md-3">
-                                        <select name="alphabet" id="alphabet-dropdown" class="form-control select2 pp-select2">
-                                            <option value="">Alphabet (All)</option>
+                                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                                        <select name="alphabet" id="alphabet-dropdown" class="form-control select2">
+                                            <option value="">Filter by Alphabet (All)</option>
                                             @foreach(range('A', 'Z') as $char)
-                                                <option value="{{ $char }}" {{ request('alphabet') == $char ? 'selected' : '' }}>{{ $char }}</option>
+                                                <option value="{{ $char }}" {{ request('alphabet') == $char ? 'selected' : '' }}>Starts with: {{ $char }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-12 col-md-2">
-                                        <select name="product_type" id="product_type_filter" class="form-control select2 pp-select2">
-                                            <option value="">Occasion / Type</option>
-                                            <option value="new_arrival" {{ request('product_type') == 'new_arrival' ? 'selected' : '' }}>New Arrival</option>
-                                            <option value="upcoming" {{ request('product_type') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
+                                    <div class="col-12 col-md-2 mb-3 mb-md-0">
+                                        <select name="product_type" id="product_type_filter" class="form-control select2">
+                                            <option value=""> Occasion/ Types</option>
+                                            {{-- Legacy Options --}}
+                                            <option value="new_arrival" {{ request('product_type') == 'new_arrival' ? 'selected' : '' }}>New Arrival (Legacy)</option>
+                                            <option value="upcoming" {{ request('product_type') == 'upcoming' ? 'selected' : '' }}>Upcoming (Legacy)</option>
+                                            
+                                            {{-- Dynamic Options --}}
                                             @foreach ($productTypes as $type)
                                                 <option value="{{ $type->id }}" {{ request('product_type') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     @if(isset($vendors) && $vendors->count() > 0)
-                                    <div class="col-12 col-md-3">
-                                        <select name="vendor" id="vendor_filter" class="form-control select2 pp-select2">
+                                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                                        <select name="vendor" id="vendor_filter" class="form-control select2">
                                             <option value="">Select Vendor</option>
                                             @foreach ($vendors as $vendor)
                                                 <option value="{{ $vendor->id }}" {{ request('vendor') == $vendor->id ? 'selected' : '' }}>{{ $vendor->shop_name }}</option>
@@ -590,7 +137,7 @@
                                     </div>
                                     @endif
                                     <div class="col-12 col-md-1">
-                                        <button type="button" id="reset-filters" class="btn pp-btn pp-btn-reset btn-sm shadow-sm w-100">
+                                        <button type="button" id="reset-filters" class="btn btn-danger btn-sm shadow-sm rounded-pill">
                                             <i class="fas fa-redo mr-1"></i> Reset
                                         </button>
                                     </div>
@@ -604,35 +151,42 @@
             <div id="product-grid-container">
                 @include('backend.product.product_grid')
             </div>
+            
+            <style>
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+            </style>
         </div>
     </section>
 
-<!-- Vendor Conflict Modal -->
-<div class="modal fade pp-modal" id="vendorConflictModal" tabindex="-1" role="dialog" aria-labelledby="vendorConflictModalLabel" aria-hidden="true">
+<!-- Vendor Conflict Confirmation Modal -->
+<div class="modal fade" id="vendorConflictModal" tabindex="-1" role="dialog" aria-labelledby="vendorConflictModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-warning border-bottom">
                 <h5 class="modal-title" id="vendorConflictModalLabel">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>Vendor Conflict
+                    <i class="fas fa-exclamation-triangle text-dark mr-2"></i>Vendor Conflict
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-warning border-0 rounded-lg">
+                <div class="alert alert-warning">
                     <i class="fas fa-info-circle mr-2"></i>
                     <span id="vendorConflictMessage"></span>
                 </div>
-                <p class="text-muted mb-0">
+                <p class="text-muted">
                     Do you want to replace the current basket items with products from the new vendor?
                 </p>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
                     <i class="fas fa-times mr-1"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-amber" id="confirmVendorConflict">
+                <button type="button" class="btn btn-warning" id="confirmVendorConflict">
                     <i class="fas fa-check mr-1"></i> Yes, Replace
                 </button>
             </div>
@@ -643,12 +197,12 @@
 @endsection
 
 <!-- Rating Modal -->
-<div class="modal fade pp-modal" id="ratingModal" tabindex="-1" role="dialog" aria-labelledby="ratingModalLabel" aria-hidden="true">
+<div class="modal fade" id="ratingModal" tabindex="-1" role="dialog" aria-labelledby="ratingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-light border-bottom">
                 <h5 class="modal-title" id="ratingModalLabel">
-                    <i class="fas fa-star mr-2"></i>Rate Product
+                    <i class="fas fa-star text-warning mr-2"></i>Rate Product
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -658,30 +212,36 @@
                 <div class="mb-3">
                     <h6 class="text-dark font-weight-bold" id="ratingProductName"></h6>
                 </div>
+                
                 <form id="ratingForm">
                     <input type="hidden" id="ratingProductId" name="product_id">
+                    
+                    <!-- Star Rating Selector -->
                     <div class="mb-4">
-                        <label class="font-weight-bold mb-2">Rating <span class="text-danger">*</span></label>
-                        <div class="pp-star-rating d-flex" style="gap: 16px; font-size: 34px;">
+                        <label class="form-label font-weight-bold">Rating <span class="text-danger">*</span></label>
+                        <div class="star-rating d-flex" style="gap: 15px; font-size: 32px;">
                             @for($i = 1; $i <= 5; $i++)
-                                <i class="far fa-star rating-star text-muted" data-rating="{{ $i }}" style="cursor: pointer;"></i>
+                                <i class="far fa-star rating-star cursor-pointer text-muted" data-rating="{{ $i }}" style="cursor: pointer; transition: color 0.2s;"></i>
                             @endfor
                         </div>
                         <input type="hidden" id="ratingValue" name="rating" value="0">
                         <small class="text-muted d-block mt-2">Selected: <span id="selectedRatingText">0</span> stars</small>
                     </div>
+
+                    <!-- Comment -->
                     <div class="mb-4">
-                        <label class="font-weight-bold mb-2">Comment <span class="text-muted">(Optional)</span></label>
-                        <textarea id="ratingComment" name="comment" class="form-control" rows="4" placeholder="Share your feedback about this product..." style="resize: vertical; border-radius: 12px; border-color: var(--pp-border);"></textarea>
+                        <label class="form-label font-weight-bold">Comment <span class="text-muted">(Optional)</span></label>
+                        <textarea id="ratingComment" name="comment" class="form-control" rows="4" placeholder="Share your feedback about this product..." style="resize: vertical; border-radius: 8px;"></textarea>
                     </div>
-                    <div class="alert alert-info border-0 rounded-lg" id="existingRatingAlert" style="display: none;">
-                        <i class="fas fa-info-circle mr-2"></i>You already have a rating. Submitting will update it.
+
+                    <div class="alert alert-info alert-sm" id="existingRatingAlert" style="display: none;">
+                        <i class="fas fa-info-circle mr-2"></i>You already have a rating for this product. Submitting will update your existing rating.
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer bg-light border-top">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-amber" id="submitRatingBtn">
+                <button type="button" class="btn btn-warning" id="submitRatingBtn">
                     <i class="fas fa-check mr-2"></i>Submit Rating
                 </button>
             </div>
@@ -693,38 +253,12 @@
     <!-- Floating Baskets Container -->
     <div id="floating-baskets-container" class="position-fixed d-flex align-items-center" style="bottom: 30px; right: 30px; z-index: 99999; gap: 20px;">
         <!-- Container and contents allow clicks -->
-        <style>
-            #floating-baskets-container, #floating-baskets-container > * { pointer-events: auto; }
-            .basket-fab {
-                box-shadow: 0 10px 26px -6px rgba(15, 23, 41, 0.4), inset 0 1px 0 rgba(255,255,255,0.3) !important;
-                border: 2px solid rgba(255,255,255,0.25);
-            }
-            #go-to-booking.basket-fab {
-                background: linear-gradient(135deg, var(--pg-gold-bright, #e3bd7c), var(--pg-gold, #cda05a)) !important;
-                color: #1a1408 !important;
-            }
-            #go-to-request.basket-fab {
-                background: linear-gradient(135deg, #34d399, #16a34a) !important;
-            }
-            .basket-fab:hover {
-                transform: scale(1.08) translateY(-2px);
-                filter: brightness(1.05);
-            }
-            #request-basket-count, #basket-count {
-                box-shadow: 0 0 0 0 rgba(226, 104, 95, 0.55);
-                animation: nbBadgePulse 2s infinite;
-            }
-            @keyframes nbBadgePulse {
-                0% { box-shadow: 0 0 0 0 rgba(226, 104, 95, 0.5); }
-                70% { box-shadow: 0 0 0 8px rgba(226, 104, 95, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(226, 104, 95, 0); }
-            }
-        </style>
+        <style>#floating-baskets-container, #floating-baskets-container > * { pointer-events: auto; }</style>
         <!-- Floating Basket Widget (Product Request) -->
         @can('Create Product Requests')
         <div id="floating-request-basket" style="display: none;">
             <div class="d-flex flex-column align-items-center">
-                <div class="cursor-pointer text-white shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
+                <div class="cursor-pointer bg-success text-white shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
                      id="go-to-request" title="Product Request" style="width: 55px; height: 55px; transition: all 0.3s ease;">
                     <i class="fas fa-file-import fa-lg"></i>
                     <span id="request-basket-count" class="badge badge-warning position-absolute" style="top: -5px; right: -5px; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid #fff; color: #000;">0</span>
@@ -741,7 +275,7 @@
         @can('Manage Order Place')
         <div id="floating-basket" style="display: none;">
             <div class="d-flex flex-column align-items-center">
-                <div class="cursor-pointer shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
+                <div class="cursor-pointer bg-primary text-white shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
                      id="go-to-booking" title="Place Order" style="width: 55px; height: 55px; transition: all 0.3s ease;">
                     <i class="fas fa-shopping-basket fa-lg"></i>
                     <span id="basket-count" class="badge badge-danger position-absolute" style="top: -5px; right: -5px; border-radius: 999px; min-width: 22px; height: 22px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid #fff; white-space: nowrap; line-height: 1;">0</span>
@@ -759,7 +293,7 @@
         .hover-white { transition: color 0.2s ease; }
         .hover-white:hover { color: #fff !important; }
         .cursor-pointer { cursor: pointer; }
-
+        
         /* Animation Styles */
         @keyframes shake-basket {
             0% { transform: scale(1) rotate(0); }
@@ -773,6 +307,13 @@
             animation: shake-basket 0.5s ease-in-out;
         }
 
+        .basket-fab:hover {
+            transform: scale(1.1);
+            filter: brightness(1.1);
+        }
+        .basket-fab {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+        }
         .add-to-basket.added, .add-to-request-basket.added {
             background-color: #28a745;
             border-color: #28a745;
@@ -788,7 +329,7 @@
                 backdrop: 'static',
                 keyboard: false
             });
-
+            
             // Ensure grid is visible on page load - initial state should be opacity 1
             if ($('#product-grid-container').data('loaded')) {
                 $('#product-grid-container').stop(true, true).css('opacity', '1');
@@ -796,7 +337,7 @@
             $('#grid-loader').hide();
 
             // --- Basket Logic Start (Database Cart System) ---
-
+            
             /**
              * Update basket UI with counts and button states
              */
@@ -876,7 +417,7 @@
             $(document).on('click', '#clear-request-basket', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-
+                
                 Swal.fire({
                     title: 'Clear Request Basket?',
                     text: "You are about to remove all items from the request basket.",
@@ -963,7 +504,7 @@
                             // Show vendor conflict modal
                             $('#vendorConflictMessage').text(response.message);
                             $('#vendorConflictModal').modal('show');
-
+                            
                             // Store the product ID for later use
                             $('#vendorConflictModal').data('product-id', productId);
                             $('#vendorConflictModal').data('cart-type', 'booking');
@@ -1006,7 +547,7 @@
                             // Show vendor conflict modal
                             $('#vendorConflictMessage').text(response.message);
                             $('#vendorConflictModal').modal('show');
-
+                            
                             // Store the product ID for later use
                             $('#vendorConflictModal').data('product-id', productId);
                             $('#vendorConflictModal').data('cart-type', 'request');
@@ -1098,17 +639,17 @@
                     success: function(response) {
                         // Hide loader
                         $('#grid-loader').hide();
-
+                        
                         // Update content
                         $('#product-grid-container').html(response);
                         $('#product-grid-container').attr('data-loaded', 'true');
-
+                        
                         // Fade in with smooth transition
                         $('#product-grid-container').stop(true, true).css('opacity', '1');
-
+                        
                         // Mark initial load as complete
                         initialLoad = false;
-
+                        
                         // Update history API without reloading
                         let params = new URLSearchParams({
                             search: search,
@@ -1119,7 +660,7 @@
                             product_type: product_type,
                             sort: sort
                         });
-
+                        
                         // Handle pagination page if in URL
                         let pageMatch = url.match(/page=(\d+)/);
                         if (pageMatch) {
@@ -1187,7 +728,7 @@
             // Category Change
             $('body').on('change', '#category', function(e, isInitialLoad = false) {
                 let id = $(this).val();
-
+                
                 // Clear and reset sub/child categories silently without triggering 'change' event
                  // We don't want to trigger child change events that fetch products again
                 $('#sub_category').html('<option value="">--Sub Category--</option>');
@@ -1214,7 +755,7 @@
                         });
                     }
                 }
-
+                
                 // Only fetch products if this wasn't called during the initial page load setup
                 if (!isInitialLoad) {
                     fetchProducts();
@@ -1224,7 +765,7 @@
             // Sub Category Change
             $('body').on('change', '#sub_category', function(e, isInitialLoad = false) {
                 let id = $(this).val();
-
+                
                 // Clear and reset child categories silently
                 $('#child_category').html('<option value="">--Child Category--</option>');
 
@@ -1249,7 +790,7 @@
                         });
                     }
                 }
-
+                
                 if (!isInitialLoad) {
                     fetchProducts();
                 }
@@ -1279,9 +820,9 @@
             $('#confirmVendorConflict').on('click', function() {
                 const productId = $('#vendorConflictModal').data('product-id');
                 const cartType = $('#vendorConflictModal').data('cart-type');
-
+                
                 $('#vendorConflictModal').modal('hide');
-
+                
                 // Add product with force_clear
                 $.ajax({
                     url: "{{ route('admin.cart.add') }}",
@@ -1311,7 +852,7 @@
             // Reset Filters
             $('body').on('click', '#reset-filters', function() {
                 $('.search-input').val('');
-
+                
                 // Reset select2 and triggers without calling fetchProducts multiple times
                 $('#category').val('');
                 $('#sub_category').html('<option value="">Sub Category</option>');
@@ -1320,13 +861,13 @@
                 $('#product_type_filter').val('');
                 $('#vendor_filter').val('');
                 $('#sort').val('latest');
-
+                
                 // Re-trigger select2 UI update without triggering 'change' listener
                 $('.select2').trigger('change.select2'); 
-
+                
                 fetchProducts();
             });
-
+            
             // Handle Pagination clicks via AJAX
              $('body').on('click', '.pagination a', function(e) {
                 e.preventDefault();
@@ -1339,18 +880,18 @@
             $('body').on('click', '.add-rating-btn', function() {
                 let productId = $(this).data('product-id');
                 let productName = $(this).data('product-name');
-
+                
                 // Reset form
                 $('#ratingForm')[0].reset();
                 $('#ratingValue').val('0');
                 $('#selectedRatingText').text('0');
                 $('.rating-star').removeClass('fas').addClass('far').css('color', '');
                 $('#existingRatingAlert').hide();
-
+                
                 // Set product info
                 $('#ratingProductId').val(productId);
                 $('#ratingProductName').text(productName);
-
+                
                 // Fetch existing rating if any
                 $.ajax({
                     url: "{{ route('admin.reviews.user-product', ['productId' => 'PRODUCT_ID']) }}".replace('PRODUCT_ID', productId),
@@ -1360,19 +901,19 @@
                             $('#ratingValue').val(response.rating);
                             $('#selectedRatingText').text(response.rating);
                             $('#ratingComment').val(response.comment || '');
-
+                            
                             // Highlight stars
                             $('.rating-star').each(function() {
                                 if ($(this).data('rating') <= response.rating) {
                                     $(this).removeClass('far').addClass('fas').css('color', '#ffc107');
                                 }
                             });
-
+                            
                             $('#existingRatingAlert').show();
                         }
                     }
                 });
-
+                
                 $('#ratingModal').modal('show');
             });
 
@@ -1381,7 +922,7 @@
                 let rating = $(this).data('rating');
                 $('#ratingValue').val(rating);
                 $('#selectedRatingText').text(rating);
-
+                
                 $('.rating-star').each(function() {
                     if ($(this).data('rating') <= rating) {
                         $(this).removeClass('far').addClass('fas').css('color', '#ffc107');
@@ -1419,14 +960,14 @@
                 let productId = $('#ratingProductId').val();
                 let rating = $('#ratingValue').val();
                 let comment = $('#ratingComment').val();
-
+                
                 if (!rating || rating == 0) {
                     toastr.error('Please select a rating');
                     return;
                 }
-
+                
                 $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...');
-
+                
                 $.ajax({
                     url: "{{ route('admin.reviews.store') }}",
                     method: 'POST',
@@ -1441,7 +982,7 @@
                         $('#ratingModal').modal('hide');
                         // Refresh the grid to show updated ratings
                         fetchProducts();
-
+                        
                         $('#submitRatingBtn').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Submit Rating');
                     },
                     error: function(response) {

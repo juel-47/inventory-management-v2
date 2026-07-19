@@ -6,6 +6,31 @@
             <h1><i class="fas fa-chart-pie mr-2 text-primary"></i>Dashboard</h1>
         </div>
 
+        <style>
+            @media (max-width: 575.98px) {
+                .card-statistic-1 .card-icon { width: 55px !important; min-width: 55px !important; font-size: 20px !important; }
+                .card-statistic-1 .card-wrap { padding: 10px 8px 10px 12px !important; }
+                .card-statistic-1 .card-header h4 { font-size: 10px !important; }
+                .card-statistic-1 .card-body { font-size: 16px !important; }
+                #salesChart, #statusChart { min-height: 180px !important; max-height: 220px; }
+                .table th, .table td { font-size: 10px !important; padding: 5px 6px !important; white-space: nowrap; }
+                .table .badge { font-size: 8px !important; padding: 2px 6px !important; }
+                .card-header h4 { font-size: 13px !important; }
+                .card-header { padding: 10px 14px !important; }
+                .card-header .d-flex { flex-direction: column !important; gap: 6px !important; }
+                .card-header .btn { align-self: flex-start !important; }
+                .section-header h1 { font-size: 15px !important; }
+                .btn-sm.rounded-pill { font-size: 10px !important; padding: 3px 10px !important; }
+                .card-body.p-0 .table th.pl-4, .card-body.p-0 .table td.pl-4 { padding-left: 10px !important; }
+                .card-body.p-0 .table td.pr-4, .card-body.p-0 .table th.pr-4 { padding-right: 10px !important; }
+                .row > [class*="col-"] { margin-bottom: 8px; }
+            }
+            @media (min-width: 576px) and (max-width: 767.98px) {
+                .card-statistic-1 .card-icon { width: 65px !important; min-width: 65px !important; font-size: 22px !important; }
+                .card-statistic-1 .card-body { font-size: 18px !important; }
+            }
+        </style>
+
         <div class="row">
             {{-- Admin Stats --}}
             @can('Manage Reports')
@@ -189,9 +214,9 @@
         @if(Auth::user()->can('Manage Reports'))
         <div class="row">
             {{-- Best Seller Products --}}
-            <div class="col-lg-6 col-12">
-                <div class="card border shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div class="col-lg-6 col-12 mb-3 mb-lg-0">
+                <div class="card border shadow-sm h-100">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap" style="gap: 6px;">
                         <h4 class="text-dark mb-0"><i class="fas fa-fire mr-2 text-danger"></i>Best Seller Products</h4>
                         <a href="{{ route('admin.reports.best-sellers') }}" class="btn btn-outline-danger btn-sm rounded-pill">View All</a>
                     </div>
@@ -230,8 +255,8 @@
 
             {{-- Top Customers --}}
             <div class="col-lg-6 col-12">
-                <div class="card border shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div class="card border shadow-sm h-100">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap" style="gap: 6px;">
                         <h4 class="text-dark mb-0"><i class="fas fa-crown mr-2 text-warning"></i>Top Customers</h4>
                         <a href="{{ route('admin.reports.top-customers') }}" class="btn btn-outline-warning btn-sm rounded-pill">View All</a>
                     </div>
@@ -277,7 +302,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="card border shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap" style="gap: 6px;">
                         <h4 class="text-dark"><i class="fas fa-history mr-2 text-primary"></i>Recent Orders</h4>
                         <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-primary btn-sm rounded-pill">View All</a>
                     </div>
