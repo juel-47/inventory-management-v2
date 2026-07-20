@@ -253,6 +253,54 @@ class ReportController extends Controller implements HasMiddleware
     }
 
     /**
+     * Current Stock Report (Unified)
+     */
+    public function currentStockReport(Request $request)
+    {
+        $query = Product::with(['category', 'vendor', 'inventoryStocks'])
+            ->withSum('inventoryStocks', 'quantity')
+            ->where('status', 1);
+
+        // Filter by Category
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by Stock Status
+        if ($request->stock_status) {
+            if ($request->stock_status == 'in_stock') {
+                $query->having('inventory_stocks_sum_quantity', '>', 0);
+            } elseif ($request->stock_status == 'out_of_stock') {
+                $query->havingRaw('inventory_stocks_sum_quantity <= 0 OR inventory_stocks_sum_quantity IS NULL');
+            }
+        }
+
+        // Filter by Vendor
+        if ($request->vendor_id) {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+
+        // Vendor-wala products first (NULL vendor_id LAST), then latest product id
+        $products = $query->orderByRaw('CASE WHEN vendor_id IS NULL THEN 1 ELSE 0 END ASC')
+                          ->orderBy('vendor_id', 'asc')
+                          ->orderBy('id', 'desc')
+                          ->paginate(30)->withQueryString();
+        $categories = Category::where('status', 1)->orderBy('id', 'desc')->get();
+        $vendors = Vendor::where('status', 1)->orderBy('id', 'desc')->get();
+        $settings = GeneralSetting::first();
+
+        return view('backend.reports.current_stock', compact('products', 'categories', 'vendors', 'settings'));
+    }
+
+    /**
+     * Export Current Stock Report
+     */
+    public function exportCurrentStockReport(Request $request)
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CurrentStockExport($request->category_id, $request->stock_status, $request->vendor_id), 'current-stock-report-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    /**
      * Purchase History Report
      */
     public function purchaseReport(Request $request)

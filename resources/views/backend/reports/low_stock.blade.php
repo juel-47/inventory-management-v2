@@ -76,12 +76,23 @@
                                                         <input type="checkbox" class="product-checkbox" value="{{ $product->id }}" data-product-name="{{ $product->name }}">
                                                     </td>
                                                     <td class="text-center">
-                                                        <img src="{{ $product->thumb_image ? asset('storage/' . $product->thumb_image) : asset('backend/images/placeholder.png') }}" 
-                                                             alt="{{ $product->name }}" 
-                                                             class="img-fluid rounded" 
-                                                             style="width: 40px; height: 40px; object-fit: cover;"
-                                                             loading="lazy"
-                                                             onerror="this.src='{{ asset('backend/images/placeholder.png') }}'">
+                                                        @if($product->thumb_image)
+                                                            <img src="{{ asset('storage/' . $product->thumb_image) }}"
+                                                                 alt="{{ $product->name }}"
+                                                                 class="img-fluid rounded"
+                                                                 style="width:40px;height:40px;object-fit:cover;"
+                                                                 loading="lazy"
+                                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'">
+                                                            <div class="rounded align-items-center justify-content-center text-muted"
+                                                                 style="display:none;width:40px;height:40px;background:#f8f9fa;border:1px solid #e9ecef;">
+                                                                <i class="fas fa-image" style="font-size:12px;"></i>
+                                                            </div>
+                                                        @else
+                                                            <div class="rounded d-inline-flex align-items-center justify-content-center text-muted"
+                                                                 style="width:40px;height:40px;background:#f8f9fa;border:1px solid #e9ecef;">
+                                                                <i class="fas fa-image" style="font-size:12px;"></i>
+                                                            </div>
+                                                        @endif
                                                     </td>
                                                     <td>{{ $product->name }}</td>
                                                     <td>{{ $product->category->name ?? 'N/A' }}</td>
