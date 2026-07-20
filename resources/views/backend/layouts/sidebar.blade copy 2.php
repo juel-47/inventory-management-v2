@@ -1,4 +1,4 @@
-<!-- <div class="main-sidebar sidebar-style-2">
+<div class="main-sidebar sidebar-style-2">
   <aside id="sidebar-wrapper">
     <div class="sidebar-brand">
       <a href="{{ route('admin.dashboard') }}">{{ Auth::user()->name }}</a>
@@ -127,7 +127,7 @@
 
       @can('Manage Reports')
       <li class="menu-header">Reports</li>
-      <li class="dropdown {{ setActive(['admin.reports.index', 'admin.reports.stock', 'admin.reports.purchase', 'admin.reports.product-purchase-history', 'admin.reports.low-stock', 'admin.reports.profit-loss']) }}">
+      <li class="dropdown {{ setActive(['admin.reports.*']) }}">
         <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-chart-line"></i>
           <span>Reports</span></a>
         <ul class="dropdown-menu">
@@ -146,11 +146,6 @@
           <li class="{{ setActive(['admin.reports.profit-loss']) }}"><a class="nav-link"
               href="{{ route('admin.reports.profit-loss') }}"><i class="fas fa-chart-bar"></i> Profit & Loss</a></li>
         </ul>
-      </li>
-
-      <li class="{{ setActive(['admin.reports.current-stock']) }}">
-        <a href="{{ route('admin.reports.current-stock') }}" class="nav-link"><i class="fas fa-cubes"></i>
-          <span>Current Stock Report</span></a>
       </li>
       @endcan
 
@@ -236,7 +231,7 @@
   --sb-primary-soft: rgba(99, 102, 241, 0.1);
   --sb-text: rgba(255, 255, 255, 0.9);
   --sb-muted: rgba(255, 255, 255, 0.4);
-  --sb-width: 268px;
+  --sb-width: 260px;
 }
 
 .main-sidebar {
@@ -463,4 +458,4 @@
     box-shadow: 4px 0 60px rgba(0, 0, 0, 0.6);
   }
 }
-</style> -->
+</style>

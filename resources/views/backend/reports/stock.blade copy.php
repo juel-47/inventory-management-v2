@@ -80,8 +80,8 @@
     .pp-stat-card {
         border-radius: var(--pp-radius-md) !important;
         border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+        background: #f8f9fc !important;
+        box-shadow: var(--pp-shadow-card) !important;
         transition: all 0.3s cubic-bezier(.2,.8,.2,1) !important;
         overflow: hidden;
         padding: 0 !important;
@@ -217,20 +217,13 @@
     #table-stock tbody tr:hover td { background: var(--pp-amber-soft); }
     #table-stock tbody tr:nth-child(even) td { background: var(--pp-surface); }
     #table-stock tbody tr:nth-child(even):hover td { background: var(--pp-amber-soft); }
-    .grand-total-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-top: 2px solid var(--pp-amber);
-        background: linear-gradient(135deg, #fffdf7, #fffbeb);
+    #table-stock tfoot td {
+        padding: 10px 14px !important;
+        background: var(--pp-surface);
+        font-weight: 700;
+        font-size: 12px;
+        border-top: 2px solid var(--pp-border);
     }
-    .gt-label { font-size: 14px; font-weight: 700; color: var(--pp-ink); }
-    .gt-values { display: flex; align-items: center; gap: 14px; }
-    .gt-val { font-size: 15px; font-weight: 700; }
-    .gt-val--asset { color: #4f46e5; }
-    .gt-val--profit { color: #16a34a; }
-    .gt-sep { color: #d1d5db; font-weight: 300; }
 
     .pp-btn-sm {
         border: none !important;
@@ -325,52 +318,24 @@
         padding: 12px 0 4px;
     }
 
-    /* Tablet (768px - 991.98px) */
-    @media (max-width: 991.98px) {
-        .pp-stat-card .card-statistic-1 { padding: 14px 16px; gap: 12px; }
-        .pp-stat-card .card-statistic-1 .card-icon { width: 42px; height: 42px; min-width: 42px; font-size: 17px; border-radius: 12px !important; }
-        .pp-stat-card .card-statistic-1 .card-header h4 { font-size: 10.5px; }
-        .pp-stat-card .card-statistic-1 .card-body { font-size: 17px; }
-        .pp-table-card .card-header .card-header-action { gap: 4px; }
-        .pp-table-card .card-header .card-header-action .pp-btn-sm { font-size: 10px !important; padding: 5px 11px !important; }
-        .grand-total-bar { padding: 12px 18px; }
-        .gt-label { font-size: 13px; }
-        .gt-val { font-size: 14px; }
-    }
-
-    /* Mobile (<= 767.98px) */
     @media (max-width: 767.98px) {
         .pp-header { flex-direction: column; align-items: flex-start; gap: 8px; }
         .pp-header h1 { font-size: 16px; gap: 8px; }
         .pp-header h1 .pp-icon { width: 28px; height: 28px; min-width: 28px; font-size: 12px; }
-        .pp-breadcrumb { font-size: 11px; }
-        .pp-stat-card .card-statistic-1 { padding: 12px 14px; gap: 10px; }
-        .pp-stat-card .card-statistic-1 .card-icon { width: 38px; height: 38px; min-width: 38px; font-size: 15px; border-radius: 11px !important; }
-        .pp-stat-card .card-statistic-1 .card-header h4 { font-size: 9.5px; }
-        .pp-stat-card .card-statistic-1 .card-body { font-size: 15px; }
-        .row.mb-4 > [class*="col-"] { margin-bottom: 10px; }
+        .pp-stat-card .card-statistic-1 .card-body { font-size: 13px; }
         .pp-filter-card .card-body { padding: 12px 14px !important; }
         .pp-filter-card .col-md-5 { margin-bottom: 8px; }
         .pp-filter-card .col-md-5:last-of-type { margin-bottom: 0; }
         .pp-filter-card .col-md-2 { margin-top: 0 !important; }
         .pp-filter-card .col-md-2 .btn { width: 100%; }
         .pp-table-card .card-header { flex-direction: column; align-items: flex-start; }
-        .pp-table-card .card-header .card-header-action { display: flex; flex-wrap: wrap; gap: 5px; width: 100%; }
-        .pp-table-card .card-header .card-header-action .pp-btn-sm { flex: 1; justify-content: center; font-size: 9px !important; padding: 4px 8px !important; }
-        .table-responsive { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-        #table-stock { min-width: 650px; }
-        #table-stock thead th { font-size: 8.5px; padding: 6px 6px !important; white-space: nowrap; }
-        #table-stock tbody td { font-size: 9.5px; padding: 6px 6px !important; white-space: nowrap; }
-        .grand-total-bar { flex-wrap: wrap; padding: 10px 14px; gap: 4px; }
-        .gt-label { font-size: 10px; width: 100%; }
-        .gt-values { width: 100%; justify-content: space-between; }
-        .gt-val { font-size: 12px; }
-        .gt-sep { display: none; }
-        .d-flex.justify-content-center.flex-wrap { overflow-x: auto; }
-        .pp-pagination .pagination { flex-wrap: nowrap; }
-        .pp-pagination .pagination .page-link { font-size: 9px !important; padding: 3px 7px !important; margin: 0 1px; }
+        .pp-table-card .card-header .card-header-action { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+        .pp-table-card .card-header .card-header-action .pp-btn-sm { flex: 1; justify-content: center; font-size: 9.5px !important; padding: 5px 10px !important; }
+        #table-stock thead th { font-size: 9px; padding: 7px 8px !important; white-space: nowrap; }
+        #table-stock tbody td { font-size: 10px; padding: 7px 8px !important; }
+        #table-stock tfoot td { font-size: 10px; padding: 7px 8px !important; }
+        .pp-pagination .pagination .page-link { font-size: 9px !important; padding: 4px 8px !important; margin: 0 1px; }
         .pp-info-text { font-size: 11px; }
-        .select2-container { width: 100% !important; }
     }
 </style>
 @endpush
@@ -392,7 +357,7 @@
         <div class="section-body">
             <!-- Summary Cards -->
             <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-2 d-flex">
                     <div class="card pp-stat-card">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-primary"><i class="fas fa-boxes"></i></div>
@@ -403,7 +368,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-2 d-flex">
                     <div class="card pp-stat-card">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
@@ -414,7 +379,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-2 d-flex">
                     <div class="card pp-stat-card">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-info"><i class="fas fa-tags"></i></div>
@@ -425,7 +390,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-2 d-flex">
                     <div class="card pp-stat-card">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-warning"><i class="fas fa-chart-line"></i></div>
@@ -526,15 +491,14 @@
                             <tbody id="stock-table-body">
                                 @include('backend.reports.partials.stock_table_rows')
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-right text-dark">GRAND TOTAL:</td>
+                                    <td class="text-right text-primary"><span id="span-grand-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</span></td>
+                                    <td class="text-right text-success"><span id="span-grand-total-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</span></td>
+                                </tr>
+                            </tfoot>
                         </table>
-                    </div>
-                    <div class="grand-total-bar">
-                        <span class="gt-label">GRAND TOTAL:</span>
-                        <span class="gt-values">
-                            <span class="gt-val gt-val--asset"><span id="span-grand-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</span></span>
-                            <span class="gt-sep">|</span>
-                            <span class="gt-val gt-val--profit"><span id="span-grand-total-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</span></span>
-                        </span>
                     </div>
                     <p class="pp-info-text">
                         Showing

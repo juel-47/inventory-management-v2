@@ -114,13 +114,13 @@
         @yield('content')
       </div>
       <footer class="main-footer">
-        <div class="footer-inner">
-          <div class="footer-left">
-            <span class="footer-copyright"> B2bviking &copy; {{ now()->year }} All rights reserved</span>
-          </div>
-          <div class="footer-right">
-            Developed by <a target="_blank" href="https://inoodex.com/"><strong>Inoodex</strong></a>
-          </div>
+        <div class="footer-left">
+          <a target="_blank" href="https://inoodex.com/">Concept &amp; Design by shahadat</a>
+        </div>
+        <div class="footer-right">
+          <span>Copyright &copy; {{ now()->year }}</span>
+          <span class="mx-2">&middot;</span>
+          <a target="_blank" href="https://inoodex.com/">Developed by Inoodex</a>
         </div>
       </footer>
     </div>

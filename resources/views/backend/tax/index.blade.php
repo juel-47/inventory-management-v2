@@ -75,7 +75,7 @@
 
     .table {
         width: 100% !important;
-        min-width: 600px !important;
+        min-width: 400px !important;
         margin-bottom: 0 !important;
     }
 

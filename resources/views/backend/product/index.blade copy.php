@@ -167,7 +167,7 @@
         height: 2.5px;
         background: linear-gradient(90deg, var(--pp-amber-bright), var(--pp-amber) 50%, transparent 96%);
     }
-    .pp-filter-card .card-body { padding: 18px 20px 16px !important; }
+    .pp-filter-card .card-body { padding: 14px 16px 12px !important; }
 
     .pp-search-wrap {
         border-radius: var(--pp-radius-lg) !important;
@@ -369,7 +369,7 @@
         border-color: var(--pp-border-hover) !important;
     }
     .pp-card-img-wrap {
-        height: 180px;
+        height: 150px;
         background: linear-gradient(180deg, #fafbfc 0%, #f4f5f8 100%);
         position: relative;
         overflow: hidden;
@@ -386,9 +386,6 @@
         pointer-events: none;
     }
     .pp-card-img-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
         transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
         position: relative;
         z-index: 0;
@@ -621,7 +618,7 @@
     .pp-header h1 { font-size: 14px; }
     .pp-filter-card .card-body { padding: 12px 12px 10px !important; }
     .pp-search-wrap .form-control { font-size: 11px !important; height: 32px !important; }
-    #filter-form .col-12 { margin-bottom: 10px; }
+    #filter-form .col-12 { margin-bottom: 6px; }
     #filter-form .pp-btn { width: 100%; text-align: center; padding: 6px 12px !important; font-size: 10.5px !important; display: block; }
     .pp-card-img-wrap { height: 110px; }
     .pp-card-body { padding: 8px 10px 10px; }
@@ -653,7 +650,7 @@
 }
 
 </style>
-@endpush
+@​endpush
 
 @section('content')
     <section class="section">
@@ -674,7 +671,7 @@
                     <div class="card border-0 pp-filter-card">
                         <div class="card-body">
                             <form id="filter-form">
-                                <div class="row g-4 align-items-end">
+                                <div class="row g-2 align-items-end">
                                     <div class="col-12 col-md-3">
                                         <div class="input-group pp-search-wrap shadow-sm">
                                             <div class="input-group-prepend">
@@ -714,8 +711,7 @@
                                         @endcan
                                     </div>
                                 </div>
-                                <hr style="border-top: 1px solid var(--pp-border); margin: 6px 0 10px;">
-                                <div class="row g-4 align-items-end">
+                                <div class="row g-2 align-items-end">
                                     <div class="col-12 col-md-3">
                                         <select name="sort" id="sort" class="form-control select2 pp-select2">
                                             <option value="">Sort by</option>
