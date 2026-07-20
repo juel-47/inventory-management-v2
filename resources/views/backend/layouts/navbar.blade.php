@@ -1200,6 +1200,8 @@ body.sidebar-collapsed .sb-item .sb-flyout-title {
           <li class="sb-submenu-header">Stock Reports</li>
           <li><a href="{{ route('admin.reports.stock') }}"><i class="fas fa-boxes"></i> Stock Reports</a></li>
           <li><a href="{{ route('admin.reports.low-stock') }}"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</a></li>
+        <li class="sb-submenu-header">Current Stock Report</li>
+          <li><a href="{{ route('admin.reports.current-stock') }}"><i class="fas fa-cubes"></i> Current Stock Report</a></li>
           <li class="sb-submenu-header">Financial</li>
           <li><a href="{{ route('admin.reports.profit-loss') }}"><i class="fas fa-coins"></i> Profit & Loss</a></li>
           <li><a href="{{ route('admin.reports.purchase') }}"><i class="fas fa-shopping-bag"></i> Purchase History</a></li>
@@ -1208,7 +1210,6 @@ body.sidebar-collapsed .sb-item .sb-flyout-title {
           <li><a href="{{ route('admin.reports.audit') }}"><i class="fas fa-clipboard-check"></i> Audit Report</a></li>
         </ul>
       </li>
-
       <li class="sb-item has-children {{ $accountsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Accounts">
           <i class="fas fa-file-invoice-dollar"></i>
