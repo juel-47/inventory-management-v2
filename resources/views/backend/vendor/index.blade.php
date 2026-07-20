@@ -20,7 +20,7 @@ Vendor
                             <a href="{{ route('admin.vendor.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Create New</a>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body table-responsive">
                         {{ $dataTable->table() }}
                     </div>
                 </div>
