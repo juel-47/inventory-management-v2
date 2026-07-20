@@ -1,6 +1,6 @@
 <div class="row" style="margin: 0 -6px;">
     @foreach ($products as $key => $product)
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3" style="padding: 0 6px;">
+    <div class="col-6 col-md-4 col-lg-5th col-xl-5th mb-3" style="padding: 0 6px;">
         <div class="card h-100 border-0 shadow-sm pp-card">
             <div class="pp-card-img-wrap d-flex align-items-center justify-content-center">
                 <img alt="{{ $product->name }}" 
@@ -74,7 +74,7 @@
                     } catch (\Exception $e) { }
                 @endphp
 
-                <div class="d-flex align-items-center justify-content-between mb-2" style="margin-top: 3px;">
+                <div class="d-flex align-items-center mb-2" style="margin-top: 3px;">
                     <div class="d-flex align-items-center" style="gap: 2px;">
                         @for($i = 1; $i <= 5; $i++)
                             <i class="fas fa-star" style="color: {{ $i <= round($avgRating) ? '#f59e0b' : '#d1d5db' }}; font-size: 9px;"></i>
@@ -83,11 +83,6 @@
                             <span style="color: var(--pp-muted); font-size: 9px; font-weight: 600; margin-left: 3px;">({{ $reviewCount }})</span>
                         @endif
                     </div>
-                    @if($isOutletUserRole)
-                        <button type="button" class="btn btn-sm pp-btn-card pp-btn-amber add-rating-btn" data-product-id="{{ $product->id }}" data-product-name="{{ $product->name }}" style="font-size: 9px !important; padding: 2px 8px !important;">
-                            <i class="fas fa-star mr-1"></i> Rate
-                        </button>
-                    @endif
                 </div>
 
                 <div class="pp-price-box">
@@ -176,9 +171,10 @@
 
 <div class="row mt-3 mb-4">
     <div class="col-12">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center" style="gap: 8px;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pp-pagination-wrapper" style="gap: 8px;">
             <span class="pp-count-badge">
-                Showing <strong>{{ $products->firstItem() ?? 0 }}</strong>-<strong>{{ $products->lastItem() ?? 0 }}</strong> of <strong>{{ $products->total() }}</strong>
+                <i class="fas fa-list-ul mr-1" style="opacity: 0.5; font-size: 9px;"></i>
+                Showing <strong>{{ $products->firstItem() ?? 0 }}</strong>–<strong>{{ $products->lastItem() ?? 0 }}</strong> of <strong>{{ $products->total() }}</strong>
             </span>
             <div class="pp-pagination">
                 {{ $products->links() }}

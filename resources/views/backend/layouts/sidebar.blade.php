@@ -231,7 +231,7 @@
   --sb-primary-soft: rgba(99, 102, 241, 0.1);
   --sb-text: rgba(255, 255, 255, 0.9);
   --sb-muted: rgba(255, 255, 255, 0.4);
-  --sb-width: 260px;
+  --sb-width: 268px;
 }
 
 .main-sidebar {

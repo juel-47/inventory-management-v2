@@ -116,10 +116,7 @@
       <footer class="main-footer">
         <div class="footer-inner">
           <div class="footer-left">
-            Concept &amp; Design by <a target="_blank" href="https://inoodex.com/"><strong>shahadat</strong></a>
-          </div>
-          <div class="footer-center">
-            <span class="footer-copyright">&copy; {{ now()->year }} All rights reserved</span>
+            <span class="footer-copyright"> B2bviking &copy; {{ now()->year }} All rights reserved</span>
           </div>
           <div class="footer-right">
             Developed by <a target="_blank" href="https://inoodex.com/"><strong>Inoodex</strong></a>
