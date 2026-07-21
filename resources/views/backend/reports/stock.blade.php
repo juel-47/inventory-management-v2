@@ -4,192 +4,261 @@
 @push('css')
 <style>
     :root {
-        --pp-amber: #d4a24e;
-        --pp-amber-bright: #ecc78b;
-        --pp-amber-deep: #b8852a;
-        --pp-amber-soft: rgba(212, 162, 78, 0.08);
-        --pp-border: rgba(11, 17, 32, 0.07);
-        --pp-border-hover: rgba(212, 162, 78, 0.15);
-        --pp-ink: #161e2e;
-        --pp-ink-soft: #2d3748;
-        --pp-muted: #6b788e;
-        --pp-surface: #f8f9fc;
-        --pp-radius-md: 14px;
-        --pp-radius-lg: 20px;
-        --pp-shadow-card: 0 1px 3px rgba(11,17,32,0.04), 0 8px 20px -12px rgba(11,17,32,0.12);
-        --pp-shadow-card-hover: 0 12px 32px -12px rgba(11,17,32,0.16), 0 0 0 1px rgba(212,162,78,0.06);
+        --sr-amber: #d4a24e;
+        --sr-amber-bright: #ecc78b;
+        --sr-amber-deep: #b8852a;
+        --sr-amber-soft: rgba(212, 162, 78, 0.08);
+        --sr-border: rgba(11, 17, 32, 0.07);
+        --sr-border-hover: rgba(212, 162, 78, 0.18);xzx
+        --sr-ink: #161e2e;
+        --sr-ink-soft: #2d3748;
+        --sr-muted: #6b788e;
+        --sr-surface: #f8f9fc;
+        --sr-radius: 14px;
+        --sr-radius-lg: 20px;
+        --sr-shadow: 0 1px 3px rgba(11,17,32,0.04), 0 8px 20px -12px rgba(11,17,32,0.12);
+        --sr-shadow-hover: 0 12px 32px -12px rgba(11,17,32,0.16), 0 0 0 1px rgba(212,162,78,0.06);
+        --sr-font: 'Inter', 'Segoe UI', system-ui, sans-serif;
     }
 
-    .pp-header {
+    /* ============================
+       HEADER
+       ============================ */
+    .sr-page-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 10px;
-        margin-bottom: 20px;
-        padding: 0;
-        position: relative;
+        margin-bottom: 22px;
+        padding-top: 18px;
     }
-    .pp-header h1 {
+    .sr-page-header h1 {
         display: flex;
         align-items: center;
         gap: 12px;
+        font-family: var(--sr-font);
         font-weight: 800;
-        font-size: 20px;
-        color: var(--pp-ink);
+        font-size: 21px;
+        color: var(--sr-ink);
         letter-spacing: -0.3px;
         margin: 0;
     }
-    .pp-header h1 .pp-icon {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
+    .sr-page-header .sr-icon-badge {
+        width: 36px; height: 36px; min-width: 36px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 11px;
         font-size: 14px;
         color: #1a1306;
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber));
-        box-shadow: 0 4px 14px rgba(212, 162, 78, 0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+        background: linear-gradient(145deg, var(--sr-amber-bright), var(--sr-amber));
+        box-shadow: 0 4px 14px rgba(212,162,78,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
     }
-    .pp-breadcrumb {
+    .sr-breadcrumb {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12.5px; font-weight: 600;
+    }
+    .sr-breadcrumb span { color: var(--sr-muted); position: relative; padding-right: 14px; }
+    .sr-breadcrumb span + span { padding-left: 14px; }
+    .sr-breadcrumb span + span::before {
+        content: '/'; position: absolute; left: 0; color: rgba(11,17,32,0.15);
+    }
+    .sr-breadcrumb a { color: var(--sr-amber); text-decoration: none; transition: color 0.2s; }
+    .sr-breadcrumb a:hover { color: var(--sr-amber-deep); }
+    .sr-breadcrumb .active { color: var(--sr-amber-deep); }
+
+    /* ============================
+       STAT CARDS — Desktop Grid
+       ============================ */
+    .sr-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+    .sr-stat-card {
+        background: #fff;
+        border: 1px solid var(--sr-border);
+        border-radius: var(--sr-radius);
+        padding: 18px 20px;
+        box-shadow: var(--sr-shadow);
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12.5px;
-        font-weight: 600;
-    }
-    .pp-breadcrumb-item {
-        color: var(--pp-muted);
-        padding-right: 14px;
+        gap: 16px;
+        transition: all 0.3s cubic-bezier(.2,.8,.2,1);
         position: relative;
-    }
-    .pp-breadcrumb-item + .pp-breadcrumb-item { padding-left: 14px; }
-    .pp-breadcrumb-item + .pp-breadcrumb-item::before {
-        content: '/';
-        position: absolute;
-        left: 0;
-        color: rgba(11, 17, 32, 0.15);
-    }
-    .pp-breadcrumb-item a { color: var(--pp-amber); text-decoration: none; transition: color 0.2s; }
-    .pp-breadcrumb-item a:hover { color: var(--pp-amber-deep); }
-    .pp-breadcrumb-item.active { color: var(--pp-amber-deep); }
-
-    /* Stat Cards */
-    .pp-stat-card {
-        border-radius: var(--pp-radius-md) !important;
-        border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-        transition: all 0.3s cubic-bezier(.2,.8,.2,1) !important;
         overflow: hidden;
-        padding: 0 !important;
-        height: 100%;
     }
-    .pp-stat-card:hover {
-        box-shadow: var(--pp-shadow-card-hover) !important;
-        border-color: var(--pp-border-hover) !important;
+    .sr-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        border-radius: var(--sr-radius) var(--sr-radius) 0 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .sr-stat-card:hover {
+        box-shadow: var(--sr-shadow-hover);
+        border-color: var(--sr-border-hover);
         transform: translateY(-3px);
     }
-    .pp-stat-card .card-statistic-1 { border: none !important; box-shadow: none !important; margin-bottom: 0 !important; height: 100%; }
-    .pp-stat-card .card-statistic-1 .card-wrap { height: 100%; display: flex; flex-direction: column; justify-content: center; }
-    .pp-stat-card .card-statistic-1 .card-icon {
-        border-radius: 10px !important;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-    }
-    .pp-stat-card .card-statistic-1 .card-icon.bg-primary { background: linear-gradient(145deg, #6366f1, #4f46e5) !important; }
-    .pp-stat-card .card-statistic-1 .card-icon.bg-success { background: linear-gradient(145deg, #34d399, #16a34a) !important; }
-    .pp-stat-card .card-statistic-1 .card-icon.bg-info { background: linear-gradient(145deg, #38bdf8, #0284c7) !important; }
-    .pp-stat-card .card-statistic-1 .card-icon.bg-warning { background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber-deep)) !important; }
-    .pp-stat-card .card-statistic-1 .card-header h4 {
-        font-weight: 600;
-        font-size: 10px;
-        color: var(--pp-muted);
-        letter-spacing: 0.2px;
-        padding: 0;
-    }
-    .pp-stat-card .card-statistic-1 .card-body {
-        font-weight: 800;
-        font-size: 14px;
-        color: var(--pp-ink);
-        padding: 4px 0 0;
-    }
-    .pp-stat-card .card-statistic-1 .card-wrap { padding: 8px 12px 8px 8px; }
-    .pp-stat-card .card-statistic-1 { display: flex; align-items: center; }
-    .pp-stat-card .card-statistic-1 .card-icon { margin: 8px 0 8px 10px; }
+    .sr-stat-card:hover::before { opacity: 1; }
+    .sr-stat-card:nth-child(1)::before { background: linear-gradient(90deg, #6366f1, #818cf8); }
+    .sr-stat-card:nth-child(2)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .sr-stat-card:nth-child(3)::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+    .sr-stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--sr-amber), var(--sr-amber-bright)); }
 
-    /* Filter Card */
-    .pp-filter-card {
-        border-radius: var(--pp-radius-md) !important;
-        border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: var(--pp-shadow-card) !important;
-        overflow: hidden;
+    .sr-stat-icon {
+        width: 44px; height: 44px; min-width: 44px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 12px;
+        font-size: 16px;
+        color: #fff;
+        flex-shrink: 0;
     }
-    .pp-filter-card .card-header {
-        padding: 12px 20px !important;
-        background: linear-gradient(135deg, #fafbfc, #f4f5f8);
-        border-bottom: 1px solid var(--pp-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .pp-filter-card .card-header h4 {
-        font-weight: 800;
-        font-size: 13px;
-        color: var(--pp-ink);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .pp-filter-card .card-header h4 i { color: var(--pp-amber); }
-    .pp-filter-card .card-body { padding: 16px 20px !important; }
-    .pp-filter-card label {
-        font-weight: 700;
-        font-size: 11.5px;
-        color: var(--pp-ink-soft);
+    .sr-stat-icon.indigo { background: linear-gradient(145deg, #818cf8, #6366f1); box-shadow: 0 4px 12px -3px rgba(99,102,241,0.35); }
+    .sr-stat-icon.emerald { background: linear-gradient(145deg, #34d399, #10b981); box-shadow: 0 4px 12px -3px rgba(16,185,129,0.35); }
+    .sr-stat-icon.sky { background: linear-gradient(145deg, #38bdf8, #0ea5e9); box-shadow: 0 4px 12px -3px rgba(14,165,233,0.35); }
+    .sr-stat-icon.amber { background: linear-gradient(145deg, var(--sr-amber-bright), var(--sr-amber)); box-shadow: 0 4px 12px -3px rgba(212,162,78,0.35); color: #1a1306; }
+
+    .sr-stat-info { flex: 1; min-width: 0; }
+    .sr-stat-label {
+        font-size: 11px; font-weight: 700;
+        color: var(--sr-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
         margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sr-stat-value {
+        font-size: 18px; font-weight: 800;
+        color: var(--sr-ink);
+        letter-spacing: -0.3px;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    /* DataTable styling */
-    .pp-table-card {
-        border-radius: var(--pp-radius-md) !important;
-        border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: var(--pp-shadow-card) !important;
+    /* ============================
+       FILTER CARD
+       ============================ */
+    .sr-filter-card {
+        background: #fff;
+        border: 1px solid var(--sr-border);
+        border-radius: var(--sr-radius);
+        box-shadow: var(--sr-shadow);
+        overflow: hidden;
+        margin-bottom: 22px;
+    }
+    .sr-filter-head {
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #fafbfc, #f4f5f8);
+        border-bottom: 1px solid var(--sr-border);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .sr-filter-head h4 {
+        font-family: var(--sr-font);
+        font-weight: 800; font-size: 13.5px;
+        color: var(--sr-ink); margin: 0;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .sr-filter-head h4 i { color: var(--sr-amber); font-size: 13px; }
+    .sr-filter-head .sr-collapse-btn {
+        width: 28px; height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        background: var(--sr-surface);
+        border: 1px solid var(--sr-border);
+        color: var(--sr-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 11px;
+    }
+    .sr-filter-head .sr-collapse-btn:hover { background: var(--sr-amber-soft); color: var(--sr-amber); border-color: var(--sr-border-hover); }
+    .sr-filter-body { padding: 18px 20px; }
+    .sr-filter-body label {
+        font-family: var(--sr-font);
+        font-weight: 700; font-size: 11.5px;
+        color: var(--sr-ink-soft);
+        margin-bottom: 5px;
+        display: block;
+    }
+    .sr-filter-body .select2-selection--single {
+        height: 38px !important;
+        border-radius: 10px !important;
+        border: 1.5px solid var(--sr-border) !important;
+        display: flex !important; align-items: center;
+    }
+    .sr-filter-body .select2-selection--single .select2-selection__rendered {
+        color: var(--sr-ink); font-size: 12.5px; font-weight: 500; padding-left: 14px; line-height: 36px;
+    }
+    .sr-filter-body .select2-selection--single .select2-selection__arrow { height: 36px; right: 10px; }
+    .sr-filter-body .select2-container--focus .select2-selection--single,
+    .sr-filter-body .select2-container--open .select2-selection--single {
+        border-color: var(--sr-amber) !important;
+        box-shadow: 0 0 0 3px var(--sr-amber-soft) !important;
+    }
+
+    /* ============================
+       BUTTONS
+       ============================ */
+    .sr-btn {
+        border: none;
+        font-family: var(--sr-font);
+        font-weight: 700;
+        font-size: 11px;
+        border-radius: var(--sr-radius-lg);
+        padding: 7px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(.2,.8,.2,1);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .sr-btn:hover { transform: translateY(-1.5px); }
+    .sr-btn.indigo { background: linear-gradient(145deg, #6366f1, #4f46e5); color: #fff; box-shadow: 0 4px 12px -4px rgba(99,102,241,0.3); }
+    .sr-btn.indigo:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(99,102,241,0.4); color: #fff; }
+    .sr-btn.emerald { background: linear-gradient(145deg, #34d399, #16a34a); color: #fff; box-shadow: 0 4px 12px -4px rgba(22,163,74,0.3); }
+    .sr-btn.emerald:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(22,163,74,0.4); color: #fff; }
+    .sr-btn.rose { background: linear-gradient(145deg, #fb7185, #e11d48); color: #fff; box-shadow: 0 4px 12px -4px rgba(225,29,72,0.3); }
+    .sr-btn.rose:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(225,29,72,0.4); color: #fff; }
+    .sr-btn.amber { background: linear-gradient(145deg, var(--sr-amber-bright), var(--sr-amber-deep)); color: #1a1306; box-shadow: 0 4px 12px -4px rgba(212,162,78,0.3); }
+    .sr-btn.amber:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(212,162,78,0.4); color: #1a1306; }
+
+    /* ============================
+       TABLE CARD
+       ============================ */
+    .sr-table-card {
+        background: #fff;
+        border: 1px solid var(--sr-border);
+        border-radius: var(--sr-radius);
+        box-shadow: var(--sr-shadow);
         overflow: hidden;
     }
-    .pp-table-card .card-header {
-        padding: 12px 20px !important;
+    .sr-table-head {
+        padding: 14px 20px;
         background: linear-gradient(135deg, #fafbfc, #f4f5f8);
-        border-bottom: 1px solid var(--pp-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 8px;
+        border-bottom: 1px solid var(--sr-border);
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 10px;
     }
-    .pp-table-card .card-header h4 {
-        font-weight: 800;
-        font-size: 13px;
-        color: var(--pp-ink);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    .sr-table-head h4 {
+        font-family: var(--sr-font);
+        font-weight: 800; font-size: 13.5px;
+        color: var(--sr-ink); margin: 0;
+        display: flex; align-items: center; gap: 8px;
     }
-    .pp-table-card .card-header h4 i { color: var(--pp-amber); }
-    .pp-table-card .card-body { padding: 0 !important; }
+    .sr-table-head h4 i { color: var(--sr-amber); font-size: 13px; }
+    .sr-table-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
+    /* TABLE */
+    .sr-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     #table-stock {
-        font-size: 12px !important;
+        font-size: 12.5px;
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
@@ -197,262 +266,416 @@
     }
     #table-stock thead th {
         background: linear-gradient(135deg, #fafbfc, #f4f5f8);
-        color: var(--pp-ink-soft) !important;
+        color: var(--sr-ink-soft);
+        font-family: var(--sr-font);
         font-weight: 700;
-        font-size: 11px;
+        font-size: 10.5px;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
-        padding: 10px 14px !important;
-        border: none !important;
-        border-bottom: 2px solid var(--pp-border) !important;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+        border: none;
+        border-bottom: 2px solid var(--sr-border);
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 2;
     }
     #table-stock tbody td {
-        padding: 10px 14px !important;
+        padding: 12px 16px;
         vertical-align: middle;
-        color: var(--pp-ink);
-        border-bottom: 1px solid var(--pp-border);
+        color: var(--sr-ink);
+        border-bottom: 1px solid var(--sr-border);
         background: #fff;
         transition: background 0.15s;
+        font-weight: 500;
     }
-    #table-stock tbody tr:hover td { background: var(--pp-amber-soft); }
-    #table-stock tbody tr:nth-child(even) td { background: var(--pp-surface); }
-    #table-stock tbody tr:nth-child(even):hover td { background: var(--pp-amber-soft); }
-    .grand-total-bar {
+    #table-stock tbody tr:hover td { background: var(--sr-amber-soft); }
+    #table-stock tbody tr:nth-child(even) td { background: var(--sr-surface); }
+    #table-stock tbody tr:nth-child(even):hover td { background: var(--sr-amber-soft); }
+
+    /* Product cell */
+    .sr-product-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 180px;
+    }
+    .sr-product-img {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid var(--sr-border);
+    }
+    .sr-product-placeholder {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: 700;
+        color: #64748b;
+        flex-shrink: 0;
+    }
+    .sr-product-name {
+        font-weight: 700;
+        font-size: 12.5px;
+        color: var(--sr-ink);
+        line-height: 1.3;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    /* Category badge */
+    .sr-cat-badge {
+        display: inline-block;
+        background: var(--sr-surface);
+        color: var(--sr-ink-soft);
+        font-size: 10.5px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 50px;
+        border: 1px solid var(--sr-border);
+        margin-bottom: 3px;
+    }
+    .sr-brand-text {
+        font-size: 10.5px;
+        color: var(--sr-muted);
+        font-weight: 500;
+    }
+
+    /* Stock badge */
+    .sr-stock-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 42px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .sr-stock-badge.ok { background: rgba(22,163,74,0.1); color: #16a34a; }
+    .sr-stock-badge.low { background: rgba(220,38,38,0.1); color: #dc2626; animation: sr-pulse 2s infinite; }
+
+    @keyframes sr-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.15); }
+        50% { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+    }
+
+    /* Money cells */
+    .sr-money { white-space: nowrap; }
+    .sr-money.asset { color: #4f46e5; }
+    .sr-money.profit { color: #16a34a; }
+
+    /* Grand Total Bar */
+    .sr-grand-total {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 14px 20px;
-        border-top: 2px solid var(--pp-amber);
+        padding: 16px 22px;
+        border-top: 2px solid var(--sr-amber);
         background: linear-gradient(135deg, #fffdf7, #fffbeb);
     }
-    .gt-label { font-size: 14px; font-weight: 700; color: var(--pp-ink); }
-    .gt-values { display: flex; align-items: center; gap: 14px; }
-    .gt-val { font-size: 15px; font-weight: 700; }
-    .gt-val--asset { color: #4f46e5; }
-    .gt-val--profit { color: #16a34a; }
-    .gt-sep { color: #d1d5db; font-weight: 300; }
+    .sr-gt-label {
+        font-family: var(--sr-font);
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--sr-ink);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .sr-gt-label i { color: var(--sr-amber); font-size: 14px; }
+    .sr-gt-values { display: flex; align-items: center; gap: 20px; }
+    .sr-gt-chip {
+        display: flex; flex-direction: column; align-items: flex-end;
+    }
+    .sr-gt-chip-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .sr-gt-chip-val { font-size: 16px; font-weight: 800; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    .sr-gt-chip.asset .sr-gt-chip-label { color: #6366f1; }
+    .sr-gt-chip.asset .sr-gt-chip-val { color: #4f46e5; }
+    .sr-gt-chip.profit .sr-gt-chip-label { color: #10b981; }
+    .sr-gt-chip.profit .sr-gt-chip-val { color: #16a34a; }
 
-    .pp-btn-sm {
-        border: none !important;
-        font-weight: 700 !important;
-        font-size: 10.5px !important;
-        border-radius: var(--pp-radius-lg) !important;
-        padding: 6px 14px !important;
-        transition: all 0.25s cubic-bezier(.2,.8,.2,1);
-        display: inline-flex;
+    /* Pagination */
+    .sr-pagination-wrap {
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 5px;
+        gap: 10px;
     }
-    .pp-btn-sm:hover { transform: translateY(-1.5px); }
-    .pp-btn-indigo { background: linear-gradient(145deg, #6366f1, #4f46e5) !important; color: #fff !important; box-shadow: 0 4px 12px -4px rgba(99,102,241,0.3); }
-    .pp-btn-indigo:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(99,102,241,0.4); }
-    .pp-btn-emerald { background: linear-gradient(145deg, #34d399, #16a34a) !important; color: #fff !important; box-shadow: 0 4px 12px -4px rgba(22,163,74,0.3); }
-    .pp-btn-emerald:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(22,163,74,0.4); }
-    .pp-btn-rose { background: linear-gradient(145deg, #fb7185, #e11d48) !important; color: #fff !important; box-shadow: 0 4px 12px -4px rgba(225,29,72,0.3); }
-    .pp-btn-rose:hover { filter: brightness(1.06); box-shadow: 0 6px 18px -4px rgba(225,29,72,0.4); }
-
-    .pp-select2 .select2-selection--single {
-        height: 36px !important;
-        border-radius: var(--pp-radius-lg) !important;
-        border: 1.5px solid var(--pp-border) !important;
-        background: #fff !important;
-        display: flex !important;
-        align-items: center;
-        transition: all 0.25s ease;
+    .sr-pagination-info {
+        font-size: 12.5px; font-weight: 500;
+        color: var(--sr-muted);
     }
-    .pp-select2 .select2-selection--single .select2-selection__rendered {
-        color: var(--pp-ink);
-        font-size: 12px;
-        font-weight: 500;
-        padding-left: 14px;
-        line-height: 34px;
-    }
-    .pp-select2 .select2-selection--single .select2-selection__arrow { height: 34px; right: 10px; }
-    .pp-select2 .select2-selection--single .select2-selection__arrow b {
-        border-color: var(--pp-amber) transparent transparent transparent !important;
-        border-width: 4px 4px 0 !important;
-    }
-    .pp-select2.select2-container--open .select2-selection--single,
-    .pp-select2.select2-container--focus .select2-selection--single {
-        border-color: var(--pp-amber) !important;
-        box-shadow: 0 0 0 3px var(--pp-amber-soft) !important;
-    }
-    .pp-select2 .select2-dropdown {
-        border-radius: var(--pp-radius-sm) !important;
-        border: 1px solid var(--pp-border) !important;
-        box-shadow: 0 20px 50px -16px rgba(11,17,32,0.2) !important;
-        overflow: hidden;
-        margin-top: 4px;
-    }
-    .pp-select2 .select2-results__option {
-        font-size: 12px !important;
-        padding: 8px 12px !important;
-        transition: background 0.15s;
-    }
-    .pp-select2 .select2-results__option--highlighted[aria-selected] {
-        background: linear-gradient(135deg, var(--pp-amber-bright), var(--pp-amber)) !important;
-        color: #1a1306 !important;
-    }
-
-    .pp-pagination .pagination .page-link {
-        border-radius: 10px !important;
-        border: 1px solid var(--pp-border) !important;
+    .sr-pagination-info strong { color: var(--sr-ink); }
+    .sr-pagination-wrap .pagination { margin: 0; }
+    .sr-pagination-wrap .pagination .page-link {
+        border-radius: 10px;
+        border: 1px solid var(--sr-border);
         margin: 0 2px;
         font-weight: 600;
         font-size: 11px;
-        color: var(--pp-muted);
+        color: var(--sr-muted);
         padding: 6px 11px;
         transition: all 0.2s cubic-bezier(.2,.8,.2,1);
         background: #fff;
     }
-    .pp-pagination .pagination .page-link:hover {
-        border-color: var(--pp-amber) !important;
-        background: var(--pp-amber-soft) !important;
-        color: var(--pp-amber-deep) !important;
+    .sr-pagination-wrap .pagination .page-link:hover {
+        border-color: var(--sr-amber);
+        background: var(--sr-amber-soft);
+        color: var(--sr-amber-deep);
     }
-    .pp-pagination .pagination .page-item.active .page-link {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber)) !important;
-        border-color: var(--pp-amber) !important;
-        color: #1a1306 !important;
-        box-shadow: 0 4px 14px -3px rgba(212, 162, 78, 0.35);
-    }
-
-    .pp-info-text {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--pp-muted);
-        text-align: center;
-        padding: 12px 0 4px;
+    .sr-pagination-wrap .pagination .page-item.active .page-link {
+        background: linear-gradient(145deg, var(--sr-amber-bright), var(--sr-amber));
+        border-color: var(--sr-amber);
+        color: #1a1306;
+        box-shadow: 0 4px 14px -3px rgba(212,162,78,0.35);
     }
 
-    /* Tablet (768px - 991.98px) */
-    @media (max-width: 991.98px) {
-        .pp-stat-card .card-statistic-1 { padding: 14px 16px; gap: 12px; }
-        .pp-stat-card .card-statistic-1 .card-icon { width: 42px; height: 42px; min-width: 42px; font-size: 17px; border-radius: 12px !important; }
-        .pp-stat-card .card-statistic-1 .card-header h4 { font-size: 10.5px; }
-        .pp-stat-card .card-statistic-1 .card-body { font-size: 17px; }
-        .pp-table-card .card-header .card-header-action { gap: 4px; }
-        .pp-table-card .card-header .card-header-action .pp-btn-sm { font-size: 10px !important; padding: 5px 11px !important; }
-        .grand-total-bar { padding: 12px 18px; }
-        .gt-label { font-size: 13px; }
-        .gt-val { font-size: 14px; }
-    }
+    /* ============================
+       MOBILE CARD VIEW (< 768px)
+       ============================ */
+    .sr-mobile-cards { display: none; }
 
-    /* Mobile (<= 767.98px) */
     @media (max-width: 767.98px) {
-        .pp-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-        .pp-header h1 { font-size: 16px; gap: 8px; }
-        .pp-header h1 .pp-icon { width: 28px; height: 28px; min-width: 28px; font-size: 12px; }
-        .pp-breadcrumb { font-size: 11px; }
-        .pp-stat-card .card-statistic-1 { padding: 12px 14px; gap: 10px; }
-        .pp-stat-card .card-statistic-1 .card-icon { width: 38px; height: 38px; min-width: 38px; font-size: 15px; border-radius: 11px !important; }
-        .pp-stat-card .card-statistic-1 .card-header h4 { font-size: 9.5px; }
-        .pp-stat-card .card-statistic-1 .card-body { font-size: 15px; }
-        .row.mb-4 > [class*="col-"] { margin-bottom: 10px; }
-        .pp-filter-card .card-body { padding: 12px 14px !important; }
-        .pp-filter-card .col-md-5 { margin-bottom: 8px; }
-        .pp-filter-card .col-md-5:last-of-type { margin-bottom: 0; }
-        .pp-filter-card .col-md-2 { margin-top: 0 !important; }
-        .pp-filter-card .col-md-2 .btn { width: 100%; }
-        .pp-table-card .card-header { flex-direction: column; align-items: flex-start; }
-        .pp-table-card .card-header .card-header-action { display: flex; flex-wrap: wrap; gap: 5px; width: 100%; }
-        .pp-table-card .card-header .card-header-action .pp-btn-sm { flex: 1; justify-content: center; font-size: 9px !important; padding: 4px 8px !important; }
-        .table-responsive { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-        #table-stock { min-width: 650px; }
-        #table-stock thead th { font-size: 8.5px; padding: 6px 6px !important; white-space: nowrap; }
-        #table-stock tbody td { font-size: 9.5px; padding: 6px 6px !important; white-space: nowrap; }
-        .grand-total-bar { flex-wrap: wrap; padding: 10px 14px; gap: 4px; }
-        .gt-label { font-size: 10px; width: 100%; }
-        .gt-values { width: 100%; justify-content: space-between; }
-        .gt-val { font-size: 12px; }
-        .gt-sep { display: none; }
-        .d-flex.justify-content-center.flex-wrap { overflow-x: auto; }
-        .pp-pagination .pagination { flex-wrap: nowrap; }
-        .pp-pagination .pagination .page-link { font-size: 9px !important; padding: 3px 7px !important; margin: 0 1px; }
-        .pp-info-text { font-size: 11px; }
+        .sr-table-wrap { display: none !important; }
+        .sr-mobile-cards { display: block; padding: 12px; }
+
+        .sr-mobile-card {
+            background: #fff;
+            border: 1px solid var(--sr-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+        .sr-mobile-card:active { transform: scale(0.99); background: #fafbfc; }
+
+        .sr-mobile-card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--sr-border);
+        }
+        .sr-mobile-card-img {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--sr-border);
+        }
+        .sr-mobile-card-placeholder {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: #64748b;
+            flex-shrink: 0;
+        }
+        .sr-mobile-card-name {
+            flex: 1; min-width: 0;
+        }
+        .sr-mobile-card-name .name {
+            font-weight: 700; font-size: 13px; color: var(--sr-ink);
+            line-height: 1.3; margin-bottom: 3px;
+            overflow: hidden; text-overflow: ellipsis;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .sr-mobile-card-name .meta {
+            display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+        }
+
+        .sr-mobile-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+        }
+        .sr-mobile-card-field {
+            display: flex; flex-direction: column;
+        }
+        .sr-mobile-card-field .label {
+            font-size: 9.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--sr-muted);
+            margin-bottom: 2px;
+        }
+        .sr-mobile-card-field .value {
+            font-size: 13px; font-weight: 700;
+            color: var(--sr-ink);
+        }
+        .sr-mobile-card-field .value.asset { color: #4f46e5; }
+        .sr-mobile-card-field .value.profit { color: #16a34a; }
+    }
+
+    /* ============================
+       TABLET (768px - 991px)
+       ============================ */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+        .sr-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .sr-stat-value { font-size: 16px; }
+        .sr-stat-icon { width: 40px; height: 40px; min-width: 40px; font-size: 15px; }
+        #table-stock { min-width: 750px; }
+        #table-stock thead th { font-size: 9.5px; padding: 10px 12px; }
+        #table-stock tbody td { font-size: 11.5px; padding: 10px 12px; }
+        .sr-product-name { max-width: 150px; font-size: 11.5px; }
+        .sr-product-img, .sr-product-placeholder { width: 30px; height: 30px; }
+        .sr-grand-total { padding: 14px 18px; }
+        .sr-gt-chip-val { font-size: 14px; }
+        .sr-table-actions { gap: 4px; }
+        .sr-btn { font-size: 10px; padding: 6px 12px; }
+    }
+
+    /* ============================
+       MOBILE (< 768px)
+       ============================ */
+    @media (max-width: 767.98px) {
+        .sr-page-header { flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 16px; }
+        .sr-page-header h1 { font-size: 17px; gap: 10px; }
+        .sr-page-header .sr-icon-badge { width: 30px; height: 30px; min-width: 30px; font-size: 12px; border-radius: 9px; }
+        .sr-breadcrumb { font-size: 11px; }
+
+        .sr-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+        .sr-stat-card { padding: 14px 14px; gap: 12px; }
+        .sr-stat-icon { width: 36px; height: 36px; min-width: 36px; font-size: 14px; border-radius: 10px; }
+        .sr-stat-label { font-size: 9.5px; letter-spacing: 0.3px; }
+        .sr-stat-value { font-size: 14px; }
+
+        .sr-filter-card { margin-bottom: 16px; }
+        .sr-filter-head { padding: 12px 16px; }
+        .sr-filter-body { padding: 14px 16px; }
+        .sr-filter-body .col-md-5 { margin-bottom: 10px; }
+        .sr-filter-body .col-md-2 { margin-top: 0; }
+        .sr-filter-body .col-md-2 .sr-btn { width: 100%; justify-content: center; }
         .select2-container { width: 100% !important; }
+
+        .sr-table-head { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 8px; }
+        .sr-table-actions { width: 100%; }
+        .sr-btn { flex: 1; justify-content: center; font-size: 10px; padding: 7px 10px; }
+
+        .sr-grand-total {
+            flex-direction: column; gap: 10px;
+            padding: 14px 16px;
+            align-items: flex-start;
+        }
+        .sr-gt-values { width: 100%; justify-content: space-between; }
+        .sr-gt-chip { align-items: flex-start; }
+        .sr-gt-chip-val { font-size: 15px; }
+
+        .sr-pagination-wrap { padding: 14px 16px; }
+        .sr-pagination-info { font-size: 11px; }
+        .sr-pagination-wrap .pagination .page-link { font-size: 10px; padding: 4px 9px; }
+    }
+
+    /* ============================
+       SMALL PHONES (< 375px)
+       ============================ */
+    @media (max-width: 374.98px) {
+        .sr-stats-grid { grid-template-columns: 1fr; gap: 8px; }
+        .sr-stat-card { padding: 12px; gap: 10px; }
+        .sr-stat-value { font-size: 15px; }
+        .sr-stat-icon { width: 34px; height: 34px; min-width: 34px; font-size: 13px; }
+
+        .sr-mobile-card-grid { grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+        .sr-mobile-card-field .value { font-size: 12px; }
+
+        .sr-page-header h1 { font-size: 15px; }
+        .sr-breadcrumb { font-size: 10px; }
+    }
+
+    /* ============================
+       LARGE DESKTOPS (≥ 1400px)
+       ============================ */
+    @media (min-width: 1400px) {
+        .sr-stat-value { font-size: 20px; }
+        .sr-stat-icon { width: 48px; height: 48px; font-size: 18px; }
+        .sr-stat-card { padding: 22px 24px; gap: 18px; }
+        #table-stock { font-size: 13px; }
+        #table-stock thead th { font-size: 11px; padding: 14px 18px; }
+        #table-stock tbody td { padding: 14px 18px; }
+        .sr-product-name { max-width: 280px; font-size: 13px; }
+    }
+
+    /* ============================
+       PRINT
+       ============================ */
+    @media print {
+        .sr-filter-card, .sr-table-actions, .sr-page-header, .sr-pagination-wrap { display: none !important; }
+        .sr-stats-grid { display: none !important; }
+        .sr-table-card { border: none !important; box-shadow: none !important; }
+        .sr-table-head { display: none !important; }
+        #table-stock thead th { background: #f0f0f0 !important; }
     }
 </style>
 @endpush
 
 @section('content')
     <section class="section">
-        <div class="pp-header">
+        {{-- Page Header --}}
+        <div class="sr-page-header">
             <h1>
-                <span class="pp-icon"><i class="fas fa-chart-pie"></i></span>
+
                 Stock Report
             </h1>
-            <div class="pp-breadcrumb">
-                <span class="pp-breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="fas fa-home mr-1"></i>Dashboard</a></span>
-                <span class="pp-breadcrumb-item"><a href="{{ route('admin.reports.index') }}">Reports</a></span>
-                <span class="pp-breadcrumb-item active">Stock</span>
+            <div class="sr-breadcrumb">
+                <span><a href="{{ route('admin.dashboard') }}"><i class="fas fa-home mr-1"></i>Dashboard</a></span>
+                <span><a href="{{ route('admin.reports.index') }}">Reports</a></span>
+                <span class="active">Stock</span>
             </div>
         </div>
 
         <div class="section-body">
-            <!-- Summary Cards -->
-            <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
-                    <div class="card pp-stat-card">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-primary"><i class="fas fa-boxes"></i></div>
-                            <div class="card-wrap">
-                                <div class="card-header"><h4>Total Stock Qty</h4></div>
-                                <div class="card-body"><span id="span-total-qty">{{ number_format($totalQty) }}</span></div>
-                            </div>
-                        </div>
+            {{-- Summary Stat Cards --}}
+            <div class="sr-stats-grid">
+                <div class="sr-stat-card">
+                    <div class="sr-stat-icon indigo"><i class="fas fa-boxes"></i></div>
+                    <div class="sr-stat-info">
+                        <div class="sr-stat-label">Total Stock Qty</div>
+                        <div class="sr-stat-value" id="span-total-qty">{{ number_format($totalQty) }}</div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
-                    <div class="card pp-stat-card">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
-                            <div class="card-wrap">
-                                <div class="card-header"><h4>Total Asset Value</h4></div>
-                                <div class="card-body"><span id="span-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</span></div>
-                            </div>
-                        </div>
+                <div class="sr-stat-card">
+                    <div class="sr-stat-icon emerald"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="sr-stat-info">
+                        <div class="sr-stat-label">Total Asset Value</div>
+                        <div class="sr-stat-value" id="span-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
-                    <div class="card pp-stat-card">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-info"><i class="fas fa-tags"></i></div>
-                            <div class="card-wrap">
-                                <div class="card-header"><h4>Potential Revenue</h4></div>
-                                <div class="card-body"><span id="span-potential-revenue">{{ $settings->currency_icon }}{{ number_format($potentialRevenue, 2) }}</span></div>
-                            </div>
-                        </div>
+                <div class="sr-stat-card">
+                    <div class="sr-stat-icon sky"><i class="fas fa-tags"></i></div>
+                    <div class="sr-stat-info">
+                        <div class="sr-stat-label">Potential Revenue</div>
+                        <div class="sr-stat-value" id="span-potential-revenue">{{ $settings->currency_icon }}{{ number_format($potentialRevenue, 2) }}</div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-lg-0 d-flex">
-                    <div class="card pp-stat-card">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-warning"><i class="fas fa-chart-line"></i></div>
-                            <div class="card-wrap">
-                                <div class="card-header"><h4>Potential Profit</h4></div>
-                                <div class="card-body"><span id="span-potential-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</span></div>
-                            </div>
-                        </div>
+                <div class="sr-stat-card">
+                    <div class="sr-stat-icon amber"><i class="fas fa-chart-line"></i></div>
+                    <div class="sr-stat-info">
+                        <div class="sr-stat-label">Potential Profit</div>
+                        <div class="sr-stat-value" id="span-potential-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Filter Section -->
-            <div class="card pp-filter-card mb-4">
-                <div class="card-header">
+            {{-- Filter Section --}}
+            <div class="sr-filter-card">
+                <div class="sr-filter-head">
                     <h4><i class="fas fa-filter"></i> Filter Options</h4>
-                    <div class="card-header-action">
-                        <a data-collapse="#mycard-collapse" class="btn btn-sm" href="#" style="background: var(--pp-surface); color: var(--pp-muted); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-minus"></i></a>
-                    </div>
+                    <a data-collapse="#sr-filter-collapse" class="sr-collapse-btn" href="#"><i class="fas fa-minus"></i></a>
                 </div>
-                <div class="collapse show" id="mycard-collapse">
-                    <div class="card-body">
+                <div class="collapse show" id="sr-filter-collapse">
+                    <div class="sr-filter-body">
                         <form id="stock-filter-form" action="{{ route('admin.reports.stock') }}" method="GET">
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-5">
                                     <label>Category</label>
-                                    <select name="category_id" class="form-control select2 pp-select2">
+                                    <select name="category_id" class="form-control select2">
                                         <option value="">All Categories</option>
                                         @foreach ($categories as $category)
                                             <option value="{{ $category->id }}" {{ request()->category_id == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
@@ -461,7 +684,7 @@
                                 </div>
                                 <div class="col-md-5">
                                     <label>Brand</label>
-                                    <select name="brand_id" class="form-control select2 pp-select2">
+                                    <select name="brand_id" class="form-control select2">
                                         <option value="">All Brands</option>
                                         @foreach ($brands as $brand)
                                             <option value="{{ $brand->id }}" {{ request()->brand_id == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
@@ -469,7 +692,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <a href="{{ route('admin.reports.stock') }}" class="btn pp-btn-sm pp-btn-rose w-100" style="margin-top: 4px;">
+                                    <a href="{{ route('admin.reports.stock') }}" class="sr-btn rose w-100" style="margin-top: 4px; justify-content: center;">
                                         <i class="fas fa-undo"></i> Reset
                                     </a>
                                 </div>
@@ -479,23 +702,24 @@
                 </div>
             </div>
 
-            <!-- Report Table -->
-            <div class="card pp-table-card">
-                <div class="card-header">
+            {{-- Stock Table --}}
+            <div class="sr-table-card">
+                <div class="sr-table-head">
                     <h4><i class="fas fa-table"></i> Detailed Stock List</h4>
-                    <div class="card-header-action">
-                        <button type="button" class="pp-btn-sm pp-btn-indigo" id="btn-export-excel">
+                    <div class="sr-table-actions">
+                        <button type="button" class="sr-btn indigo" id="btn-export-excel">
                             <i class="fas fa-file-excel"></i> Excel
                         </button>
-                        <button type="button" class="pp-btn-sm pp-btn-emerald" id="btn-export-pdf">
+                        <button type="button" class="sr-btn emerald" id="btn-export-pdf">
                             <i class="fas fa-file-pdf"></i> PDF
                         </button>
-                        <button type="button" class="pp-btn-sm pp-btn-rose" id="btn-print">
+                        <button type="button" class="sr-btn rose" id="btn-print">
                             <i class="fas fa-print"></i> Print
                         </button>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding: 0 !important;">
+                    {{-- Export Header (hidden) --}}
                     <div class="export-header d-none">
                         <div style="text-align: center; margin-bottom: 10px;">
                             <h3 style="margin: 0; color: #333;">{{ $settings->site_name ?? 'Inventory Management System' }}</h3>
@@ -510,7 +734,9 @@
                             <p style="margin: 5px 0; color: #666; font-size: 14px;"><strong>Generated on:</strong> {{ date('F d, Y h:i A') }}</p>
                         </div>
                     </div>
-                    <div class="table-responsive">
+
+                    {{-- Desktop Table --}}
+                    <div class="sr-table-wrap">
                         <table class="table" id="table-stock">
                             <thead>
                                 <tr>
@@ -524,26 +750,120 @@
                                 </tr>
                             </thead>
                             <tbody id="stock-table-body">
-                                @include('backend.reports.partials.stock_table_rows')
+                                @foreach ($products as $product)
+                                    @php
+                                        $qty = $product->inventory_stocks_sum_quantity ?? 0;
+                                        $assetValue = $qty * $product->purchase_price;
+                                        $potentialSale = $qty * $product->price;
+                                        $profit = $potentialSale - $assetValue;
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <div class="sr-product-cell">
+                                                @if($product->thumb_image)
+                                                    <img src="{{ asset('storage/'.$product->thumb_image) }}" alt="" class="sr-product-img">
+                                                @else
+                                                    <div class="sr-product-placeholder">N/A</div>
+                                                @endif
+                                                <div class="sr-product-name font-weight-bold">{{ $product->name }}</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="sr-cat-badge">{{ $product->category->name ?? '-' }}</div>
+                                            <div class="sr-brand-text">{{ $product->brand->name ?? '-' }}</div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if($qty <= $product->min_inventory_qty)
+                                                <span class="sr-stock-badge low" data-toggle="tooltip" title="Low Stock!">{{ number_format($qty) }}</span>
+                                            @else
+                                                <span class="sr-stock-badge ok">{{ number_format($qty) }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right"><span class="sr-money cost">{{ $settings->currency_icon }}{{ number_format($product->purchase_price, 2) }}</span></td>
+                                        <td class="text-right"><span class="sr-money price">{{ $settings->currency_icon }}{{ number_format($product->price, 2) }}</span></td>
+                                        <td class="text-right"><span class="sr-money asset">{{ $settings->currency_icon }}{{ number_format($assetValue, 2) }}</span></td>
+                                        <td class="text-right"><span class="sr-money profit">{{ $settings->currency_icon }}{{ number_format($profit, 2) }}</span></td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
-                    <div class="grand-total-bar">
-                        <span class="gt-label">GRAND TOTAL:</span>
-                        <span class="gt-values">
-                            <span class="gt-val gt-val--asset"><span id="span-grand-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</span></span>
-                            <span class="gt-sep">|</span>
-                            <span class="gt-val gt-val--profit"><span id="span-grand-total-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</span></span>
+
+                    {{-- Mobile Card View --}}
+                    <div class="sr-mobile-cards">
+                        @foreach ($products as $product)
+                            @php
+                                $qty = $product->inventory_stocks_sum_quantity ?? 0;
+                                $assetValue = $qty * $product->purchase_price;
+                                $potentialSale = $qty * $product->price;
+                                $profit = $potentialSale - $assetValue;
+                            @endphp
+                            <div class="sr-mobile-card">
+                                <div class="sr-mobile-card-top">
+                                    @if($product->thumb_image)
+                                        <img src="{{ asset('storage/'.$product->thumb_image) }}" alt="" class="sr-mobile-card-img">
+                                    @else
+                                        <div class="sr-mobile-card-placeholder">N/A</div>
+                                    @endif
+                                    <div class="sr-mobile-card-name">
+                                        <div class="name">{{ $product->name }}</div>
+                                        <div class="meta">
+                                            <span class="sr-cat-badge" style="font-size: 9.5px; padding: 2px 8px;">{{ $product->category->name ?? '-' }}</span>
+                                            <span class="sr-brand-text">{{ $product->brand->name ?? '-' }}</span>
+                                        </div>
+                                    </div>
+                                    @if($qty <= $product->min_inventory_qty)
+                                        <span class="sr-stock-badge low">{{ number_format($qty) }}</span>
+                                    @else
+                                        <span class="sr-stock-badge ok">{{ number_format($qty) }}</span>
+                                    @endif
+                                </div>
+                                <div class="sr-mobile-card-grid">
+                                    <div class="sr-mobile-card-field">
+                                        <span class="label">Unit Cost</span>
+                                        <span class="value">{{ $settings->currency_icon }}{{ number_format($product->purchase_price, 2) }}</span>
+                                    </div>
+                                    <div class="sr-mobile-card-field">
+                                        <span class="label">Unit Price</span>
+                                        <span class="value">{{ $settings->currency_icon }}{{ number_format($product->price, 2) }}</span>
+                                    </div>
+                                    <div class="sr-mobile-card-field">
+                                        <span class="label">Asset Value</span>
+                                        <span class="value asset">{{ $settings->currency_icon }}{{ number_format($assetValue, 2) }}</span>
+                                    </div>
+                                    <div class="sr-mobile-card-field">
+                                        <span class="label">Profit Potential</span>
+                                        <span class="value profit">{{ $settings->currency_icon }}{{ number_format($profit, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Grand Total --}}
+                    <div class="sr-grand-total">
+                        <span class="sr-gt-label"> Grand Total</span>
+                        <span class="sr-gt-values">
+                            <span class="sr-gt-chip asset">
+                                <span class="sr-gt-chip-label">Asset Value</span>
+                                <span class="sr-gt-chip-val" id="span-grand-total-value">{{ $settings->currency_icon }}{{ number_format($totalValue, 2) }}</span>
+                            </span>
+                            <span class="sr-gt-chip profit">
+                                <span class="sr-gt-chip-label">Profit Potential</span>
+                                <span class="sr-gt-chip-val" id="span-grand-total-profit">{{ $settings->currency_icon }}{{ number_format($potentialProfit, 2) }}</span>
+                            </span>
                         </span>
                     </div>
-                    <p class="pp-info-text">
-                        Showing
-                        <span class="text-dark font-weight-bold">{{ $products->firstItem() ?? 0 }} - {{ $products->lastItem() ?? 0 }}</span>
-                        of
-                        <span class="text-dark font-weight-bold">{{ $products->total() }}</span>
-                        products
-                    </p>
-                    <div class="d-flex justify-content-center flex-wrap pp-pagination">
+
+                    {{-- Pagination --}}
+                    <div class="sr-pagination-wrap">
+                        <div class="sr-pagination-info">
+                            Showing
+                            <strong>{{ $products->firstItem() ?? 0 }} – {{ $products->lastItem() ?? 0 }}</strong>
+                            of
+                            <strong>{{ $products->total() }}</strong>
+                            products
+                        </div>
                         {{ $products->links() }}
                     </div>
                 </div>
@@ -593,12 +913,12 @@
                 format: {
                     body: function (data, row, column, node) {
                         if (column === 0) {
-                            const nameElement = $(node).find('.font-weight-bold').first();
+                            const nameElement = $(node).find('.sr-product-name, .font-weight-bold').first();
                             if (nameElement.length) return nameElement.text().trim();
                         }
                         if (column === 1) {
-                            const category = $(node).find('.badge').first().text().trim() || '-';
-                            const brand = $(node).find('.text-muted').first().text().trim() || '-';
+                            const category = $(node).find('.sr-cat-badge').first().text().trim() || '-';
+                            const brand = $(node).find('.sr-brand-text').first().text().trim() || '-';
                             return 'Category: ' + category + '\nBrand: ' + brand;
                         }
                         return cleanCellText(data);

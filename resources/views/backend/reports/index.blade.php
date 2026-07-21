@@ -26,7 +26,7 @@
         flex-wrap: wrap;
         gap: 10px;
         margin-bottom: 20px;
-        padding: 0;
+        padding-top: 18px;
         position: relative;
     }
     .pp-header h1 {
@@ -98,31 +98,48 @@
         border: none !important;
         box-shadow: none !important;
         margin-bottom: 0 !important;
+        padding: 16px 18px !important;
     }
     .pp-stat-card .card-statistic-1 .card-icon {
-        border-radius: 12px !important;
-        width: 48px;
-        height: 48px;
+        border-radius: 10px !important;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 15px;
+        margin: 0 !important;
+        float: left;
+    }
+    .pp-stat-card .card-statistic-1 .card-wrap {
+        margin-left: 54px;
+    }
+    .pp-stat-card .card-statistic-1 .card-header {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+    .pp-stat-card .card-statistic-1 .card-header h4 {
+        font-weight: 600;
+        font-size: 11.5px;
+        color: var(--pp-muted);
+        letter-spacing: 0.2px;
+        margin: 0 !important;
+        text-transform: none !important;
+    }
+    .pp-stat-card .card-statistic-1 .card-body {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--pp-ink);
+        padding: 2px 0 0 0 !important;
     }
     .pp-stat-card .card-statistic-1 .card-icon.bg-primary { background: linear-gradient(145deg, #6366f1, #4f46e5) !important; }
     .pp-stat-card .card-statistic-1 .card-icon.bg-success { background: linear-gradient(145deg, #34d399, #16a34a) !important; }
     .pp-stat-card .card-statistic-1 .card-icon.bg-warning { background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber-deep)) !important; }
     .pp-stat-card .card-statistic-1 .card-icon.bg-danger { background: linear-gradient(145deg, #fb7185, #e11d48) !important; }
     .pp-stat-card .card-statistic-1 .card-icon.bg-info { background: linear-gradient(145deg, #38bdf8, #0284c7) !important; }
-    .pp-stat-card .card-statistic-1 .card-header h4 {
-        font-weight: 600;
-        font-size: 11.5px;
-        color: var(--pp-muted);
-        letter-spacing: 0.2px;
-    }
-    .pp-stat-card .card-statistic-1 .card-body {
-        font-weight: 800;
-        font-size: 18px;
-        color: var(--pp-ink);
-    }
 
     /* Link Section */
     .link-section {
@@ -207,13 +224,13 @@
         min-width: 0;
     }
     .link-card .lc-body .lc-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 13px;
         color: #fff;
         flex-shrink: 0;
     }
@@ -306,7 +323,7 @@
     <section class="section">
         <div class="pp-header">
             <h1>
-                <span class="pp-icon"><i class="fas fa-chart-pie"></i></span>
+
                 All Reports
             </h1>
             <div class="pp-breadcrumb">

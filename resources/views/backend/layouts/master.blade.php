@@ -44,8 +44,9 @@
   <style>
   @media (min-width: 1200px) {
     .main-wrapper.container {
-      max-width: 98% !important;
-      width: 98% !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 !important;
     }
   }
 
@@ -103,10 +104,7 @@
       <div class="navbar-bg"></div>
       <!-- navbar Content -->
       @include('backend.layouts.navbar')
-      <!-- sidebar Content (Mobile Only) -->
-      <div class="d-lg-none">
-        @include('backend.layouts.sidebar')
-      </div>
+      {{-- sidebar is rendered inside navbar.blade.php (app-sidebar) --}}
 
 
       <!-- Main Content -->
