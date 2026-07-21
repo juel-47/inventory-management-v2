@@ -59,7 +59,31 @@
                 <div class="card-body">
                     <form id="best-sellers-filter-form" method="GET" action="{{ route('admin.reports.best-sellers') }}">
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Year</label>
+                                    <select name="year" id="year" class="form-control select2">
+                                        <option value="">All Years</option>
+                                        @foreach($availableYears as $yr)
+                                            <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Month</label>
+                                    <select name="month" id="month" class="form-control select2">
+                                        <option value="">All Months</option>
+                                        @foreach(range(1, 12) as $m)
+                                            <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
+                                                {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Category</label>
                                     <select name="category_id" id="category_id" class="form-control select2">
@@ -70,7 +94,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Sub Category</label>
                                     <select name="sub_category_id" id="sub_category_id" class="form-control select2">
@@ -78,7 +102,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Child Category</label>
                                     <select name="child_category_id" id="child_category_id" class="form-control select2">
@@ -86,16 +110,16 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Search Product</label>
-                                    <input type="text" name="search" class="form-control" placeholder="Search product name..." value="{{ request('search') }}">
+                                    <input type="text" name="search" class="form-control" placeholder="Search product..." value="{{ request('search') }}">
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12 text-right">
-                                <a href="{{ route('admin.reports.best-sellers') }}" class="btn btn-danger" id="btn-reset"><i class="fas fa-undo"></i> Reset</a>
+                                <a href="{{ route('admin.reports.best-sellers') }}" class="btn btn-danger btn-sm" id="btn-reset"><i class="fas fa-undo"></i> Reset Filters</a>
                             </div>
                         </div>
                     </form>
@@ -212,6 +236,10 @@
                 loadChildCategories(selectedSubCategory, selectedChildCategory || null);
             }
 
+            $('#year, #month').on('change', function () {
+                fetchBestSellers();
+            });
+
             $('#category_id').on('change', function () {
                 var val = $(this).val();
                 loadSubCategories(val, null, function () {
@@ -232,10 +260,12 @@
                 fetchBestSellers();
             });
 
-            $('#best-sellers-filter-form input[name="search"]').on('keyup', function (e) {
-                if (e.keyCode === 13) {
+            var searchTimeout;
+            $('#best-sellers-filter-form input[name="search"]').on('input keyup', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function () {
                     fetchBestSellers();
-                }
+                }, 400);
             });
 
             $(document).on('click', '.pagination a', function (e) {
