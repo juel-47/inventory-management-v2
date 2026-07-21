@@ -67,30 +67,16 @@
         flex-wrap: wrap;
         gap: 10px;
         margin-bottom: 20px;
+        margin-top: 18px;
         padding: 18px 22px;
-        background: linear-gradient(135deg, #0b1120, #111b33);
+        background: #fff;
         border-radius: var(--pp-radius-md);
-        box-shadow: 0 4px 20px -8px rgba(11,17,32,0.3);
+        box-shadow: 0 1px 3px rgba(11,17,32,0.04), 0 8px 20px -12px rgba(11,17,32,0.12);
         position: relative;
         overflow: hidden;
     }
-    .pp-header::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background:
-            radial-gradient(circle at 5% 30%, rgba(236,199,139,0.1), transparent 50%),
-            radial-gradient(circle at 95% 70%, rgba(236,199,139,0.05), transparent 50%);
-        pointer-events: none;
-    }
-    .pp-header::after {
-        content: '';
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 5%, var(--pp-amber-bright) 40%, var(--pp-amber) 60%, transparent 95%);
-        opacity: 0.7;
-    }
+    .pp-header::before { display: none; }
+    .pp-header::after { display: none; }
     .pp-header h1 {
         position: relative;
         z-index: 1;
@@ -99,7 +85,7 @@
         gap: 12px;
         font-weight: 800;
         font-size: 20px;
-        color: #f5f2ea;
+        color: var(--pp-ink);
         letter-spacing: -0.3px;
         margin: 0;
     }
@@ -126,7 +112,7 @@
         font-weight: 600;
     }
     .pp-breadcrumb-item {
-        color: rgba(255,255,255,0.4);
+        color: var(--pp-muted);
         padding-right: 14px;
         position: relative;
     }
@@ -135,15 +121,15 @@
         content: '/';
         position: absolute;
         left: 0;
-        color: rgba(255,255,255,0.15);
+        color: var(--pp-muted);
     }
     .pp-breadcrumb-item a {
-        color: rgba(255,255,255,0.45);
+        color: var(--pp-amber-deep);
         text-decoration: none;
-        transition: color 0.2s;
+        transition: color 0.2s ease;
     }
-    .pp-breadcrumb-item a:hover { color: var(--pp-amber-bright); }
-    .pp-breadcrumb-item.active { color: var(--pp-amber-bright); }
+    .pp-breadcrumb-item a:hover { color: var(--pp-amber); }
+    .pp-breadcrumb-item.active { color: var(--pp-ink-soft); }
 
     /* ===== Filter Card ===== */
     .pp-filter-card {
@@ -275,15 +261,23 @@
     .pp-btn-emerald:hover { filter: brightness(1.06); box-shadow: 0 8px 24px -6px rgba(22, 163, 74, 0.4); }
     .pp-btn-reset {
         background: #fff !important;
-        color: var(--pp-danger) !important;
-        border: 1.5px solid rgba(220, 90, 82, 0.2) !important;
-        box-shadow: 0 2px 8px rgba(220, 90, 82, 0.04);
+        color: var(--pp-amber-deep) !important;
+        border: 1.5px solid rgba(212, 162, 78, 0.25) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 11.5px !important;
+        padding: 7px 14px !important;
+        letter-spacing: 0.2px;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(212, 162, 78, 0.06);
     }
     .pp-btn-reset:hover {
-        background: rgba(220, 90, 82, 0.04) !important;
-        border-color: var(--pp-danger) !important;
-        box-shadow: 0 4px 14px -6px rgba(220, 90, 82, 0.12);
+        background: rgba(212, 162, 78, 0.07) !important;
+        border-color: var(--pp-amber) !important;
+        box-shadow: 0 4px 16px -6px rgba(212, 162, 78, 0.2);
+        transform: translateY(-1px);
     }
+    .pp-btn-reset i { font-size: 11px; }
 
     /* ===== Modals ===== */
     .pp-modal .modal-content {
@@ -659,7 +653,6 @@
     <section class="section">
         <div class="pp-header">
             <h1>
-                <span class="pp-icon"><i class="fas fa-box"></i></span>
                 Products
             </h1>
             <div class="pp-breadcrumb">
