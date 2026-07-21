@@ -104,7 +104,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                    {{-- PENDING VALUE (commented out — unit_price backfill needed for old issues) --}}
+                    {{-- <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <div class="card card-statistic-1">
                             <div class="card-icon bg-secondary"><i class="fas fa-hourglass-half"></i></div>
                             <div class="card-wrap">
@@ -112,7 +113,7 @@
                                 <div class="card-body">{!! formatConverted($pendingValue) !!}</div>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
 
                 {{-- ─── PER-USER: Filter ───────────────────────── --}}
@@ -235,6 +236,7 @@
                                         <thead><tr>
                                             <th>#</th><th>Order No</th><th>Date</th>
                                             <th class="text-center">Items</th>
+                                            <th class="text-center">Qty</th>
                                             <th class="text-right">Total</th>
                                             <th class="text-right">Paid</th>
                                             <th class="text-right">Due</th>
@@ -244,9 +246,13 @@
                                             @forelse($orders as $i => $order)
                                                 <tr>
                                                     <td>{{ $i + 1 }}</td>
-                                                    <td>{{ $order->order_no }}</td>
+                                                    <td><a href="{{ route('admin.orders.show', $order->id) }}" target="_blank">{{ $order->order_no }}</a></td>
                                                     <td>{{ $order->placed_at->format('d M Y') }}</td>
-                                                    <td class="text-center">{{ $order->items->count() }}</td>
+                                                    <td class="text-center"><a href="{{ route('admin.orders.show', $order->id) }}" target="_blank" class="badge badge-info">{{ $order->items->count() }}</a></td>
+                                                    @php
+                                                        $orderIssuedQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->where('order_id', $order->id))->sum('quantity');
+                                                    @endphp
+                                                    <td class="text-center">{{ $orderIssuedQty ? number_format($orderIssuedQty) : number_format($order->items->sum('quantity')) }}</td>
                                                     <td class="text-right">{!! formatConverted($order->total_amount) !!}</td>
                                                     <td class="text-right">{!! formatConverted($order->paid_amount) !!}</td>
                                                     <td class="text-right">{!! formatConverted($order->due_amount) !!}</td>
@@ -257,7 +263,7 @@
                                                     </td>
                                                 </tr>
                                             @empty
-                                                <tr><td colspan="8" class="text-center text-muted py-4">No orders.</td></tr>
+                                                <tr><td colspan="9" class="text-center text-muted py-4">No orders.</td></tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -284,8 +290,8 @@
                                                     <td>{{ $i + 1 }}</td>
                                                     <td>{{ $issue->issue_no }}</td>
                                                     <td>{{ $issue->created_at->format('d M Y') }}</td>
-                                                    <td>{{ optional($issue->order)->order_no ?? '—' }}</td>
-                                                    <td class="text-center">{{ $issue->items->count() }}</td>
+                                                    <td>@if($issue->order_id)<a href="{{ route('admin.orders.show', $issue->order_id) }}" target="_blank">{{ optional($issue->order)->order_no ?? '—' }}</a>@else{{ optional($issue->order)->order_no ?? '—' }}@endif</td>
+                                                    <td class="text-center">@if($issue->order_id)<a href="{{ route('admin.orders.show', $issue->order_id) }}" target="_blank">{{ $issue->items->count() }}</a>@else{{ $issue->items->count() }}@endif</td>
                                                     <td class="text-center">{{ number_format($issue->total_qty) }}</td>
                                                     <td class="text-right">{!! formatConverted($issue->computed_value) !!}</td>
                                                 </tr>
@@ -314,7 +320,7 @@
                                                 <tr>
                                                     <td>{{ $i + 1 }}</td>
                                                     <td>{{ $payment->created_at->format('d M Y') }}</td>
-                                                    <td>{{ $payment->order->order_no ?? '—' }}</td>
+                                                    <td>@if($payment->order_id)<a href="{{ route('admin.orders.show', $payment->order_id) }}" target="_blank">{{ $payment->order->order_no ?? '—' }}</a>@else{{ $payment->order->order_no ?? '—' }}@endif</td>
                                                     <td>{{ $payment->payment_method ?? '—' }}</td>
                                                     <td>{{ $payment->transaction_id ?? '—' }}</td>
                                                     <td class="text-right">{!! formatConverted($payment->amount) !!}</td>
@@ -386,20 +392,38 @@
                                             <th>Month</th>
                                             <th class="text-center">Orders</th>
                                             <th class="text-right">Order Value</th>
-                                            {{-- <th class="text-center">Issue Qty</th>
-                                            <th class="text-center">Products</th> --}}
+                                            <th class="text-center">Issue Qty</th>
+                                            <th class="text-center">Products</th>
                                         </tr></thead>
                                         <tbody>
                                             @forelse($monthlyTrend as $trend)
+                                                @php
+                                                    $monthStart = $trend->month;
+                                                    $linkedQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
+                                                        ->whereYear('created_at', substr($monthStart, 0, 4))
+                                                        ->whereMonth('created_at', substr($monthStart, 5, 2))
+                                                    )->sum('quantity');
+                                                    $standaloneQty = \App\Models\IssueItem::whereHas('issue', function($q) use ($monthStart) {
+                                                        $q->whereNull('order_id')
+                                                            ->whereYear('created_at', substr($monthStart, 0, 4))
+                                                            ->whereMonth('created_at', substr($monthStart, 5, 2));
+                                                    })->sum('quantity');
+                                                    $monthIssueQty = (int) $linkedQty + (int) $standaloneQty;
+                                                    $monthUniqueProducts = \App\Models\IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
+                                                        ->whereYear('issues.created_at', substr($monthStart, 0, 4))
+                                                        ->whereMonth('issues.created_at', substr($monthStart, 5, 2))
+                                                        ->distinct('issue_items.product_id')
+                                                        ->count('issue_items.product_id');
+                                                @endphp
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('F Y') }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($trend->orders_count) }}</span></td>
                                                     <td class="text-right">{!! formatConverted($trend->total_amount) !!}</td>
-                                                    {{-- <td class="text-center">{{ number_format($trend->issue_qty) }}</td>
-                                                    <td class="text-center">{{ number_format($trend->unique_products) }}</td> --}}
+                                                    <td class="text-center">{{ number_format($monthIssueQty) }}</td>
+                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td>
                                                 </tr>
                                             @empty
-                                                <tr><td colspan="3" class="text-center text-muted py-4">No data.</td></tr>
+                                                <tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -607,40 +631,35 @@
                                             <th>Month</th>
                                             <th class="text-center">Orders</th>
                                             <th class="text-right">Amount</th>
-                                            {{-- <th class="text-center">Issue Qty</th>
-                                            <th class="text-center">Products</th> --}}
+                                            <th class="text-center">Issue Qty</th>
+                                            <th class="text-center">Products</th>
                                         </tr></thead>
                                         <tbody>
                                             @forelse($monthlyTrend as $trend)
-                                                {{-- @php
-                                                    $monthStart = substr($trend->month, 0, 4) . '-' . substr($trend->month, 5, 2);
+                                                @php
+                                                    $monthStart = $trend->month;
                                                     $linkedQty = \App\Models\IssueItem::whereHas('issue', fn($q) => $q->whereIn('order_id', $orderIds)
-                                                        ->whereYear('created_at', substr($trend->month, 0, 4))
-                                                        ->whereMonth('created_at', substr($trend->month, 5, 2))
+                                                        ->whereYear('created_at', substr($monthStart, 0, 4))
+                                                        ->whereMonth('created_at', substr($monthStart, 5, 2))
                                                     )->sum('quantity');
-                                                    $standaloneQty = \App\Models\IssueItem::whereHas('issue', function($q) use ($trend) {
-                                                        $q->whereNull('order_id');
-                                                        $q->whereYear('created_at', substr($trend->month, 0, 4));
-                                                        $q->whereMonth('created_at', substr($trend->month, 5, 2));
+                                                    $standaloneQty = \App\Models\IssueItem::whereHas('issue', function($q) use ($monthStart) {
+                                                        $q->whereNull('order_id')
+                                                            ->whereYear('created_at', substr($monthStart, 0, 4))
+                                                            ->whereMonth('created_at', substr($monthStart, 5, 2));
                                                     })->sum('quantity');
                                                     $monthIssueQty = (int) $linkedQty + (int) $standaloneQty;
-                                                    $monthIssueValue = \App\Models\IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
-                                                        ->join('products', 'issue_items.product_id', '=', 'products.id')
-                                                        ->whereYear('issues.created_at', substr($trend->month, 0, 4))
-                                                        ->whereMonth('issues.created_at', substr($trend->month, 5, 2))
-                                                        ->sum(\Illuminate\Support\Facades\DB::raw('issue_items.quantity * COALESCE(products.price, products.purchase_price, 0)'));
                                                     $monthUniqueProducts = \App\Models\IssueItem::join('issues', 'issue_items.issue_id', '=', 'issues.id')
-                                                        ->whereYear('issues.created_at', substr($trend->month, 0, 4))
-                                                        ->whereMonth('issues.created_at', substr($trend->month, 5, 2))
+                                                        ->whereYear('issues.created_at', substr($monthStart, 0, 4))
+                                                        ->whereMonth('issues.created_at', substr($monthStart, 5, 2))
                                                         ->distinct('issue_items.product_id')
                                                         ->count('issue_items.product_id');
-                                                @endphp --}}
+                                                @endphp
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('F Y') }}</td>
                                                     <td class="text-center"><span class="badge badge-primary">{{ number_format($trend->orders_count) }}</span></td>
                                                     <td class="text-right">{!! formatConverted($trend->total_amount) !!}</td>
-                                                    {{-- <td class="text-center">{{ number_format($monthIssueQty) }}</td>
-                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td> --}}
+                                                    <td class="text-center">{{ number_format($monthIssueQty) }}</td>
+                                                    <td class="text-center">{{ number_format($monthUniqueProducts) }}</td>
                                                 </tr>
                                             @empty
                                                 <tr><td colspan="3" class="text-center text-muted py-4">No data.</td></tr>
