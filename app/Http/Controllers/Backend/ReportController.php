@@ -1010,29 +1010,32 @@ class ReportController extends Controller implements HasMiddleware
                 });
 
             // Monthly trend
-            if ($hasDateFilter) {
-                $monthlyTrend = Order::where('status', 'completed')
-                    ->where('user_id', $request->user_id)
-                    ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
-                    ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
-                    ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
-                    ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
-                    ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            } else {
-                $monthlyTrend = (clone $issueBase)
-                    ->selectRaw("COALESCE(DATE_FORMAT(orders.placed_at, '%Y-%m'), DATE_FORMAT(issues.created_at, '%Y-%m')) as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(issue_items.quantity * COALESCE(issue_items.unit_price, 0)),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            }
+            $monthlyTrend = Order::where('status', 'completed')
+                ->where('user_id', $request->user_id)
+                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+                ->groupBy('month')->orderBy('month', 'desc')
+                ->get();
 
             $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
                 'user', 'summary', 'issueStats', 'paymentStats', 'totalDue', 'issueValue', 'pendingValue',
-                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend', 'settings', 'request', 'totalRevenue'
+                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend', 'settings', 'request', 'totalRevenue', 'orderIds'
             ))->setPaper('a4', 'landscape');
         } else {
             // ─── Global PDF ───────────────────────────────────────
+            $monthlyTrend = Order::where('status', 'completed')
+                ->when($request->filled('user_id'), fn($q) => $q->where('user_id', $request->user_id))
+                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+                ->groupBy('month')->orderBy('month', 'desc')
+                ->get();
+
             $issueValue = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
                 ->where(function ($q) use ($request) {
                     if ($request->filled('date_from')) $q->whereDate('issues.created_at', '>=', $request->date_from);
@@ -1062,7 +1065,7 @@ class ReportController extends Controller implements HasMiddleware
                 ->keyBy('user_id');
 
             $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
-                'summary', 'issueStats', 'productFrequency', 'userSummary', 'settings', 'request', 'orderIds', 'issueValue', 'totalRevenue'
+                'summary', 'issueStats', 'productFrequency', 'monthlyTrend', 'userSummary', 'settings', 'request', 'orderIds', 'issueValue', 'totalRevenue'
             ))->setPaper('a4', 'landscape');
         }
 
