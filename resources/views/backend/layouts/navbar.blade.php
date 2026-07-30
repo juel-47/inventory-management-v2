@@ -139,8 +139,10 @@ body::before {
 .main-footer .footer-right { color: rgba(248,246,240,0.5); font-size: 13px; display: flex; align-items: center; gap: 6px; line-height: 1.4; }
 .main-footer .footer-right a { font-size: 13px; }
 
-body.sidebar-collapsed { padding-left: 0; }
-body.sidebar-collapsed .main-footer { padding-left: 28px; }
+@media (min-width: 768px) {
+  body.sidebar-collapsed { padding-left: var(--sb-width-collapsed); }
+  body.sidebar-collapsed .main-footer { padding-left: calc(var(--sb-width-collapsed) + 28px); }
+}
 
 @media (max-width: 991.98px) {
   body { padding-left: 0 !important; padding-top: calc(var(--tb-height-mobile) + env(safe-area-inset-top)); }
@@ -201,7 +203,9 @@ body.sidebar-collapsed .main-footer { padding-left: 28px; }
   opacity: 0.6;
 }
 
-body.sidebar-collapsed .topbar { left: 0; }
+@media (min-width: 768px) {
+  body.sidebar-collapsed .topbar { left: var(--sb-width-collapsed); }
+}
 
 .hamburger-toggle {
   position: relative;
@@ -592,7 +596,116 @@ body.sidebar-collapsed .topbar { left: 0; }
   opacity: 0.5;
 }
 
-body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
+/* Collapsed Desktop State & Hover Expand */
+@media (min-width: 768px) {
+  .app-sidebar {
+    transition: width 0.22s cubic-bezier(.4, 0, .2, 1), transform 0.22s cubic-bezier(.4, 0, .2, 1) !important;
+    overflow: visible !important;
+  }
+
+  html.sidebar-collapsed body,
+  body.sidebar-collapsed {
+    padding-left: var(--sb-width-collapsed) !important;
+    transition: padding-left 0.22s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  html.sidebar-collapsed .topbar,
+  body.sidebar-collapsed .topbar {
+    left: var(--sb-width-collapsed) !important;
+    transition: left 0.22s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  html.sidebar-collapsed .main-footer,
+  body.sidebar-collapsed .main-footer {
+    padding-left: calc(var(--sb-width-collapsed) + 28px) !important;
+    transition: padding-left 0.22s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  html.sidebar-collapsed .app-sidebar,
+  body.sidebar-collapsed .app-sidebar {
+    width: var(--sb-width-collapsed) !important;
+    transform: translateX(0) !important;
+  }
+
+  /* When Collapsed & Not Hovered: Hide labels, submenus, arrows */
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sidebar-header span,
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-label,
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-arrow,
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-submenu,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sidebar-header span,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-label,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-arrow,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-submenu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-link,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sb-link {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+  }
+
+  html.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sidebar-header,
+  body.sidebar-collapsed .app-sidebar:not(:hover):not(.sb-hovered) .sidebar-header {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  /* When Collapsed & HOVERED: Expand to full width, show everything! */
+  html.sidebar-collapsed .app-sidebar:hover,
+  html.sidebar-collapsed .app-sidebar.sb-hovered,
+  body.sidebar-collapsed .app-sidebar:hover,
+  body.sidebar-collapsed .app-sidebar.sb-hovered {
+    width: var(--sb-width) !important;
+    box-shadow: 0 14px 45px rgba(0, 0, 0, 0.75), 0 0 30px rgba(205, 160, 90, 0.3) !important;
+    z-index: 1060 !important;
+  }
+
+  html.sidebar-collapsed .app-sidebar:hover .sidebar-header span,
+  html.sidebar-collapsed .app-sidebar:hover .sb-label,
+  html.sidebar-collapsed .app-sidebar:hover .sb-arrow,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sidebar-header span,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sb-label,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sb-arrow,
+  body.sidebar-collapsed .app-sidebar:hover .sidebar-header span,
+  body.sidebar-collapsed .app-sidebar:hover .sb-label,
+  body.sidebar-collapsed .app-sidebar:hover .sb-arrow,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sidebar-header span,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sb-label,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sb-arrow {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.15s ease 0.05s;
+  }
+
+  html.sidebar-collapsed .app-sidebar:hover .sb-submenu,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sb-submenu,
+  body.sidebar-collapsed .app-sidebar:hover .sb-submenu,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sb-submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  html.sidebar-collapsed .app-sidebar:hover .sb-link,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sb-link,
+  body.sidebar-collapsed .app-sidebar:hover .sb-link,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sb-link {
+    justify-content: flex-start !important;
+    padding: 11px 13px !important;
+  }
+
+  html.sidebar-collapsed .app-sidebar:hover .sidebar-header,
+  html.sidebar-collapsed .app-sidebar.sb-hovered .sidebar-header,
+  body.sidebar-collapsed .app-sidebar:hover .sidebar-header,
+  body.sidebar-collapsed .app-sidebar.sb-hovered .sidebar-header {
+    justify-content: flex-start !important;
+    padding: 0 20px !important;
+  }
+}
 
 .sidebar-header {
   height: var(--tb-height);
@@ -2317,8 +2430,8 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
      TOPBAR
      ============================================ --}}
 <nav class="topbar">
-  <button class="hamburger-toggle" id="sidebarToggle" aria-label="Toggle menu">
-    <i class="fas fa-bars"></i>
+  <button class="hamburger-toggle" id="sidebarToggle" aria-label="Toggle menu" title="Toggle Sidebar">
+    <i class="fas fa-indent" id="toggleIcon"></i>
   </button>
 
   <ul class="navbar-right" style="list-style:none;">
@@ -2575,7 +2688,7 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
   var overlay = document.getElementById('sidebarOverlay');
   var toggleBtn = document.getElementById('sidebarToggle');
 
-  function isDesktop() { return window.innerWidth >= 992; }
+  function isDesktop() { return window.innerWidth >= 768; }
 
   function openMobile() {
     var scrollW = window.innerWidth - document.documentElement.clientWidth;
@@ -2592,10 +2705,38 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
     document.body.style.paddingRight = '';
   }
 
+  function isCollapsed() {
+    return document.documentElement.classList.contains('sidebar-collapsed') || document.body.classList.contains('sidebar-collapsed');
+  }
+
+  function setCollapsed(state) {
+    if (state) {
+      document.documentElement.classList.add('sidebar-collapsed');
+      document.body.classList.add('sidebar-collapsed');
+    } else {
+      document.documentElement.classList.remove('sidebar-collapsed');
+      document.body.classList.remove('sidebar-collapsed');
+    }
+  }
+
+  function updateToggleIcon() {
+    var icon = document.getElementById('toggleIcon');
+    if (icon) {
+      if (isCollapsed()) {
+        icon.className = 'fas fa-outdent';
+      } else {
+        icon.className = 'fas fa-indent';
+      }
+    }
+  }
+
   function toggleSidebar() {
     if (isDesktop()) {
-      document.body.classList.toggle('sidebar-collapsed');
-      try { localStorage.setItem('sidebar-collapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0'); } catch (e) {}
+      var nextState = !isCollapsed();
+      setCollapsed(nextState);
+      sidebar.classList.remove('sb-hovered');
+      try { localStorage.setItem('sidebar-collapsed', nextState ? '1' : '0'); } catch (e) {}
+      updateToggleIcon();
     } else {
       if (sidebar.classList.contains('mobile-open')) { closeMobile(); }
       else { openMobile(); }
@@ -2631,16 +2772,59 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
     if (e.key === 'Escape') closeMobile();
   });
 
+  // Default to collapsed on desktop unless set to uncollapsed (0)
   try {
-    if (isDesktop() && localStorage.getItem('sidebar-collapsed') === '1') {
-      // document.body.classList.add('sidebar-collapsed');
+    if (isDesktop()) {
+      var savedState = localStorage.getItem('sidebar-collapsed');
+      if (savedState === '0') {
+        setCollapsed(false);
+      } else {
+        setCollapsed(true);
+      }
+      updateToggleIcon();
     }
-  } catch (e) {}
+  } catch (e) {
+    if (isDesktop()) {
+      setCollapsed(true);
+      updateToggleIcon();
+    }
+  }
+
+  // Remove is-preload class after initial rendering to enable smooth user hover transitions
+  setTimeout(function () {
+    document.documentElement.classList.remove('is-preload');
+  }, 100);
+
+  // JS Mouse Hover Handlers on both Topbar Toggle Button & Sidebar
+  var hoverTimer;
+  function expandSidebarHover() {
+    if (isDesktop() && document.body.classList.contains('sidebar-collapsed')) {
+      clearTimeout(hoverTimer);
+      sidebar.classList.add('sb-hovered');
+    }
+  }
+
+  function collapseSidebarHover() {
+    if (isDesktop()) {
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(function () {
+        if (!sidebar.matches(':hover') && !fresh.matches(':hover')) {
+          sidebar.classList.remove('sb-hovered');
+        }
+      }, 200);
+    }
+  }
+
+  fresh.addEventListener('mouseenter', expandSidebarHover);
+  fresh.addEventListener('mouseleave', collapseSidebarHover);
+
+  sidebar.addEventListener('mouseenter', expandSidebarHover);
+  sidebar.addEventListener('mouseleave', collapseSidebarHover);
 
   // Accordion submenu toggle
   document.querySelectorAll('.sb-toggle').forEach(function (toggle) {
     toggle.addEventListener('click', function (e) {
-      if (document.body.classList.contains('sidebar-collapsed') && isDesktop()) return;
+      if (document.body.classList.contains('sidebar-collapsed') && !sidebar.classList.contains('sb-hovered') && !sidebar.matches(':hover') && isDesktop()) return;
       e.preventDefault();
       var item = this.closest('.sb-item');
       var isOpen = item.classList.contains('open');

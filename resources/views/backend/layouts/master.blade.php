@@ -4,6 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <script>
+    (function() {
+      try {
+        if (window.innerWidth >= 768 && localStorage.getItem('sidebar-collapsed') !== '0') {
+          document.documentElement.classList.add('sidebar-collapsed');
+        }
+        document.documentElement.classList.add('is-preload');
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    html.is-preload,
+    html.is-preload *,
+    html.is-preload body,
+    html.is-preload .app-sidebar,
+    html.is-preload .topbar,
+    html.is-preload .main-footer {
+      -webkit-transition: none !important;
+      -moz-transition: none !important;
+      -o-transition: none !important;
+      transition: none !important;
+    }
+  </style>
   <!-- laravel ajax csrf token -->
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
