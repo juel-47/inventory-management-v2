@@ -2504,6 +2504,7 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
         </a>
       </li>
 
+      @can('Manage Categories')
       <li class="sb-item has-children {{ $categoriesActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Categories">
           <i class="fas fa-layer-group"></i>
@@ -2520,7 +2521,9 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.product-types.index') }}"><i class="fas fa-calendar-alt"></i> Occasion Type</a></li>
         </ul>
       </li>
+      @endcan
 
+      @canany(['Manage Products', 'View Product Stock'])
       <li class="sb-item has-children {{ $productsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Products">
           <i class="fas fa-box-open"></i>
@@ -2530,13 +2533,17 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
         <ul class="sb-submenu">
           <li class="sb-flyout-title">Products</li>
           <li><a href="{{ route('admin.products.index') }}"><i class="fas fa-cubes"></i> All Products</a></li>
+          @can('Manage Products')
           <li class="sb-submenu-header">Attributes</li>
           <li><a href="{{ route('admin.units.index') }}"><i class="fas fa-weight-hanging"></i> Units</a></li>
           <li><a href="{{ route('admin.colors.index') }}"><i class="fas fa-palette"></i> Colors</a></li>
           <li><a href="{{ route('admin.sizes.index') }}"><i class="fas fa-ruler"></i> Sizes</a></li>
+          @endcan
         </ul>
       </li>
+      @endcanany
 
+      @canany(['Manage Inventory', 'View Product Stock'])
       <li class="sb-item has-children {{ $inventoryActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Inventory">
           <i class="fas fa-warehouse"></i>
@@ -2546,13 +2553,17 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
         <ul class="sb-submenu">
           <li class="sb-flyout-title">Inventory</li>
           <li><a href="{{ route('admin.inventory-reports.index') }}"><i class="fas fa-clipboard-check"></i> Current Stock</a></li>
+          @can('Manage Inventory')
           <li><a href="{{ route('admin.issues.index') }}"><i class="fas fa-arrow-right"></i> Stock Issues</a></li>
           <li><a href="{{ route('admin.issue-returns.index') }}"><i class="fas fa-undo-alt"></i> Stock Returns</a></li>
           <li class="sb-submenu-divider"></li>
           <li><a href="{{ route('admin.stock-ledger.index') }}"><i class="fas fa-book"></i> Stock Ledger</a></li>
+          @endcan
         </ul>
       </li>
+      @endcanany
 
+      @canany(['Manage Order Place', 'Manage Order Receive', 'Manage Custom Product Requests', 'Create Custom Product Requests', 'View Custom Product Requests', 'Manage Product Requests', 'Create Product Requests', 'View Product Requests'])
       <li class="sb-item has-children {{ $ordersActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Orders">
           <i class="fas fa-shopping-bag"></i>
@@ -2561,14 +2572,24 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
         </a>
         <ul class="sb-submenu">
           <li class="sb-flyout-title">Orders</li>
+          @canany(['Manage Order Place', 'Manage Order Receive'])
           <li><a href="{{ route('admin.orders.index') }}"><i class="fas fa-store-alt"></i> Outlet/Shop Orders</a></li>
+          @endcanany
+          @canany(['Manage Custom Product Requests', 'Create Custom Product Requests', 'View Custom Product Requests'])
           <li><a href="{{ route('admin.custom-product-requests.index') }}"><i class="fas fa-sync-alt"></i> Custom Requests</a></li>
+          @endcanany
           <li class="sb-submenu-divider"></li>
+          @canany(['Manage Product Requests', 'View Product Requests'])
           <li><a href="{{ route('admin.product-requests.index') }}"><i class="fas fa-history"></i> Old Requests</a></li>
+          @endcanany
+          @can('Create Product Requests')
           <li><a href="{{ route('admin.product-requests.create') }}"><i class="fas fa-plus-circle"></i> Create Request</a></li>
+          @endcan
         </ul>
       </li>
+      @endcanany
 
+      @canany(['Manage Order Place', 'Manage Order Receive'])
       <li class="sb-item has-children {{ $purchaseActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Purchase">
           <i class="fas fa-cart-plus"></i>
@@ -2577,13 +2598,19 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
         </a>
         <ul class="sb-submenu">
           <li class="sb-flyout-title">Purchase</li>
+          @can('Manage Order Place')
           <li><a href="{{ route('admin.bookings.index') }}"><i class="fas fa-shopping-cart"></i> All Order Place</a></li>
+          @endcan
+          @can('Manage Order Receive')
           <li><a href="{{ route('admin.purchases.index') }}"><i class="fas fa-check-circle"></i> All Order Receive</a></li>
           <li class="sb-submenu-header">Quick Actions</li>
           <li><a href="{{ route('admin.purchases.create') }}"><i class="fas fa-plus-circle"></i> Create New</a></li>
+          @endcan
         </ul>
       </li>
+      @endcanany
 
+      @can('Manage Reports')
       <li class="sb-item has-children {{ $reportsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Reports">
           <i class="fas fa-chart-bar"></i>
@@ -2610,7 +2637,9 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.reports.audit') }}"><i class="fas fa-clipboard-check"></i> Audit Report</a></li>
         </ul>
       </li>
+      @endcan
 
+      @canany(['account', 'Accountants', 'Administration'])
       <li class="sb-item has-children {{ $accountsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Accounts">
           <i class="fas fa-file-invoice-dollar"></i>
@@ -2629,7 +2658,9 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.accounts.vendor-payments.due-purchases') }}"><i class="fas fa-hourglass-half"></i> Vendor Due Purchases</a></li>
         </ul>
       </li>
+      @endcanany
 
+      @can('Manage Brands')
       <li class="sb-item has-children {{ $brandsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Brands">
           <i class="fas fa-tag"></i>
@@ -2642,7 +2673,9 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.brand.create') }}"><i class="fas fa-plus-circle"></i> Add Brand</a></li>
         </ul>
       </li>
+      @endcan
 
+      @can('Manage Vendors')
       <li class="sb-item has-children {{ $vendorsActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="Vendors">
           <i class="fas fa-truck"></i>
@@ -2655,7 +2688,9 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.vendor.create') }}"><i class="fas fa-plus-circle"></i> Add Vendor</a></li>
         </ul>
       </li>
+      @endcan
 
+      @can('Administration')
       <li class="sb-item has-children {{ $systemActive ? 'active open' : '' }}">
         <a href="#" class="sb-link sb-toggle" title="System">
           <i class="fas fa-cog"></i>
@@ -2677,6 +2712,7 @@ body.sidebar-collapsed .app-sidebar { transform: translateX(-100%); }
           <li><a href="{{ route('admin.settings.index') }}"><i class="fas fa-sliders-h"></i> Settings</a></li>
         </ul>
       </li>
+      @endcan
 
     </ul>
   </div>
