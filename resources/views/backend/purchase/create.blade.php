@@ -155,8 +155,8 @@
                                                 <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Tax</th>
                                                 <th style="width: 8%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Transport</th>
                                                 <th style="width: 9%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Local Unit Cost</th>
-                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Sale Price</th>
-                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Outlet Price</th>
+                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Retail Price</th>
+                                                <th style="width: 7%; font-size: 0.65rem; padding: 0.4rem 0.3rem;">Outlet / Wholesale Price</th>
                                                 <th style="width: 3%; font-size: 0.65rem; padding: 0.4rem 0.3rem;"></th>
                                             </tr>
                                         </thead>
