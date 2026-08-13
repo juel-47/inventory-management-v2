@@ -246,6 +246,19 @@
                                     </div>
                                 </div>
 
+                                <div class="row">
+                                    <div class="form-group col-12 col-md-6">
+                                        <label class="font-weight-bold text-dark" style="font-size: 0.85rem;">
+                                            <span class="ml-1">Status</span>
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="status" class="form-control">
+                                            <option {{ old('status', 1) == 1 ? 'selected' : '' }} value="1">Active</option>
+                                            <option {{ old('status') == 0 ? 'selected' : '' }} value="0">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 {{-- Submit Buttons --}}
                                 <div class="row mt-4 pt-3 border-top">
                                     <div class="col-12">
