@@ -105,7 +105,7 @@
                                             value="{{ old('outlet_price') }}">
                                     </div>
                                     <div class="form-group col-md-3">
-                                         <label>Outlet/Customer price</label>
+                                         <label>Retail Price</label>
                                          <input type="number" class="form-control" name="price" step="any"
                                              value="{{ old('price') }}">
                                      </div>

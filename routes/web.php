@@ -282,6 +282,8 @@ Route::group(['middleware' => ['auth', 'check.permission'], 'prefix' => 'admin',
         Route::get('low-stock-check', 'lowStockCheck')->name('low-stock-check'); // AJAX endpoint
         Route::post('low-stock-mark-read', 'markNotificationsRead')->name('low-stock-mark-read');
         Route::get('notifications/all', 'allNotifications')->name('notifications.all');
+        Route::get('reports/current-stock', 'currentStockReport')->name('reports.current-stock');
+        Route::get('reports/current-stock/export', 'exportCurrentStockReport')->name('reports.current-stock.export');
     });
 
 

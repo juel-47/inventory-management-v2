@@ -15,9 +15,11 @@
         .invoice-header table { width: 100%; border: none; }
         .invoice-header td { vertical-align: top; border: none; padding: 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f4f4f4; text-align: left; padding: 8px; border: 1px solid #ddd; text-transform: uppercase; font-size: 10px; font-weight: bold; }
-        td { padding: 8px; border: 1px solid #ddd; vertical-align: middle; }
+        * { box-sizing: border-box; }
+        body, table, th, td, div, p, span { word-wrap: break-word !important; word-break: break-word !important; overflow-wrap: break-word !important; }
+        table { width: 100% !important; border-collapse: collapse; margin-top: 15px; table-layout: fixed !important; }
+        th { background: #f4f4f4; text-align: left; padding: 8px; border: 1px solid #ddd; text-transform: uppercase; font-size: 10px; font-weight: bold; word-break: break-word; }
+        td { padding: 8px; border: 1px solid #ddd; vertical-align: middle; word-break: break-word; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 

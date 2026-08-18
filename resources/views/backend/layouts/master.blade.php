@@ -4,6 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <script>
+    (function() {
+      try {
+        if (window.innerWidth >= 768 && localStorage.getItem('sidebar-collapsed') !== '0') {
+          document.documentElement.classList.add('sidebar-collapsed');
+        }
+        document.documentElement.classList.add('is-preload');
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    html.is-preload,
+    html.is-preload *,
+    html.is-preload body,
+    html.is-preload .app-sidebar,
+    html.is-preload .topbar,
+    html.is-preload .main-footer {
+      -webkit-transition: none !important;
+      -moz-transition: none !important;
+      -o-transition: none !important;
+      transition: none !important;
+    }
+  </style>
   <!-- laravel ajax csrf token -->
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
@@ -44,8 +67,9 @@
   <style>
   @media (min-width: 1200px) {
     .main-wrapper.container {
-      max-width: 98% !important;
-      width: 98% !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 !important;
     }
   }
 
@@ -103,10 +127,7 @@
       <div class="navbar-bg"></div>
       <!-- navbar Content -->
       @include('backend.layouts.navbar')
-      <!-- sidebar Content (Mobile Only) -->
-      <div class="d-lg-none">
-        @include('backend.layouts.sidebar')
-      </div>
+      {{-- sidebar is rendered inside navbar.blade.php (app-sidebar) --}}
 
 
       <!-- Main Content -->
@@ -116,10 +137,7 @@
       <footer class="main-footer">
         <div class="footer-inner">
           <div class="footer-left">
-            Concept &amp; Design by <a target="_blank" href="https://inoodex.com/"><strong>shahadat</strong></a>
-          </div>
-          <div class="footer-center">
-            <span class="footer-copyright">&copy; {{ now()->year }} All rights reserved</span>
+            <span class="footer-copyright"> B2bviking &copy; {{ now()->year }} All rights reserved</span>
           </div>
           <div class="footer-right">
             Developed by <a target="_blank" href="https://inoodex.com/"><strong>Inoodex</strong></a>

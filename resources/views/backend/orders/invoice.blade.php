@@ -93,26 +93,47 @@
             width: 48%;
             text-align: right;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+        * {
+            box-sizing: border-box;
         }
+
+        body, table, th, td, div, p, span {
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+
+        table {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 20px;
+            table-layout: fixed !important;
+        }
+
         th {
             background-color: #f8f9fa;
             color: #333;
-            padding: 12px;
+            padding: 10px 8px;
             text-align: left;
             border-bottom: 2px solid #ddd;
             font-weight: bold;
             text-transform: uppercase;
             font-size: 12px;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
+
         td {
-            padding: 12px;
+            padding: 10px 8px;
             border-bottom: 1px solid #eee;
             vertical-align: top;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
+
         .total-row td {
             font-weight: bold;
             background-color: #f8f9fa;

@@ -44,9 +44,7 @@ class ProductController extends Controller implements HasMiddleware
 
     public static function middleware(): array
     {
-        return [
-            new Middleware('role:Admin', except: ['index']),
-        ];
+        return [];
     }
 
     /**

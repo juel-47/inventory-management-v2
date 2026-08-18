@@ -109,7 +109,7 @@
                                             value="{{ $product->outlet_price ?? 0 }}">
                                     </div>
                                     <div class="form-group col-md-3">
-                                        <label>Outlet/Customer Price</label>
+                                        <label>Retail Price</label>
                                         <input type="number" class="form-control" name="price" step="any"
                                             value="{{ $product->price }}">
                                     </div>

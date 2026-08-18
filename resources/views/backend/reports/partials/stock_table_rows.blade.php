@@ -10,9 +10,9 @@
         <td>
             <div class="d-flex align-items-center">
                 @if($product->thumb_image)
-                    <img src="{{ asset('storage/'.$product->thumb_image) }}" alt="" width="40" class="rounded mr-2 box-shadow-1">
+                    <img src="{{ asset('storage/'.$product->thumb_image) }}" alt="" width="32" class="rounded mr-2 box-shadow-1">
                 @else
-                    <div class="rounded mr-2 bg-secondary d-flex align-items-center justify-content-center text-white small" style="width:40px; height:40px;">N/A</div>
+                    <div class="rounded mr-2 bg-secondary d-flex align-items-center justify-content-center text-white small" style="width:32px; height:32px;">N/A</div>
                 @endif
                 <div>
             <div class="font-weight-bold">{{ $product->name }}</div>

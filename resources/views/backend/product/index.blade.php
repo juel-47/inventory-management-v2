@@ -7,28 +7,33 @@
         --pp-obsidian-2: #060a14;
         --pp-amber: #d4a24e;
         --pp-amber-bright: #ecc78b;
-        --pp-amber-soft: rgba(212, 162, 78, 0.10);
+        --pp-amber-deep: #b8852a;
+        --pp-amber-soft: rgba(212, 162, 78, 0.08);
         --pp-amber-glow: rgba(212, 162, 78, 0.30);
         --pp-border: rgba(11, 17, 32, 0.07);
+        --pp-border-hover: rgba(212, 162, 78, 0.15);
         --pp-ink: #161e2e;
+        --pp-ink-soft: #2d3748;
         --pp-muted: #6b788e;
         --pp-danger: #dc5a52;
         --pp-surface: #f8f9fc;
+        --pp-surface-hover: #f1f3f8;
         --pp-font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        --pp-radius-sm: 12px;
+        --pp-radius-md: 14px;
+        --pp-radius-lg: 20px;
+        --pp-shadow-card: 0 1px 3px rgba(11,17,32,0.04), 0 8px 20px -12px rgba(11,17,32,0.12);
+        --pp-shadow-card-hover: 0 12px 32px -12px rgba(11,17,32,0.16), 0 0 0 1px rgba(212,162,78,0.06);
+        --pp-shadow-lift: 0 20px 50px -16px rgba(11,17,32,0.2), 0 0 0 1px rgba(212,162,78,0.1);
     }
 
-    #ratingModal {
-        display: none;
-        opacity: 0;
-        visibility: hidden;
+    @keyframes ppFadeSlide {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
+
     .navbar .nav-link {
         height: 26px !important;
-    }
-    #ratingModal.show {
-        display: block;
-        opacity: 1;
-        visibility: visible;
     }
     .modal-backdrop {
         opacity: 0.5;
@@ -41,40 +46,65 @@
         min-height: 400px;
     }
 
+    @media (min-width: 992px) and (max-width: 1399.98px) {
+        .col-lg-5th {
+            flex: 0 0 25% !important;
+            max-width: 25% !important;
+        }
+    }
+    @media (min-width: 1400px) {
+        .col-xl-5th {
+            flex: 0 0 20% !important;
+            max-width: 20% !important;
+        }
+    }
+
     /* ===== Section Header ===== */
     .pp-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 14px;
+        gap: 10px;
+        margin-bottom: 20px;
+        margin-top: 18px;
+        padding: 18px 22px;
+        background: #fff;
+        border-radius: var(--pp-radius-md);
+        box-shadow: 0 1px 3px rgba(11,17,32,0.04), 0 8px 20px -12px rgba(11,17,32,0.12);
+        position: relative;
+        overflow: hidden;
     }
+    .pp-header::before { display: none; }
+    .pp-header::after { display: none; }
     .pp-header h1 {
+        position: relative;
+        z-index: 1;
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-family: var(--pp-font);
+        gap: 12px;
         font-weight: 800;
-        font-size: 18px;
+        font-size: 20px;
         color: var(--pp-ink);
         letter-spacing: -0.3px;
         margin: 0;
     }
     .pp-header h1 .pp-icon {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 10px;
-        font-size: 13px;
+        font-size: 14px;
         color: #1a1306;
         background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber));
-        box-shadow: 0 4px 12px rgba(212, 162, 78, 0.3);
+        box-shadow: 0 4px 14px rgba(212, 162, 78, 0.35), inset 0 1px 0 rgba(255,255,255,0.3);
     }
     .pp-breadcrumb {
+        position: relative;
+        z-index: 1;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -91,24 +121,30 @@
         content: '/';
         position: absolute;
         left: 0;
-        color: rgba(107, 120, 142, 0.35);
+        color: var(--pp-muted);
     }
     .pp-breadcrumb-item a {
-        color: var(--pp-muted);
+        color: var(--pp-amber-deep);
         text-decoration: none;
-        transition: color 0.2s;
+        transition: color 0.2s ease;
     }
     .pp-breadcrumb-item a:hover { color: var(--pp-amber); }
-    .pp-breadcrumb-item.active { color: var(--pp-amber); }
+    .pp-breadcrumb-item.active { color: var(--pp-ink-soft); }
 
     /* ===== Filter Card ===== */
     .pp-filter-card {
         position: relative;
-        border-radius: 14px !important;
+        border-radius: var(--pp-radius-md) !important;
         border: 1px solid var(--pp-border) !important;
-        background: #fff !important;
-        box-shadow: 0 1px 2px rgba(11,17,32,0.02), 0 12px 32px -16px rgba(11,17,32,0.14) !important;
+        background: rgba(255,255,255,0.75) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: var(--pp-shadow-card) !important;
         overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+    .pp-filter-card:hover {
+        box-shadow: var(--pp-shadow-card-hover) !important;
     }
     .pp-filter-card::before {
         content: '';
@@ -117,46 +153,48 @@
         height: 2.5px;
         background: linear-gradient(90deg, var(--pp-amber-bright), var(--pp-amber) 50%, transparent 96%);
     }
-    .pp-filter-card .card-body { padding: 12px 14px 10px !important; }
+    .pp-filter-card .card-body { padding: 18px 20px 16px !important; }
 
     .pp-search-wrap {
-        border-radius: 20px !important;
-        background: var(--pp-surface) !important;
+        border-radius: var(--pp-radius-lg) !important;
+        background: #fff !important;
         border: 1.5px solid var(--pp-border) !important;
-        transition: all 0.2s ease;
+        transition: all 0.25s ease;
         overflow: hidden;
     }
     .pp-search-wrap:focus-within {
         border-color: var(--pp-amber) !important;
-        box-shadow: 0 0 0 3px var(--pp-amber-soft) !important;
+        box-shadow: 0 0 0 3px var(--pp-amber-soft), 0 4px 12px -8px rgba(212,162,78,0.15) !important;
         background: #fff !important;
     }
     .pp-search-wrap .form-control {
         font-size: 12.5px;
-        height: 34px !important;
+        height: 36px !important;
         background: transparent !important;
+        font-weight: 500;
+        color: var(--pp-ink);
     }
     .pp-search-wrap .form-control::placeholder { color: #aab2c0; }
-    .pp-search-wrap .input-group-text { font-size: 12px; }
+    .pp-search-wrap .input-group-text { font-size: 12px; color: #aab2c0; }
 
     .pp-select2 .select2-selection--single {
-        height: 34px !important;
-        border-radius: 20px !important;
+        height: 36px !important;
+        border-radius: var(--pp-radius-lg) !important;
         border: 1.5px solid var(--pp-border) !important;
-        background: var(--pp-surface) !important;
+        background: #fff !important;
         display: flex !important;
         align-items: center;
-        transition: all 0.2s ease;
+        transition: all 0.25s ease;
     }
     .pp-select2 .select2-selection--single .select2-selection__rendered {
         color: var(--pp-ink);
         font-size: 12px;
         font-weight: 500;
         padding-left: 14px;
-        line-height: 32px;
+        line-height: 34px;
     }
     .pp-select2 .select2-selection--single .select2-selection__arrow {
-        height: 32px;
+        height: 34px;
         right: 10px;
     }
     .pp-select2 .select2-selection--single .select2-selection__arrow b {
@@ -170,15 +208,16 @@
         background: #fff !important;
     }
     .pp-select2 .select2-dropdown {
-        border-radius: 12px !important;
+        border-radius: var(--pp-radius-sm) !important;
         border: 1px solid var(--pp-border) !important;
-        box-shadow: 0 16px 40px -14px rgba(11,17,32,0.26) !important;
+        box-shadow: var(--pp-shadow-lift) !important;
         overflow: hidden;
         margin-top: 4px;
     }
     .pp-select2 .select2-results__option {
         font-size: 12px !important;
-        padding: 7px 12px !important;
+        padding: 8px 12px !important;
+        transition: background 0.15s;
     }
     .pp-select2 .select2-results__option--highlighted[aria-selected] {
         background: linear-gradient(135deg, var(--pp-amber-bright), var(--pp-amber)) !important;
@@ -191,7 +230,7 @@
     .pp-select2 .select2-search--dropdown .select2-search__field {
         border-radius: 8px !important;
         border: 1px solid var(--pp-border) !important;
-        padding: 5px 10px !important;
+        padding: 6px 10px !important;
         font-size: 12px !important;
     }
 
@@ -200,45 +239,57 @@
         font-weight: 700 !important;
         font-size: 11.5px !important;
         letter-spacing: 0.2px;
-        border-radius: 20px !important;
-        padding: 6px 14px !important;
-        transition: all 0.2s ease;
+        border-radius: var(--pp-radius-lg) !important;
+        padding: 7px 16px !important;
+        transition: all 0.25s cubic-bezier(.2,.8,.2,1);
+        position: relative;
+        overflow: hidden;
     }
-    .pp-btn:hover { transform: translateY(-1px); }
+    .pp-btn:hover { transform: translateY(-2px); }
+    .pp-btn:active { transform: translateY(0) scale(0.97); }
     .pp-btn-amber {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber)) !important;
+        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber-deep)) !important;
         color: #1a1306 !important;
-        box-shadow: 0 4px 14px -4px rgba(212, 162, 78, 0.45);
+        box-shadow: 0 4px 14px -4px rgba(212, 162, 78, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
     }
-    .pp-btn-amber:hover { filter: brightness(1.05); box-shadow: 0 6px 18px -6px rgba(212, 162, 78, 0.5); }
+    .pp-btn-amber:hover { filter: brightness(1.06); box-shadow: 0 8px 24px -6px rgba(212, 162, 78, 0.5); }
     .pp-btn-emerald {
         background: linear-gradient(145deg, #34d399, #16a34a) !important;
         color: #fff !important;
         box-shadow: 0 4px 14px -4px rgba(22, 163, 74, 0.34);
     }
-    .pp-btn-emerald:hover { filter: brightness(1.05); box-shadow: 0 6px 18px -6px rgba(22, 163, 74, 0.4); }
+    .pp-btn-emerald:hover { filter: brightness(1.06); box-shadow: 0 8px 24px -6px rgba(22, 163, 74, 0.4); }
     .pp-btn-reset {
         background: #fff !important;
-        color: var(--pp-danger) !important;
-        border: 1.5px solid rgba(220, 90, 82, 0.25) !important;
-        box-shadow: 0 2px 6px rgba(220, 90, 82, 0.06);
+        color: var(--pp-amber-deep) !important;
+        border: 1.5px solid rgba(212, 162, 78, 0.25) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 11.5px !important;
+        padding: 7px 14px !important;
+        letter-spacing: 0.2px;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(212, 162, 78, 0.06);
     }
     .pp-btn-reset:hover {
-        background: rgba(220, 90, 82, 0.05) !important;
-        border-color: var(--pp-danger) !important;
+        background: rgba(212, 162, 78, 0.07) !important;
+        border-color: var(--pp-amber) !important;
+        box-shadow: 0 4px 16px -6px rgba(212, 162, 78, 0.2);
+        transform: translateY(-1px);
     }
+    .pp-btn-reset i { font-size: 11px; }
 
     /* ===== Modals ===== */
     .pp-modal .modal-content {
         border: none;
-        border-radius: 14px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 30px 60px -20px rgba(11,17,32,0.4);
+        box-shadow: 0 30px 60px -20px rgba(11,17,32,0.45);
     }
     .pp-modal .modal-header {
-        background: linear-gradient(145deg, var(--pp-obsidian), var(--pp-obsidian-2));
+        background: linear-gradient(135deg, #0a0e1a, #131a2b);
         border-bottom: none;
-        padding: 12px 18px;
+        padding: 14px 20px;
         position: relative;
     }
     .pp-modal .modal-header::after {
@@ -250,120 +301,155 @@
         opacity: 0.6;
     }
     .pp-modal .modal-title {
-        color: #fff;
-        font-family: var(--pp-font);
+        color: #f5f2ea;
         font-weight: 700;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    .pp-modal .modal-title i { color: var(--pp-amber-bright) !important; }
+    .pp-modal .modal-title i { color: var(--pp-amber-bright) !important; font-size: 15px; }
     .pp-modal .close {
-        color: #fff;
-        opacity: 0.7;
+        color: rgba(255,255,255,0.5);
         text-shadow: none;
         font-size: 20px;
-        transition: opacity 0.2s;
+        transition: all 0.2s;
     }
     .pp-modal .close:hover { opacity: 1; color: var(--pp-amber-bright); }
-    .pp-modal .modal-body { padding: 16px 18px !important; }
+    .pp-modal .modal-body { padding: 18px 20px !important; }
     .pp-modal .modal-footer {
         background: #f8f9fc;
         border-top: 1px solid var(--pp-border);
-        padding: 10px 18px;
+        padding: 12px 20px;
+        gap: 8px;
     }
     .pp-modal .modal-footer .btn {
-        border-radius: 20px;
+        border-radius: var(--pp-radius-lg);
         font-weight: 600;
         font-size: 11.5px;
-        padding: 6px 16px;
+        padding: 7px 18px;
+        transition: all 0.2s ease;
     }
     .pp-modal .btn-amber {
-        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber));
+        background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber-deep));
         border: none;
         color: #1a1306;
-        box-shadow: 0 4px 12px -3px rgba(212, 162, 78, 0.4);
+        box-shadow: 0 4px 14px -4px rgba(212, 162, 78, 0.4);
     }
-    .pp-modal .btn-amber:hover { filter: brightness(1.05); }
+    .pp-modal .btn-amber:hover { filter: brightness(1.06); transform: translateY(-1px); }
     .pp-modal .btn-secondary {
         background: #e8ebf0;
         border: 1px solid var(--pp-border);
-        color: var(--pp-ink);
+        color: var(--pp-ink-soft);
     }
-    .pp-modal .btn-secondary:hover { background: #dee2e9; }
+    .pp-modal .btn-secondary:hover { background: #dee2e9; border-color: var(--pp-amber); }
 
     .pp-star-rating .rating-star { transition: all 0.2s ease; }
-    .pp-star-rating .rating-star:hover { transform: scale(1.2); color: #f59e0b !important; }
+    .pp-star-rating .rating-star:hover { transform: scale(1.2) rotate(-5deg); color: #f59e0b !important; }
 
     /* ===== Product Card ===== */
     .pp-card {
-        border-radius: 12px !important;
+        border-radius: var(--pp-radius-md) !important;
         border: 1px solid var(--pp-border) !important;
         background: #fff !important;
-        transition: all 0.25s ease !important;
+        box-shadow: var(--pp-shadow-card) !important;
+        transition: all 0.3s cubic-bezier(.2,.8,.2,1) !important;
         overflow: hidden;
+        animation: ppFadeSlide 0.4s ease both;
     }
     .pp-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 16px 40px -14px rgba(11, 17, 32, 0.16) !important;
-        border-color: rgba(212, 162, 78, 0.2) !important;
+        transform: translateY(-4px);
+        box-shadow: var(--pp-shadow-card-hover) !important;
+        border-color: var(--pp-border-hover) !important;
     }
     .pp-card-img-wrap {
-        height: 140px;
+        height: 180px;
         background: linear-gradient(180deg, #fafbfc 0%, #f4f5f8 100%);
         position: relative;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--pp-border);
+    }
+    .pp-card-img-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0) 60%, rgba(248,249,252,0.8) 100%);
+        pointer-events: none;
     }
     .pp-card-img-wrap img {
-        transition: transform 0.4s ease;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
+        position: relative;
+        z-index: 0;
     }
     .pp-card:hover .pp-card-img-wrap img {
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
     .pp-card-body {
-        padding: 8px 10px 10px;
+        padding: 10px 12px 12px;
     }
     .pp-card-title {
         font-weight: 700;
-        font-size: 13px;
+        font-size: 13.5px;
         color: var(--pp-ink);
-        line-height: 1.3;
+        line-height: 1.35;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        margin-bottom: 4px !important;
+        margin-bottom: 6px !important;
+        letter-spacing: -0.1px;
+        transition: color 0.3s;
+    }
+    .pp-card:hover .pp-card-title {
+        color: var(--pp-amber-deep);
     }
     .pp-badge-category {
         background: var(--pp-surface);
         color: var(--pp-muted);
         font-size: 9px;
         font-weight: 600;
-        padding: 2px 8px;
+        padding: 3px 9px;
         border-radius: 12px;
         border: 1px solid var(--pp-border);
+        transition: all 0.25s;
+    }
+    .pp-card:hover .pp-badge-category {
+        background: var(--pp-amber-soft);
+        border-color: var(--pp-border-hover);
+        color: var(--pp-amber-deep);
     }
     .pp-badge-stock {
         font-size: 9px;
         font-weight: 600;
-        padding: 2px 8px;
+        padding: 3px 9px;
         border-radius: 12px;
+        transition: all 0.25s;
     }
     .pp-badge-stock.in-stock {
-        background: rgba(22, 163, 74, 0.1);
+        background: rgba(22, 163, 74, 0.08);
         color: #16a34a;
-        border: 1px solid rgba(22, 163, 74, 0.2);
+        border: 1px solid rgba(22, 163, 74, 0.15);
     }
     .pp-badge-stock.out-of-stock {
-        background: rgba(220, 90, 82, 0.1);
+        background: rgba(220, 90, 82, 0.08);
         color: #dc5a52;
-        border: 1px solid rgba(220, 90, 82, 0.2);
+        border: 1px solid rgba(220, 90, 82, 0.15);
     }
     .pp-badge-type {
         font-size: 8px;
         font-weight: 700;
-        padding: 2px 7px;
+        padding: 3px 8px;
         border-radius: 6px;
         letter-spacing: 0.3px;
         text-transform: uppercase;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     .pp-variant-scroll {
         max-height: 110px;
@@ -380,57 +466,73 @@
 
     .pp-price-box {
         background: var(--pp-surface);
-        border-radius: 8px;
-        padding: 6px 10px;
+        border-radius: 10px;
+        padding: 8px 11px;
         border: 1px solid var(--pp-border);
+        transition: all 0.3s;
+    }
+    .pp-card:hover .pp-price-box {
+        background: linear-gradient(135deg, #fefcf8, #faf7f0);
+        border-color: var(--pp-border-hover);
     }
     .pp-price-label {
-        font-size: 10px;
+        font-size: 9.5px;
         color: var(--pp-muted);
-        font-weight: 500;
+        font-weight: 600;
+        letter-spacing: 0.2px;
     }
     .pp-price-value {
         font-weight: 700;
-        font-size: 12px;
-        color: var(--pp-ink);
+        font-size: 12.5px;
+        color: var(--pp-ink-soft);
     }
     .pp-btn-card {
-        border-radius: 20px !important;
-        font-weight: 600 !important;
+        border-radius: var(--pp-radius-lg) !important;
+        font-weight: 700 !important;
         font-size: 10.5px !important;
-        padding: 4px 12px !important;
-        transition: all 0.2s ease !important;
+        padding: 5px 13px !important;
+        transition: all 0.25s cubic-bezier(.2,.8,.2,1) !important;
     }
-    .pp-btn-card:hover { transform: translateY(-1px); }
+    .pp-btn-card:hover { transform: translateY(-1.5px); box-shadow: 0 4px 12px -4px rgba(212,162,78,0.2); }
     .pp-btn-outline {
         border: 1.5px solid var(--pp-border) !important;
-        color: var(--pp-ink) !important;
+        color: var(--pp-ink-soft) !important;
         background: transparent !important;
     }
     .pp-btn-outline:hover {
         border-color: var(--pp-amber) !important;
         background: var(--pp-amber-soft) !important;
-        color: var(--pp-ink) !important;
+        color: var(--pp-amber-deep) !important;
     }
     .pp-edit-btn {
-        border-radius: 20px !important;
+        border-radius: var(--pp-radius-lg) !important;
         font-weight: 600 !important;
         font-size: 10px !important;
-        padding: 4px 10px !important;
+        padding: 5px 11px !important;
+        transition: all 0.25s ease !important;
+    }
+    .pp-edit-btn:hover {
+        transform: translateY(-1.5px);
+        box-shadow: 0 4px 12px -4px rgba(11,17,32,0.1);
     }
     .pp-status-switch .custom-switch-indicator {
         border-radius: 16px !important;
-        width: 30px !important;
-        height: 16px !important;
+        width: 31px !important;
+        height: 17px !important;
+        transition: all 0.25s ease !important;
+        border: 1px solid var(--pp-border);
     }
     .pp-status-switch .custom-switch-indicator::after {
-        width: 12px !important;
-        height: 12px !important;
+        width: 13px !important;
+        height: 13px !important;
         top: 2px !important;
         left: 2px !important;
+        transition: all 0.25s ease !important;
     }
     .pp-status-switch .custom-switch-input:checked ~ .custom-switch-indicator {
-        background: #16a34a !important;
+        background: linear-gradient(135deg, var(--pp-amber-bright), var(--pp-amber)) !important;
+        border-color: var(--pp-amber) !important;
+        box-shadow: 0 2px 8px -2px rgba(212, 162, 78, 0.3);
     }
     .pp-count-badge {
         background: #fff;
@@ -438,33 +540,42 @@
         color: var(--pp-muted);
         font-size: 11px;
         font-weight: 600;
-        padding: 5px 14px;
-        border-radius: 20px;
+        padding: 6px 16px;
+        border-radius: var(--pp-radius-lg);
+        box-shadow: 0 1px 3px rgba(11,17,32,0.03);
     }
+    .pp-count-badge strong { color: var(--pp-amber-deep); }
     .pp-pagination .pagination .page-link {
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         border: 1px solid var(--pp-border) !important;
         margin: 0 2px;
         font-weight: 600;
         font-size: 11px;
         color: var(--pp-muted);
-        padding: 5px 10px;
-        transition: all 0.2s;
+        padding: 6px 11px;
+        transition: all 0.2s cubic-bezier(.2,.8,.2,1);
+        background: #fff;
     }
     .pp-pagination .pagination .page-link:hover {
         border-color: var(--pp-amber) !important;
         background: var(--pp-amber-soft) !important;
-        color: var(--pp-ink) !important;
+        color: var(--pp-amber-deep) !important;
+        transform: translateY(-1px);
     }
     .pp-pagination .pagination .page-item.active .page-link {
         background: linear-gradient(145deg, var(--pp-amber-bright), var(--pp-amber)) !important;
         border-color: var(--pp-amber) !important;
         color: #1a1306 !important;
-        box-shadow: 0 4px 12px rgba(212, 162, 78, 0.3);
+        box-shadow: 0 4px 14px -3px rgba(212, 162, 78, 0.35);
+        transform: translateY(-1px);
     }
     .pp-pagination .pagination .page-item.disabled .page-link {
         opacity: 0.4;
         cursor: not-allowed;
+    }
+    .pp-pagination .pagination .page-item:first-child .page-link,
+    .pp-pagination .pagination .page-item:last-child .page-link {
+        border-radius: 10px !important;
     }
     .pp-rating-star-small {
         font-size: 11px;
@@ -488,6 +599,53 @@
         align-items: flex-end;
         gap: 6px;
     }
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 991.98px) {
+    .pp-header { flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 8px; }
+    .pp-header h1 { font-size: 16px; gap: 8px; }
+    .pp-header h1 .pp-icon { width: 28px; height: 28px; min-width: 28px; font-size: 12px; }
+    .pp-breadcrumb { font-size: 11px; }
+    .pp-breadcrumb-item { padding-right: 10px; }
+    .pp-breadcrumb-item + .pp-breadcrumb-item { padding-left: 10px; }
+}
+
+@media (max-width: 767.98px) {
+    .pp-header { margin-bottom: 14px; }
+    .pp-header h1 { font-size: 14px; }
+    .pp-filter-card .card-body { padding: 12px 12px 10px !important; }
+    .pp-search-wrap .form-control { font-size: 11px !important; height: 32px !important; }
+    #filter-form .col-12 { margin-bottom: 10px; }
+    #filter-form .pp-btn { width: 100%; text-align: center; padding: 6px 12px !important; font-size: 10.5px !important; display: block; }
+    .pp-card-img-wrap { height: 110px; }
+    .pp-card-body { padding: 8px 10px 10px; }
+    .pp-card-title { font-size: 11.5px; }
+    .pp-badge-category, .pp-badge-stock { font-size: 8px; padding: 2px 7px; }
+    .pp-price-label { font-size: 8px; }
+    .pp-price-value { font-size: 10.5px; }
+    .pp-btn-card { font-size: 9px !important; padding: 4px 10px !important; }
+    .pp-edit-btn { font-size: 9px !important; padding: 4px 9px !important; }
+    .pp-variant-scroll { max-height: 80px; }
+    .pp-count-badge { font-size: 9px; padding: 4px 10px; }
+    .pp-pagination .pagination .page-link { font-size: 9px !important; padding: 4px 8px !important; margin: 0 1px; }
+    #floating-baskets-container { bottom: 16px !important; right: 16px !important; gap: 10px !important; }
+    .basket-fab { width: 38px !important; height: 38px !important; }
+    .basket-fab i { font-size: 14px; }
+    #request-basket-count, #basket-count { min-width: 18px; height: 18px; font-size: 9px; top: -5px; right: -5px; }
+}
+
+@media (max-width: 575.98px) {
+    .pp-card-img-wrap { height: 90px; }
+    .pp-card-title { font-size: 10.5px; -webkit-line-clamp: 1; }
+    .pp-card-body { padding: 6px 8px 8px; }
+    .pp-price-box { padding: 5px 8px; }
+    .pp-price-value { font-size: 9.5px; }
+    .pp-price-label { font-size: 7.5px; }
+    .pp-badge-category, .pp-badge-stock { font-size: 7px; padding: 1px 6px; }
+    .pp-btn-card { font-size: 8px !important; padding: 3px 8px !important; }
+    .pp-edit-btn { font-size: 8px !important; padding: 3px 7px !important; }
+}
+
 </style>
 @endpush
 
@@ -495,7 +653,6 @@
     <section class="section">
         <div class="pp-header">
             <h1>
-                <span class="pp-icon"><i class="fas fa-box"></i></span>
                 Products
             </h1>
             <div class="pp-breadcrumb">
@@ -510,7 +667,7 @@
                     <div class="card border-0 pp-filter-card">
                         <div class="card-body">
                             <form id="filter-form">
-                                <div class="row g-2 align-items-end">
+                                <div class="row g-4 align-items-end">
                                     <div class="col-12 col-md-3">
                                         <div class="input-group pp-search-wrap shadow-sm">
                                             <div class="input-group-prepend">
@@ -550,7 +707,8 @@
                                         @endcan
                                     </div>
                                 </div>
-                                <div class="row g-2 align-items-end">
+                                <hr style="border-top: 1px solid var(--pp-border); margin: 6px 0 10px;">
+                                <div class="row g-4 align-items-end">
                                     <div class="col-12 col-md-3">
                                         <select name="sort" id="sort" class="form-control select2 pp-select2">
                                             <option value="">Sort by</option>
@@ -643,95 +801,63 @@
 @endsection
 
 <!-- Rating Modal -->
-<div class="modal fade pp-modal" id="ratingModal" tabindex="-1" role="dialog" aria-labelledby="ratingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="ratingModalLabel">
-                    <i class="fas fa-star mr-2"></i>Rate Product
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <h6 class="text-dark font-weight-bold" id="ratingProductName"></h6>
-                </div>
-                <form id="ratingForm">
-                    <input type="hidden" id="ratingProductId" name="product_id">
-                    <div class="mb-4">
-                        <label class="font-weight-bold mb-2">Rating <span class="text-danger">*</span></label>
-                        <div class="pp-star-rating d-flex" style="gap: 16px; font-size: 34px;">
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="far fa-star rating-star text-muted" data-rating="{{ $i }}" style="cursor: pointer;"></i>
-                            @endfor
-                        </div>
-                        <input type="hidden" id="ratingValue" name="rating" value="0">
-                        <small class="text-muted d-block mt-2">Selected: <span id="selectedRatingText">0</span> stars</small>
-                    </div>
-                    <div class="mb-4">
-                        <label class="font-weight-bold mb-2">Comment <span class="text-muted">(Optional)</span></label>
-                        <textarea id="ratingComment" name="comment" class="form-control" rows="4" placeholder="Share your feedback about this product..." style="resize: vertical; border-radius: 12px; border-color: var(--pp-border);"></textarea>
-                    </div>
-                    <div class="alert alert-info border-0 rounded-lg" id="existingRatingAlert" style="display: none;">
-                        <i class="fas fa-info-circle mr-2"></i>You already have a rating. Submitting will update it.
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-amber" id="submitRatingBtn">
-                    <i class="fas fa-check mr-2"></i>Submit Rating
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
     <!-- Floating Baskets Container -->
-    <div id="floating-baskets-container" class="position-fixed d-flex align-items-center" style="bottom: 30px; right: 30px; z-index: 99999; gap: 20px;">
-        <!-- Container and contents allow clicks -->
+    <div id="floating-baskets-container" class="position-fixed d-flex align-items-center" style="bottom: 24px; right: 32px; z-index: 99999; gap: 14px;">
         <style>
             #floating-baskets-container, #floating-baskets-container > * { pointer-events: auto; }
             .basket-fab {
-                box-shadow: 0 10px 26px -6px rgba(15, 23, 41, 0.4), inset 0 1px 0 rgba(255,255,255,0.3) !important;
-                border: 2px solid rgba(255,255,255,0.25);
+                width: 44px !important;
+                height: 44px !important;
+                box-shadow: 0 8px 22px -6px rgba(15, 23, 41, 0.45), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+                border: 2px solid rgba(255,255,255,0.2);
+                transition: all 0.3s ease !important;
             }
             #go-to-booking.basket-fab {
-                background: linear-gradient(135deg, var(--pg-gold-bright, #e3bd7c), var(--pg-gold, #cda05a)) !important;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
                 color: #1a1408 !important;
             }
             #go-to-request.basket-fab {
-                background: linear-gradient(135deg, #34d399, #16a34a) !important;
+                background: linear-gradient(135deg, #a78bfa, #7c3aed) !important;
+                color: #fff !important;
             }
             .basket-fab:hover {
-                transform: scale(1.08) translateY(-2px);
-                filter: brightness(1.05);
+                transform: scale(1.1) translateY(-2px);
+                filter: brightness(1.08);
             }
+            .basket-fab i { font-size: 16px; }
             #request-basket-count, #basket-count {
                 box-shadow: 0 0 0 0 rgba(226, 104, 95, 0.55);
                 animation: nbBadgePulse 2s infinite;
+                min-width: 20px;
+                height: 20px;
+                font-size: 10px;
+                padding: 0 5px;
+                top: -4px;
+                right: -4px;
+                line-height: 1;
             }
+            #request-basket-count { background: #fbbf24; color: #1a1408; }
+            #basket-count { background: #fb7185; color: #fff; }
             @keyframes nbBadgePulse {
                 0% { box-shadow: 0 0 0 0 rgba(226, 104, 95, 0.5); }
                 70% { box-shadow: 0 0 0 8px rgba(226, 104, 95, 0); }
                 100% { box-shadow: 0 0 0 0 rgba(226, 104, 95, 0); }
             }
+            .basket-clear-btn { width: 22px; height: 22px; font-size: 9px; }
         </style>
         <!-- Floating Basket Widget (Product Request) -->
         @can('Create Product Requests')
         <div id="floating-request-basket" style="display: none;">
             <div class="d-flex flex-column align-items-center">
-                <div class="cursor-pointer text-white shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
-                     id="go-to-request" title="Product Request" style="width: 55px; height: 55px; transition: all 0.3s ease;">
-                    <i class="fas fa-file-import fa-lg"></i>
-                    <span id="request-basket-count" class="badge badge-warning position-absolute" style="top: -5px; right: -5px; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid #fff; color: #000;">0</span>
+                <div class="cursor-pointer text-white shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-1 basket-fab" 
+                     id="go-to-request" title="Product Request" style="transition: all 0.3s ease;">
+                    <i class="fas fa-file-import"></i>
+                    <span id="request-basket-count" class="badge position-absolute" style="border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff;">0</span>
                 </div>
-                <button class="btn btn-sm btn-light shadow-sm rounded-circle d-flex align-items-center justify-content-center" 
-                        id="clear-request-basket" title="Clear Request Basket" style="width: 25px; height: 25px; padding: 0; opacity: 0.8;">
-                    <i class="fas fa-times text-danger" style="font-size: 10px;"></i>
+                <button class="btn btn-sm btn-light shadow-sm rounded-circle d-flex align-items-center justify-content-center basket-clear-btn" 
+                        id="clear-request-basket" title="Clear Request Basket" style="padding: 0; opacity: 0.7;">
+                    <i class="fas fa-times text-danger"></i>
                 </button>
             </div>
         </div>
@@ -741,14 +867,14 @@
         @can('Manage Order Place')
         <div id="floating-basket" style="display: none;">
             <div class="d-flex flex-column align-items-center">
-                <div class="cursor-pointer shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-2 basket-fab" 
-                     id="go-to-booking" title="Place Order" style="width: 55px; height: 55px; transition: all 0.3s ease;">
-                    <i class="fas fa-shopping-basket fa-lg"></i>
-                    <span id="basket-count" class="badge badge-danger position-absolute" style="top: -5px; right: -5px; border-radius: 999px; min-width: 22px; height: 22px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid #fff; white-space: nowrap; line-height: 1;">0</span>
+                <div class="cursor-pointer shadow-lg rounded-circle d-flex align-items-center justify-content-center position-relative mb-1 basket-fab" 
+                     id="go-to-booking" title="Place Order" style="transition: all 0.3s ease;">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span id="basket-count" class="badge position-absolute" style="border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #fff; white-space: nowrap;">0</span>
                 </div>
-                <button class="btn btn-sm btn-light shadow-sm rounded-circle d-flex align-items-center justify-content-center" 
-                        id="clear-booking-basket" title="Clear Booking Basket" style="width: 25px; height: 25px; padding: 0; opacity: 0.8;">
-                    <i class="fas fa-trash-alt text-danger" style="font-size: 10px;"></i>
+                <button class="btn btn-sm btn-light shadow-sm rounded-circle d-flex align-items-center justify-content-center basket-clear-btn" 
+                        id="clear-booking-basket" title="Clear Booking Basket" style="padding: 0; opacity: 0.7;">
+                    <i class="fas fa-times text-danger"></i>
                 </button>
             </div>
         </div>
@@ -782,12 +908,6 @@
     <script>
         let initialLoad = true; // Fix ReferenceError in pagination clicks
         $(document).ready(function() {
-            // Ensure modal is properly initialized
-            $('#ratingModal').modal({
-                show: false,
-                backdrop: 'static',
-                keyboard: false
-            });
 
             // Ensure grid is visible on page load - initial state should be opacity 1
             if ($('#product-grid-container').data('loaded')) {
@@ -1333,126 +1453,6 @@
                 initialLoad = false; // Allow pagination to trigger
                 let url = $(this).attr('href');
                 fetchProducts(url, true); // Pass true to scroll to top
-            });
-
-            // Rating Button Click
-            $('body').on('click', '.add-rating-btn', function() {
-                let productId = $(this).data('product-id');
-                let productName = $(this).data('product-name');
-
-                // Reset form
-                $('#ratingForm')[0].reset();
-                $('#ratingValue').val('0');
-                $('#selectedRatingText').text('0');
-                $('.rating-star').removeClass('fas').addClass('far').css('color', '');
-                $('#existingRatingAlert').hide();
-
-                // Set product info
-                $('#ratingProductId').val(productId);
-                $('#ratingProductName').text(productName);
-
-                // Fetch existing rating if any
-                $.ajax({
-                    url: "{{ route('admin.reviews.user-product', ['productId' => 'PRODUCT_ID']) }}".replace('PRODUCT_ID', productId),
-                    method: 'GET',
-                    success: function(response) {
-                        if (response && response.rating) {
-                            $('#ratingValue').val(response.rating);
-                            $('#selectedRatingText').text(response.rating);
-                            $('#ratingComment').val(response.comment || '');
-
-                            // Highlight stars
-                            $('.rating-star').each(function() {
-                                if ($(this).data('rating') <= response.rating) {
-                                    $(this).removeClass('far').addClass('fas').css('color', '#ffc107');
-                                }
-                            });
-
-                            $('#existingRatingAlert').show();
-                        }
-                    }
-                });
-
-                $('#ratingModal').modal('show');
-            });
-
-            // Star Rating Interaction
-            $('body').on('click', '.rating-star', function() {
-                let rating = $(this).data('rating');
-                $('#ratingValue').val(rating);
-                $('#selectedRatingText').text(rating);
-
-                $('.rating-star').each(function() {
-                    if ($(this).data('rating') <= rating) {
-                        $(this).removeClass('far').addClass('fas').css('color', '#ffc107');
-                    } else {
-                        $(this).removeClass('fas').addClass('far').css('color', '');
-                    }
-                });
-            });
-
-            // Star Hover Effect
-            $('body').on('mouseenter', '.rating-star', function() {
-                let rating = $(this).data('rating');
-                $('.rating-star').each(function() {
-                    if ($(this).data('rating') <= rating) {
-                        $(this).css('color', '#ffc107');
-                    } else {
-                        $(this).css('color', '');
-                    }
-                });
-            });
-
-            $('body').on('mouseleave', '.rating-star', function() {
-                let currentRating = $('#ratingValue').val();
-                $('.rating-star').each(function() {
-                    if ($(this).data('rating') <= currentRating) {
-                        $(this).css('color', '#ffc107');
-                    } else {
-                        $(this).css('color', '');
-                    }
-                });
-            });
-
-            // Submit Rating
-            $('#submitRatingBtn').click(function() {
-                let productId = $('#ratingProductId').val();
-                let rating = $('#ratingValue').val();
-                let comment = $('#ratingComment').val();
-
-                if (!rating || rating == 0) {
-                    toastr.error('Please select a rating');
-                    return;
-                }
-
-                $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...');
-
-                $.ajax({
-                    url: "{{ route('admin.reviews.store') }}",
-                    method: 'POST',
-                    data: {
-                        product_id: productId,
-                        rating: rating,
-                        comment: comment,
-                        _token: "{{ csrf_token() }}"
-                    },
-                    success: function(response) {
-                        toastr.success('Rating submitted successfully!');
-                        $('#ratingModal').modal('hide');
-                        // Refresh the grid to show updated ratings
-                        fetchProducts();
-
-                        $('#submitRatingBtn').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Submit Rating');
-                    },
-                    error: function(response) {
-                        let message = 'Error submitting rating';
-                        if (response.responseJSON && response.responseJSON.message) {
-                            message = response.responseJSON.message;
-                        }
-                        toastr.error(message);
-                        $('#submitRatingBtn').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Submit Rating');
-                    }
-                });
             });
 
         })

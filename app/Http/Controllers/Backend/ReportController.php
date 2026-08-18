@@ -89,10 +89,18 @@ class ReportController extends Controller implements HasMiddleware
     /**
      * Best Seller Products — Full paginated list
      * Matches the same logic as productFrequency in orderReport() — completed orders only.
+     * Supports Year & Month filtering.
      */
     public function bestSellers(Request $request)
     {
-        $completedOrderIds = Order::where('status', 'completed')->pluck('id');
+        $orderQuery = Order::where('status', 'completed');
+        if ($request->filled('year')) {
+            $orderQuery->whereYear('placed_at', $request->year);
+        }
+        if ($request->filled('month')) {
+            $orderQuery->whereMonth('placed_at', $request->month);
+        }
+        $completedOrderIds = $orderQuery->pluck('id');
 
         $query = OrderItem::whereIn('order_id', $completedOrderIds)
             ->leftJoin('products', 'order_items.product_id', '=', 'products.id')
@@ -132,6 +140,12 @@ class ReportController extends Controller implements HasMiddleware
             ->when($request->filled('child_category_id'), fn($q) => $q->where('products.child_category_id', $request->child_category_id))
             ->first();
 
+        $availableYears = Order::where('status', 'completed')
+            ->selectRaw('YEAR(placed_at) as year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
+
         $categories = Category::where('status', 1)->get();
         $settings = GeneralSetting::first();
 
@@ -150,11 +164,12 @@ class ReportController extends Controller implements HasMiddleware
             ]);
         }
 
-        return view('backend.reports.best_sellers', compact('products', 'grandTotals', 'categories', 'settings'));
+        return view('backend.reports.best_sellers', compact('products', 'grandTotals', 'categories', 'settings', 'availableYears'));
     }
 
     /**
      * Top Customers — Full paginated list ordered by total value
+     * Supports Year/Month filter + Monthly Trend tab
      */
     public function topCustomers(Request $request)
     {
@@ -176,19 +191,69 @@ class ReportController extends Controller implements HasMiddleware
             );
         }
 
-        $grandTotals = Order::where('status', 'completed')
-            ->has('user')
-            ->selectRaw('
-                COUNT(DISTINCT user_id) as total_customers,
-                COUNT(*) as grand_total_orders,
-                COALESCE(SUM(total_amount), 0) as grand_total_value
-            ')->first();
+        // Year / Month filter for All Customers tab
+        if ($request->filled('year')) {
+            $query->whereYear('placed_at', $request->year);
+        }
+        if ($request->filled('month')) {
+            $query->whereMonth('placed_at', $request->month);
+        }
+
+        // Grand totals (respects year/month filter)
+        $grandQuery = Order::where('status', 'completed')->has('user');
+        if ($request->filled('year'))  $grandQuery->whereYear('placed_at', $request->year);
+        if ($request->filled('month')) $grandQuery->whereMonth('placed_at', $request->month);
+
+        $grandTotals = $grandQuery->selectRaw('
+            COUNT(DISTINCT user_id) as total_customers,
+            COUNT(*) as grand_total_orders,
+            COALESCE(SUM(total_amount), 0) as grand_total_value
+        ')->first();
 
         $customers = $query->orderByDesc('total_value')->paginate(30)->withQueryString();
 
+        // Available years for filter dropdown
+        $availableYears = Order::where('status', 'completed')
+            ->selectRaw('YEAR(placed_at) as year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
+
         $settings = GeneralSetting::first();
 
-        return view('backend.reports.top_customers', compact('customers', 'grandTotals', 'settings'));
+        // Monthly Trend — all customers grouped by month (skipped for AJAX)
+        $monthlyTrend = collect(); // commented out for now — activate when needed
+        // $monthlyTrend = Order::where('status', 'completed')
+        //     ->has('user')
+        //     ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, user_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_value")
+        //     ->with('user:id,name,outlet_name,email')
+        //     ->groupBy('month', 'user_id')
+        //     ->orderBy('month', 'desc')->orderByDesc('total_value')
+        //     ->get()->groupBy('month');
+
+        if ($request->ajax()) {
+            $tableHtml = view('backend.reports.partials.top_customers_table',
+                compact('customers', 'settings')
+            )->render();
+
+            $paginationHtml = $customers->links()->render();
+
+            return response()->json([
+                'table'            => $tableHtml,
+                'pagination'       => (string) $paginationHtml,
+                'total_customers'  => number_format($grandTotals->total_customers ?? 0),
+                'total_orders'     => number_format($grandTotals->grand_total_orders ?? 0),
+                'total_value'      => formatWithCurrency($grandTotals->grand_total_value ?? 0),
+                'showing_from'     => $customers->firstItem() ?? 0,
+                'showing_to'       => $customers->lastItem() ?? 0,
+                'showing_total'    => $customers->total(),
+            ]);
+        }
+
+        return view('backend.reports.top_customers', compact(
+            'customers', 'grandTotals', 'settings',
+            'monthlyTrend', 'availableYears'
+        ));
     }
 
     /**
@@ -250,6 +315,54 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         return view('backend.reports.stock', compact('products', 'categories', 'brands', 'totalQty', 'totalValue', 'potentialRevenue', 'potentialProfit', 'settings'));
+    }
+
+    /**
+     * Current Stock Report (Unified)
+     */
+    public function currentStockReport(Request $request)
+    {
+        $query = Product::with(['category', 'vendor', 'inventoryStocks'])
+            ->withSum('inventoryStocks', 'quantity')
+            ->where('status', 1);
+
+        // Filter by Category
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by Stock Status
+        if ($request->stock_status) {
+            if ($request->stock_status == 'in_stock') {
+                $query->having('inventory_stocks_sum_quantity', '>', 0);
+            } elseif ($request->stock_status == 'out_of_stock') {
+                $query->havingRaw('inventory_stocks_sum_quantity <= 0 OR inventory_stocks_sum_quantity IS NULL');
+            }
+        }
+
+        // Filter by Vendor
+        if ($request->vendor_id) {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+
+        // Vendor-wala products first (NULL vendor_id LAST), then latest product id
+        $products = $query->orderByRaw('CASE WHEN vendor_id IS NULL THEN 1 ELSE 0 END ASC')
+                          ->orderBy('vendor_id', 'asc')
+                          ->orderBy('id', 'desc')
+                          ->paginate(30)->withQueryString();
+        $categories = Category::where('status', 1)->orderBy('id', 'desc')->get();
+        $vendors = Vendor::where('status', 1)->orderBy('id', 'desc')->get();
+        $settings = GeneralSetting::first();
+
+        return view('backend.reports.current_stock', compact('products', 'categories', 'vendors', 'settings'));
+    }
+
+    /**
+     * Export Current Stock Report
+     */
+    public function exportCurrentStockReport(Request $request)
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CurrentStockExport($request->category_id, $request->stock_status, $request->vendor_id), 'current-stock-report-' . now()->format('Y-m-d') . '.xlsx');
     }
 
     /**
@@ -691,22 +804,15 @@ class ReportController extends Controller implements HasMiddleware
                     return $item;
                 });
 
-            if ($hasDateFilter) {
-                $monthlyTrend = Order::where('status', 'completed')
-                    ->where('user_id', $request->user_id)
-                    ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
-                    ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
-                    ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
-                    ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
-                    ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            } else {
-                $monthlyTrend = (clone $issueBase)
-                    ->selectRaw("COALESCE(DATE_FORMAT(orders.placed_at, '%Y-%m'), DATE_FORMAT(issues.created_at, '%Y-%m')) as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(issue_items.quantity * COALESCE(issue_items.unit_price, 0)),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            }
+            $monthlyTrend = Order::where('status', 'completed')
+                ->where('user_id', $request->user_id)
+                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+                ->groupBy('month')->orderBy('month', 'desc')
+                ->get();
 
             return view('backend.reports.orders', compact(
                 'user', 'users', 'summary', 'issueStats', 'orderIds',
@@ -733,22 +839,15 @@ class ReportController extends Controller implements HasMiddleware
             ->orderByDesc('times_ordered')
             ->paginate(30)->withQueryString();
 
-        if ($hasDateFilter) {
-            $monthlyTrend = Order::where('status', 'completed')
-                ->when($request->filled('user_id'), fn($q) => $q->where('user_id', $request->user_id))
-                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
-                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
-                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
-                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
-                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
-                ->groupBy('month')->orderBy('month')
-                ->get();
-        } else {
-            $monthlyTrend = (clone $issueBase)
-                ->selectRaw("COALESCE(DATE_FORMAT(orders.placed_at, '%Y-%m'), DATE_FORMAT(issues.created_at, '%Y-%m')) as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(issue_items.quantity * COALESCE(issue_items.unit_price, 0)),0) as total_amount")
-                ->groupBy('month')->orderBy('month')
-                ->get();
-        }
+        $monthlyTrend = Order::where('status', 'completed')
+            ->when($request->filled('user_id'), fn($q) => $q->where('user_id', $request->user_id))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+            ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+            ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+            ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+            ->groupBy('month')->orderBy('month', 'desc')
+            ->get();
 
         $userSummary = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
             ->where(function ($q) use ($orderIds, $request) {
@@ -911,29 +1010,32 @@ class ReportController extends Controller implements HasMiddleware
                 });
 
             // Monthly trend
-            if ($hasDateFilter) {
-                $monthlyTrend = Order::where('status', 'completed')
-                    ->where('user_id', $request->user_id)
-                    ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
-                    ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
-                    ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
-                    ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
-                    ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            } else {
-                $monthlyTrend = (clone $issueBase)
-                    ->selectRaw("COALESCE(DATE_FORMAT(orders.placed_at, '%Y-%m'), DATE_FORMAT(issues.created_at, '%Y-%m')) as month, COUNT(DISTINCT orders.id) as orders_count, COALESCE(SUM(issue_items.quantity * COALESCE(issue_items.unit_price, 0)),0) as total_amount")
-                    ->groupBy('month')->orderBy('month')
-                    ->get();
-            }
+            $monthlyTrend = Order::where('status', 'completed')
+                ->where('user_id', $request->user_id)
+                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+                ->groupBy('month')->orderBy('month', 'desc')
+                ->get();
 
             $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
                 'user', 'summary', 'issueStats', 'paymentStats', 'totalDue', 'issueValue', 'pendingValue',
-                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend', 'settings', 'request', 'totalRevenue'
+                'orders', 'issues', 'payments', 'productComparison', 'monthlyTrend', 'settings', 'request', 'totalRevenue', 'orderIds'
             ))->setPaper('a4', 'landscape');
         } else {
             // ─── Global PDF ───────────────────────────────────────
+            $monthlyTrend = Order::where('status', 'completed')
+                ->when($request->filled('user_id'), fn($q) => $q->where('user_id', $request->user_id))
+                ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at', '>=', $request->date_from))
+                ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at', '<=', $request->date_to))
+                ->when($request->filled('month'), fn($q) => $q->whereMonth('placed_at', $request->month))
+                ->when($request->filled('year'), fn($q) => $q->whereYear('placed_at', $request->year))
+                ->selectRaw("DATE_FORMAT(placed_at, '%Y-%m') as month, COUNT(*) as orders_count, COALESCE(SUM(total_amount),0) as total_amount")
+                ->groupBy('month')->orderBy('month', 'desc')
+                ->get();
+
             $issueValue = Issue::leftJoin('issue_items', 'issues.id', '=', 'issue_items.issue_id')
                 ->where(function ($q) use ($request) {
                     if ($request->filled('date_from')) $q->whereDate('issues.created_at', '>=', $request->date_from);
@@ -963,7 +1065,7 @@ class ReportController extends Controller implements HasMiddleware
                 ->keyBy('user_id');
 
             $pdf = Pdf::loadView('backend.reports.orders_pdf', compact(
-                'summary', 'issueStats', 'productFrequency', 'userSummary', 'settings', 'request', 'orderIds', 'issueValue', 'totalRevenue'
+                'summary', 'issueStats', 'productFrequency', 'monthlyTrend', 'userSummary', 'settings', 'request', 'orderIds', 'issueValue', 'totalRevenue'
             ))->setPaper('a4', 'landscape');
         }
 
