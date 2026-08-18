@@ -68,11 +68,12 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
 
                 $row = 1;
 
-                // ── 2. SITE / COMPANY HEADER SECTION ──
-                $sheet->mergeCells("A1:A3");
-                $sheet->getRowDimension(1)->setRowHeight(25);
+                // ── 2. SITE / COMPANY HEADER SECTION (Left: Logo | Right: Site Info) ──
+                $sheet->mergeCells("A1:B3");
+                $sheet->getRowDimension(1)->setRowHeight(22);
                 $sheet->getRowDimension(2)->setRowHeight(18);
                 $sheet->getRowDimension(3)->setRowHeight(18);
+                $sheet->getRowDimension(4)->setRowHeight(10); // Blank spacing row
 
                 $logoPath = null;
                 if (!empty($settings?->site_logo)) {
@@ -91,21 +92,22 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 if ($logoPath) {
                     $dwg = new Drawing();
                     $dwg->setPath($logoPath);
-                    $dwg->setHeight(55);
+                    $dwg->setHeight(48);
                     $dwg->setCoordinates('A1');
-                    $dwg->setOffsetX(8);
+                    $dwg->setOffsetX(6);
                     $dwg->setOffsetY(4);
                     $dwg->setWorksheet($sheet);
                 }
 
-                // Company Name
-                $sheet->mergeCells("B1:F1");
-                $sheet->setCellValue("B1", strtoupper($settings->site_name ?? 'b2bviking'));
-                $sheet->getStyle("B1")->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF1F3864');
-                $sheet->getStyle("B1")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                // Right Side: Company Details (D1:F3)
+                // Row 1: Site Name
+                $sheet->mergeCells("D1:F1");
+                $sheet->setCellValue("D1", strtoupper($settings->site_name ?? 'b2bviking'));
+                $sheet->getStyle("D1")->getFont()->setBold(true)->setSize(12)->getColor()->setARGB('FF1F3864');
+                $sheet->getStyle("D1")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT)->setVertical(Alignment::VERTICAL_CENTER);
 
-                // Company Contact (Email & Phone)
-                $sheet->mergeCells("B2:F2");
+                // Row 2: Email & Phone
+                $sheet->mergeCells("D2:F2");
                 $contactInfo = [];
                 if (!empty($settings?->contact_email)) {
                     $contactInfo[] = 'Email: ' . $settings->contact_email;
@@ -113,15 +115,15 @@ class BookingOrderExport implements FromArray, WithCustomStartCell, ShouldAutoSi
                 if (!empty($settings?->phone)) {
                     $contactInfo[] = 'Phone: ' . $settings->phone;
                 }
-                $sheet->setCellValue("B2", !empty($contactInfo) ? implode('   |   ', $contactInfo) : '');
-                $sheet->getStyle("B2")->getFont()->setSize(10)->getColor()->setARGB('FF555555');
-                $sheet->getStyle("B2")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->setCellValue("D2", !empty($contactInfo) ? implode('  |  ', $contactInfo) : '');
+                $sheet->getStyle("D2")->getFont()->setSize(9.5)->getColor()->setARGB('FF555555');
+                $sheet->getStyle("D2")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT)->setVertical(Alignment::VERTICAL_CENTER);
 
-                // Company Address
-                $sheet->mergeCells("B3:F3");
-                $sheet->setCellValue("B3", !empty($settings?->address) ? ('Address: ' . $settings->address) : '');
-                $sheet->getStyle("B3")->getFont()->setSize(9)->getColor()->setARGB('FF777777');
-                $sheet->getStyle("B3")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                // Row 3: Address
+                $sheet->mergeCells("D3:F3");
+                $sheet->setCellValue("D3", !empty($settings?->address) ? ('Address: ' . $settings->address) : '');
+                $sheet->getStyle("D3")->getFont()->setSize(9)->getColor()->setARGB('FF777777');
+                $sheet->getStyle("D3")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT)->setVertical(Alignment::VERTICAL_CENTER);
 
                 $row = 5;
 
