@@ -70,7 +70,7 @@ class BookingDataTable extends DataTable
         return $model->newQuery()
             ->join('vendors', 'bookings.vendor_id', '=', 'vendors.id')
             ->select(
-                DB::raw('MIN(bookings.id) as id'),
+                DB::raw('MAX(bookings.id) as id'),
                 'bookings.booking_no',
                 'bookings.vendor_id',
                 'bookings.status',
@@ -79,7 +79,8 @@ class BookingDataTable extends DataTable
                 DB::raw('count(bookings.product_id) as product_count'),
                 DB::raw('sum(bookings.qty) as total_qty')
             )
-            ->groupBy('bookings.booking_no', 'bookings.vendor_id', 'bookings.status', 'bookings.shipping_method', 'vendors.shop_name');
+            ->groupBy('bookings.booking_no', 'bookings.vendor_id', 'bookings.status', 'bookings.shipping_method', 'vendors.shop_name')
+            ->orderByDesc(DB::raw('MAX(bookings.id)'));
     }
 
     public function html(): HtmlBuilder
@@ -88,7 +89,7 @@ class BookingDataTable extends DataTable
             ->setTableId('booking-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->orderBy(0)
+            ->orderBy(0, 'desc')
             ->selectStyleSingle()
             ->buttons([
                 Button::make('excel'),
@@ -101,7 +102,7 @@ class BookingDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            // Column::make('id'),
+            Column::make('id')->visible(false),
             Column::make('booking_no')->title('Booking No'),
             Column::make('vendor')->title('Vendor'),
             Column::computed('product_count')->title('Products')
