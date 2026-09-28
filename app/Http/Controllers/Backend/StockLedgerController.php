@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockLedger;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class StockLedgerController extends Controller
@@ -13,7 +15,21 @@ class StockLedgerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = StockLedger::with(['product', 'variant', 'outlet'])->select('stock_ledgers.*');
+            $data = StockLedger::with(['product.category', 'product.vendor', 'variant', 'outlet'])->select('stock_ledgers.*');
+
+            if ($request->filled('vendor_id')) {
+                $vendorId = $request->integer('vendor_id');
+                $data->whereHas('product', function($q) use ($vendorId) {
+                    $q->where('vendor_id', $vendorId);
+                });
+            }
+
+            if ($request->filled('category_id')) {
+                $categoryId = $request->integer('category_id');
+                $data->whereHas('product', function($q) use ($categoryId) {
+                    $q->where('category_id', $categoryId);
+                });
+            }
 
             if ($request->filled('product_id')) {
                 $data->where('product_id', $request->integer('product_id'));
@@ -51,6 +67,15 @@ class StockLedgerController extends Controller
                 $data->where('outlet_id', $request->integer('user_id'));
             }
 
+            // Calculate overall totals based on applied filters
+            $totalsQuery = (clone $data)->without(['product', 'variant', 'outlet']);
+            $totalsQuery->getQuery()->columns = null;
+            $totals = $totalsQuery->selectRaw('COALESCE(SUM(in_qty), 0) as total_in, COALESCE(SUM(out_qty), 0) as total_out, COUNT(*) as total_records')->first();
+            $totalIn = (float) ($totals->total_in ?? 0);
+            $totalOut = (float) ($totals->total_out ?? 0);
+            $totalBalance = $totalIn - $totalOut;
+            $totalRecords = (int) ($totals->total_records ?? 0);
+
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('date', function($row){
@@ -60,8 +85,21 @@ class StockLedgerController extends Controller
                     $url = $row->product && $row->product->thumb_image ? asset('storage/'.$row->product->thumb_image) : asset('uploads/default.jpg');
                     return '<img src="'.$url.'" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">';
                 })
+                ->addColumn('category_name', function($row){
+                    if ($row->product && $row->product->category) {
+                        return '<span class="badge badge-info">' . e($row->product->category->name) . '</span>';
+                    }
+                    return '<span class="badge badge-light">-</span>';
+                })
+                ->filterColumn('category_name', function($query, $keyword) {
+                    $query->whereHas('product.category', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('product_name', function($row){
-                    return $row->product->name ?? 'Deleted';
+                    $name = e($row->product->name ?? 'Deleted');
+                    $vendor = $row->product && $row->product->vendor ? '<small class="text-muted d-block"><i class="fas fa-store mr-1 text-secondary"></i>' . e($row->product->vendor->shop_name) . '</small>' : '';
+                    return '<div><strong>' . $name . '</strong>' . $vendor . '</div>';
                 })
                 ->filterColumn('product_name', function($query, $keyword) {
                     $query->whereHas('product', function($q) use ($keyword) {
@@ -103,28 +141,41 @@ class StockLedgerController extends Controller
                     else
                         return '<div class="badge badge-danger">OUT</div>';
                 })
-                ->rawColumns(['image', 'type', 'outlet'])
+                ->rawColumns(['image', 'category_name', 'product_name', 'type', 'outlet'])
+                ->with('totals', [
+                    'total_in' => number_format($totalIn, 2, '.', ''),
+                    'total_out' => number_format($totalOut, 2, '.', ''),
+                    'total_balance' => number_format($totalBalance, 2, '.', ''),
+                    'total_records' => $totalRecords,
+                ])
                 ->make(true);
         }
 
+        $vendors = Vendor::where('status', 1)->orderBy('shop_name')->get(['id', 'shop_name']);
+        $categories = Category::where('status', 1)->orderBy('name')->get(['id', 'name']);
+
         $products = Product::query()
-            ->select('products.id', 'products.name')
+            ->select('products.id', 'products.name', 'products.category_id', 'products.vendor_id')
             ->whereIn('products.id', StockLedger::query()->select('product_id')->whereNotNull('product_id')->distinct())
             ->with(['variants' => function ($query) {
                 $query->select('id', 'product_id', 'name', 'color', 'size')
                     ->whereIn('id', StockLedger::query()->select('variant_id')->whereNotNull('variant_id')->distinct());
             }])
-            ->orderByDesc('products.id')
+            ->orderBy('products.name')
             ->get();
 
         $ledgerProducts = $products->mapWithKeys(function ($product) {
             return [
-                (string) $product->id => $product->variants->map(function ($variant) {
-                    return [
-                        'id' => $variant->id,
-                        'label' => $variant->name ?: trim(collect([$variant->color, $variant->size])->filter()->implode(' ')) ?: 'Variant #' . $variant->id,
-                    ];
-                })->values()->all(),
+                (string) $product->id => [
+                    'category_id' => $product->category_id,
+                    'vendor_id' => $product->vendor_id,
+                    'variants' => $product->variants->map(function ($variant) {
+                        return [
+                            'id' => $variant->id,
+                            'label' => $variant->name ?: trim(collect([$variant->color, $variant->size])->filter()->implode(' ')) ?: 'Variant #' . $variant->id,
+                        ];
+                    })->values()->all(),
+                ],
             ];
         })->toArray();
 
@@ -136,6 +187,6 @@ class StockLedgerController extends Controller
 
         $users = User::role(['Outlet User', 'User'])->get(['id', 'name', 'outlet_name']);
 
-        return view('backend.stock_ledger.index', compact('products', 'ledgerProducts', 'referenceTypes', 'users'));
+        return view('backend.stock_ledger.index', compact('products', 'ledgerProducts', 'referenceTypes', 'users', 'vendors', 'categories'));
     }
 }

@@ -43,10 +43,38 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
+                                <div class="col-md-3 col-sm-6 col-12 mb-3">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
-                                            <i class="fas fa-box text-primary mr-1"></i>
+                                            <i class="fas fa-store text-primary mr-1"></i>
+                                            Vendor
+                                        </label>
+                                        <select id="filter-vendor" class="form-control form-control-sm select2" data-placeholder="Select Vendor">
+                                            <option value="">All Vendors</option>
+                                            @foreach ($vendors as $vendor)
+                                                <option value="{{ $vendor->id }}">{{ $vendor->shop_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                    <div class="form-group mb-0">
+                                        <label class="font-weight-bold text-dark">
+                                            <i class="fas fa-folder text-warning mr-1"></i>
+                                            Category
+                                        </label>
+                                        <select id="filter-category" class="form-control form-control-sm select2" data-placeholder="Select Category">
+                                            <option value="">All Categories</option>
+                                            @foreach ($categories as $category)
+                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                    <div class="form-group mb-0">
+                                        <label class="font-weight-bold text-dark">
+                                            <i class="fas fa-box text-success mr-1"></i>
                                             Product
                                         </label>
                                         <select id="filter-product" class="form-control form-control-sm select2" data-placeholder="Select Product">
@@ -57,7 +85,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
+                                <div class="col-md-3 col-sm-6 col-12 mb-3">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
                                             <i class="fas fa-tags text-info mr-1"></i>
@@ -71,7 +99,7 @@
                                 <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
-                                            <i class="fas fa-file-alt text-warning mr-1"></i>
+                                            <i class="fas fa-file-alt text-secondary mr-1"></i>
                                             Reference Type
                                         </label>
                                         <select id="filter-reference-type" class="form-control form-control-sm">
@@ -82,10 +110,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
+                                <div class="col-md-2 col-sm-6 col-12 mb-3 mb-md-0">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
-                                            <i class="fas fa-arrows-alt-h text-success mr-1"></i>
+                                            <i class="fas fa-arrows-alt-h text-primary mr-1"></i>
                                             Movement
                                         </label>
                                         <select id="filter-movement-type" class="form-control form-control-sm">
@@ -95,7 +123,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
+                                <div class="col-md-2 col-sm-6 col-12 mb-3 mb-md-0">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
                                             <i class="fas fa-calendar-alt text-primary mr-1"></i>
@@ -104,7 +132,7 @@
                                         <input type="date" id="filter-date-from" class="form-control form-control-sm">
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-sm-6 col-12 mb-3 mb-md-0">
+                                <div class="col-md-2 col-sm-6 col-12 mb-3 mb-md-0">
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">
                                             <i class="fas fa-calendar-alt text-primary mr-1"></i>
@@ -117,9 +145,73 @@
                                     <div class="form-group mb-0">
                                         <label class="font-weight-bold text-dark">&nbsp;</label>
                                         <div>
-                                            <button type="button" class="btn btn-danger btn-sm px-4 shadow-sm" id="reset-ledger-filters">
+                                            <button type="button" class="btn btn-danger btn-sm w-100 shadow-sm" id="reset-ledger-filters">
                                                 <i class="fas fa-undo mr-1"></i> Reset 
                                             </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Summary Stat Cards --}}
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3 mb-lg-0">
+                            <div class="card shadow-sm border-0 mb-0 py-2" style="border-radius: 10px; border-left: 4px solid #1cc88a !important;">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total In Qty</div>
+                                            <h5 class="font-weight-bold text-success mb-0" id="stat-total-in">0.00</h5>
+                                        </div>
+                                        <div class="p-2 bg-success text-white rounded-circle shadow-sm" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-arrow-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3 mb-lg-0">
+                            <div class="card shadow-sm border-0 mb-0 py-2" style="border-radius: 10px; border-left: 4px solid #e74a3b !important;">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Out Qty</div>
+                                            <h5 class="font-weight-bold text-danger mb-0" id="stat-total-out">0.00</h5>
+                                        </div>
+                                        <div class="p-2 bg-danger text-white rounded-circle shadow-sm" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-arrow-up"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3 mb-lg-0">
+                            <div class="card shadow-sm border-0 mb-0 py-2" style="border-radius: 10px; border-left: 4px solid #4e73df !important;">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Balance Qty</div>
+                                            <h5 class="font-weight-bold text-primary mb-0" id="stat-total-balance">0.00</h5>
+                                        </div>
+                                        <div class="p-2 bg-primary text-white rounded-circle shadow-sm" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-balance-scale"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                            <div class="card shadow-sm border-0 mb-0 py-2" style="border-radius: 10px; border-left: 4px solid #36b9cc !important;">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Movements Count</div>
+                                            <h5 class="font-weight-bold text-dark mb-0" id="stat-total-records">0</h5>
+                                        </div>
+                                        <div class="p-2 bg-info text-white rounded-circle shadow-sm" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-list-ol"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +245,8 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th class="font-weight-bold text-dark">Date</th>
-                                            <th class="font-weight-bold text-dark text-center" width="80">Image</th>
+                                            <th class="font-weight-bold text-dark text-center" width="60">Image</th>
+                                            <th class="font-weight-bold text-dark">Category</th>
                                             <th class="font-weight-bold text-dark">Product</th>
                                             <th class="font-weight-bold text-dark">Variant</th>
                                             <th class="font-weight-bold text-dark">Reference</th>
@@ -165,6 +258,20 @@
                                     </thead>
                                     <tbody>
                                     </tbody>
+                                    <tfoot class="bg-light border-top">
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                            <th class="text-right font-weight-bold text-dark" style="font-size: 0.9rem;">Total:</th>
+                                            <th class="text-center font-weight-bold text-success" id="footer-total-in" style="font-size: 0.9rem;">0.00</th>
+                                            <th class="text-center font-weight-bold text-danger" id="footer-total-out" style="font-size: 0.9rem;">0.00</th>
+                                            <th class="text-center font-weight-bold text-primary" id="footer-total-balance" style="font-size: 0.9rem;">0.00</th>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>
@@ -619,12 +726,47 @@
 @push('scripts')
 <script>
     const ledgerProducts = @json($ledgerProducts);
+    const allProducts = @json($products);
+
+    function filterProductDropdown() {
+        const selectedVendor = $('#filter-vendor').val();
+        const selectedCategory = $('#filter-category').val();
+        const currentProduct = $('#filter-product').val();
+
+        const $product = $('#filter-product');
+        $product.empty().append('<option value="">All Products</option>');
+
+        let currentProductStillValid = false;
+
+        allProducts.forEach(function (product) {
+            let matchVendor = !selectedVendor || String(product.vendor_id) === String(selectedVendor);
+            let matchCategory = !selectedCategory || String(product.category_id) === String(selectedCategory);
+
+            if (matchVendor && matchCategory) {
+                $product.append(new Option(product.name, product.id));
+                if (String(product.id) === String(currentProduct)) {
+                    currentProductStillValid = true;
+                }
+            }
+        });
+
+        if (currentProduct && currentProductStillValid) {
+            $product.val(currentProduct);
+        } else {
+            $product.val('');
+            renderVariantOptions('');
+        }
+
+        $product.trigger('change.select2');
+    }
 
     function renderVariantOptions(productId) {
         const $variant = $('#filter-variant');
-        const variants = productId && Object.prototype.hasOwnProperty.call(ledgerProducts, String(productId))
-            ? ledgerProducts[String(productId)]
-            : [];
+        let variants = [];
+        if (productId && Object.prototype.hasOwnProperty.call(ledgerProducts, String(productId))) {
+            const entry = ledgerProducts[String(productId)];
+            variants = Array.isArray(entry) ? entry : (entry.variants || []);
+        }
 
         $variant.empty().append('<option value="">All Variants</option>');
 
@@ -643,6 +785,48 @@
         }
     });
 
+    const exportOptions = {
+        columns: [0, 2, 3, 4, 5, 6, 7, 8, 9],
+        footer: true,
+        format: {
+            body: function (data, row, column, node) {
+                return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
+            },
+            footer: function (data, row, column, node) {
+                return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
+            }
+        }
+    };
+
+    function newExportAction(e, dt, button, config) {
+        var self = this;
+        var oldStart = dt.settings()[0]._iDisplayStart;
+        dt.one('preXhr', function (e, s, data) {
+            data.start = 0;
+            data.length = -1;
+            dt.one('preDraw', function (e, settings) {
+                if (button[0].className.indexOf('buttons-copy') >= 0) {
+                    $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button, config);
+                } else if (button[0].className.indexOf('buttons-excel') >= 0) {
+                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
+                } else if (button[0].className.indexOf('buttons-csv') >= 0) {
+                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
+                } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
+                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button, config);
+                } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                    $.fn.dataTable.ext.buttons.print.action.call(self, e, dt, button, config);
+                }
+                settings._iDisplayStart = oldStart;
+                data.start = oldStart;
+                setTimeout(function () {
+                    dt.ajax.reload();
+                }, 0);
+                return false;
+            });
+        });
+        dt.ajax.reload();
+    }
+
     const ledgerTable = $("#table-ledger").DataTable({
         dom: '<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"f>>' +
              '<"row"<"col-sm-12"tr>>' +
@@ -650,26 +834,36 @@
         buttons: [
             {
                 extend: 'copy',
-                className: 'btn btn-primary btn-sm'
+                className: 'btn btn-primary btn-sm',
+                exportOptions: exportOptions,
+                action: newExportAction
             },
             {
                 extend: 'csv',
-                className: 'btn btn-primary btn-sm'
+                className: 'btn btn-primary btn-sm',
+                exportOptions: exportOptions,
+                action: newExportAction
             },
             {
                 extend: 'excel',
                 className: 'btn btn-primary btn-sm',
-                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report'
+                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report',
+                exportOptions: exportOptions,
+                action: newExportAction
             },
             {
                 extend: 'pdf',
                 className: 'btn btn-primary btn-sm',
-                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report'
+                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report',
+                exportOptions: exportOptions,
+                action: newExportAction
             },
             {
                 extend: 'print',
                 className: 'btn btn-primary btn-sm',
-                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report'
+                title: '{{ \App\Models\GeneralSetting::first()->site_name ?? "Inventory System" }} - Stock Ledger Report',
+                exportOptions: exportOptions,
+                action: newExportAction
             }
         ],
         processing: true,
@@ -677,6 +871,8 @@
         ajax: {
             url: "{{ route('admin.stock-ledger.index') }}",
             data: function (d) {
+                d.vendor_id = $('#filter-vendor').val();
+                d.category_id = $('#filter-category').val();
                 d.product_id = $('#filter-product').val();
                 d.variant_id = $('#filter-variant').val();
                 d.reference_type = $('#filter-reference-type').val();
@@ -688,13 +884,14 @@
         columns: [
             {data: 'date', name: 'created_at'},
             {data: 'image', name: 'image', orderable: false, searchable: false, className: 'text-center'},
+            {data: 'category_name', name: 'category_name'},
             {data: 'product_name', name: 'product_name'},
             {data: 'variant_name', name: 'variant_name'},
             {data: 'reference', name: 'reference'},
             {data: 'type', name: 'type', orderable: false, searchable: false, className: 'text-center'},
-            {data: 'in_qty', name: 'in_qty', className: 'text-center'},
-            {data: 'out_qty', name: 'out_qty', className: 'text-center'},
-            {data: 'balance_qty', name: 'balance_qty', className: 'text-center font-weight-bold'}
+            {data: 'in_qty', name: 'in_qty', className: 'text-center font-weight-bold text-success'},
+            {data: 'out_qty', name: 'out_qty', className: 'text-center font-weight-bold text-danger'},
+            {data: 'balance_qty', name: 'balance_qty', className: 'text-center font-weight-bold text-dark'}
         ],
         order: [[0, "desc"]],
         pageLength: 10,
@@ -708,6 +905,31 @@
         }
     });
 
+    // Update Totals on AJAX completion
+    ledgerTable.on('xhr', function () {
+        const json = ledgerTable.ajax.json();
+        if (json && json.totals) {
+            const inFormatted = Number(json.totals.total_in).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const outFormatted = Number(json.totals.total_out).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const balFormatted = Number(json.totals.total_balance).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const countFormatted = Number(json.totals.total_records).toLocaleString();
+
+            $('#stat-total-in').text(inFormatted);
+            $('#stat-total-out').text(outFormatted);
+            $('#stat-total-balance').text(balFormatted);
+            $('#stat-total-records').text(countFormatted);
+
+            $('#footer-total-in').text(inFormatted);
+            $('#footer-total-out').text(outFormatted);
+            $('#footer-total-balance').text(balFormatted);
+        }
+    });
+
+    $('#filter-vendor, #filter-category').on('change', function () {
+        filterProductDropdown();
+        ledgerTable.ajax.reload();
+    });
+
     $('#filter-product').on('change', function () {
         renderVariantOptions($(this).val());
         ledgerTable.ajax.reload();
@@ -718,11 +940,15 @@
     });
 
     $('#reset-ledger-filters').on('click', function () {
+        $('#filter-vendor').val('').trigger('change.select2');
+        $('#filter-category').val('').trigger('change.select2');
         $('#filter-product').val('').trigger('change.select2');
+        $('#filter-variant').val('').trigger('change.select2');
         $('#filter-reference-type').val('');
         $('#filter-movement-type').val('');
         $('#filter-date-from').val('');
         $('#filter-date-to').val('');
+        filterProductDropdown();
         renderVariantOptions('');
         ledgerTable.ajax.reload();
     });
