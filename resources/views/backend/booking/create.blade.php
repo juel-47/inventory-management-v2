@@ -20,7 +20,7 @@
                         <!-- Section 1: Vendor & Global Status -->
                         <div class="card card-primary">
                             <div class="card-header">
-                                <h4>General Informations</h4>
+                                <h4>General Information</h4>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -83,7 +83,8 @@
                                             <option value="">-- Search Product --</option>
                                             @foreach ($products as $product)
                                                 <option value="{{ $product->id }}">{{ $product->name }}
-                                                    ({{ $product->product_number }})</option>
+                                                    ({{ $product->product_number }})
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -218,47 +219,47 @@
 
         /* Mobile Responsive Table Breakdown */
         /* @media (max-width: 767.98px) {
-                #basket_table thead { display: none; }
-                #basket_table, #basket_table tbody, #basket_table tr, #basket_table td {
-                    display: block;
-                    width: 100%;
-                }
-                #basket_table tr.basket-row {
-                    margin-bottom: 15px;
-                    border: 1px solid #e4e6fc !important;
-                    border-radius: 10px;
-                    padding: 15px;
-                    background: #fff;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-                }
-                #basket_table td {
-                    border: none !important;
-                    padding: 8px 0 !important;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    text-align: right !important;
-                }
-                #basket_table td:before {
-                    content: attr(data-label);
-                    font-weight: 800;
-                    flex-basis: 40%;
-                    text-align: left;
-                    font-size: 11px;
-                    color: #888;
-                    text-transform: uppercase;
-                }
-                #basket_table td:first-child {
-                    justify-content: center;
-                    border-bottom: 1px solid #eee !important;
-                    padding-bottom: 15px !important;
-                    margin-bottom: 10px;
-                }
-                #basket_table td:first-child:before { display: none; }
-                #basket_table td .basket-product-name { font-size: 16px; }
-                #basket_table td .variant-qty-input { width: 100px !important; }
-                #basket_table td.text-center { justify-content: space-between; }
-            } */
+                    #basket_table thead { display: none; }
+                    #basket_table, #basket_table tbody, #basket_table tr, #basket_table td {
+                        display: block;
+                        width: 100%;
+                    }
+                    #basket_table tr.basket-row {
+                        margin-bottom: 15px;
+                        border: 1px solid #e4e6fc !important;
+                        border-radius: 10px;
+                        padding: 15px;
+                        background: #fff;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+                    }
+                    #basket_table td {
+                        border: none !important;
+                        padding: 8px 0 !important;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        text-align: right !important;
+                    }
+                    #basket_table td:before {
+                        content: attr(data-label);
+                        font-weight: 800;
+                        flex-basis: 40%;
+                        text-align: left;
+                        font-size: 11px;
+                        color: #888;
+                        text-transform: uppercase;
+                    }
+                    #basket_table td:first-child {
+                        justify-content: center;
+                        border-bottom: 1px solid #eee !important;
+                        padding-bottom: 15px !important;
+                        margin-bottom: 10px;
+                    }
+                    #basket_table td:first-child:before { display: none; }
+                    #basket_table td .basket-product-name { font-size: 16px; }
+                    #basket_table td .variant-qty-input { width: 100px !important; }
+                    #basket_table td.text-center { justify-content: space-between; }
+                } */
     </style>
     <script>
         const products = @json($products);
