@@ -16,16 +16,17 @@
                 <div class="col-12">
                     <form action="{{ route('admin.bookings.store') }}" method="POST" id="booking_form">
                         @csrf
-                        
+
                         <!-- Section 1: Vendor & Global Status -->
                         <div class="card card-primary">
                             <div class="card-header">
-                                <h4>General Information</h4>
+                                <h4>General Informations</h4>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="form-group col-md-6">
-                                        <label class="font-weight-bold">Select Vendor <span class="text-danger">*</span></label>
+                                        <label class="font-weight-bold">Select Vendor <span
+                                                class="text-danger">*</span></label>
                                         <select class="form-control select2" name="vendor_id" required>
                                             <option value="">-- Select Vendor --</option>
                                             @foreach ($vendors as $vendor)
@@ -81,12 +82,14 @@
                                         <select class="form-control select2" id="product_selector">
                                             <option value="">-- Search Product --</option>
                                             @foreach ($products as $product)
-                                                <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->product_number }})</option>
+                                                <option value="{{ $product->id }}">{{ $product->name }}
+                                                    ({{ $product->product_number }})</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <button type="button" class="btn btn-info btn-block py-2 h-100" id="add_product_btn">
+                                        <button type="button" class="btn btn-info btn-block py-2 h-100"
+                                            id="add_product_btn">
                                             <i class="fas fa-cart-plus mr-1"></i> Add to Basket
                                         </button>
                                     </div>
@@ -98,7 +101,8 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h4>Order Basket</h4>
-                                <button type="button" class="btn btn-sm btn-danger shadow-sm" id="clear_basket_btn" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-danger shadow-sm" id="clear_basket_btn"
+                                    style="display: none;">
                                     <i class="fas fa-trash-alt mr-1"></i> Clear Basket
                                 </button>
                             </div>
@@ -120,39 +124,41 @@
                                             <tr id="empty_basket_row">
                                                 <td colspan="7" class="text-center py-5 text-muted">
                                                     <i class="fas fa-shopping-basket fa-3x mb-3 opacity-25"></i>
-                                                    <p>Your basket is empty. Use the search filters above to add products.</p>
+                                                    <p>Your basket is empty. Use the search filters above to add products.
+                                                    </p>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                        <!-- Section 4: Custom Fields -->
-                        <div class="card mt-3">
-                            <div class="card-header bg-whitesmoke d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">Custom Fields (Optional)</h4>
-                                <div class="card-header-action">
-                                    <button type="button" class="btn btn-sm btn-success" id="add-custom-field">
-                                        <i class="fas fa-plus"></i> Add Field
-                                    </button>
+                            <!-- Section 4: Custom Fields -->
+                            <div class="card mt-3">
+                                <div class="card-header bg-whitesmoke d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0">Custom Fields (Optional)</h4>
+                                    <div class="card-header-action">
+                                        <button type="button" class="btn btn-sm btn-success" id="add-custom-field">
+                                            <i class="fas fa-plus"></i> Add Field
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="custom-fields-container">
+                                    <!-- Custom fields will appear here -->
                                 </div>
                             </div>
-                            <div class="card-body" id="custom-fields-container">
-                                <!-- Custom fields will appear here -->
-                            </div>
-                        </div>
 
-                        <!-- Section 3: Order Basket (Footer Moved Below Custom Fields) -->
+                            <!-- Section 3: Order Basket (Footer Moved Below Custom Fields) -->
                             <div class="card-footer bg-whitesmoke mt-3 border rounded shadow-sm">
                                 <div class="row">
                                     <div class="col-md-8">
                                         <div class="form-group mb-0">
                                             <label>General Notes for this entire order</label>
-                                            <textarea name="description" class="form-control" rows="2" placeholder="Write any specific instructions for the vendor here..."></textarea>
+                                            <textarea name="description" class="form-control" rows="2"
+                                                placeholder="Write any specific instructions for the vendor here..."></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-4 text-right d-flex flex-column justify-content-end">
-                                         <button type="submit" class="btn btn-primary btn-lg btn-block shadow-sm py-3">
+                                        <button type="submit" class="btn btn-primary btn-lg btn-block shadow-sm py-3">
                                             <i class="fas fa-check-double mr-1"></i> Confirm & Place Order
                                         </button>
                                     </div>
@@ -168,56 +174,91 @@
 
 @push('scripts')
     <style>
-        .variant-input-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; background: #f9f9f9; padding: 5px 10px; border-radius: 4px; border: 1px solid #eee; }
-        .variant-label { flex-grow: 1; font-size: 11px; font-weight: 600; color: #666; }
-        .variant-qty-input { width: 70px !important; height: 26px !important; text-align: center; border-radius: 3px !important; }
-        .basket-product-name { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 0; }
-        .basket-product-sku { font-size: 11px; color: #888; text-transform: uppercase; }
-        #basket_table thead th { border-top: none; }
+        .variant-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            background: #f9f9f9;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .variant-label {
+            flex-grow: 1;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .variant-qty-input {
+            width: 70px !important;
+            height: 26px !important;
+            text-align: center;
+            border-radius: 3px !important;
+        }
+
+        .basket-product-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0;
+        }
+
+        .basket-product-sku {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        #basket_table thead th {
+            border-top: none;
+        }
 
         /* Mobile Responsive Table Breakdown */
         /* @media (max-width: 767.98px) {
-            #basket_table thead { display: none; }
-            #basket_table, #basket_table tbody, #basket_table tr, #basket_table td { 
-                display: block; 
-                width: 100%; 
-            }
-            #basket_table tr.basket-row { 
-                margin-bottom: 15px; 
-                border: 1px solid #e4e6fc !important; 
-                border-radius: 10px; 
-                padding: 15px; 
-                background: #fff; 
-                box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-            }
-            #basket_table td { 
-                border: none !important; 
-                padding: 8px 0 !important; 
-                display: flex; 
-                align-items: center; 
-                justify-content: space-between;
-                text-align: right !important;
-            }
-            #basket_table td:before { 
-                content: attr(data-label); 
-                font-weight: 800; 
-                flex-basis: 40%; 
-                text-align: left; 
-                font-size: 11px; 
-                color: #888;
-                text-transform: uppercase;
-            }
-            #basket_table td:first-child { 
-                justify-content: center; 
-                border-bottom: 1px solid #eee !important; 
-                padding-bottom: 15px !important;
-                margin-bottom: 10px;
-            }
-            #basket_table td:first-child:before { display: none; }
-            #basket_table td .basket-product-name { font-size: 16px; }
-            #basket_table td .variant-qty-input { width: 100px !important; }
-            #basket_table td.text-center { justify-content: space-between; }
-        } */
+                #basket_table thead { display: none; }
+                #basket_table, #basket_table tbody, #basket_table tr, #basket_table td {
+                    display: block;
+                    width: 100%;
+                }
+                #basket_table tr.basket-row {
+                    margin-bottom: 15px;
+                    border: 1px solid #e4e6fc !important;
+                    border-radius: 10px;
+                    padding: 15px;
+                    background: #fff;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+                }
+                #basket_table td {
+                    border: none !important;
+                    padding: 8px 0 !important;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    text-align: right !important;
+                }
+                #basket_table td:before {
+                    content: attr(data-label);
+                    font-weight: 800;
+                    flex-basis: 40%;
+                    text-align: left;
+                    font-size: 11px;
+                    color: #888;
+                    text-transform: uppercase;
+                }
+                #basket_table td:first-child {
+                    justify-content: center;
+                    border-bottom: 1px solid #eee !important;
+                    padding-bottom: 15px !important;
+                    margin-bottom: 10px;
+                }
+                #basket_table td:first-child:before { display: none; }
+                #basket_table td .basket-product-name { font-size: 16px; }
+                #basket_table td .variant-qty-input { width: 100px !important; }
+                #basket_table td.text-center { justify-content: space-between; }
+            } */
     </style>
     <script>
         const products = @json($products);
@@ -226,12 +267,12 @@
         let rowCount = 0;
 
         $(document).ready(function() {
-            
+
             // --- Auto-select vendor from cart ---
             // Check if there are product IDs in the URL (from cart)
             const urlParams = new URLSearchParams(window.location.search);
             const productIds = urlParams.get('ids');
-            
+
             if (productIds) {
                 // Get vendor from cart
                 $.ajax({
@@ -244,21 +285,24 @@
                     }
                 });
             }
-            
+
             // --- Cascading Filter Logic ---
             $('#category_filter').on('change', function() {
                 let categoryId = $(this).val();
                 $('#sub_category_filter').html('<option value="">Select Sub Category</option>');
                 $('#child_category_filter').html('<option value="">Select Child Category</option>');
-                
+
                 if (categoryId) {
                     $.ajax({
                         url: "{{ route('admin.bookings.get-subcategories') }}",
                         method: 'GET',
-                        data: { id: categoryId },
+                        data: {
+                            id: categoryId
+                        },
                         success: function(data) {
                             let html = '<option value="">All Sub Categories</option>';
-                            data.forEach(sub => html += `<option value="${sub.id}">${sub.name}</option>`);
+                            data.forEach(sub => html +=
+                                `<option value="${sub.id}">${sub.name}</option>`);
                             $('#sub_category_filter').html(html);
                         }
                     });
@@ -269,15 +313,18 @@
             $('#sub_category_filter').on('change', function() {
                 let subCategoryId = $(this).val();
                 $('#child_category_filter').html('<option value="">Select Child Category</option>');
-                
+
                 if (subCategoryId) {
                     $.ajax({
                         url: "{{ route('admin.bookings.get-childcategories') }}",
                         method: 'GET',
-                        data: { id: subCategoryId },
+                        data: {
+                            id: subCategoryId
+                        },
                         success: function(data) {
                             let html = '<option value="">All Child Categories</option>';
-                            data.forEach(child => html += `<option value="${child.id}">${child.name}</option>`);
+                            data.forEach(child => html +=
+                                `<option value="${child.id}">${child.name}</option>`);
                             $('#child_category_filter').html(html);
                         }
                     });
@@ -295,11 +342,11 @@
                 let html = '<option value="">-- Search Product --</option>';
                 products.forEach(p => {
                     let match = true;
-                    if(cat && p.category_id != cat) match = false;
-                    if(sub && p.sub_category_id != sub) match = false;
-                    if(child && p.child_category_id != child) match = false;
+                    if (cat && p.category_id != cat) match = false;
+                    if (sub && p.sub_category_id != sub) match = false;
+                    if (child && p.child_category_id != child) match = false;
 
-                    if(match) {
+                    if (match) {
                         html += `<option value="${p.id}">${p.name} (${p.product_number})</option>`;
                     }
                 });
@@ -309,13 +356,13 @@
             // --- Basket Logic ---
             $('#add_product_btn').on('click', function() {
                 let productId = $('#product_selector').val();
-                if(!productId) {
+                if (!productId) {
                     toastr.warning('Please select a product first.');
                     return;
                 }
 
                 let product = products.find(p => p.id == productId);
-                if(product) {
+                if (product) {
                     addProductRow(product);
                     $('#product_selector').val('').trigger('change');
                 }
@@ -323,20 +370,20 @@
 
             function addProductRow(product) {
                 $('#empty_basket_row').hide();
-                
-                let imageHtml = product.thumb_image 
-                    ? `<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">`
-                    : `<div class="bg-light rounded border d-flex align-items-center justify-content-center text-muted tiny" style="width: 50px; height: 50px;">NO IMG</div>`;
+
+                let imageHtml = product.thumb_image ?
+                    `<img src="{{ asset('storage') }}/${product.thumb_image}" class="rounded border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">` :
+                    `<div class="bg-light rounded border d-flex align-items-center justify-content-center text-muted tiny" style="width: 50px; height: 50px;">NO IMG</div>`;
 
                 let variantHtml = '<div class="row">';
                 let hasVariants = false;
-                
-                if(product.variants && product.variants.length > 0) {
+
+                if (product.variants && product.variants.length > 0) {
                     product.variants.forEach(v => {
                         let colorName = v.color ? v.color.name : '';
                         let sizeName = v.size ? v.size.name : '';
                         let name = (colorName + ' ' + sizeName).trim() || 'Default';
-                        if(name) {
+                        if (name) {
                             hasVariants = true;
                             let safeName = name.replace(/"/g, '&quot;');
                             variantHtml += `
@@ -353,7 +400,8 @@
                 }
                 variantHtml += '</div>';
 
-                if(!hasVariants) variantHtml = '<span class="text-muted italic small ml-2">No variants available for this item</span>';
+                if (!hasVariants) variantHtml =
+                    '<span class="text-muted italic small ml-2">No variants available for this item</span>';
 
                 let rowHtml = `
                     <tr id="row_${rowCount}" class="basket-row">
@@ -396,7 +444,7 @@
             $(document).on('click', '.remove-row', function() {
                 let id = $(this).data('id');
                 $(`#row_${id}`).remove();
-                if($('.basket-row').length === 0) {
+                if ($('.basket-row').length === 0) {
                     $('#empty_basket_row').show();
                 }
             });
@@ -405,13 +453,13 @@
                 let rowId = $(this).data('row');
                 let row = $(`#row_${rowId}`);
                 let total = 0;
-                
+
                 row.find('.variant-qty').each(function() {
                     total += parseInt($(this).val()) || 0;
                 });
 
-                if(total > 0) {
-                   row.find('.main-qty').val(total).attr('min', total);
+                if (total > 0) {
+                    row.find('.main-qty').val(total).attr('min', total);
                 } else {
                     row.find('.main-qty').attr('min', 1);
                 }
@@ -442,7 +490,7 @@
             function loadBasket() {
                 try {
                     let source = [];
-                    
+
                     // First check URL selectedIds
                     if (selectedIds && selectedIds.length > 0) {
                         source = selectedIds;
@@ -462,19 +510,19 @@
 
                     if (source.length > 0) {
                         let loadedCount = 0;
-                        
+
                         source.forEach(id => {
                             // Ensure ID comparison works (string vs int)
                             let product = products.find(p => p.id == id);
-                        
+
                             if (product) {
                                 // Prevent duplicates
                                 let alreadyAdded = false;
                                 $('input[name^="items"][name$="[product_id]"]').each(function() {
-                                    if($(this).val() == product.id) alreadyAdded = true;
+                                    if ($(this).val() == product.id) alreadyAdded = true;
                                 });
 
-                                if(!alreadyAdded) {
+                                if (!alreadyAdded) {
                                     console.log('Adding product:', product.name);
                                     addProductRow(product);
                                     loadedCount++;
@@ -484,7 +532,7 @@
                             }
                         });
 
-                        if(loadedCount > 0) {
+                        if (loadedCount > 0) {
                             toastr.success(`${loadedCount} items loaded from your basket.`);
                             $('#clear_basket_btn').show();
                         }
@@ -503,7 +551,9 @@
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
-                    data: { cart_type: 'booking' },
+                    data: {
+                        cart_type: 'booking'
+                    },
                     success: function() {
                         $('#basket_body').empty();
                         rowCount = 0;
@@ -518,7 +568,7 @@
             // --- End Basket Logic ---
 
             $('#booking_form').on('submit', function(e) {
-                if($('.basket-row').length === 0) {
+                if ($('.basket-row').length === 0) {
                     e.preventDefault();
                     toastr.error('Product basket must contain at least one item.', 'Basket Empty');
                 }
